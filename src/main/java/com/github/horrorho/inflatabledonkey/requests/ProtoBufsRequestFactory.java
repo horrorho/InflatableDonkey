@@ -33,18 +33,20 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 
 /**
- * Post Message Factory.
+ * Protobuf array HttpUriRequest factory.
+ * <p>
+ * Encodes the supplied protobuf messages to Apple protobuf arrays.
  *
  * @author Ahseya
  */
 @Immutable
-public final class PostMessageFactory {
+public final class ProtoBufsRequestFactory {
 
-    public static PostMessageFactory defaultInstance() {
+    public static ProtoBufsRequestFactory defaultInstance() {
         return instance;
     }
 
-    private static final PostMessageFactory instance = new PostMessageFactory();
+    private static final ProtoBufsRequestFactory instance = new ProtoBufsRequestFactory();
 
     public <T extends GeneratedMessage> HttpUriRequest newRequest(
             String url,
@@ -53,11 +55,11 @@ public final class PostMessageFactory {
             String cloudKitUserId,
             String cloudKitToken,
             String uuid,
-            List<T> messages,
+            List<T> protobufs,
             Headers headers
     ) throws IOException {
 
-        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(ProtoBufArray.encode(messages));
+        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(ProtoBufArray.encode(protobufs));
 
         HttpPost post = new HttpPost(url);
         post.setHeader(Headers.xAppleRequestUUID, uuid);
