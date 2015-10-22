@@ -88,7 +88,10 @@ Postulated steps and current status are as follows:
   12. Assemble assets/ files. Known if unchanged from iOS8.
   13. Decrypt files. Known if unchanged from iOS8.
 
-At present steps 8 and 9 remain undiscovered. If you have any additional information, we would love hear it! Please open a ticket and pour your heart out.
+For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
+
+
+At present steps 8 and 9 remain undiscovered. If you have any additional information, we would love hear it! Please open a ticket and pour your heart out. However if you would prefer to remain under the radar, then email me directly.
 
 ### Backups!
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
