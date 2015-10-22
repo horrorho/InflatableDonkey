@@ -103,7 +103,7 @@ message Data { // Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
   optional uint32 uint32 = 4;
   optional Fixed64 fixed64 = 6;
   optional string string = 7;
-	optional IdItemOp idItemOp = 9;
+  optional IdItemOp idItemOp = 9;
   repeated Data data = 11;
 }
 
