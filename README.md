@@ -29,7 +29,7 @@ AppleId/ password.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur
 ```
-DsPrsID/mmeAuthToken. Preferable for repeated runs as rapid AppleId/ password authentication may trip anti-flooding controls.
+DsPrsID/mmeAuthToken. Preferable for consecutive runs as repeated appleId/ password authentication over short periods may trip anti-flooding/ security controls.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar 1234567890:AQAAAABWJVgBHQvCSr4qPXsjQN9M9dQw9K7w/sB=
 ```
