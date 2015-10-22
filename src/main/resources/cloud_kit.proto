@@ -108,8 +108,8 @@ message Data { // Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
 }
 
 message IdItemOp {  // Record_Response_211_1_7_2_11_9
-	optional uint32 id = 1;
-	optional ItemOp itemOp = 2;
+  optional uint32 id = 1;
+  optional ItemOp itemOp = 2;
 }
 
 message ItemOp {
