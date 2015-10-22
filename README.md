@@ -94,7 +94,7 @@ At present steps 8 and 9 remain undiscovered. If you have any additional informa
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
 
 ### What about LiquidDonkey?
-Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll one again cast my gaze over LiquidDonkey.
+Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
 
 ### Credits
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions. Please send him lots of cakes.
