@@ -447,7 +447,9 @@ public class Main {
      STEP 8. Retrieve list of assets. UNKNOWN.  
     
      What is the destination of our manifest information?
-     It takes the form 'M:UUID'.
+     It takes the form 'M:UUID:x'.
+    
+     Is this form passed in it's entirety or do we split the UUID and X?
     
      Possibilities:
      /api/client/zone/retrieve
@@ -456,6 +458,11 @@ public class Main {
      */
     /* 
      STEP 9. Retrieve asset tokens. UNKNOWN.  
+    
+     AuthorizeGet typically requires a list of assets and authorization tokens.
+     How do we acquire these tokens?
+    
+    
      */
 }
 // TODO info limits have not been set
