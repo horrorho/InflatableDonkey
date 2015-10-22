@@ -37,7 +37,7 @@ import net.jcip.annotations.Immutable;
 /**
  * ProfoBuf arrays.
  *
- * iCloud array encoding. 32 bit varint n (denoting array size) followed by n items.
+ * iCloud array encoding. 32 bit varint n followed by n bytes of element data, repeated.
  *
  * @author ahseya
  */
