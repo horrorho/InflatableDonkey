@@ -97,6 +97,6 @@ The elucidation of client-server calls has been greatly inhibited by the lack of
 Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
 
 ### Credits
-[ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions. Please send him lots of cakes.
+[ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions. Please send him lots of cakes for advancing the project on so quickly.
 
 There have been some contributors who, rather like vampires, prefer the cover of darkness. You know who you are and thank you!
