@@ -42,7 +42,7 @@ import com.github.horrorho.inflatabledonkey.requests.Headers;
 import com.github.horrorho.inflatabledonkey.requests.M201RequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.M211RequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.MappedHeaders;
-import com.github.horrorho.inflatabledonkey.requests.PostMessageFactory;
+import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
@@ -190,7 +190,12 @@ public class Main {
         // Default HttpClient.
         HttpClient httpClient = HttpClients.createDefault();
 
-        // 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
+        /*        
+         STEP 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
+        
+         No different to iOS8.
+         */
+        logger.info("-- main() - STEP 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.");
         Auth auth = arguments.containsKey(Property.AUTHENTICATION_TOKEN)
                 ? new Auth(arguments.get(Property.AUTHENTICATION_TOKEN))
                 : new Authenticator(coreHeaders).authenticate(
@@ -206,19 +211,36 @@ public class Main {
             System.exit(0);
         }
 
-        // 2. Account settings.
+        /*
+         STEP 2. Account settings.
+                
+         New url/ headers otherwise comparable to iOS8.     
+         https://setup.icloud.com/setup/get_account_settings
+
+         Returns an account settings plist, that along with numerous other items includes a cloudKitToken.        
+         */
+        logger.info("-- main() - STEP 2. Account settings.");
         HttpUriRequest accountSettingsRequest = new AccountSettingsRequestFactory(coreHeaders)
                 .apply(auth.dsPrsID(), auth.mmeAuthToken());
 
         NSDictionary settings
                 = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.nsDictionaryResponseHandler());
-
         logger.debug("-- main() - account settings: {}", settings.toASCIIPropertyList());
 
         AccountInfo accountInfo = new AccountInfo(PLists.get(settings, "appleAccountInfo"));
         Tokens tokens = new Tokens(PLists.get(settings, "tokens"));
 
-        // 3. CloudKit Application Initialization.
+        /* 
+         STEP 3. CloudKit Application Initialization.
+         
+         Url/ headers are specific to the particular bundle/ container required 
+         (in our case bundle = com.apple.backupd  container = com.apple.backup.ios)
+         cloudKitToken also required
+         https://setup.icloud.com/setup/ck/v1/ckAppInit?container=$CONTAINER
+        
+         Returns a JSON response outlining various urls and a cloudKitUserId.        
+         */
+        logger.info("-- main() - STEP 3. CloudKit Application Initialization.");
         HttpUriRequest ckAppInitRequest
                 = CkAppInitBackupRequestFactory.create()
                 .newRequest(accountInfo.dsPrsID(), tokens.mmeAuthToken(), tokens.cloudKitToken());
@@ -233,7 +255,21 @@ public class Main {
                 .setType(7)
                 .build();
 
-        // 4. Record zones.
+        /* 
+         STEP 4. Record zones.
+        
+         Url ckDatabase from ckInit + /record/retrieve
+         ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
+         Headers similar to step 3
+        
+         Message type 201 request (cloud_kit.proto)      
+         This proto is encoded with Apple's protobuf array encoding (see ProtoBufArray class).
+         Possibility of passing multiple requests not yet explored.
+        
+         Returns record zone data.
+        
+         */
+        logger.info("-- main() - STEP 4. Record zones.");
         CK.Request requestA = M201RequestFactory.instance()
                 .newRequest(
                         container,
@@ -245,7 +281,7 @@ public class Main {
                         info);
         logger.debug("-- main() - record zones request: {}", requestA);
 
-        HttpUriRequest postA = PostMessageFactory.defaultInstance().newRequest(
+        HttpUriRequest postA = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 ckInit.production().url() + "/record/retrieve",
                 container,
                 bundle,
@@ -258,7 +294,16 @@ public class Main {
         List<CK.Response> responseA = httpClient.execute(postA, ckResponseHandler);
         logger.debug("-- main() - record zones response: {}", responseA);
 
-        // 5. Backups. 
+        /* 
+         STEP 5. Backup list.
+        
+         Url/ headers as step 4.
+         Message type 211 request, protobuf array encoded.
+
+         Returns device data/ backups.
+        
+         */
+        logger.info("-- main() - STEP 5. Backup list.");
         CK.Request requestB = M211RequestFactory.instance()
                 .newRequest(
                         container,
@@ -271,7 +316,7 @@ public class Main {
                         info);
         logger.debug("-- main() - backups request: {}", requestB);
 
-        HttpUriRequest postB = PostMessageFactory.defaultInstance().newRequest(
+        HttpUriRequest postB = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 ckInit.production().url() + "/record/retrieve",
                 container,
                 bundle,
@@ -300,7 +345,17 @@ public class Main {
             System.exit(0);
         }
 
-        // 6. Snapshots.
+        /* 
+         STEP 6. Snapshot list.
+        
+         Url/ headers as step 5.
+         Message type 211 with the required backup uuid, protobuf array encoded.
+
+         Returns device/ snapshots/ keybag information.
+         Timestamps are hex encoded double offsets to 01 Jan 2001 00:00:00 GMT (Cocoa/ Webkit reference date).
+        
+         */
+        logger.info("-- main() - STEP 6. Snapshot list.");
         CK.Item device = CK.Item.newBuilder()
                 .setValue(devices.get(0)) // First device only.
                 .setType(1)
@@ -318,7 +373,7 @@ public class Main {
                         info);
         logger.debug("-- main() - snapshots request: {}", requestC);
 
-        HttpUriRequest postC = PostMessageFactory.defaultInstance().newRequest(
+        HttpUriRequest postC = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 ckInit.production().url() + "/record/retrieve",
                 container,
                 bundle,
@@ -329,7 +384,7 @@ public class Main {
                 coreHeaders);
 
         List<CK.Response> responseC = httpClient.execute(postC, ckResponseHandler);
-        logger.debug("-- main() - snapshot response: {}", responseC);
+        logger.debug("-- main() - snapshots response: {}", responseC);
 
         List<String> snapshots = responseC.stream()
                 .map(CK.Response::getM211Response)
@@ -347,7 +402,16 @@ public class Main {
             System.exit(0);
         }
 
-        // 7. Manifests.   
+        /* 
+         STEP 7. Manifest list.
+        
+         Url/ headers as step 6.
+         Message type 211 with the required snapshot uuid, protobuf array encoded.
+
+         Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
+        
+         */
+        logger.info("-- main() - STEP 7. Manifest list.");
         CK.Item snapshot = CK.Item.newBuilder()
                 .setValue(snapshots.get(0)) // First snapshot only.
                 .setType(1)
@@ -365,7 +429,7 @@ public class Main {
                         info);
         logger.debug("-- main() - manifests request: {}", requestD);
 
-        HttpUriRequest postD = PostMessageFactory.defaultInstance().newRequest(
+        HttpUriRequest postD = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 ckInit.production().url() + "/record/retrieve",
                 container,
                 bundle,
@@ -378,5 +442,12 @@ public class Main {
         List<CK.Response> responseD = httpClient.execute(postD, ckResponseHandler);
         logger.debug("-- main() - manifests response: {}", responseD);
     }
+
+    /* 
+     STEP 8. Retrieve list of assets. UNKNOWN.  
+     */
+    /* 
+     STEP 9. Retrieve asset tokens. UNKNOWN.  
+     */
 }
 // TODO info limits have not been set
