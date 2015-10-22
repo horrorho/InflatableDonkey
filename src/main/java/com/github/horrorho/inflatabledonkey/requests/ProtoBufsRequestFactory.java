@@ -35,7 +35,7 @@ import org.apache.http.entity.ByteArrayEntity;
 /**
  * Protobuf array HttpUriRequest factory.
  * <p>
- * Encodes the supplied protobuf messages to Apple protobuf arrays.
+ * Encodes the supplied protobuf messages with {@link ProtoBufArray}
  *
  * @author Ahseya
  */
