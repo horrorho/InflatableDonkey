@@ -54,6 +54,9 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
                 new Option(null, "help", false, "Display this help and exit."),
                 Property.ARGS_HELP);
 
+        options.put(
+                new Option(null, "token", false, "Display the dsPrsID:mmeAuthToken and exit."),
+                Property.ARGS_TOKEN);
         return options;
     }
 }

@@ -36,11 +36,12 @@ public enum Property {
 
     APP_NAME("InflatableDonkey"),
     ARGS_HELP,
+    ARGS_TOKEN,
     ARGS_VERSION,
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
     AUTHENTICATION_TOKEN,
-    PROPERTIES_RESOURCE("/inflatable_donkey.properties"),;
+    PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {
         return DateTimeFormatter.ISO_DATE;

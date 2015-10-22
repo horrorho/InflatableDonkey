@@ -201,6 +201,11 @@ public class Main {
         logger.debug("-- main() - auth: {}", auth);
         logger.info("-- main() - dsPrsID:mmeAuthToken: {}:{}", auth.dsPrsID(), auth.mmeAuthToken());
 
+        if (arguments.containsKey(Property.ARGS_TOKEN)) {
+            System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
+            System.exit(0);
+        }
+
         // 2. Account settings.
         HttpUriRequest accountSettingsRequest = new AccountSettingsRequestFactory(coreHeaders)
                 .apply(auth.dsPrsID(), auth.mmeAuthToken());
