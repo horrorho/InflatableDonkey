@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- DEBUG/ TRACE switches WILL log sensitive information. Use with caution. -->
+    <logger name="com.github.horrorho.inflatabledonkey" level="trace" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <!-- Apache HttpClient loggers via JCL bridge. WILL log sensitive information. Use with caution. -->
+    <logger name="org.apache.http" level="off" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    
+    <logger name="org.apache.http.headers" level="debug" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    
+    <logger name="org.apache.http.wire" level="off" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    
+    <root level="off">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration> 

@@ -1,0 +1,158 @@
+// Ahseya https://github.com/horrorho
+// ItsASmallWorld https://github.com/ItsASmallWorld
+
+message Request {
+  optional Info info = 1;
+  optional Message message = 2;
+  optional M201Request m201Request = 201;
+  optional M211Request m211Request = 211;
+}
+
+message Response {
+  optional uint32 f1 = 1;
+  optional Message message = 2;
+  optional Status status = 3;
+  optional M201Response m201Response = 201;
+  optional M211Response m211Response = 211;
+}
+
+message Info {
+  optional string container = 2;
+  optional string bundle = 3;
+  optional Item f7 = 7;
+  optional string os = 8;
+  optional Fixed64 f9 = 9;
+  optional string app = 10;
+  optional string appVersion = 11;
+  optional string operation =12;
+  optional uint32 limit1 = 13;
+  optional uint32 limit2 = 14;
+  optional fixed32 hex32 = 15;
+  optional string version = 18;
+  optional uint32 f19 = 19;
+  optional string deviceName = 21;
+  optional string deviceID = 22;
+  optional uint32 f23 = 23;
+  optional uint32 f25 = 25;
+}
+
+message Message {
+  optional string uuid = 1;
+  optional uint32 type = 2;
+  optional uint32 f4 = 4;
+}
+
+message M201Request {
+  optional Op op = 1;
+}
+
+message M201Response {
+  optional M201ResponseBody body = 1;
+}
+
+message M201ResponseBody {
+  optional OpResult result = 1;
+  optional bytes f2 = 2;
+  optional uint32 f4 = 4;
+  optional uint32 f5 = 5;
+  optional uint32 f6 = 6;
+}
+
+message M211Request {
+  optional ItemOp itemOp = 1;
+  optional UInt32 f6 = 6;
+}
+
+message M211Response { // Record_Response_211
+  optional M211ResponseBody body = 1;
+  optional uint32 f2 = 2;
+}
+
+message M211ResponseBody { // Record_Response_211_1
+  optional string f1 = 1;
+  optional ItemOp itemOp = 2;
+  optional String record = 3;
+  optional Item userID = 4;
+  optional Fixed64Pair f5 = 5;
+  repeated Container container = 7;
+  optional Item ckUserID = 9;
+  optional string deviceName = 11;
+  optional BytesString f13 = 13;
+  optional uint32 f15 = 15;
+}
+
+message Status {
+  optional uint32 code = 1;
+  optional Error error = 2;
+}
+
+message Error {
+  optional UInt32 code = 1;
+  optional string message = 4;
+  optional string id = 5;
+}
+
+message Container { // Record_Response_211_1_7
+  optional String tag = 1;
+  optional Data data = 2;
+}
+
+message Data { // Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
+  optional uint32 id = 1;
+  optional bytes bytes = 2;
+  optional uint32 uint32 = 4;
+  optional Fixed64 fixed64 = 6;
+  optional string string = 7;
+	optional IdItemOp idItemOp = 9;
+  repeated Data data = 11;
+}
+
+message IdItemOp {  // Record_Response_211_1_7_2_11_9
+	optional uint32 id = 1;
+	optional ItemOp itemOp = 2;
+}
+
+message ItemOp {
+  optional Item item = 1;
+  optional Op op = 2;
+}
+
+message OpResult {
+  optional Op op = 1;
+  optional BytesString bytesString = 3;
+}
+
+message Item {  // Record_Response_211_1_7_2_11_9_2_1 Record_Response_211_1_7_2_11_9_2_2_1
+  optional string value = 1;
+  optional uint32 type = 2;
+}
+
+message Op {
+  optional Item item = 1;
+  optional Item ckUserID = 2;
+}
+
+message BytesString {
+  optional bytes bytes = 1;
+  optional string string = 2;
+}
+
+message Fixed64Pair {
+  optional Fixed64 one = 1;
+  optional Fixed64 two = 2;
+}
+
+message Fixed64 {  // Record_Response_211_1_7_2_11_6
+  optional fixed64 value = 1;
+}
+
+message String {
+  optional string value = 1;
+}
+
+message UInt32 {
+  optional uint32 value = 1;
+}
+// TODO naming conventions for boxed/ unboxed pairs
+// TODO probably missing repeated types
+// TODO naming is presently non-idiomatic
