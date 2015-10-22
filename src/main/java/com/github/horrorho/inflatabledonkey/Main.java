@@ -445,6 +445,14 @@ public class Main {
 
     /* 
      STEP 8. Retrieve list of assets. UNKNOWN.  
+    
+     What is the destination of our manifest information?
+     It takes the form 'M:UUID'.
+    
+     Possibilities:
+     /api/client/zone/retrieve
+     /api/client/asset/retrieve
+    
      */
     /* 
      STEP 9. Retrieve asset tokens. UNKNOWN.  
