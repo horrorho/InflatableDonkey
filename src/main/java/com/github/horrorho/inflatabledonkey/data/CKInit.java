@@ -36,7 +36,7 @@ public final class CKInit {
 
         this.cloudKitDeviceUrl = cloudKitDeviceUrl;
         this.cloudKitDatabaseUrl = cloudKitDatabaseUrl;
-        this.containers = containers;
+        this.containers = Arrays.copyOf(containers, containers.length);
         this.cloudKitShareUrl = cloudKitShareUrl;
         this.cloudKitUserId = cloudKitUserId;
     }

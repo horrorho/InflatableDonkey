@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public final class MappedHeaders implements Headers {
 
     public MappedHeaders(Collection<Header> headers) {
         this.headers = headers.stream()
-                .collect(Collectors.toMap(header -> header.getName().toLowerCase(), Function.identity()));
+                .collect(Collectors.toMap(header -> header.getName().toLowerCase(Locale.US), Function.identity()));
     }
 
     public MappedHeaders(Header... headers) {
@@ -60,8 +61,8 @@ public final class MappedHeaders implements Headers {
 
     @Override
     public Header get(String header) throws NullPointerException {
-        if (headers.containsKey(header.toLowerCase())) {
-            return headers.get(header.toLowerCase());
+        if (headers.containsKey(header.toLowerCase(Locale.US))) {
+            return headers.get(header.toLowerCase(Locale.US));
         }
 
         throw new NullPointerException("Missing header: " + header);
