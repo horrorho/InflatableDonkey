@@ -81,8 +81,8 @@ Postulated steps and current status are as follows:
   5. Backup list. Functional.
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
-  8. Retrieve assets. Unknown.
-  9. Asset tokens. Unknown.
+  8. Retrieve list of assets. Unknown.
+  9. Retrieve asset tokens. Unknown.
   10. AuthorizeGet. Known if unchanged from iOS8.
   11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
   12. Assemble assets/ files. Known if unchanged from iOS8.
