@@ -468,7 +468,7 @@ public class Main {
         }
 
         /* 
-         STEP 8. Retrieve list of assets. UNKNOWN.  
+         STEP 8. Retrieve list of assets.
     
          Url ckDatabase from ckInit + /query/retrieve
          ~ pXX-ckdatabase.icloud.com:443//api/client/query/retrieve
