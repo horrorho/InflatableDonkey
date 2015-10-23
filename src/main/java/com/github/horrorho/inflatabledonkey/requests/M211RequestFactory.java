@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.protocol.CK;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -43,48 +43,48 @@ public class M211RequestFactory {
     private M211RequestFactory() {
     }
 
-    public CK.Request newRequest(
+    public CloudKit.Request newRequest(
             String container,
             String bundle,
             String operation,
             String uuid,
-            CK.Item item,
-            CK.Item op,
-            CK.Item userID,
-            CK.Info coreInfo) {
+            CloudKit.String recordName,
+            CloudKit.String zoneName,
+            CloudKit.String userID,
+            CloudKit.Info coreInfo) {
 
-        CK.Info info = CK.Info.newBuilder(coreInfo)
+        CloudKit.Info info = CloudKit.Info.newBuilder(coreInfo)
                 .setContainer(container)
                 .setBundle(bundle)
                 .setOperation(operation)
                 .build();
 
-        CK.Message message = CK.Message.newBuilder()
+        CloudKit.Message message = CloudKit.Message.newBuilder()
                 .setUuid(uuid)
                 .setType(211)
                 .setF4(1)
                 .build();
 
-        CK.Op ckOp = CK.Op.newBuilder()
-                .setItem(op)
-                .setCkUserID(userID)
+        CloudKit.RecordZoneID recordZoneID = CloudKit.RecordZoneID.newBuilder()
+                .setZoneName(zoneName)
+                .setOwnerName(userID)
                 .build();
 
-        CK.ItemOp itemOp = CK.ItemOp.newBuilder()
-                .setItem(item)
-                .setOp(ckOp)
+        CloudKit.RecordID recordID = CloudKit.RecordID.newBuilder()
+                .setRecordName(recordName)
+                .setZoneID(recordZoneID)
                 .build();
 
-        CK.UInt32 one = CK.UInt32.newBuilder()
+        CloudKit.UInt32 one = CloudKit.UInt32.newBuilder()
                 .setValue(1)
                 .build();
 
-        CK.M211Request m211Request = CK.M211Request.newBuilder()
-                .setItemOp(itemOp)
+        CloudKit.M211Request m211Request = CloudKit.M211Request.newBuilder()
+                .setRecordID(recordID)
                 .setF6(one)
                 .build();
 
-        return CK.Request.newBuilder()
+        return CloudKit.Request.newBuilder()
                 .setInfo(info)
                 .setMessage(message)
                 .setM211Request(m211Request)

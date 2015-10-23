@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.requests;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import java.util.List;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -32,22 +33,26 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public class M201RequestFactory {
+public class M220RequestFactory {
 
-    public static M201RequestFactory instance() {
+    public static M220RequestFactory instance() {
         return instance;
     }
 
-    private static final M201RequestFactory instance = new M201RequestFactory();
+    private static final M220RequestFactory instance = new M220RequestFactory();
 
-    private M201RequestFactory() {
+    private M220RequestFactory() {
     }
 
-    public CloudKit.Request newRequest(
+    public CloudKit.Request newRequest( 
             String container,
             String bundle,
             String operation,
             String uuid,
+            CloudKit.Name subField,
+            CloudKit.Name field,
+            CloudKit.Names columns,
+            CloudKit.String recordName,
             CloudKit.String zoneName,
             CloudKit.String userID,
             CloudKit.Info coreInfo) {
@@ -60,7 +65,7 @@ public class M201RequestFactory {
 
         CloudKit.Message message = CloudKit.Message.newBuilder()
                 .setUuid(uuid)
-                .setType(201)
+                .setType(220)
                 .setF4(1)
                 .build();
 
@@ -69,14 +74,45 @@ public class M201RequestFactory {
                 .setOwnerName(userID)
                 .build();
 
-        CloudKit.M201Request m201Request = CloudKit.M201Request.newBuilder()
-                .setRecordZoneID(recordZoneID) 
+        CloudKit.RecordID recordID = CloudKit.RecordID.newBuilder()
+                .setRecordName(recordName)
+                .setZoneID(recordZoneID)
+                .build();
+
+        CloudKit.XRecordID xRecordID = CloudKit.XRecordID.newBuilder()
+                .setRecordID(recordID)
+                .build();
+
+        CloudKit.UInt32 one = CloudKit.UInt32.newBuilder()
+                .setValue(1)
+                .build();
+
+        CloudKit.Data data = CloudKit.Data.newBuilder()
+                .setId(5)
+                .setXRecordID(xRecordID)
+                .build();
+
+        CloudKit.Container ckContainer = CloudKit.Container.newBuilder()
+                .setName(field)
+                .setData(data)
+                .setF4(1)
+                .build();
+
+        CloudKit.NameContainer nameContainer = CloudKit.NameContainer.newBuilder()
+                .setName(subField)
+                .setContainer(ckContainer)
+                .build();
+
+        CloudKit.M220Request m220Request = CloudKit.M220Request.newBuilder()
+                .setNameContainer(nameContainer)
+                .setFields(columns)
+                .setF6(one)
                 .build();
 
         return CloudKit.Request.newBuilder()
                 .setInfo(info)
                 .setMessage(message)
-                .setM201Request(m201Request)
+                .setM220Request(m220Request)
                 .build();
     }
 }
