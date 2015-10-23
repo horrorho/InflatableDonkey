@@ -91,7 +91,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * 7. Manifest list. Functional.
  * <p>
- * 8. Retrieve assets. Unknown.
+ * 8. Retrieve assets. Unknown -> now functional.
  * <p>
  * 9. Asset tokens. Unknown.
  * <p>
