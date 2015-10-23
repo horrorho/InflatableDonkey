@@ -81,7 +81,7 @@ Postulated steps and current status are as follows:
   5. Backup list. Functional.
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
-  8. Retrieve list of assets. Unknown.
+  8. Retrieve list of assets. Unknown -> now functional.
   9. Retrieve asset tokens. Unknown.
   10. AuthorizeGet. Known if unchanged from iOS8.
   11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
@@ -92,6 +92,9 @@ For further information please refer to the comments/ code in [Main](https://git
 
 
 At present steps 8 and 9 remain undiscovered. If you have any additional information, we would love hear it! Please open a ticket and pour your heart out. However if you would prefer to remain under the radar, then email me directly.
+
+Update, 23 October 2015. Ok! I figured out step 8 and have updated the tool. The casualty being the cloud_kit.proto file, which is a complete mess. At some point it will need refactoring, cleaning and more idiomatic names applied.
+
 
 ### Backups!
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
