@@ -6,6 +6,8 @@ message Request {
   optional Message message = 2;
   optional M201Request m201Request = 201;
   optional M211Request m211Request = 211;
+  optional M220Request m220Request = 220;
+
 }
 
 message Response {
@@ -14,20 +16,22 @@ message Response {
   optional Status status = 3;
   optional M201Response m201Response = 201;
   optional M211Response m211Response = 211;
+  optional M220Response m220Response = 220;
 }
 
-message Info {
+message Info {  // Attributes might be a better name
   optional string container = 2;
   optional string bundle = 3;
-  optional Item f7 = 7;
+  optional String f7 = 7;
   optional string os = 8;
-  optional Fixed64 f9 = 9;
+  optional Fixed64 f9 = 9; // product type, TODO to String64
   optional string app = 10;
   optional string appVersion = 11;
   optional string operation =12;
   optional uint32 limit1 = 13;
   optional uint32 limit2 = 14;
-  optional fixed32 hex32 = 15;
+  optional fixed32 hex32 = 15; // Fixed string?
+  // 17 = locale information
   optional string version = 18;
   optional uint32 f19 = 19;
   optional string deviceName = 21;
@@ -43,7 +47,7 @@ message Message {
 }
 
 message M201Request {
-  optional Op op = 1;
+  optional RecordZoneID recordZoneID = 1;
 }
 
 message M201Response {
@@ -59,7 +63,7 @@ message M201ResponseBody {
 }
 
 message M211Request {
-  optional ItemOp itemOp = 1;
+  optional RecordID recordID = 1;
   optional UInt32 f6 = 6;
 }
 
@@ -70,15 +74,31 @@ message M211Response { // Record_Response_211
 
 message M211ResponseBody { // Record_Response_211_1
   optional string f1 = 1;
-  optional ItemOp itemOp = 2;
-  optional String record = 3;
-  optional Item userID = 4;
+  optional RecordID recordID = 2;
+  optional String record = 3; // ? type
+  optional String userID = 4;
   optional Fixed64Pair f5 = 5;
   repeated Container container = 7;
-  optional Item ckUserID = 9;
+  optional String ckUserID = 9;
   optional string deviceName = 11;
   optional BytesString f13 = 13;
   optional uint32 f15 = 15;
+}
+
+message M220Request {
+  optional NameContainer nameContainer = 1;
+  optional Names fields = 5;
+  optional UInt32 f6 = 6;
+}
+
+message M220Response {
+  repeated M220ResponseBody body = 1;
+}
+
+message M220ResponseBody {
+  optional RecordID recordID = 1;
+  optional uint32 f3 = 3;
+  optional M211ResponseBody m211ResponseBody = 4;
 }
 
 message Status {
@@ -92,44 +112,50 @@ message Error {
   optional string id = 5;
 }
 
-message Container { // Record_Response_211_1_7
-  optional String tag = 1;
-  optional Data data = 2;
+message NameContainer {
+  optional Name name = 1;
+  optional Container container = 2;
 }
 
-message Data { // Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
+message Container { // ? Attribute ? Object ? Record ? RecordEntry ? Field Record_Response_211_1_7
+  optional Name name = 1; // ? Record Type Name? Just need an encapsulated string eg Name as opposed to String.
+  optional Data data = 2;
+  optional uint32 f4 = 4;
+}
+
+message Data { // ? Record Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
   optional uint32 id = 1;
   optional bytes bytes = 2;
   optional uint32 uint32 = 4;
   optional Fixed64 fixed64 = 6;
   optional string string = 7;
-  optional IdItemOp idItemOp = 9;
+  optional XRecordID xRecordID = 9;
   repeated Data data = 11;
 }
 
-message IdItemOp {  // Record_Response_211_1_7_2_11_9
+message XRecordID {  // (Old: IdItempOp) What is this?   Record_Response_211_1_7_2_11_9
   optional uint32 id = 1;
-  optional ItemOp itemOp = 2;
+  optional RecordID recordID = 2;
 }
 
-message ItemOp {
-  optional Item item = 1;
-  optional Op op = 2;
+message RecordID {  // (Old:ItemOp)
+  optional String recordName = 1;
+  optional RecordZoneID zoneID = 2;
 }
 
 message OpResult {
-  optional Op op = 1;
+  optional RecordZoneID recordZoneID = 1;
   optional BytesString bytesString = 3;
 }
 
-message Item {  // Record_Response_211_1_7_2_11_9_2_1 Record_Response_211_1_7_2_11_9_2_2_1
+message String {  // NSString (Old: Item) Record_Response_211_1_7_2_11_9_2_1 Record_Response_211_1_7_2_11_9_2_2_1
   optional string value = 1;
-  optional uint32 type = 2;
+  optional uint32 encoding = 2; // encoding
 }
 
-message Op {
-  optional Item item = 1;
-  optional Item ckUserID = 2;
+message RecordZoneID { // (Old:op)
+  optional String zoneName = 1;
+  optional String ownerName = 2;
 }
 
 message BytesString {
@@ -137,17 +163,29 @@ message BytesString {
   optional string string = 2;
 }
 
-message Fixed64Pair {
+message Fixed64Pair { // References?
   optional Fixed64 one = 1;
   optional Fixed64 two = 2;
 }
 
-message Fixed64 {  // Record_Response_211_1_7_2_11_6
+message Fixed64 {  // Reference? Record_Response_211_1_7_2_11_6
   optional fixed64 value = 1;
 }
 
-message String {
+message Names {
+  repeated Name name = 1;
+}
+
+message Name {
   optional string value = 1;
+}
+
+message String32 {
+  optional fixed32 value = 1;
+}
+
+message String64 {
+  optional fixed64 value = 1;
 }
 
 message UInt32 {
@@ -156,3 +194,4 @@ message UInt32 {
 // TODO naming conventions for boxed/ unboxed pairs
 // TODO probably missing repeated types
 // TODO naming is presently non-idiomatic
+// TODO responsebodies represent nested types, to rename

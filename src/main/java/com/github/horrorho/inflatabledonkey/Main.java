@@ -34,13 +34,14 @@ import com.github.horrorho.inflatabledonkey.data.Auth;
 import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
-import com.github.horrorho.inflatabledonkey.protocol.CK;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.protocol.ProtoBufArray;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.Headers;
 import com.github.horrorho.inflatabledonkey.requests.M201RequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.M211RequestFactory;
+import com.github.horrorho.inflatabledonkey.requests.M220RequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.MappedHeaders;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
@@ -48,7 +49,11 @@ import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -153,28 +158,30 @@ public class Main {
                 new BasicHeader(Headers.xCloudKitProtocolVersion, "client=1;comments=1;device=1;presence=1;records=1;sharing=1;subscriptions=1;users=1;mescal=1;")
         );
 
-        CK.Item mbksync = CK.Item.newBuilder()
+        CloudKit.String mbksync = CloudKit.String.newBuilder()
                 .setValue("mbksync")
-                .setType(6)
+                .setEncoding(6)
                 .build();
 
-        CK.Item backupAccount = CK.Item.newBuilder()
+        CloudKit.String backupAccount = CloudKit.String.newBuilder()
                 .setValue("BackupAccount")
-                .setType(1)
+                .setEncoding(1)
                 .build();
 
-        CK.Item seven = CK.Item.newBuilder()
+        CloudKit.String seven = CloudKit.String.newBuilder()
                 .setValue(UUID.randomUUID().toString()) // Unknown session static UUID.
-                .setType(2)
+                .setEncoding(2)
                 .build();
 
-        CK.Info info = CK.Info.newBuilder()
+        CloudKit.Info info = CloudKit.Info.newBuilder()
                 .setContainer(container)
                 .setBundle(bundle)
                 .setF7(seven)
                 .setOs("9.0.1")
                 .setApp("com.apple.cloudkit.CloudKitDaemon")
                 .setAppVersion("479")
+                .setLimit1(40000)
+                .setLimit2(40000)
                 .setVersion("4.0")
                 .setF19(1)
                 .setDeviceName("My iPhone")
@@ -184,8 +191,8 @@ public class Main {
                 .build();
 
         // Protobuf array response handler.
-        InputStreamResponseHandler<List<CK.Response>> ckResponseHandler
-                = new InputStreamResponseHandler<>(inputStream -> ProtoBufArray.decode(inputStream, CK.Response.PARSER));
+        InputStreamResponseHandler<List<CloudKit.Response>> ckResponseHandler
+                = new InputStreamResponseHandler<>(inputStream -> ProtoBufArray.decode(inputStream, CloudKit.Response.PARSER));
 
         // Default HttpClient.
         HttpClient httpClient = HttpClients.createDefault();
@@ -250,9 +257,9 @@ public class Main {
         CKInit ckInit = httpClient.execute(ckAppInitRequest, jsonResponseHandler);
         logger.debug("-- main() - ckInit: {}", ckInit);
 
-        CK.Item ckUserId = CK.Item.newBuilder()
+        CloudKit.String ckUserId = CloudKit.String.newBuilder()
                 .setValue(ckInit.cloudKitUserId())
-                .setType(7)
+                .setEncoding(7)
                 .build();
 
         /* 
@@ -270,7 +277,7 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 4. Record zones.");
-        CK.Request requestA = M201RequestFactory.instance()
+        CloudKit.Request requestA = M201RequestFactory.instance()
                 .newRequest(
                         container,
                         bundle,
@@ -291,7 +298,7 @@ public class Main {
                 Arrays.asList(requestA),
                 coreHeaders);
 
-        List<CK.Response> responseA = httpClient.execute(postA, ckResponseHandler);
+        List<CloudKit.Response> responseA = httpClient.execute(postA, ckResponseHandler);
         logger.debug("-- main() - record zones response: {}", responseA);
 
         /* 
@@ -304,7 +311,7 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 5. Backup list.");
-        CK.Request requestB = M211RequestFactory.instance()
+        CloudKit.Request requestB = M211RequestFactory.instance()
                 .newRequest(
                         container,
                         bundle,
@@ -326,17 +333,17 @@ public class Main {
                 Arrays.asList(requestB),
                 coreHeaders);
 
-        List<CK.Response> responseB = httpClient.execute(postB, ckResponseHandler);
+        List<CloudKit.Response> responseB = httpClient.execute(postB, ckResponseHandler);
         logger.debug("-- main() - backup response: {}", responseB);
 
         List<String> devices = responseB.stream()
-                .map(CK.Response::getM211Response)
-                .map(CK.M211Response::getBody)
-                .map(CK.M211ResponseBody::getContainerList)
+                .map(CloudKit.Response::getM211Response)
+                .map(CloudKit.M211Response::getBody)
+                .map(CloudKit.M211ResponseBody::getContainerList)
                 .flatMap(Collection::stream)
-                .filter(value -> value.getTag().getValue().equals("devices"))
+                .filter(value -> value.getName().getValue().equals("devices"))
                 .flatMap(value -> value.getData().getDataList().stream())
-                .map(x -> x.getIdItemOp().getItemOp().getItem().getValue())
+                .map(x -> x.getXRecordID().getRecordID().getRecordName().getValue()) // TODO refactor
                 .collect(Collectors.toList());
         logger.info("-- main() - devices: {}", devices);
 
@@ -356,12 +363,12 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 6. Snapshot list.");
-        CK.Item device = CK.Item.newBuilder()
+        CloudKit.String device = CloudKit.String.newBuilder()
                 .setValue(devices.get(0)) // First device only.
-                .setType(1)
+                .setEncoding(1)
                 .build();
 
-        CK.Request requestC = M211RequestFactory.instance()
+        CloudKit.Request requestC = M211RequestFactory.instance()
                 .newRequest(
                         container,
                         bundle,
@@ -383,17 +390,17 @@ public class Main {
                 Arrays.asList(requestC),
                 coreHeaders);
 
-        List<CK.Response> responseC = httpClient.execute(postC, ckResponseHandler);
+        List<CloudKit.Response> responseC = httpClient.execute(postC, ckResponseHandler);
         logger.debug("-- main() - snapshots response: {}", responseC);
 
         List<String> snapshots = responseC.stream()
-                .map(CK.Response::getM211Response)
-                .map(CK.M211Response::getBody)
-                .map(CK.M211ResponseBody::getContainerList)
+                .map(CloudKit.Response::getM211Response)
+                .map(CloudKit.M211Response::getBody)
+                .map(CloudKit.M211ResponseBody::getContainerList)
                 .flatMap(Collection::stream)
-                .filter(value -> value.getTag().getValue().equals("snapshots"))
+                .filter(value -> value.getName().getValue().equals("snapshots"))
                 .flatMap(value -> value.getData().getDataList().stream())
-                .map(x -> x.getIdItemOp().getItemOp().getItem().getValue())
+                .map(x -> x.getXRecordID().getRecordID().getRecordName().getValue())
                 .collect(Collectors.toList());
         logger.info("-- main() - snapshots: {}", snapshots);
 
@@ -412,12 +419,12 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 7. Manifest list.");
-        CK.Item snapshot = CK.Item.newBuilder()
+        CloudKit.String snapshot = CloudKit.String.newBuilder()
                 .setValue(snapshots.get(0)) // First snapshot only.
-                .setType(1)
+                .setEncoding(1)
                 .build();
 
-        CK.Request requestD = M211RequestFactory.instance()
+        CloudKit.Request requestD = M211RequestFactory.instance()
                 .newRequest(
                         container,
                         bundle,
@@ -439,30 +446,96 @@ public class Main {
                 Arrays.asList(requestD),
                 coreHeaders);
 
-        List<CK.Response> responseD = httpClient.execute(postD, ckResponseHandler);
+        List<CloudKit.Response> responseD = httpClient.execute(postD, ckResponseHandler);
         logger.debug("-- main() - manifests response: {}", responseD);
-    }
 
-    /* 
-     STEP 8. Retrieve list of assets. UNKNOWN.  
+        List<String> manifests = responseD.stream()
+                .map(CloudKit.Response::getM211Response)
+                .map(CloudKit.M211Response::getBody)
+                .map(CloudKit.M211ResponseBody::getContainerList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getName().getValue().equals("manifestIDs"))
+                .map(CloudKit.Container::getData)
+                .map(CloudKit.Data::getDataList)
+                .flatMap(Collection::stream)
+                .map(CloudKit.Data::getString)
+                .collect(Collectors.toList());
+        logger.info("-- main() - manifests: {}", manifests);
+
+        if (manifests.isEmpty()) {
+            logger.info("-- main() - no manifests for snapshot: {}", snapshots.get(0));
+            System.exit(0);
+        }
+
+        /* 
+         STEP 8. Retrieve list of assets. UNKNOWN.  
     
-     What is the destination of our manifest information?
-     It takes the form 'M:UUID:x'.
+         Url ckDatabase from ckInit + /query/retrieve
+         ~ pXX-ckdatabase.icloud.com:443//api/client/query/retrieve
+         Headers as step 7.
+         Message type 220 with the required manifest string + ":0" appended, protobuf array encoded.
+         List of required fields "fileType", "protectionClass", "encryptedAttributes", "deleted", "keybag"
+        
+         Returns a rather somewhat familiar looking set of results but with encoded bytes.
+         Are these protobufs in protobufs?
+         */
+        logger.info("-- main() - STEP 8. Retrieve list of assets");
+        CloudKit.Names columns = CloudKit.Names.newBuilder()
+                .addName(CloudKit.Name.newBuilder().setValue("fileType").build())
+                .addName(CloudKit.Name.newBuilder().setValue("protectionClass").build())
+                .addName(CloudKit.Name.newBuilder().setValue("encryptedAttributes").build())
+                .addName(CloudKit.Name.newBuilder().setValue("deleted").build())
+                .addName(CloudKit.Name.newBuilder().setValue("keybag").build())
+                .build();
+
+        CloudKit.Name field = CloudKit.Name.newBuilder().setValue("___recordID").build();
+        CloudKit.Name subField = CloudKit.Name.newBuilder().setValue("PrivilegedManifestDownload").build();
+
+        CloudKit.String manifest = CloudKit.String.newBuilder()
+                .setValue(manifests.get(0) + ":0")
+                .setEncoding(1)
+                .build();
+
+        CloudKit.String defaultZone = CloudKit.String.newBuilder()
+                .setValue("_defaultZone")
+                .setEncoding(6)
+                .build();
+
+        CloudKit.Request requestE = M220RequestFactory.instance()
+                .newRequest(
+                        container,
+                        bundle,
+                        "CKDQueryOperation",
+                        UUID.randomUUID().toString(),
+                        subField,
+                        field,
+                        columns,
+                        manifest,
+                        defaultZone,
+                        ckUserId,
+                        info);
+        logger.debug("-- main() - asset request: {}", requestE);
+
+        HttpUriRequest postE = ProtoBufsRequestFactory.defaultInstance().newRequest(
+                ckInit.production().url() + "/query/retrieve",
+                container,
+                bundle,
+                ckInit.cloudKitUserId(),
+                tokens.cloudKitToken(),
+                UUID.randomUUID().toString(),
+                Arrays.asList(requestE),
+                coreHeaders);
+
+        List<CloudKit.Response> responseE = httpClient.execute(postE, ckResponseHandler);
+        logger.debug("-- main() - assets response: {}", responseE);
+
+        /* 
+         STEP 9. Retrieve asset tokens. UNKNOWN.  
     
-     Is this form passed in it's entirety or do we split the UUID and X?
-    
-     Possibilities:
-     /api/client/zone/retrieve
-     /api/client/asset/retrieve
-    
-     */
-    /* 
-     STEP 9. Retrieve asset tokens. UNKNOWN.  
-    
-     AuthorizeGet typically requires a list of assets and authorization tokens.
-     How do we acquire these tokens?
+         AuthorizeGet typically requires a list of assets and authorization tokens.
+         How do we acquire these tokens?
     
     
-     */
+         */    }
 }
 // TODO info limits have not been set
