@@ -596,7 +596,7 @@ public class Main {
         logger.debug("-- main() - assets: {}", files);
 
         /* 
-         STEP 9. Retrieve list of asset tokens.
+         STEP 9. Retrieve asset tokens.
     
          Url/ headers as step 8.
          Message type 211 with the required file, protobuf array encoded.

@@ -101,6 +101,8 @@ message M220ResponseBody {
   optional M211ResponseBody m211ResponseBody = 4;
 }
 
+
+
 message Status {
   optional uint32 code = 1;
   optional Error error = 2;
@@ -130,6 +132,7 @@ message Data { // ? Record Record_Response_211_1_7_2 Record_Response_211_1_7_2_1
   optional Fixed64 fixed64 = 6;
   optional string string = 7;
   optional XRecordID xRecordID = 9;
+  optional bytes proto = 10; // ? proto ? asset
   repeated Data data = 11;
 }
 
@@ -156,6 +159,37 @@ message String {  // NSString (Old: Item) Record_Response_211_1_7_2_11_9_2_1 Rec
 message RecordZoneID { // (Old:op)
   optional String zoneName = 1;
   optional String ownerName = 2;
+}
+
+message FileTokens {
+  repeated FileToken fileTokens = 1;
+}
+
+message FileToken {
+    optional bytes fileChecksum = 1;
+    optional string token = 2;
+    //optional uint64 f2 = 3; // possibly file length
+    optional bytes fileSignature = 4; // 90% certain of this
+
+    // f1 f2 candidates
+    // file checksum, file signature, sha256
+
+}
+
+message Asset { // TODO rename to file attribute or similar
+  optional string dsPrsID = 1; // Or dsid
+  optional bytes fileChecksum = 2;  // fileChecksum
+  optional uint64 size = 4; // guesstimate
+  optional string token = 5;
+  optional string mmcsurl = 8; // content url
+  optional string dsid = 9; // Or dsPrsID
+  repeated bytes f15 = 15; // 192 bit something or other
+  optional bytes fileSignature = 17; // 90% certain of this
+  optional uint64 timestamp = 18;
+
+  // dsid/ dsPrsID order? does it really matter? are they not always the same???
+  // candidates for unknowns
+  // file checksum, sha256, file signature, encryption key,
 }
 
 message BytesString {
@@ -191,7 +225,9 @@ message String64 {
 message UInt32 {
   optional uint32 value = 1;
 }
+// TODO can try passing malformed fields, the server sometimes returns an error giving us the field name
 // TODO naming conventions for boxed/ unboxed pairs
 // TODO probably missing repeated types
 // TODO naming is presently non-idiomatic
-// TODO responsebodies represent nested types, to rename
+// TODO responsebodies represent nested types, to refactor
+// TODO known message types: 200, 201, 202, 210, 211, 212, 213, 214, 220, 230, 240, 241, 242, 243, 300, 301, 302, 400, 800, 801, 802, 803, 804, 900, 901
