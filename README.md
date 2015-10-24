@@ -82,7 +82,7 @@ Postulated steps and current status are as follows:
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
   8. Retrieve list of assets. Unknown -> now functional.
-  9. Retrieve asset tokens. Unknown. -> now functional except encryptedAttributes remains undecrypted.
+  9. Retrieve asset tokens. Unknown -> now functional except encryptedAttributes remains undecrypted.
   10. AuthorizeGet. Known if unchanged from iOS8. -> altered but now functional.
   11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
   12. Assemble assets/ files. Known if unchanged from iOS8.
