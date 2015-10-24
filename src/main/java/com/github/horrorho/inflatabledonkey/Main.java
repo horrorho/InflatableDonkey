@@ -66,6 +66,7 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -683,15 +684,20 @@ public class Main {
         // TODO Without them we don't know what our binary file data represents.
         // TODO But where is our decryption key?
         // TODO Possibly AES encrypted.
-//        List<ByteString> encryptedAttributes = responseG.stream()
-//                .map(CloudKit.Response::getM211Response)
-//                .map(CloudKit.M211Response::getBody)
-//                .map(CloudKit.M211ResponseBody::getContainerList)
-//                .flatMap(Collection::stream)
-//                .filter(c -> c.getName().getValue().equals("encryptedAttributes"))
-//                .map(c -> c.getData())
-//                .map(x -> x.getBytes())
-//                .collect(Collectors.toList());
+        List<ByteString> encryptedAttributes = responseG.stream()
+                .map(CloudKit.Response::getM211Response)
+                .map(CloudKit.M211Response::getBody)
+                .map(CloudKit.M211ResponseBody::getContainerList)
+                .flatMap(Collection::stream)
+                .filter(c -> c.getName().getValue().equals("encryptedAttributes"))
+                .map(CloudKit.Container::getData)
+                .map(CloudKit.Data::getBytes)
+                .collect(Collectors.toList());
+
+        encryptedAttributes.forEach(
+                x -> logger.debug("-- main() - encryptedAttributes: {}", Hex.toHexString(x.toByteArray())));
+
+        // FileTokens. Expanded from iOS8.
         CloudKit.FileTokens fileTokens = FileTokensFactory.instance().apply(Arrays.asList(asset));
 
         // TODO check mmcsurl and com.apple.Dataclass.Content url match. But is there a reason they shouldn't?
