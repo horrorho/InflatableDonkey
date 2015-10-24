@@ -60,6 +60,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -74,36 +75,7 @@ import org.slf4j.LoggerFactory;
  * iOS9 backup retrieval proof of concept - work in progress. Development tool intended to demonstrate a functional
  * chain of client/ server responses required for backup retrieval, as opposed to being a fully functional backup tool
  * in itself.
- * <p>
- * Postulated steps:
- * <p>
- * 1. Authentication. Functional.
- * <p>
- * 2. Account settings. Functional.
- * <p>
- * 3. CloudKit Application Initialization. Functional.
- * <p>
- * 4. Record zones. Functional.
- * <p>
- * 5. Backup list. Functional.
- * <p>
- * 6. Snapshot list. Functional.
- * <p>
- * 7. Manifest list. Functional.
- * <p>
- * 8. Retrieve assets. Unknown -> now functional.
- * <p>
- * 9. Asset tokens. Unknown.
- * <p>
- * 10.AuthorizeGet. Known if unchanged from iOS8.
- * <p>
- * 11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
- * <p>
- * 12. Assemble assets/ files. Known if unchanged from iOS8.
- * <p>
- * 13. Decrypt files. Known if unchanged from iOS8.
- * <p>
- *
+ 
  * Thank you to:
  * <p>
  * <a href="https://github.com/ItsASmallWorld">ItsASmallWorld</a> for deciphering key client/ server interactions and
@@ -127,6 +99,10 @@ public class Main {
         ArgsParser<Property> argsParser = new ArgsParser<>(optionsFactory);
         Map<Property, String> arguments = new HashMap<>();
 
+        int deviceIndex = 0;
+        int snapshotIndex = 0;
+        int manifestIndex = 0;
+
         try {
             List<String> operands = argsParser.apply(args, arguments);
 
@@ -137,8 +113,17 @@ public class Main {
 
             arguments.putAll(authenticationMapper.apply(operands));
 
+            Function<Property, Integer> intArgument = property
+                    -> Integer.parseInt(arguments.containsKey(property)
+                                    ? arguments.get(property)
+                                    : property.defaultValue());
+
+            deviceIndex = intArgument.apply(Property.SELECT_DEVICE_INDEX);
+            snapshotIndex = intArgument.apply(Property.SELECT_SNAPSHOT_INDEX);
+            manifestIndex = intArgument.apply(Property.SELECT_MANIFEST_INDEX);
+
         } catch (IllegalArgumentException ex) {
-            System.out.println("Error: " + ex.getMessage());
+            System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
             System.exit(0);
         }
@@ -279,7 +264,7 @@ public class Main {
          This proto is encoded with Apple's protobuf array encoding (see ProtoBufArray class).
          Possibility of passing multiple requests not yet explored.
         
-         Returns record zone data.
+         Returns record zone data which needs further analysis.
         
          */
         logger.info("-- main() - STEP 4. Record zones.");
@@ -313,8 +298,7 @@ public class Main {
          Url/ headers as step 4.
          Message type 211 request, protobuf array encoded.
 
-         Returns device data/ backups.
-        
+         Returns device data/ backups.        
          */
         logger.info("-- main() - STEP 5. Backup list.");
         CloudKit.Request requestB = M211RequestFactory.instance()
@@ -349,7 +333,10 @@ public class Main {
                 .flatMap(Collection::stream)
                 .filter(value -> value.getName().getValue().equals("devices"))
                 .flatMap(value -> value.getData().getDataList().stream())
-                .map(x -> x.getXRecordID().getRecordID().getRecordName().getValue()) // TODO refactor
+                .map(CloudKit.Data::getXRecordID)
+                .map(CloudKit.XRecordID::getRecordID)
+                .map(CloudKit.RecordID::getRecordName)
+                .map(CloudKit.String::getValue)
                 .collect(Collectors.toList());
         logger.info("-- main() - devices: {}", devices);
 
@@ -369,8 +356,14 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 6. Snapshot list.");
+
+        if (deviceIndex >= devices.size()) {
+            logger.warn("-- main() - No such device: {}, available devices: {}", deviceIndex, devices);
+            System.exit(0);
+        }
+
         CloudKit.String device = CloudKit.String.newBuilder()
-                .setValue(devices.get(0)) // First device only.
+                .setValue(devices.get(deviceIndex))
                 .setEncoding(1)
                 .build();
 
@@ -406,12 +399,15 @@ public class Main {
                 .flatMap(Collection::stream)
                 .filter(value -> value.getName().getValue().equals("snapshots"))
                 .flatMap(value -> value.getData().getDataList().stream())
-                .map(x -> x.getXRecordID().getRecordID().getRecordName().getValue())
+                .map(CloudKit.Data::getXRecordID)
+                .map(CloudKit.XRecordID::getRecordID)
+                .map(CloudKit.RecordID::getRecordName)
+                .map(CloudKit.String::getValue)
                 .collect(Collectors.toList());
         logger.info("-- main() - snapshots: {}", snapshots);
 
         if (snapshots.isEmpty()) {
-            logger.info("-- main() - no snapshots for device: {}", devices.get(0));
+            logger.info("-- main() - no snapshots for device: {}", devices.get(deviceIndex));
             System.exit(0);
         }
 
@@ -425,8 +421,14 @@ public class Main {
         
          */
         logger.info("-- main() - STEP 7. Manifest list.");
+
+        if (snapshotIndex >= snapshots.size()) {
+            logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
+            System.exit(0);
+        }
+
         CloudKit.String snapshot = CloudKit.String.newBuilder()
-                .setValue(snapshots.get(0)) // First snapshot only.
+                .setValue(snapshots.get(snapshotIndex))
                 .setEncoding(1)
                 .build();
 
@@ -469,7 +471,7 @@ public class Main {
         logger.info("-- main() - manifests: {}", manifests);
 
         if (manifests.isEmpty()) {
-            logger.info("-- main() - no manifests for snapshot: {}", snapshots.get(0));
+            logger.info("-- main() - no manifests for snapshot: {}", snapshots.get(snapshotIndex));
             System.exit(0);
         }
 
@@ -549,8 +551,14 @@ public class Main {
          Are these protobufs in protobufs?
          */
         logger.info("-- main() - STEP 8. Retrieve list of assets");
+
+        if (manifestIndex >= manifests.size()) {
+            logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
+            System.exit(0);
+        }
+
         CloudKit.String manifest = CloudKit.String.newBuilder()
-                .setValue(manifests.get(0) + ":0") // Increment if this manifest contains only 0 length files in step 9.
+                .setValue(manifests.get(manifestIndex) + ":0")
                 .setEncoding(1)
                 .build();
 
@@ -593,7 +601,6 @@ public class Main {
                 .map(CloudKit.RecordID::getRecordName)
                 .map(CloudKit.String::getValue)
                 .collect(Collectors.toList());
-
         logger.debug("-- main() - assets: {}", files);
 
         /* 
@@ -614,10 +621,10 @@ public class Main {
                     return !split[3].equals("0");
                 })
                 .findFirst()
-                .orElseGet(null);
-
+                .orElse(null);
+ 
         if (file == null) {
-            logger.warn("-- main() - empty manifest, please manually increment code manifest at step 8");
+            logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifest);
             System.exit(0);
         }
 

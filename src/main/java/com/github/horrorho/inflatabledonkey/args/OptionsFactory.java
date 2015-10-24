@@ -50,6 +50,27 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
     public Map<Option, Property> get() {
         LinkedHashMap<Option, Property> options = new LinkedHashMap<>();
 
+        options.put(Option.builder("d").longOpt("device")
+                .desc("Device, default: 0 = first device.")
+                .argName("int")
+                .numberOfArgs(1)
+                .hasArgs().build(),
+                Property.SELECT_DEVICE_INDEX);
+
+        options.put(Option.builder("s").longOpt("snapshot")
+                .desc("Snapshot, default: 0 = first snapshot.")
+                .argName("int")
+                .numberOfArgs(1)
+                .hasArgs().build(),
+                Property.SELECT_SNAPSHOT_INDEX);
+
+        options.put(Option.builder("m").longOpt("manifest")
+                .desc("Manifest, default: 0 = first manifest.")
+                .argName("int")
+                .numberOfArgs(1)
+                .hasArgs().build(),
+                Property.SELECT_MANIFEST_INDEX);
+
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),
                 Property.ARGS_HELP);

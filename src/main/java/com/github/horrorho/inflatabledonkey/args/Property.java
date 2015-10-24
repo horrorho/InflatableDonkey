@@ -40,7 +40,10 @@ public enum Property {
     ARGS_VERSION,
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
-    AUTHENTICATION_TOKEN,
+    AUTHENTICATION_TOKEN, 
+    SELECT_DEVICE_INDEX("0"),
+    SELECT_SNAPSHOT_INDEX("0"),
+    SELECT_MANIFEST_INDEX("0"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {
