@@ -82,8 +82,8 @@ Postulated steps and current status are as follows:
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
   8. Retrieve list of assets. Unknown -> now functional.
-  9. Retrieve asset tokens. Unknown.
-  10. AuthorizeGet. Known if unchanged from iOS8.
+  9. Retrieve asset tokens. Unknown. -> now functional except encryptedAttributes remains undecrypted.
+  10. AuthorizeGet. Known if unchanged from iOS8. -> altered but now functional.
   11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
   12. Assemble assets/ files. Known if unchanged from iOS8.
   13. Decrypt files. Known if unchanged from iOS8.
@@ -95,6 +95,7 @@ At present steps 8 and 9 remain undiscovered. If you have any additional informa
 
 **Update**, 23 October 2015. Ok! I figured out step 8 and have updated the tool. The casualty being the cloud_kit.proto file, which is a complete mess. At some point it will need refactoring, cleaning and more idiomatic names applied.
 
+**Update**, 24 October 2015. Good news and bad news! Good, steps 9 and 10 are functional. Bad, step 9 returns [encryptedAttributes](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java#L683) for files. Without this we do not know what the files represent, nor can we decrypt them if needed. Unless this is solved, it's potentially a deal breaker. It's possible we may be missing additional client-server responses. If anyone has any ideas I would be keen to hear them!
 
 ### Backups!
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
