@@ -22,21 +22,37 @@ The executable Jar is located at /target/InflatableDonkey.jar
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar --help
 usage: InflatableDonkey [OPTION]... (<token> | <appleid> <password>)
-    --help    Display this help and exit.
-    --token   Display the dsPrsID:mmeAuthToken and exit.
+ -d,--device <int>     Device, default: 0 = first device.
+ -s,--snapshot <int>   Snapshot, default: 0 = first snapshot.
+ -m,--manifest <int>   Manifest, default: 0 = first manifest.
+    --help             Display this help and exit.
+    --token            Display the dsPrsID:mmeAuthToken and exit.
 ```
+
 AppleId/ password.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur
 ```
+
 DsPrsID/mmeAuthToken. Preferable for consecutive runs as repeated appleId/ password authentication over short periods may trip anti-flooding/ security controls.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar 1234567890:AQAAAABWJVgBHQvCSr4qPXsjQN9M9dQw9K7w/sB=
 ```
+
 Print DsPrsID/mmeAuthToken and exit.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --token
 ```
+
+Selection.
+For simplicity the tools operates in a linear manner. It will select the first device, first snapshot, first manifest and the first non-empty file.
+The device, snapshot and manifest index can be specified, with 0 representing the first item.
+
+Select the first device, second snapshot, tenth manifest, first non-empty file.
+```
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --manifest 9
+```
+
 Output snippet.
 ```
 11:56:54.954 [main] DEBUG org.apache.http.headers - http-outgoing-1 << HTTP/1.1 200 OK
@@ -64,12 +80,12 @@ status {
 m201Response {
   body {
     result {
-      op {
-        item {
+      recordZoneID {
+        zoneName {
           value: "mbksync"
-          type: 6
+          encoding: 6
         }
-        ckUserID {
+        ownerName {
 ```
 
 ### iOS9 iCloud retrieval progress
