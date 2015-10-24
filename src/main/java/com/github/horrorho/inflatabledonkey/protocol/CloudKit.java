@@ -16731,6 +16731,23 @@ public final class CloudKit {
     CloudKit.XRecordIDOrBuilder getXRecordIDOrBuilder();
 
     /**
+     * <code>optional bytes proto = 10;</code>
+     *
+     * <pre>
+     * ? proto ? asset
+     * </pre>
+     */
+    boolean hasProto();
+    /**
+     * <code>optional bytes proto = 10;</code>
+     *
+     * <pre>
+     * ? proto ? asset
+     * </pre>
+     */
+    com.google.protobuf.ByteString getProto();
+
+    /**
      * <code>repeated .Data data = 11;</code>
      */
     java.util.List<CloudKit.Data> 
@@ -16857,10 +16874,15 @@ public final class CloudKit {
               bitField0_ |= 0x00000020;
               break;
             }
+            case 82: {
+              bitField0_ |= 0x00000040;
+              proto_ = input.readBytes();
+              break;
+            }
             case 90: {
-              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
                 data_ = new java.util.ArrayList<CloudKit.Data>();
-                mutable_bitField0_ |= 0x00000040;
+                mutable_bitField0_ |= 0x00000080;
               }
               data_.add(input.readMessage(CloudKit.Data.PARSER, extensionRegistry));
               break;
@@ -16873,7 +16895,7 @@ public final class CloudKit {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
           data_ = java.util.Collections.unmodifiableList(data_);
         }
         this.unknownFields = unknownFields.build();
@@ -17037,6 +17059,29 @@ public final class CloudKit {
       return xRecordID_;
     }
 
+    public static final int PROTO_FIELD_NUMBER = 10;
+    private com.google.protobuf.ByteString proto_;
+    /**
+     * <code>optional bytes proto = 10;</code>
+     *
+     * <pre>
+     * ? proto ? asset
+     * </pre>
+     */
+    public boolean hasProto() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional bytes proto = 10;</code>
+     *
+     * <pre>
+     * ? proto ? asset
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getProto() {
+      return proto_;
+    }
+
     public static final int DATA_FIELD_NUMBER = 11;
     private java.util.List<CloudKit.Data> data_;
     /**
@@ -17079,6 +17124,7 @@ public final class CloudKit {
       fixed64_ = CloudKit.Fixed64.getDefaultInstance();
       string_ = "";
       xRecordID_ = CloudKit.XRecordID.getDefaultInstance();
+      proto_ = com.google.protobuf.ByteString.EMPTY;
       data_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
@@ -17111,6 +17157,9 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeMessage(9, xRecordID_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeBytes(10, proto_);
       }
       for (int i = 0; i < data_.size(); i++) {
         output.writeMessage(11, data_.get(i));
@@ -17147,6 +17196,10 @@ public final class CloudKit {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(9, xRecordID_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(10, proto_);
       }
       for (int i = 0; i < data_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -17296,9 +17349,11 @@ public final class CloudKit {
           xRecordIDBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000020);
+        proto_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000040);
         if (dataBuilder_ == null) {
           data_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
           dataBuilder_.clear();
         }
@@ -17362,10 +17417,14 @@ public final class CloudKit {
         } else {
           result.xRecordID_ = xRecordIDBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.proto_ = proto_;
         if (dataBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
             data_ = java.util.Collections.unmodifiableList(data_);
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
           }
           result.data_ = data_;
         } else {
@@ -17407,11 +17466,14 @@ public final class CloudKit {
         if (other.hasXRecordID()) {
           mergeXRecordID(other.getXRecordID());
         }
+        if (other.hasProto()) {
+          setProto(other.getProto());
+        }
         if (dataBuilder_ == null) {
           if (!other.data_.isEmpty()) {
             if (data_.isEmpty()) {
               data_ = other.data_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
             } else {
               ensureDataIsMutable();
               data_.addAll(other.data_);
@@ -17424,7 +17486,7 @@ public final class CloudKit {
               dataBuilder_.dispose();
               dataBuilder_ = null;
               data_ = other.data_;
-              bitField0_ = (bitField0_ & ~0x00000040);
+              bitField0_ = (bitField0_ & ~0x00000080);
               dataBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getDataFieldBuilder() : null;
@@ -17867,12 +17929,63 @@ public final class CloudKit {
         return xRecordIDBuilder_;
       }
 
+      private com.google.protobuf.ByteString proto_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes proto = 10;</code>
+       *
+       * <pre>
+       * ? proto ? asset
+       * </pre>
+       */
+      public boolean hasProto() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      /**
+       * <code>optional bytes proto = 10;</code>
+       *
+       * <pre>
+       * ? proto ? asset
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getProto() {
+        return proto_;
+      }
+      /**
+       * <code>optional bytes proto = 10;</code>
+       *
+       * <pre>
+       * ? proto ? asset
+       * </pre>
+       */
+      public Builder setProto(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000040;
+        proto_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes proto = 10;</code>
+       *
+       * <pre>
+       * ? proto ? asset
+       * </pre>
+       */
+      public Builder clearProto() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        proto_ = getDefaultInstance().getProto();
+        onChanged();
+        return this;
+      }
+
       private java.util.List<CloudKit.Data> data_ =
         java.util.Collections.emptyList();
       private void ensureDataIsMutable() {
-        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
           data_ = new java.util.ArrayList<CloudKit.Data>(data_);
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
          }
       }
 
@@ -18022,7 +18135,7 @@ public final class CloudKit {
       public Builder clearData() {
         if (dataBuilder_ == null) {
           data_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
           onChanged();
         } else {
           dataBuilder_.clear();
@@ -18099,7 +18212,7 @@ public final class CloudKit {
           dataBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               CloudKit.Data, CloudKit.Data.Builder, CloudKit.DataOrBuilder>(
                   data_,
-                  ((bitField0_ & 0x00000040) == 0x00000040),
+                  ((bitField0_ & 0x00000080) == 0x00000080),
                   getParentForChildren(),
                   isClean());
           data_ = null;
@@ -21411,6 +21524,3057 @@ public final class CloudKit {
     }
 
     // @@protoc_insertion_point(class_scope:RecordZoneID)
+  }
+
+  public interface FileTokensOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:FileTokens)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    java.util.List<CloudKit.FileToken> 
+        getFileTokensList();
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    CloudKit.FileToken getFileTokens(int index);
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    int getFileTokensCount();
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    java.util.List<? extends CloudKit.FileTokenOrBuilder> 
+        getFileTokensOrBuilderList();
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    CloudKit.FileTokenOrBuilder getFileTokensOrBuilder(
+        int index);
+  }
+  /**
+   * Protobuf type {@code FileTokens}
+   */
+  public static final class FileTokens extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:FileTokens)
+      FileTokensOrBuilder {
+    // Use FileTokens.newBuilder() to construct.
+    private FileTokens(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private FileTokens(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final FileTokens defaultInstance;
+    public static FileTokens getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public FileTokens getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private FileTokens(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                fileTokens_ = new java.util.ArrayList<CloudKit.FileToken>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              fileTokens_.add(input.readMessage(CloudKit.FileToken.PARSER, extensionRegistry));
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          fileTokens_ = java.util.Collections.unmodifiableList(fileTokens_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return CloudKit.internal_static_FileTokens_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return CloudKit.internal_static_FileTokens_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              CloudKit.FileTokens.class, CloudKit.FileTokens.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<FileTokens> PARSER =
+        new com.google.protobuf.AbstractParser<FileTokens>() {
+      public FileTokens parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new FileTokens(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<FileTokens> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int FILETOKENS_FIELD_NUMBER = 1;
+    private java.util.List<CloudKit.FileToken> fileTokens_;
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    public java.util.List<CloudKit.FileToken> getFileTokensList() {
+      return fileTokens_;
+    }
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    public java.util.List<? extends CloudKit.FileTokenOrBuilder> 
+        getFileTokensOrBuilderList() {
+      return fileTokens_;
+    }
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    public int getFileTokensCount() {
+      return fileTokens_.size();
+    }
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    public CloudKit.FileToken getFileTokens(int index) {
+      return fileTokens_.get(index);
+    }
+    /**
+     * <code>repeated .FileToken fileTokens = 1;</code>
+     */
+    public CloudKit.FileTokenOrBuilder getFileTokensOrBuilder(
+        int index) {
+      return fileTokens_.get(index);
+    }
+
+    private void initFields() {
+      fileTokens_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < fileTokens_.size(); i++) {
+        output.writeMessage(1, fileTokens_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < fileTokens_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, fileTokens_.get(i));
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static CloudKit.FileTokens parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.FileTokens parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.FileTokens parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.FileTokens parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.FileTokens parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.FileTokens parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static CloudKit.FileTokens parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static CloudKit.FileTokens parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static CloudKit.FileTokens parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.FileTokens parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(CloudKit.FileTokens prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code FileTokens}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:FileTokens)
+        CloudKit.FileTokensOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return CloudKit.internal_static_FileTokens_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return CloudKit.internal_static_FileTokens_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                CloudKit.FileTokens.class, CloudKit.FileTokens.Builder.class);
+      }
+
+      // Construct using CloudKit.FileTokens.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getFileTokensFieldBuilder();
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        if (fileTokensBuilder_ == null) {
+          fileTokens_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          fileTokensBuilder_.clear();
+        }
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return CloudKit.internal_static_FileTokens_descriptor;
+      }
+
+      public CloudKit.FileTokens getDefaultInstanceForType() {
+        return CloudKit.FileTokens.getDefaultInstance();
+      }
+
+      public CloudKit.FileTokens build() {
+        CloudKit.FileTokens result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public CloudKit.FileTokens buildPartial() {
+        CloudKit.FileTokens result = new CloudKit.FileTokens(this);
+        int from_bitField0_ = bitField0_;
+        if (fileTokensBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            fileTokens_ = java.util.Collections.unmodifiableList(fileTokens_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.fileTokens_ = fileTokens_;
+        } else {
+          result.fileTokens_ = fileTokensBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof CloudKit.FileTokens) {
+          return mergeFrom((CloudKit.FileTokens)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(CloudKit.FileTokens other) {
+        if (other == CloudKit.FileTokens.getDefaultInstance()) return this;
+        if (fileTokensBuilder_ == null) {
+          if (!other.fileTokens_.isEmpty()) {
+            if (fileTokens_.isEmpty()) {
+              fileTokens_ = other.fileTokens_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureFileTokensIsMutable();
+              fileTokens_.addAll(other.fileTokens_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.fileTokens_.isEmpty()) {
+            if (fileTokensBuilder_.isEmpty()) {
+              fileTokensBuilder_.dispose();
+              fileTokensBuilder_ = null;
+              fileTokens_ = other.fileTokens_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              fileTokensBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getFileTokensFieldBuilder() : null;
+            } else {
+              fileTokensBuilder_.addAllMessages(other.fileTokens_);
+            }
+          }
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        CloudKit.FileTokens parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (CloudKit.FileTokens) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<CloudKit.FileToken> fileTokens_ =
+        java.util.Collections.emptyList();
+      private void ensureFileTokensIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          fileTokens_ = new java.util.ArrayList<CloudKit.FileToken>(fileTokens_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          CloudKit.FileToken, CloudKit.FileToken.Builder, CloudKit.FileTokenOrBuilder> fileTokensBuilder_;
+
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public java.util.List<CloudKit.FileToken> getFileTokensList() {
+        if (fileTokensBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(fileTokens_);
+        } else {
+          return fileTokensBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public int getFileTokensCount() {
+        if (fileTokensBuilder_ == null) {
+          return fileTokens_.size();
+        } else {
+          return fileTokensBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public CloudKit.FileToken getFileTokens(int index) {
+        if (fileTokensBuilder_ == null) {
+          return fileTokens_.get(index);
+        } else {
+          return fileTokensBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder setFileTokens(
+          int index, CloudKit.FileToken value) {
+        if (fileTokensBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureFileTokensIsMutable();
+          fileTokens_.set(index, value);
+          onChanged();
+        } else {
+          fileTokensBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder setFileTokens(
+          int index, CloudKit.FileToken.Builder builderForValue) {
+        if (fileTokensBuilder_ == null) {
+          ensureFileTokensIsMutable();
+          fileTokens_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          fileTokensBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder addFileTokens(CloudKit.FileToken value) {
+        if (fileTokensBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureFileTokensIsMutable();
+          fileTokens_.add(value);
+          onChanged();
+        } else {
+          fileTokensBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder addFileTokens(
+          int index, CloudKit.FileToken value) {
+        if (fileTokensBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureFileTokensIsMutable();
+          fileTokens_.add(index, value);
+          onChanged();
+        } else {
+          fileTokensBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder addFileTokens(
+          CloudKit.FileToken.Builder builderForValue) {
+        if (fileTokensBuilder_ == null) {
+          ensureFileTokensIsMutable();
+          fileTokens_.add(builderForValue.build());
+          onChanged();
+        } else {
+          fileTokensBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder addFileTokens(
+          int index, CloudKit.FileToken.Builder builderForValue) {
+        if (fileTokensBuilder_ == null) {
+          ensureFileTokensIsMutable();
+          fileTokens_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          fileTokensBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder addAllFileTokens(
+          java.lang.Iterable<? extends CloudKit.FileToken> values) {
+        if (fileTokensBuilder_ == null) {
+          ensureFileTokensIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, fileTokens_);
+          onChanged();
+        } else {
+          fileTokensBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder clearFileTokens() {
+        if (fileTokensBuilder_ == null) {
+          fileTokens_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          fileTokensBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public Builder removeFileTokens(int index) {
+        if (fileTokensBuilder_ == null) {
+          ensureFileTokensIsMutable();
+          fileTokens_.remove(index);
+          onChanged();
+        } else {
+          fileTokensBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public CloudKit.FileToken.Builder getFileTokensBuilder(
+          int index) {
+        return getFileTokensFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public CloudKit.FileTokenOrBuilder getFileTokensOrBuilder(
+          int index) {
+        if (fileTokensBuilder_ == null) {
+          return fileTokens_.get(index);  } else {
+          return fileTokensBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public java.util.List<? extends CloudKit.FileTokenOrBuilder> 
+           getFileTokensOrBuilderList() {
+        if (fileTokensBuilder_ != null) {
+          return fileTokensBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(fileTokens_);
+        }
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public CloudKit.FileToken.Builder addFileTokensBuilder() {
+        return getFileTokensFieldBuilder().addBuilder(
+            CloudKit.FileToken.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public CloudKit.FileToken.Builder addFileTokensBuilder(
+          int index) {
+        return getFileTokensFieldBuilder().addBuilder(
+            index, CloudKit.FileToken.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .FileToken fileTokens = 1;</code>
+       */
+      public java.util.List<CloudKit.FileToken.Builder> 
+           getFileTokensBuilderList() {
+        return getFileTokensFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          CloudKit.FileToken, CloudKit.FileToken.Builder, CloudKit.FileTokenOrBuilder> 
+          getFileTokensFieldBuilder() {
+        if (fileTokensBuilder_ == null) {
+          fileTokensBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              CloudKit.FileToken, CloudKit.FileToken.Builder, CloudKit.FileTokenOrBuilder>(
+                  fileTokens_,
+                  ((bitField0_ & 0x00000001) == 0x00000001),
+                  getParentForChildren(),
+                  isClean());
+          fileTokens_ = null;
+        }
+        return fileTokensBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:FileTokens)
+    }
+
+    static {
+      defaultInstance = new FileTokens(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:FileTokens)
+  }
+
+  public interface FileTokenOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:FileToken)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional bytes fileChecksum = 1;</code>
+     */
+    boolean hasFileChecksum();
+    /**
+     * <code>optional bytes fileChecksum = 1;</code>
+     */
+    com.google.protobuf.ByteString getFileChecksum();
+
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    boolean hasToken();
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    java.lang.String getToken();
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getTokenBytes();
+
+    /**
+     * <code>optional bytes fileSignature = 4;</code>
+     *
+     * <pre>
+     *optional uint64 f2 = 3; // possibly file length
+     * </pre>
+     */
+    boolean hasFileSignature();
+    /**
+     * <code>optional bytes fileSignature = 4;</code>
+     *
+     * <pre>
+     *optional uint64 f2 = 3; // possibly file length
+     * </pre>
+     */
+    com.google.protobuf.ByteString getFileSignature();
+  }
+  /**
+   * Protobuf type {@code FileToken}
+   */
+  public static final class FileToken extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:FileToken)
+      FileTokenOrBuilder {
+    // Use FileToken.newBuilder() to construct.
+    private FileToken(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private FileToken(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final FileToken defaultInstance;
+    public static FileToken getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public FileToken getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private FileToken(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              fileChecksum_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000002;
+              token_ = bs;
+              break;
+            }
+            case 34: {
+              bitField0_ |= 0x00000004;
+              fileSignature_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return CloudKit.internal_static_FileToken_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return CloudKit.internal_static_FileToken_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              CloudKit.FileToken.class, CloudKit.FileToken.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<FileToken> PARSER =
+        new com.google.protobuf.AbstractParser<FileToken>() {
+      public FileToken parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new FileToken(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<FileToken> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int FILECHECKSUM_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString fileChecksum_;
+    /**
+     * <code>optional bytes fileChecksum = 1;</code>
+     */
+    public boolean hasFileChecksum() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional bytes fileChecksum = 1;</code>
+     */
+    public com.google.protobuf.ByteString getFileChecksum() {
+      return fileChecksum_;
+    }
+
+    public static final int TOKEN_FIELD_NUMBER = 2;
+    private java.lang.Object token_;
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    public boolean hasToken() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    public java.lang.String getToken() {
+      java.lang.Object ref = token_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          token_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string token = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTokenBytes() {
+      java.lang.Object ref = token_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        token_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FILESIGNATURE_FIELD_NUMBER = 4;
+    private com.google.protobuf.ByteString fileSignature_;
+    /**
+     * <code>optional bytes fileSignature = 4;</code>
+     *
+     * <pre>
+     *optional uint64 f2 = 3; // possibly file length
+     * </pre>
+     */
+    public boolean hasFileSignature() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bytes fileSignature = 4;</code>
+     *
+     * <pre>
+     *optional uint64 f2 = 3; // possibly file length
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getFileSignature() {
+      return fileSignature_;
+    }
+
+    private void initFields() {
+      fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+      token_ = "";
+      fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, fileChecksum_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getTokenBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(4, fileSignature_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, fileChecksum_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getTokenBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, fileSignature_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static CloudKit.FileToken parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.FileToken parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.FileToken parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.FileToken parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.FileToken parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.FileToken parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static CloudKit.FileToken parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static CloudKit.FileToken parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static CloudKit.FileToken parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.FileToken parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(CloudKit.FileToken prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code FileToken}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:FileToken)
+        CloudKit.FileTokenOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return CloudKit.internal_static_FileToken_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return CloudKit.internal_static_FileToken_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                CloudKit.FileToken.class, CloudKit.FileToken.Builder.class);
+      }
+
+      // Construct using CloudKit.FileToken.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        token_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
+        fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return CloudKit.internal_static_FileToken_descriptor;
+      }
+
+      public CloudKit.FileToken getDefaultInstanceForType() {
+        return CloudKit.FileToken.getDefaultInstance();
+      }
+
+      public CloudKit.FileToken build() {
+        CloudKit.FileToken result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public CloudKit.FileToken buildPartial() {
+        CloudKit.FileToken result = new CloudKit.FileToken(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.fileChecksum_ = fileChecksum_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.token_ = token_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.fileSignature_ = fileSignature_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof CloudKit.FileToken) {
+          return mergeFrom((CloudKit.FileToken)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(CloudKit.FileToken other) {
+        if (other == CloudKit.FileToken.getDefaultInstance()) return this;
+        if (other.hasFileChecksum()) {
+          setFileChecksum(other.getFileChecksum());
+        }
+        if (other.hasToken()) {
+          bitField0_ |= 0x00000002;
+          token_ = other.token_;
+          onChanged();
+        }
+        if (other.hasFileSignature()) {
+          setFileSignature(other.getFileSignature());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        CloudKit.FileToken parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (CloudKit.FileToken) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes fileChecksum = 1;</code>
+       */
+      public boolean hasFileChecksum() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bytes fileChecksum = 1;</code>
+       */
+      public com.google.protobuf.ByteString getFileChecksum() {
+        return fileChecksum_;
+      }
+      /**
+       * <code>optional bytes fileChecksum = 1;</code>
+       */
+      public Builder setFileChecksum(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        fileChecksum_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes fileChecksum = 1;</code>
+       */
+      public Builder clearFileChecksum() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        fileChecksum_ = getDefaultInstance().getFileChecksum();
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object token_ = "";
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public boolean hasToken() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public java.lang.String getToken() {
+        java.lang.Object ref = token_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            token_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTokenBytes() {
+        java.lang.Object ref = token_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          token_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public Builder setToken(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        token_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public Builder clearToken() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        token_ = getDefaultInstance().getToken();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token = 2;</code>
+       */
+      public Builder setTokenBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        token_ = value;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes fileSignature = 4;</code>
+       *
+       * <pre>
+       *optional uint64 f2 = 3; // possibly file length
+       * </pre>
+       */
+      public boolean hasFileSignature() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bytes fileSignature = 4;</code>
+       *
+       * <pre>
+       *optional uint64 f2 = 3; // possibly file length
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getFileSignature() {
+        return fileSignature_;
+      }
+      /**
+       * <code>optional bytes fileSignature = 4;</code>
+       *
+       * <pre>
+       *optional uint64 f2 = 3; // possibly file length
+       * </pre>
+       */
+      public Builder setFileSignature(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        fileSignature_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes fileSignature = 4;</code>
+       *
+       * <pre>
+       *optional uint64 f2 = 3; // possibly file length
+       * </pre>
+       */
+      public Builder clearFileSignature() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        fileSignature_ = getDefaultInstance().getFileSignature();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:FileToken)
+    }
+
+    static {
+      defaultInstance = new FileToken(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:FileToken)
+  }
+
+  public interface AssetOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Asset)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    boolean hasDsPrsID();
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    java.lang.String getDsPrsID();
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getDsPrsIDBytes();
+
+    /**
+     * <code>optional bytes fileChecksum = 2;</code>
+     *
+     * <pre>
+     * fileChecksum
+     * </pre>
+     */
+    boolean hasFileChecksum();
+    /**
+     * <code>optional bytes fileChecksum = 2;</code>
+     *
+     * <pre>
+     * fileChecksum
+     * </pre>
+     */
+    com.google.protobuf.ByteString getFileChecksum();
+
+    /**
+     * <code>optional uint64 size = 4;</code>
+     *
+     * <pre>
+     * guesstimate
+     * </pre>
+     */
+    boolean hasSize();
+    /**
+     * <code>optional uint64 size = 4;</code>
+     *
+     * <pre>
+     * guesstimate
+     * </pre>
+     */
+    long getSize();
+
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    boolean hasToken();
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    java.lang.String getToken();
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getTokenBytes();
+
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    boolean hasMmcsurl();
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    java.lang.String getMmcsurl();
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getMmcsurlBytes();
+
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    boolean hasDsid();
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    java.lang.String getDsid();
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getDsidBytes();
+
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    java.util.List<com.google.protobuf.ByteString> getF15List();
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    int getF15Count();
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    com.google.protobuf.ByteString getF15(int index);
+
+    /**
+     * <code>optional bytes fileSignature = 17;</code>
+     *
+     * <pre>
+     * 90% certain of this
+     * </pre>
+     */
+    boolean hasFileSignature();
+    /**
+     * <code>optional bytes fileSignature = 17;</code>
+     *
+     * <pre>
+     * 90% certain of this
+     * </pre>
+     */
+    com.google.protobuf.ByteString getFileSignature();
+
+    /**
+     * <code>optional uint64 timestamp = 18;</code>
+     */
+    boolean hasTimestamp();
+    /**
+     * <code>optional uint64 timestamp = 18;</code>
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code Asset}
+   */
+  public static final class Asset extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Asset)
+      AssetOrBuilder {
+    // Use Asset.newBuilder() to construct.
+    private Asset(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private Asset(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Asset defaultInstance;
+    public static Asset getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public Asset getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Asset(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000001;
+              dsPrsID_ = bs;
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              fileChecksum_ = input.readBytes();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000004;
+              size_ = input.readUInt64();
+              break;
+            }
+            case 42: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000008;
+              token_ = bs;
+              break;
+            }
+            case 66: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000010;
+              mmcsurl_ = bs;
+              break;
+            }
+            case 74: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000020;
+              dsid_ = bs;
+              break;
+            }
+            case 122: {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+                f15_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000040;
+              }
+              f15_.add(input.readBytes());
+              break;
+            }
+            case 138: {
+              bitField0_ |= 0x00000040;
+              fileSignature_ = input.readBytes();
+              break;
+            }
+            case 144: {
+              bitField0_ |= 0x00000080;
+              timestamp_ = input.readUInt64();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+          f15_ = java.util.Collections.unmodifiableList(f15_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return CloudKit.internal_static_Asset_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return CloudKit.internal_static_Asset_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              CloudKit.Asset.class, CloudKit.Asset.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<Asset> PARSER =
+        new com.google.protobuf.AbstractParser<Asset>() {
+      public Asset parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Asset(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Asset> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int DSPRSID_FIELD_NUMBER = 1;
+    private java.lang.Object dsPrsID_;
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    public boolean hasDsPrsID() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    public java.lang.String getDsPrsID() {
+      java.lang.Object ref = dsPrsID_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          dsPrsID_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string dsPrsID = 1;</code>
+     *
+     * <pre>
+     * Or dsid
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getDsPrsIDBytes() {
+      java.lang.Object ref = dsPrsID_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        dsPrsID_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FILECHECKSUM_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString fileChecksum_;
+    /**
+     * <code>optional bytes fileChecksum = 2;</code>
+     *
+     * <pre>
+     * fileChecksum
+     * </pre>
+     */
+    public boolean hasFileChecksum() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional bytes fileChecksum = 2;</code>
+     *
+     * <pre>
+     * fileChecksum
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getFileChecksum() {
+      return fileChecksum_;
+    }
+
+    public static final int SIZE_FIELD_NUMBER = 4;
+    private long size_;
+    /**
+     * <code>optional uint64 size = 4;</code>
+     *
+     * <pre>
+     * guesstimate
+     * </pre>
+     */
+    public boolean hasSize() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional uint64 size = 4;</code>
+     *
+     * <pre>
+     * guesstimate
+     * </pre>
+     */
+    public long getSize() {
+      return size_;
+    }
+
+    public static final int TOKEN_FIELD_NUMBER = 5;
+    private java.lang.Object token_;
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    public boolean hasToken() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    public java.lang.String getToken() {
+      java.lang.Object ref = token_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          token_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string token = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTokenBytes() {
+      java.lang.Object ref = token_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        token_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MMCSURL_FIELD_NUMBER = 8;
+    private java.lang.Object mmcsurl_;
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    public boolean hasMmcsurl() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    public java.lang.String getMmcsurl() {
+      java.lang.Object ref = mmcsurl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          mmcsurl_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string mmcsurl = 8;</code>
+     *
+     * <pre>
+     * content url
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getMmcsurlBytes() {
+      java.lang.Object ref = mmcsurl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        mmcsurl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DSID_FIELD_NUMBER = 9;
+    private java.lang.Object dsid_;
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    public boolean hasDsid() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    public java.lang.String getDsid() {
+      java.lang.Object ref = dsid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          dsid_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string dsid = 9;</code>
+     *
+     * <pre>
+     * Or dsPrsID
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getDsidBytes() {
+      java.lang.Object ref = dsid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        dsid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int F15_FIELD_NUMBER = 15;
+    private java.util.List<com.google.protobuf.ByteString> f15_;
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getF15List() {
+      return f15_;
+    }
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    public int getF15Count() {
+      return f15_.size();
+    }
+    /**
+     * <code>repeated bytes f15 = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getF15(int index) {
+      return f15_.get(index);
+    }
+
+    public static final int FILESIGNATURE_FIELD_NUMBER = 17;
+    private com.google.protobuf.ByteString fileSignature_;
+    /**
+     * <code>optional bytes fileSignature = 17;</code>
+     *
+     * <pre>
+     * 90% certain of this
+     * </pre>
+     */
+    public boolean hasFileSignature() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional bytes fileSignature = 17;</code>
+     *
+     * <pre>
+     * 90% certain of this
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getFileSignature() {
+      return fileSignature_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 18;
+    private long timestamp_;
+    /**
+     * <code>optional uint64 timestamp = 18;</code>
+     */
+    public boolean hasTimestamp() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional uint64 timestamp = 18;</code>
+     */
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private void initFields() {
+      dsPrsID_ = "";
+      fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+      size_ = 0L;
+      token_ = "";
+      mmcsurl_ = "";
+      dsid_ = "";
+      f15_ = java.util.Collections.emptyList();
+      fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+      timestamp_ = 0L;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getDsPrsIDBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, fileChecksum_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeUInt64(4, size_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeBytes(5, getTokenBytes());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeBytes(8, getMmcsurlBytes());
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeBytes(9, getDsidBytes());
+      }
+      for (int i = 0; i < f15_.size(); i++) {
+        output.writeBytes(15, f15_.get(i));
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeBytes(17, fileSignature_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        output.writeUInt64(18, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, getDsPrsIDBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, fileChecksum_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, size_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(5, getTokenBytes());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(8, getMmcsurlBytes());
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(9, getDsidBytes());
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < f15_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(f15_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getF15List().size();
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(17, fileSignature_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(18, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static CloudKit.Asset parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.Asset parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.Asset parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static CloudKit.Asset parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static CloudKit.Asset parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.Asset parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static CloudKit.Asset parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static CloudKit.Asset parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static CloudKit.Asset parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static CloudKit.Asset parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(CloudKit.Asset prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Asset}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Asset)
+        CloudKit.AssetOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return CloudKit.internal_static_Asset_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return CloudKit.internal_static_Asset_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                CloudKit.Asset.class, CloudKit.Asset.Builder.class);
+      }
+
+      // Construct using CloudKit.Asset.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        dsPrsID_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
+        fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        size_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        token_ = "";
+        bitField0_ = (bitField0_ & ~0x00000008);
+        mmcsurl_ = "";
+        bitField0_ = (bitField0_ & ~0x00000010);
+        dsid_ = "";
+        bitField0_ = (bitField0_ & ~0x00000020);
+        f15_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000080);
+        timestamp_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000100);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return CloudKit.internal_static_Asset_descriptor;
+      }
+
+      public CloudKit.Asset getDefaultInstanceForType() {
+        return CloudKit.Asset.getDefaultInstance();
+      }
+
+      public CloudKit.Asset build() {
+        CloudKit.Asset result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public CloudKit.Asset buildPartial() {
+        CloudKit.Asset result = new CloudKit.Asset(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.dsPrsID_ = dsPrsID_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.fileChecksum_ = fileChecksum_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.size_ = size_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.token_ = token_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.mmcsurl_ = mmcsurl_;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        result.dsid_ = dsid_;
+        if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          f15_ = java.util.Collections.unmodifiableList(f15_);
+          bitField0_ = (bitField0_ & ~0x00000040);
+        }
+        result.f15_ = f15_;
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.fileSignature_ = fileSignature_;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000080;
+        }
+        result.timestamp_ = timestamp_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof CloudKit.Asset) {
+          return mergeFrom((CloudKit.Asset)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(CloudKit.Asset other) {
+        if (other == CloudKit.Asset.getDefaultInstance()) return this;
+        if (other.hasDsPrsID()) {
+          bitField0_ |= 0x00000001;
+          dsPrsID_ = other.dsPrsID_;
+          onChanged();
+        }
+        if (other.hasFileChecksum()) {
+          setFileChecksum(other.getFileChecksum());
+        }
+        if (other.hasSize()) {
+          setSize(other.getSize());
+        }
+        if (other.hasToken()) {
+          bitField0_ |= 0x00000008;
+          token_ = other.token_;
+          onChanged();
+        }
+        if (other.hasMmcsurl()) {
+          bitField0_ |= 0x00000010;
+          mmcsurl_ = other.mmcsurl_;
+          onChanged();
+        }
+        if (other.hasDsid()) {
+          bitField0_ |= 0x00000020;
+          dsid_ = other.dsid_;
+          onChanged();
+        }
+        if (!other.f15_.isEmpty()) {
+          if (f15_.isEmpty()) {
+            f15_ = other.f15_;
+            bitField0_ = (bitField0_ & ~0x00000040);
+          } else {
+            ensureF15IsMutable();
+            f15_.addAll(other.f15_);
+          }
+          onChanged();
+        }
+        if (other.hasFileSignature()) {
+          setFileSignature(other.getFileSignature());
+        }
+        if (other.hasTimestamp()) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        CloudKit.Asset parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (CloudKit.Asset) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object dsPrsID_ = "";
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public boolean hasDsPrsID() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public java.lang.String getDsPrsID() {
+        java.lang.Object ref = dsPrsID_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            dsPrsID_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getDsPrsIDBytes() {
+        java.lang.Object ref = dsPrsID_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          dsPrsID_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public Builder setDsPrsID(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        dsPrsID_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public Builder clearDsPrsID() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        dsPrsID_ = getDefaultInstance().getDsPrsID();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dsPrsID = 1;</code>
+       *
+       * <pre>
+       * Or dsid
+       * </pre>
+       */
+      public Builder setDsPrsIDBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        dsPrsID_ = value;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString fileChecksum_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes fileChecksum = 2;</code>
+       *
+       * <pre>
+       * fileChecksum
+       * </pre>
+       */
+      public boolean hasFileChecksum() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional bytes fileChecksum = 2;</code>
+       *
+       * <pre>
+       * fileChecksum
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getFileChecksum() {
+        return fileChecksum_;
+      }
+      /**
+       * <code>optional bytes fileChecksum = 2;</code>
+       *
+       * <pre>
+       * fileChecksum
+       * </pre>
+       */
+      public Builder setFileChecksum(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        fileChecksum_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes fileChecksum = 2;</code>
+       *
+       * <pre>
+       * fileChecksum
+       * </pre>
+       */
+      public Builder clearFileChecksum() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        fileChecksum_ = getDefaultInstance().getFileChecksum();
+        onChanged();
+        return this;
+      }
+
+      private long size_ ;
+      /**
+       * <code>optional uint64 size = 4;</code>
+       *
+       * <pre>
+       * guesstimate
+       * </pre>
+       */
+      public boolean hasSize() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional uint64 size = 4;</code>
+       *
+       * <pre>
+       * guesstimate
+       * </pre>
+       */
+      public long getSize() {
+        return size_;
+      }
+      /**
+       * <code>optional uint64 size = 4;</code>
+       *
+       * <pre>
+       * guesstimate
+       * </pre>
+       */
+      public Builder setSize(long value) {
+        bitField0_ |= 0x00000004;
+        size_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 size = 4;</code>
+       *
+       * <pre>
+       * guesstimate
+       * </pre>
+       */
+      public Builder clearSize() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        size_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object token_ = "";
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public boolean hasToken() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public java.lang.String getToken() {
+        java.lang.Object ref = token_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            token_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTokenBytes() {
+        java.lang.Object ref = token_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          token_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public Builder setToken(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        token_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public Builder clearToken() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        token_ = getDefaultInstance().getToken();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string token = 5;</code>
+       */
+      public Builder setTokenBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        token_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object mmcsurl_ = "";
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public boolean hasMmcsurl() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public java.lang.String getMmcsurl() {
+        java.lang.Object ref = mmcsurl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            mmcsurl_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getMmcsurlBytes() {
+        java.lang.Object ref = mmcsurl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          mmcsurl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public Builder setMmcsurl(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        mmcsurl_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public Builder clearMmcsurl() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        mmcsurl_ = getDefaultInstance().getMmcsurl();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string mmcsurl = 8;</code>
+       *
+       * <pre>
+       * content url
+       * </pre>
+       */
+      public Builder setMmcsurlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        mmcsurl_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object dsid_ = "";
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public boolean hasDsid() {
+        return ((bitField0_ & 0x00000020) == 0x00000020);
+      }
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public java.lang.String getDsid() {
+        java.lang.Object ref = dsid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            dsid_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getDsidBytes() {
+        java.lang.Object ref = dsid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          dsid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public Builder setDsid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000020;
+        dsid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public Builder clearDsid() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        dsid_ = getDefaultInstance().getDsid();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dsid = 9;</code>
+       *
+       * <pre>
+       * Or dsPrsID
+       * </pre>
+       */
+      public Builder setDsidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000020;
+        dsid_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<com.google.protobuf.ByteString> f15_ = java.util.Collections.emptyList();
+      private void ensureF15IsMutable() {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+          f15_ = new java.util.ArrayList<com.google.protobuf.ByteString>(f15_);
+          bitField0_ |= 0x00000040;
+         }
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getF15List() {
+        return java.util.Collections.unmodifiableList(f15_);
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public int getF15Count() {
+        return f15_.size();
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getF15(int index) {
+        return f15_.get(index);
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public Builder setF15(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureF15IsMutable();
+        f15_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public Builder addF15(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureF15IsMutable();
+        f15_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public Builder addAllF15(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureF15IsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, f15_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes f15 = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other
+       * </pre>
+       */
+      public Builder clearF15() {
+        f15_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString fileSignature_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes fileSignature = 17;</code>
+       *
+       * <pre>
+       * 90% certain of this
+       * </pre>
+       */
+      public boolean hasFileSignature() {
+        return ((bitField0_ & 0x00000080) == 0x00000080);
+      }
+      /**
+       * <code>optional bytes fileSignature = 17;</code>
+       *
+       * <pre>
+       * 90% certain of this
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getFileSignature() {
+        return fileSignature_;
+      }
+      /**
+       * <code>optional bytes fileSignature = 17;</code>
+       *
+       * <pre>
+       * 90% certain of this
+       * </pre>
+       */
+      public Builder setFileSignature(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+        fileSignature_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes fileSignature = 17;</code>
+       *
+       * <pre>
+       * 90% certain of this
+       * </pre>
+       */
+      public Builder clearFileSignature() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        fileSignature_ = getDefaultInstance().getFileSignature();
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>optional uint64 timestamp = 18;</code>
+       */
+      public boolean hasTimestamp() {
+        return ((bitField0_ & 0x00000100) == 0x00000100);
+      }
+      /**
+       * <code>optional uint64 timestamp = 18;</code>
+       */
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>optional uint64 timestamp = 18;</code>
+       */
+      public Builder setTimestamp(long value) {
+        bitField0_ |= 0x00000100;
+        timestamp_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 timestamp = 18;</code>
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Asset)
+    }
+
+    static {
+      defaultInstance = new Asset(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Asset)
   }
 
   public interface BytesStringOrBuilder extends
@@ -25539,6 +28703,21 @@ public final class CloudKit {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_RecordZoneID_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_FileTokens_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_FileTokens_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_FileToken_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_FileToken_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Asset_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Asset_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_BytesString_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -25631,26 +28810,33 @@ public final class CloudKit {
       "e\030\004 \001(\t\022\n\n\002id\030\005 \001(\t\"C\n\rNameContainer\022\023\n\004" +
       "name\030\001 \001(\0132\005.Name\022\035\n\tcontainer\030\002 \001(\0132\n.C" +
       "ontainer\"A\n\tContainer\022\023\n\004name\030\001 \001(\0132\005.Na" +
-      "me\022\023\n\004data\030\002 \001(\0132\005.Data\022\n\n\002f4\030\004 \001(\r\"\220\001\n\004" +
+      "me\022\023\n\004data\030\002 \001(\0132\005.Data\022\n\n\002f4\030\004 \001(\r\"\237\001\n\004" +
       "Data\022\n\n\002id\030\001 \001(\r\022\r\n\005bytes\030\002 \001(\014\022\016\n\006uint3" +
       "2\030\004 \001(\r\022\031\n\007fixed64\030\006 \001(\0132\010.Fixed64\022\016\n\006st" +
       "ring\030\007 \001(\t\022\035\n\txRecordID\030\t \001(\0132\n.XRecordI" +
-      "D\022\023\n\004data\030\013 \003(\0132\005.Data\"4\n\tXRecordID\022\n\n\002i" +
-      "d\030\001 \001(\r\022\033\n\010recordID\030\002 \001(\0132\t.RecordID\"F\n\010",
-      "RecordID\022\033\n\nrecordName\030\001 \001(\0132\007.String\022\035\n" +
-      "\006zoneID\030\002 \001(\0132\r.RecordZoneID\"R\n\010OpResult" +
-      "\022#\n\014recordZoneID\030\001 \001(\0132\r.RecordZoneID\022!\n" +
-      "\013bytesString\030\003 \001(\0132\014.BytesString\")\n\006Stri" +
-      "ng\022\r\n\005value\030\001 \001(\t\022\020\n\010encoding\030\002 \001(\r\"E\n\014R" +
-      "ecordZoneID\022\031\n\010zoneName\030\001 \001(\0132\007.String\022\032" +
-      "\n\townerName\030\002 \001(\0132\007.String\",\n\013BytesStrin" +
-      "g\022\r\n\005bytes\030\001 \001(\014\022\016\n\006string\030\002 \001(\t\";\n\013Fixe" +
-      "d64Pair\022\025\n\003one\030\001 \001(\0132\010.Fixed64\022\025\n\003two\030\002 " +
-      "\001(\0132\010.Fixed64\"\030\n\007Fixed64\022\r\n\005value\030\001 \001(\006\"",
-      "\034\n\005Names\022\023\n\004name\030\001 \003(\0132\005.Name\"\025\n\004Name\022\r\n" +
-      "\005value\030\001 \001(\t\"\031\n\010String32\022\r\n\005value\030\001 \001(\007\"" +
-      "\031\n\010String64\022\r\n\005value\030\001 \001(\006\"\027\n\006UInt32\022\r\n\005" +
-      "value\030\001 \001(\r"
+      "D\022\r\n\005proto\030\n \001(\014\022\023\n\004data\030\013 \003(\0132\005.Data\"4\n" +
+      "\tXRecordID\022\n\n\002id\030\001 \001(\r\022\033\n\010recordID\030\002 \001(\013",
+      "2\t.RecordID\"F\n\010RecordID\022\033\n\nrecordName\030\001 " +
+      "\001(\0132\007.String\022\035\n\006zoneID\030\002 \001(\0132\r.RecordZon" +
+      "eID\"R\n\010OpResult\022#\n\014recordZoneID\030\001 \001(\0132\r." +
+      "RecordZoneID\022!\n\013bytesString\030\003 \001(\0132\014.Byte" +
+      "sString\")\n\006String\022\r\n\005value\030\001 \001(\t\022\020\n\010enco" +
+      "ding\030\002 \001(\r\"E\n\014RecordZoneID\022\031\n\010zoneName\030\001" +
+      " \001(\0132\007.String\022\032\n\townerName\030\002 \001(\0132\007.Strin" +
+      "g\",\n\nFileTokens\022\036\n\nfileTokens\030\001 \003(\0132\n.Fi" +
+      "leToken\"G\n\tFileToken\022\024\n\014fileChecksum\030\001 \001" +
+      "(\014\022\r\n\005token\030\002 \001(\t\022\025\n\rfileSignature\030\004 \001(\014",
+      "\"\241\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileCheck" +
+      "sum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\r\n\005token\030\005 \001(\t\022\017" +
+      "\n\007mmcsurl\030\010 \001(\t\022\014\n\004dsid\030\t \001(\t\022\013\n\003f15\030\017 \003" +
+      "(\014\022\025\n\rfileSignature\030\021 \001(\014\022\021\n\ttimestamp\030\022" +
+      " \001(\004\",\n\013BytesString\022\r\n\005bytes\030\001 \001(\014\022\016\n\006st" +
+      "ring\030\002 \001(\t\";\n\013Fixed64Pair\022\025\n\003one\030\001 \001(\0132\010" +
+      ".Fixed64\022\025\n\003two\030\002 \001(\0132\010.Fixed64\"\030\n\007Fixed" +
+      "64\022\r\n\005value\030\001 \001(\006\"\034\n\005Names\022\023\n\004name\030\001 \003(\013" +
+      "2\005.Name\"\025\n\004Name\022\r\n\005value\030\001 \001(\t\"\031\n\010String" +
+      "32\022\r\n\005value\030\001 \001(\007\"\031\n\010String64\022\r\n\005value\030\001",
+      " \001(\006\"\027\n\006UInt32\022\r\n\005value\030\001 \001(\r"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -25771,7 +28957,7 @@ public final class CloudKit {
     internal_static_Data_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Data_descriptor,
-        new java.lang.String[] { "Id", "Bytes", "Uint32", "Fixed64", "String", "XRecordID", "Data", });
+        new java.lang.String[] { "Id", "Bytes", "Uint32", "Fixed64", "String", "XRecordID", "Proto", "Data", });
     internal_static_XRecordID_descriptor =
       getDescriptor().getMessageTypes().get(18);
     internal_static_XRecordID_fieldAccessorTable = new
@@ -25802,50 +28988,68 @@ public final class CloudKit {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordZoneID_descriptor,
         new java.lang.String[] { "ZoneName", "OwnerName", });
-    internal_static_BytesString_descriptor =
+    internal_static_FileTokens_descriptor =
       getDescriptor().getMessageTypes().get(23);
+    internal_static_FileTokens_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_FileTokens_descriptor,
+        new java.lang.String[] { "FileTokens", });
+    internal_static_FileToken_descriptor =
+      getDescriptor().getMessageTypes().get(24);
+    internal_static_FileToken_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_FileToken_descriptor,
+        new java.lang.String[] { "FileChecksum", "Token", "FileSignature", });
+    internal_static_Asset_descriptor =
+      getDescriptor().getMessageTypes().get(25);
+    internal_static_Asset_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Asset_descriptor,
+        new java.lang.String[] { "DsPrsID", "FileChecksum", "Size", "Token", "Mmcsurl", "Dsid", "F15", "FileSignature", "Timestamp", });
+    internal_static_BytesString_descriptor =
+      getDescriptor().getMessageTypes().get(26);
     internal_static_BytesString_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_BytesString_descriptor,
         new java.lang.String[] { "Bytes", "String", });
     internal_static_Fixed64Pair_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_Fixed64Pair_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Fixed64Pair_descriptor,
         new java.lang.String[] { "One", "Two", });
     internal_static_Fixed64_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_Fixed64_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Fixed64_descriptor,
         new java.lang.String[] { "Value", });
     internal_static_Names_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_Names_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Names_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_Name_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(30);
     internal_static_Name_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Name_descriptor,
         new java.lang.String[] { "Value", });
     internal_static_String32_descriptor =
-      getDescriptor().getMessageTypes().get(28);
+      getDescriptor().getMessageTypes().get(31);
     internal_static_String32_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_String32_descriptor,
         new java.lang.String[] { "Value", });
     internal_static_String64_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(32);
     internal_static_String64_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_String64_descriptor,
         new java.lang.String[] { "Value", });
     internal_static_UInt32_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(33);
     internal_static_UInt32_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_UInt32_descriptor,
