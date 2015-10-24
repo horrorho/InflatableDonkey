@@ -43,12 +43,18 @@ public interface Headers {
     static final String accept = "Accept";
     static final String contentType = "Content-Type";
     static final String userAgent = "User-Agent";
+    static final String xAppleMmcsDataclass = "x-apple-mmcs-dataclass";
+    static final String xAppleMmcsAuth = "x-apple-mmcs-auth";
+    static final String xAppleMmcsProtoVersion = "x-apple-mmcs-proto-version";
+    static final String xAppleMmeDsid = "x-apple-mme-dsid";
     static final String xAppleRequestUUID = "X-Apple-Request-UUID";
     static final String xCloudKitAuthToken = "X-CloudKit-AuthToken";
     static final String xCloudKitBundleId = "X-CloudKit-BundleId";
     static final String xCloudKitContainerId = "X-CloudKit-ContainerId";
+    static final String xCloudKitContainer = "X-CloudKit-Container";
     static final String xCloudKitProtocolVersion = "X-CloudKit-ProtocolVersion";
     static final String xCloudKitUserId = "X-CloudKit-UserId";
+    static final String xCloudKitZones = "X-CloudKit-Zone";
     static final String xMmeClientInfo = "X-Mme-Client-Info";
 
     Header get(String header) throws NullPointerException;
