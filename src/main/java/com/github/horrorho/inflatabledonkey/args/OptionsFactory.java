@@ -54,22 +54,33 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
                 .desc("Device, default: 0 = first device.")
                 .argName("int")
                 .numberOfArgs(1)
-                .hasArgs().build(),
+                .hasArgs()
+                .build(),
                 Property.SELECT_DEVICE_INDEX);
 
         options.put(Option.builder("s").longOpt("snapshot")
                 .desc("Snapshot, default: 0 = first snapshot.")
                 .argName("int")
                 .numberOfArgs(1)
-                .hasArgs().build(),
+                .hasArgs()
+                .build(),
                 Property.SELECT_SNAPSHOT_INDEX);
 
         options.put(Option.builder("m").longOpt("manifest")
                 .desc("Manifest, default: 0 = first manifest.")
                 .argName("int")
                 .numberOfArgs(1)
-                .hasArgs().build(),
+                .hasArgs()
+                .build(),
                 Property.SELECT_MANIFEST_INDEX);
+        
+        options.put(Option.builder().longOpt("protoc")
+                .desc("Protoc binary path, default: 'protoc', leave blank to disable")
+                .argName("path")
+                .numberOfArgs(1)
+                .optionalArg(true) 
+                .build(),
+                Property.PROTOC_PATH);
 
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),

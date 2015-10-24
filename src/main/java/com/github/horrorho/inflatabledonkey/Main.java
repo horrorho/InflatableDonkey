@@ -34,6 +34,7 @@ import com.github.horrorho.inflatabledonkey.data.Auth;
 import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.protocol.ProtoBufArray;
@@ -50,7 +51,11 @@ import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,6 +67,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -75,7 +81,7 @@ import org.slf4j.LoggerFactory;
  * iOS9 backup retrieval proof of concept - work in progress. Development tool intended to demonstrate a functional
  * chain of client/ server responses required for backup retrieval, as opposed to being a fully functional backup tool
  * in itself.
- 
+ *
  * Thank you to:
  * <p>
  * <a href="https://github.com/ItsASmallWorld">ItsASmallWorld</a> for deciphering key client/ server interactions and
@@ -102,6 +108,7 @@ public class Main {
         int deviceIndex = 0;
         int snapshotIndex = 0;
         int manifestIndex = 0;
+        String protocPath = null;
 
         try {
             List<String> operands = argsParser.apply(args, arguments);
@@ -113,22 +120,25 @@ public class Main {
 
             arguments.putAll(authenticationMapper.apply(operands));
 
+            Function<Property, String> getProperty = property
+                    -> arguments.containsKey(property)
+                            ? arguments.get(property)
+                            : property.defaultValue();
+
             Function<Property, Integer> intArgument = property
-                    -> Integer.parseInt(arguments.containsKey(property)
-                                    ? arguments.get(property)
-                                    : property.defaultValue());
+                    -> Integer.parseInt(getProperty.apply(property));
 
             deviceIndex = intArgument.apply(Property.SELECT_DEVICE_INDEX);
             snapshotIndex = intArgument.apply(Property.SELECT_SNAPSHOT_INDEX);
             manifestIndex = intArgument.apply(Property.SELECT_MANIFEST_INDEX);
+
+            protocPath = getProperty.apply(Property.PROTOC_PATH);
 
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
             System.exit(0);
         }
-
-        logger.debug("-- main() - arguments: {}", arguments);
 
         // Session constants        
         String deviceID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
@@ -181,9 +191,34 @@ public class Main {
                 .setF25(1)
                 .build();
 
-        // Protobuf array response handler.
+        // Raw protoc decode
+        RawProtoDecoder rawProtoDecoder = protocPath == null
+                ? null
+                : new RawProtoDecoder(protocPath);
+
+        IOFunction<InputStream, List<CloudKit.Response>> spyDecode
+                = input -> {
+                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        IOUtils.copy(input, baos);
+
+                        if (rawProtoDecoder != null) {
+                            List<String> rawProtos = rawProtoDecoder.decodeProtos(new ByteArrayInputStream(baos.toByteArray()));
+                            logger.debug("-- main() - raw decode: {}", rawProtos);
+
+                        } else {
+                            logger.debug("-- main() - raw decode: no protoc decoder specified");
+                        }
+
+                        return ProtoBufArray.decode(new ByteArrayInputStream(baos.toByteArray()), CloudKit.Response.PARSER);
+
+                    } catch (InterruptedException ex) {
+                        // Unchecked rethrow.
+                        throw new RuntimeException(ex);
+                    }
+                };
+
         InputStreamResponseHandler<List<CloudKit.Response>> ckResponseHandler
-                = new InputStreamResponseHandler<>(inputStream -> ProtoBufArray.decode(inputStream, CloudKit.Response.PARSER));
+                = new InputStreamResponseHandler<>(spyDecode);
 
         // Default HttpClient.
         HttpClient httpClient = HttpClients.createDefault();
@@ -622,7 +657,7 @@ public class Main {
                 })
                 .findFirst()
                 .orElse(null);
- 
+
         if (file == null) {
             logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifest);
             System.exit(0);
