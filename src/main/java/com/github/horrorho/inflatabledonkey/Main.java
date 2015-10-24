@@ -679,10 +679,10 @@ public class Main {
         CloudKit.Asset asset = CloudKit.Asset.parseFrom(content);
         logger.debug("-- main() - file attributes: {}", asset);
 
-        // TODO check mmcsurl and com.apple.Dataclass.Content url match. But is there a reason they shouldn't?
         // TODO these encrypted attributes needs deciphering. 
         // TODO Without them we don't know what our binary file data represents.
         // TODO But where is our decryption key?
+        // TODO Possibly AES encrypted.
 //        List<ByteString> encryptedAttributes = responseG.stream()
 //                .map(CloudKit.Response::getM211Response)
 //                .map(CloudKit.M211Response::getBody)
@@ -694,6 +694,7 @@ public class Main {
 //                .collect(Collectors.toList());
         CloudKit.FileTokens fileTokens = FileTokensFactory.instance().apply(Arrays.asList(asset));
 
+        // TODO check mmcsurl and com.apple.Dataclass.Content url match. But is there a reason they shouldn't?
         HttpUriRequest authorizeGet = new AuthorizeGetRequestFactory(coreHeaders)
                 .newRequest(auth.dsPrsID(), asset.getMmcsurl(), container, "_defaultZone", fileTokens);
 
