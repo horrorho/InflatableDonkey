@@ -102,7 +102,7 @@ Postulated steps and current status are as follows:
   10. AuthorizeGet. Known if unchanged from iOS8. -> altered but now functional.
   11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
   12. Assemble assets/ files. Known if unchanged from iOS8.
-  13. Decrypt files. Known if unchanged from iOS8.
+  13. Decrypt files. Known if unchanged from iOS8 -> altered, at present unknown/ broken.
 
 For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
 
