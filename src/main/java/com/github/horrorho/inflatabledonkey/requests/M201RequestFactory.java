@@ -48,13 +48,14 @@ public class M201RequestFactory {
             String bundle,
             String operation,
             String uuid,
-            CloudKit.String zoneName,
-            CloudKit.String userID,
-            CloudKit.Info coreInfo) {
+            CloudKit.Identifier zoneName,
+            CloudKit.Identifier userID,
+            CloudKit.RequestOperationHeader requestOperationHeaderProto) {
 
-        CloudKit.Info info = CloudKit.Info.newBuilder(coreInfo)
-                .setContainer(container)
-                .setBundle(bundle)
+        CloudKit.RequestOperationHeader requestOperationHeader
+                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
+                .setApplicationContainer(container)
+                .setApplicationBundle(bundle)
                 .setOperation(operation)
                 .build();
 
@@ -64,17 +65,17 @@ public class M201RequestFactory {
                 .setF4(1)
                 .build();
 
-        CloudKit.RecordZoneID recordZoneID = CloudKit.RecordZoneID.newBuilder()
-                .setZoneName(zoneName)
-                .setOwnerName(userID)
+        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
+                .setValue(zoneName)
+                .setOwnerIdentifier(userID)
                 .build();
 
         CloudKit.M201Request m201Request = CloudKit.M201Request.newBuilder()
-                .setRecordZoneID(recordZoneID) 
+                .setRecordZoneID(recordZoneID)
                 .build();
 
         return CloudKit.Request.newBuilder()
-                .setInfo(info)
+                .setRequestOperationHeader(requestOperationHeader)
                 .setMessage(message)
                 .setM201Request(m201Request)
                 .build();

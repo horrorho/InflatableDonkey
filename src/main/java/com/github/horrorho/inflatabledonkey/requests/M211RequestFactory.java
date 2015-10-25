@@ -48,14 +48,15 @@ public class M211RequestFactory {
             String bundle,
             String operation,
             String uuid,
-            CloudKit.String recordName,
-            CloudKit.String zoneName,
-            CloudKit.String userID,
-            CloudKit.Info coreInfo) {
+            CloudKit.Identifier recordName,
+            CloudKit.Identifier zoneName,
+            CloudKit.Identifier userID,
+            CloudKit.RequestOperationHeader requestOperationHeaderProto) {
 
-        CloudKit.Info info = CloudKit.Info.newBuilder(coreInfo)
-                .setContainer(container)
-                .setBundle(bundle)
+        CloudKit.RequestOperationHeader requestOperationHeader
+                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
+                .setApplicationContainer(container)
+                .setApplicationBundle(bundle)
                 .setOperation(operation)
                 .build();
 
@@ -65,14 +66,14 @@ public class M211RequestFactory {
                 .setF4(1)
                 .build();
 
-        CloudKit.RecordZoneID recordZoneID = CloudKit.RecordZoneID.newBuilder()
-                .setZoneName(zoneName)
-                .setOwnerName(userID)
+        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
+                .setValue(zoneName)
+                .setOwnerIdentifier(userID)
                 .build();
 
-        CloudKit.RecordID recordID = CloudKit.RecordID.newBuilder()
-                .setRecordName(recordName)
-                .setZoneID(recordZoneID)
+        CloudKit.RecordIdentifier recordID = CloudKit.RecordIdentifier.newBuilder()
+                .setValue(recordName)
+                .setZoneIdentifier(recordZoneID)
                 .build();
 
         CloudKit.UInt32 one = CloudKit.UInt32.newBuilder()
@@ -85,7 +86,7 @@ public class M211RequestFactory {
                 .build();
 
         return CloudKit.Request.newBuilder()
-                .setInfo(info)
+                .setRequestOperationHeader(requestOperationHeader)
                 .setMessage(message)
                 .setM211Request(m211Request)
                 .build();

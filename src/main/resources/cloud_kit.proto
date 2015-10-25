@@ -1,43 +1,87 @@
 // Ahseya https://github.com/horrorho
 // ItsASmallWorld https://github.com/ItsASmallWorld
 
-message Request {
-  optional Info info = 1;
+option java_package = "com.github.horrorho.inflatabledonkey.protocol";
+option java_outer_classname = "CloudKit";
+
+message Request { // CKDPRequestOperation
+  optional RequestOperationHeader requestOperationHeader = 1;
   optional Message message = 2;
   optional M201Request m201Request = 201;
   optional M211Request m211Request = 211;
-  optional M220Request m220Request = 220;
 
 }
 
-message Response {
-  optional uint32 f1 = 1;
+message Response { // CKDPResponseOperation
+  optional uint32 operationCost = 1;
   optional Message message = 2;
-  optional Status status = 3;
+  optional ResponseOperationResult result = 3;
   optional M201Response m201Response = 201;
-  optional M211Response m211Response = 211;
-  optional M220Response m220Response = 220;
+  optional RecordRetrieveResponse recordRetrieveResponse = 211;
+
+  // Appear to be more operations than message types.
+  // Possibly duplicated message types.
+  // May need an map.
 }
 
-message Info {  // Attributes might be a better name
-  optional string container = 2;
-  optional string bundle = 3;
-  optional String f7 = 7;
-  optional string os = 8;
-  optional Fixed64 f9 = 9; // product type, TODO to String64
-  optional string app = 10;
-  optional string appVersion = 11;
+message RequestOperationHeader {  // CKDPRequestOperationHeader
+  optional string applicationContainer = 2;
+  optional string applicationBundle = 3;
+  optional Identifier deviceIdentifier = 7;
+  optional string deviceSoftwareVersion = 8;
+  optional string f9 = 9; // product type, TODO to String64
+  optional string deviceLibraryName = 10; // Probably.
+  optional string deviceLibraryVersion = 11; // Probably.
   optional string operation =12;
-  optional uint32 limit1 = 13;
-  optional uint32 limit2 = 14;
-  optional fixed32 hex32 = 15; // Fixed string?
-  // 17 = locale information
-  optional string version = 18;
+  optional uint64 deviceFlowControlBudget = 13; // Guesstimate.
+  optional uint64 deviceFlowControlBudgetCap = 14; // Guesstimate.
+  optional string deviceFlowControlKey = 15; // Guesstimate.
+  optional Locale locale = 17;
+  optional string version = 18; // Guesstimate.
   optional uint32 f19 = 19;
-  optional string deviceName = 21;
-  optional string deviceID = 22;
+  optional string deviceAssignedName = 21;
+  optional string deviceHardwareID = 22;
   optional uint32 f23 = 23;
   optional uint32 f25 = 25;
+
+
+      //NSString * _applicationBundle;
+  //unsigned long long  _applicationConfigVersion;
+      //NSString * _applicationContainer;
+  //int  _applicationContainerEnvironment;
+  //NSString * _applicationVersion;
+  //NSData * _clientChangeToken;
+      //NSString * _deviceAssignedName;
+      //unsigned long long  _deviceFlowControlBudget;
+      //unsigned long long  _deviceFlowControlBudgetCap;
+      //NSString * _deviceFlowControlKey;
+  //float  _deviceFlowControlRegeneration;
+      //NSString * _deviceHardwareID;
+      //NSString * _deviceHardwareVersion;
+      //CKDPIdentifier * _deviceIdentifier;
+      //NSString * _deviceLibraryName;
+      //NSString * _deviceLibraryVersion;
+  //unsigned long long  _deviceProtocolVersion;
+      //NSString * _deviceSoftwareVersion;
+  //unsigned long long  _globalConfigVersion;
+  //struct {
+  //    unsigned int applicationConfigVersion : 1;
+  //    unsigned int deviceFlowControlBudget : 1;
+  //    unsigned int deviceFlowControlBudgetCap : 1;
+  //    unsigned int deviceProtocolVersion : 1;
+  //    unsigned int globalConfigVersion : 1;
+  //    unsigned int applicationContainerEnvironment : 1;
+  //    unsigned int deviceFlowControlRegeneration : 1;
+  //    unsigned int isolationLevel : 1;
+  //    unsigned int targetDatabase : 1;
+  //}  _has;
+  //int  _isolationLevel;
+      //CKDPLocale * _locale;
+  //NSString * _mmcsProtocolVersion;
+  //int  _targetDatabase;
+  //NSString * _userIDContainerID;
+  //NSString * _userToken;
+
 }
 
 message Message {
@@ -47,7 +91,7 @@ message Message {
 }
 
 message M201Request {
-  optional RecordZoneID recordZoneID = 1;
+  optional RecordZoneIdentifier recordZoneID = 1; // Possibly repeated
 }
 
 message M201Response {
@@ -55,57 +99,39 @@ message M201Response {
 }
 
 message M201ResponseBody {
-  optional OpResult result = 1;
-  optional bytes f2 = 2;
-  optional uint32 f4 = 4;
-  optional uint32 f5 = 5;
-  optional uint32 f6 = 6;
+//  optional OpResult result = 1;
+//  optional bytes f2 = 2;
+//  optional uint32 f4 = 4;
+//  optional uint32 f5 = 5;
+//  optional uint32 f6 = 6;
 }
 
-message M211Request {
-  optional RecordID recordID = 1;
+message M211Request { // CKDPRecordRetrieveRequest
+  optional RecordIdentifier recordID = 1;
   optional UInt32 f6 = 6;
 }
 
-message M211Response { // Record_Response_211
-  optional M211ResponseBody body = 1;
-  optional uint32 f2 = 2;
+message RecordRetrieveResponse { // CKDPRecordRetrieveResponse - M211
+  optional Record record = 1;
+  optional bool clientVersionETagMatch = 2;
 }
 
-message M211ResponseBody { // Record_Response_211_1
-  optional string f1 = 1;
-  optional RecordID recordID = 2;
-  optional String record = 3; // ? type
-  optional String userID = 4;
-  optional Fixed64Pair f5 = 5;
-  repeated Container container = 7;
-  optional String ckUserID = 9;
-  optional string deviceName = 11;
-  optional BytesString f13 = 13;
-  optional uint32 f15 = 15;
+message Record { // CKDPRecord
+  optional string etag= 1; // Probably
+  optional RecordIdentifier RecordIdentifier = 2;
+  optional RecordType type = 3;
+  optional Identifier createdBy = 4; // Possibly 9
+  optional DateStatistics timeStatistics = 5;
+  repeated RecordField recordField = 7;
+  optional Identifier modifiedBy = 9; // Possibly 4
+  optional string modifiedByDevice = 11;
+  optional ProtectionInfo protectionInfo = 13;
+  optional uint32 permission = 15; // Probably.
 }
 
-message M220Request {
-  optional NameContainer nameContainer = 1;
-  optional Names fields = 5;
-  optional UInt32 f6 = 6;
-}
-
-message M220Response {
-  repeated M220ResponseBody body = 1;
-}
-
-message M220ResponseBody {
-  optional RecordID recordID = 1;
-  optional uint32 f3 = 3;
-  optional M211ResponseBody m211ResponseBody = 4;
-}
-
-
-
-message Status {
+message ResponseOperationResult { // CKDPResponseOperationResult
   optional uint32 code = 1;
-  optional Error error = 2;
+  optional Error error = 2; // TODO CKDPResponseOperationResultError
 }
 
 message Error {
@@ -114,51 +140,94 @@ message Error {
   optional string id = 5;
 }
 
-message NameContainer {
-  optional Name name = 1;
-  optional Container container = 2;
+message DateStatistics { // CKDPDateStatistics
+  optional Date creation = 1;
+  optional Date modification = 2;
 }
 
-message Container { // ? Attribute ? Object ? Record ? RecordEntry ? Field Record_Response_211_1_7
-  optional Name name = 1; // ? Record Type Name? Just need an encapsulated string eg Name as opposed to String.
-  optional Data data = 2;
-  optional uint32 f4 = 4;
+message Date { // CKDPDate
+  optional uint64 time = 1;
 }
 
-message Data { // ? Record Record_Response_211_1_7_2 Record_Response_211_1_7_2_11
-  optional uint32 id = 1;
-  optional bytes bytes = 2;
+message Identifier { // CKDPIdentifier.
+  optional string name = 1;
+  optional uint32 type = 2;
+}
+
+message Locale { // CKDPLocale
+  optional string languageCode = 1;
+  optional string regionCode = 2;
+  repeated string enabledKeyboard = 3;
+  optional string activeKeyboard = 4;
+}
+
+message ProtectionInfo { // CKDPProtectionInfo
+  optional bytes protectionInfo = 1;
+  optional string protectionInfoTag  = 2;
+}
+
+message RecordField { // CKDPRecordField.
+  optional RecordFieldIdentifier id = 1;
+  optional RecordFieldValue value = 2;
+}
+
+message RecordFieldValue { // CKDPRecordFieldValue
+  optional uint32 type = 1;
+  optional bytes bytesValue = 2;
   optional uint32 uint32 = 4;
-  optional Fixed64 fixed64 = 6;
-  optional string string = 7;
-  optional XRecordID xRecordID = 9;
-  optional bytes proto = 10; // ? proto ? asset
-  repeated Data data = 11;
+  optional Date dateValue = 6; // Possibly
+  optional string stringValue = 7;
+  optional RecordReference referenceValue = 9;
+  optional Asset assetValue = 10;
+  repeated RecordFieldValue recordFieldValue = 11;
+
+      // CKDPAsset * _assetValue;
+      // NSData * _bytesValue;
+      // CKDPDate * _dateValue;
+  // double  _doubleValue;
+      // struct {
+      //     unsigned int doubleValue : 1;
+      //     unsigned int signedValue : 1;
+      //     unsigned int type : 1;
+      // }  _has;
+      // NSMutableArray * _listValues;
+  // CKDPLocationCoordinate * _locationValue;
+  // CKDPPackage * _packageValue;
+      // CKDPRecordReference * _referenceValue;
+  // long long  _signedValue;
+      // NSString * _stringValue;
+      // int  _type;
 }
 
-message XRecordID {  // (Old: IdItempOp) What is this?   Record_Response_211_1_7_2_11_9
-  optional uint32 id = 1;
-  optional RecordID recordID = 2;
+message RecordType {
+  optional string name = 1;
 }
 
-message RecordID {  // (Old:ItemOp)
-  optional String recordName = 1;
-  optional RecordZoneID zoneID = 2;
+message RecordReference { // CKDPRecordReference.h (but uint32 = 2 doesn't match enum?)
+  optional uint32 type = 1;
+  optional RecordIdentifier recordIdentifier = 2;
 }
 
-message OpResult {
-  optional RecordZoneID recordZoneID = 1;
-  optional BytesString bytesString = 3;
+
+
+
+message RecordIdentifier {  // CKDPRecordIdentifier.
+  optional Identifier value = 1;
+  optional RecordZoneIdentifier zoneIdentifier = 2;
 }
 
-message String {  // NSString (Old: Item) Record_Response_211_1_7_2_11_9_2_1 Record_Response_211_1_7_2_11_9_2_2_1
+message RecordFieldIdentifier { // CKDPRecordFieldIdentifier.
+  optional string name = 1;
+}
+
+message RecordZoneIdentifier { // CKDPRecordZoneIdentifier.
+  optional Identifier value = 1;
+  optional Identifier ownerIdentifier = 2;
+}
+
+message String {  // TODO remove, this is wrong. Probably should be using Identifier.
   optional string value = 1;
   optional uint32 encoding = 2; // encoding
-}
-
-message RecordZoneID { // (Old:op)
-  optional String zoneName = 1;
-  optional String ownerName = 2;
 }
 
 message FileTokens {
@@ -168,7 +237,7 @@ message FileTokens {
 message FileToken {
     optional bytes fileChecksum = 1;
     optional string token = 2;
-    //optional uint64 f2 = 3; // possibly file length
+    optional uint64 size = 3; // possibly file length
     optional bytes fileSignature = 4; // 90% certain of this
 
     // f1 f2 candidates
@@ -181,7 +250,7 @@ message Asset { // TODO rename to file attribute or similar
   optional bytes fileChecksum = 2;  // fileChecksum
   optional uint64 size = 4; // guesstimate
   optional string token = 5;
-  optional string mmcsurl = 8; // content url
+  optional string contentBaseURL = 8; // content url
   optional string dsid = 9; // Or dsPrsID
   repeated bytes f15 = 15; // 192 bit something or other
   optional bytes fileSignature = 17; // 90% certain of this
@@ -190,11 +259,6 @@ message Asset { // TODO rename to file attribute or similar
   // dsid/ dsPrsID order? does it really matter? are they not always the same???
   // candidates for unknowns
   // file checksum, sha256, file signature, encryption key,
-}
-
-message BytesString {
-  optional bytes bytes = 1;
-  optional string string = 2;
 }
 
 message Fixed64Pair { // References?
@@ -206,12 +270,8 @@ message Fixed64 {  // Reference? Record_Response_211_1_7_2_11_6
   optional fixed64 value = 1;
 }
 
-message Names {
-  repeated Name name = 1;
-}
-
-message Name {
-  optional string value = 1;
+message Strings { // StringArray
+  repeated String name = 1;
 }
 
 message String32 {
@@ -225,9 +285,11 @@ message String64 {
 message UInt32 {
   optional uint32 value = 1;
 }
-// TODO can try passing malformed fields, the server sometimes returns an error giving us the field name
-// TODO naming conventions for boxed/ unboxed pairs
-// TODO probably missing repeated types
-// TODO naming is presently non-idiomatic
-// TODO responsebodies represent nested types, to refactor
-// TODO known message types: 200, 201, 202, 210, 211, 212, 213, 214, 220, 230, 240, 241, 242, 243, 300, 301, 302, 400, 800, 801, 802, 803, 804, 900, 901
+// fixed64 could be dates
+// consider handle suffix for id + X
+// can try passing malformed fields, the server sometimes returns an error giving us the field name
+// naming conventions for boxed/ unboxed pairs
+// probably missing repeated types
+// naming is presently non-idiomatic
+// responsebodies represent nested types, to refactor
+// known message types: 200, 201, 202, 210, 211, 212, 213, 214, 220, 230, 240, 241, 242, 243, 300, 301, 302, 400, 800, 801, 802, 803, 804, 900, 901
