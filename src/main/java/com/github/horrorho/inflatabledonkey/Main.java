@@ -55,8 +55,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -140,12 +142,14 @@ public class Main {
             System.exit(0);
         }
 
-        // Session constants        
+        // Constants        
+        // TODO can we retrieve this value?
         String deviceID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
-        //deviceID = "51378363AF15278F992AEB76026C539217D49B2F678DB559F33B53528FAD291C";
+
         String container = "com.apple.backup.ios";
         String bundle = "com.apple.backupd";
         String ckdFetchRecordZonesOperation = "CKDFetchRecordZonesOperation";
+        String ckdQueryOperation = "CKDQueryOperation";
 
         Headers coreHeaders = new MappedHeaders(
                 new BasicHeader(Headers.userAgent, "CloudKit/479 (13A404)"),
@@ -164,9 +168,17 @@ public class Main {
                 .setType(6)
                 .build();
 
+        CloudKit.RecordFieldIdentifier recordID = CloudKit.RecordFieldIdentifier.newBuilder()
+                .setName("___recordID")
+                .build();
+
         CloudKit.Identifier backupAccount = CloudKit.Identifier.newBuilder()
                 .setName("BackupAccount")
                 .setType(1)
+                .build();
+
+        CloudKit.RecordType privilegedBatchRecordFetch = CloudKit.RecordType.newBuilder()
+                .setName("PrivilegedBatchRecordFetch")
                 .build();
 
         CloudKit.Identifier deviceIdentifier = CloudKit.Identifier.newBuilder()
@@ -384,7 +396,7 @@ public class Main {
         }
 
         /* 
-         STEP 6. Snapshot list.
+         STEP 6. Snapshot list (+ Keybag)
         
          Url/ headers as step 5.
          Message type 211 with the required backup uuid, protobuf array encoded.
@@ -430,11 +442,14 @@ public class Main {
         List<CloudKit.Response> responseC = httpClient.execute(postC, ckResponseHandler);
         logger.debug("-- main() - snapshots response: {}", responseC);
 
-        List<String> snapshots = responseC.stream()
+        List<CloudKit.RecordField> recordFieldsC = responseC.stream()
                 .map(CloudKit.Response::getRecordRetrieveResponse)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        List<String> snapshots = recordFieldsC.stream()
                 .filter(value -> value.getId().getName().equals("snapshots"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
@@ -445,6 +460,18 @@ public class Main {
                 .map(CloudKit.Identifier::getName)
                 .collect(Collectors.toList());
         logger.info("-- main() - snapshots: {}", snapshots);
+
+        String keybagUUID = recordFieldsC.stream()
+                .filter(value -> value.getId().getName().equals("currentKeybagUUID"))
+                .map(CloudKit.RecordField::getValue)
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .findFirst()
+                .orElse(null);
+        logger.info("-- main() - keybagUUID: {}", keybagUUID);
+
+        CloudKit.Identifier keyBagIdentifier = keybagUUID == null
+                ? null
+                : CloudKit.Identifier.newBuilder().setName("K:" + keybagUUID).setType(1).build();
 
         if (snapshots.isEmpty()) {
             logger.info("-- main() - no snapshots for device: {}", devices.get(deviceIndex));
@@ -758,7 +785,88 @@ public class Main {
 
         logger.debug("-- main() - fileGroups: {}", fileGroups);
 
+        /* 
+         STEP 11. ChunkServer.FileGroups.
+        
+         TODO. 
+         */
+        /*
+         STEP 12. Assemble assets/ files.
+         */
+        logger.info("-- main() - STEP 12. Assemble assets/ files.");
+
+        // TODO move these values up as we refactor code.
+        // TODO this is getting rather messy, to create a helper class.
+        CloudKit.RecordZoneIdentifier mbksyncZone = CloudKit.RecordZoneIdentifier.newBuilder()
+                .setValue(mbksync)
+                .setOwnerIdentifier(ckUserId)
+                .build();
+
+        CloudKit.RecordIdentifier keybagRecordIdentifier = CloudKit.RecordIdentifier.newBuilder()
+                .setValue(keyBagIdentifier)
+                .setZoneIdentifier(mbksyncZone)
+                .build();
+
+        CloudKit.RecordReference keybagReference = CloudKit.RecordReference.newBuilder()
+                .setRecordIdentifier(keybagRecordIdentifier)
+                .build();
+
+        CloudKit.RecordFieldValue keyBagFieldValue = CloudKit.RecordFieldValue.newBuilder()
+                .setType(5)
+                .setReferenceValue(keybagReference)
+                .build();
+
+        CloudKit.QueryFilter keybagQueryFilter = CloudKit.QueryFilter.newBuilder()
+                .setFieldName(recordID)
+                .setFieldValue(keyBagFieldValue)
+                .setType(1)
+                .build();
+
+        CloudKit.Query keyBagQuery = CloudKit.Query.newBuilder()
+                .addType(privilegedBatchRecordFetch)
+                .addFilter(keybagQueryFilter)
+                .build();
+
+        CloudKit.QueryRetrieveRequest keybagQueryRetrieveQuest = CloudKit.QueryRetrieveRequest.newBuilder()
+                .setQuery(keyBagQuery)
+                .setZoneIdentifier(mbksyncZone)
+                .setF6(CloudKit.UInt32.newBuilder().setValue(1))
+                .build();
+
+        CloudKit.Request keybagRequest = CloudKit.Request.newBuilder()
+                .setQueryRetrieveRequest(keybagQueryRetrieveQuest)
+                .setRequestOperationHeader(
+                        CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
+                        .setOperation(ckdQueryOperation).build())
+                .setMessage(CloudKit.Message.newBuilder()
+                        .setUuid(UUID.randomUUID().toString())
+                        .setType(220)
+                        .setF4(1))
+                .build();
+        logger.debug("-- main() - keybag request: {}", keybagRequest);
+
+        HttpUriRequest keybagUriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
+                ckInit.production().url() + "/query/retrieve",
+                container,
+                bundle,
+                ckInit.cloudKitUserId(),
+                tokens.cloudKitToken(),
+                UUID.randomUUID().toString(),
+                Arrays.asList(keybagRequest),
+                coreHeaders);
+
+        List<CloudKit.Response> keybagResponse = httpClient.execute(keybagUriRequest, ckResponseHandler);
+        logger.debug("-- main() - keybag response: {}", keybagResponse);
+
+// TODO Possibility of multiple keybags.
     }
 
+    static void dump(byte[] data, String path) throws IOException {
+        // Dump out binary data to file.
+        try (OutputStream outputStream = Files.newOutputStream(Paths.get(path))) {
+            outputStream.write(data);
+        }
+    }
 }
 // TODO info limits have not been set
+// TODO operation helper classes/ factories
