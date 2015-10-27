@@ -125,6 +125,8 @@ At present steps 9 and 12 remain problematic. If you have any additional informa
 
 **Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. I'm rather hoping the keybag decryption will follow in a similar vein.
 
+So: cloudkit service key > zone wide key > file key
+
 ### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
 
