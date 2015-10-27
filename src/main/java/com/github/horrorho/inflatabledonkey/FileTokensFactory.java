@@ -60,7 +60,7 @@ public final class FileTokensFactory implements Function<Collection<CloudKit.Ass
         return CloudKit.FileToken.newBuilder()
                 .setFileChecksum(asset.getFileChecksum())
                 .setFileSignature(asset.getFileSignature())
-                .setToken(asset.getToken())
+                .setToken(asset.getDownloadToken())
                 .build();
     }
 }

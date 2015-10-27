@@ -5,14 +5,9 @@
 option java_package = "com.github.horrorho.inflatabledonkey.protocol";
 option java_outer_classname = "CloudKit";
 
-
-// Appear to be more operations than message types.
-// Possibly another abstraction layer in place.
-// Requests converted to the appropriate Mxxx type.
-
-message Request { // CKDPRequestOperation
+message RequestOperation { // CKDPRequestOperation
   optional RequestOperationHeader requestOperationHeader = 1;
-  optional Message message = 2;
+  optional Operation request = 2;
   optional ZoneRetrieveRequest zoneRetrieveRequest = 201;
   optional RecordRetrieveRequest recordRetrieveRequest = 211;
   optional QueryRetrieveRequest queryRetrieveRequest = 220;
@@ -35,13 +30,13 @@ message Request { // CKDPRequestOperation
   // ?     CKDPPostCommentRequest * _postCommentRequest;
   // ?     CKDPPromoteContainerSchemaRequest * _promoteContainerSchemaRequest;
   // ?     CKDPPulseRequest * _pulseRequest;
-  // ?     CKDPQueryRetrieveRequest * _queryRetrieveRequest;
+  // 220   CKDPQueryRetrieveRequest * _queryRetrieveRequest;
   // ?     CKDPRecordDeleteRequest * _recordDeleteRequest;
   // ?     CKDPRecordRetrieveChangesRequest * _recordRetrieveChangesRequest;
   // 211   CKDPRecordRetrieveRequest * _recordRetrieveRequest;
   // ?     CKDPRecordRetrieveVersionsRequest * _recordRetrieveVersionsRequest;
   // ?     CKDPRecordSaveRequest * _recordSaveRequest;
-  // ?     CKDPOperation * _request;
+  // 2     CKDPOperation * _request;
   // ?     CKDPResetContainerRequest * _resetContainerRequest;
   // ?     CKDPSetBadgeCountRequest * _setBadgeCountRequest;
   // ?     CKDPShareAcceptRequest * _shareAcceptRequest;
@@ -71,16 +66,71 @@ message Request { // CKDPRequestOperation
   // ?     CKDPZoneSaveRequest * _zoneSaveRequest;
 }
 
-message Response { // CKDPResponseOperation
+message ResponseOperation {
   optional uint32 operationCost = 1;
-  optional Message message = 2;
+  optional Operation response = 2;
   optional ResponseOperationResult result = 3;
   optional ZoneRetrieveResponse zoneRetrieveResponse = 201;
   optional RecordRetrieveResponse recordRetrieveResponse = 211;
   optional QueryRetrieveRequestResponse queryRetrieveRequestResponse = 220;
+
+  // CKDPResponseOperation
+  // ?     CKDPAssetUploadTokenRetrieveResponse * _assetUploadTokenRetrieveResponse;
+  // ?     CKDPDeleteCommentResponse * _deleteCommentResponse;
+  // ?     CKDPDeleteContainerResponse * _deleteContainerResponse;
+  // ?     CKDPGetCommentResponse * _getCommentResponse;
+  // ?     CKDPGetCommentsResponse * _getCommentsResponse;
+  // ?     CKDPGetLikesResponse * _getLikesResponse;
+  // ?     CKDPLikeResponse * _likeResponse;
+  // ?     CKDPMescalCertificateResponse * _mescalCertificateResponse;
+  // ?     CKDPMescalSessionInfoResponse * _mescalSessionInfoResponse;
+  // ?     CKDPMescalSignatureResponse * _mescalSignatureResponse;
+  // ?     CKDPNotificationMarkReadResponse * _notificationMarkReadResponse;
+  // ?     CKDPNotificationSyncResponse * _notificationSyncResponse;
+  // 1     unsigned int  _operationCost;
+  // ?     CKDPPkiRegisterResponse * _pkiRegisterResponse;
+  // ?     CKDPPkiRetrieveResponse * _pkiRetrieveResponse;
+  // ?     CKDPPostCommentResponse * _postCommentResponse;
+  // ?     CKDPPromoteContainerSchemaResponse * _promoteContainerSchemaResponse;
+  // ?     CKDPPulseResponse * _pulseResponse;
+  // 220   CKDPQueryRetrieveResponse * _queryRetrieveResponse;
+  // ?     CKDPRecordDeleteResponse * _recordDeleteResponse;
+  // ?     CKDPRecordRetrieveChangesResponse * _recordRetrieveChangesResponse;
+  // 211   CKDPRecordRetrieveResponse * _recordRetrieveResponse;
+  // ?     CKDPRecordRetrieveVersionsResponse * _recordRetrieveVersionsResponse;
+  // ?     CKDPRecordSaveResponse * _recordSaveResponse;
+  // ?     CKDPResetContainerResponse * _resetContainerResponse;
+  // 2     CKDPOperation * _response;
+  // 3     CKDPResponseOperationResult * _result;
+  // ?     CKDPSetBadgeCountResponse * _setBadgeCountResponse;
+  // ?     CKDPShareAcceptResponse * _shareAcceptResponse;
+  // ?     CKDPShareDeleteResponse * _shareDeleteResponse;
+  // ?     CKDPShareRetrieveResponse * _shareRetrieveResponse;
+  // ?     CKDPShareSaveResponse * _shareSaveResponse;
+  // ?     CKDPShareTokenDeleteResponse * _shareTokenDeleteResponse;
+  // ?     CKDPShareTokenRetrieveResponse * _shareTokenRetrieveResponse;
+  // ?     CKDPShareTokenSaveResponse * _shareTokenSaveResponse;
+  // ?     CKDPSubscriptionCreateResponse * _subscriptionCreateResponse;
+  // ?     CKDPSubscriptionDeleteResponse * _subscriptionDeleteResponse;
+  // ?     CKDPSubscriptionRetrieveResponse * _subscriptionRetrieveResponse;
+  // ?     CKDPTokenRegistrationResponse * _tokenRegistrationResponse;
+  // ?     CKDPTokenUnregistrationResponse * _tokenUnregistrationResponse;
+  // ?     CKDPUnlikeResponse * _unlikeResponse;
+  // ?     CKDPUserAvailableQuotaResponse * _userAvailableQuotaResponse;
+  // ?     CKDPUserPrivacySettingsBatchLookupResponse * _userPrivacySettingsBatchLookupResponse;
+  // ?     CKDPUserPrivacySettingsResetResponse * _userPrivacySettingsResetResponse;
+  // ?     CKDPUserPrivacySettingsRetrieveResponse * _userPrivacySettingsRetrieveResponse;
+  // ?     CKDPUserPrivacySettingsUpdateResponse * _userPrivacySettingsUpdateResponse;
+  // ?     CKDPUserQueryResponse * _userQueryResponse;
+  // ?     CKDPUserRetrieveResponse * _userRetrieveResponse;
+  // ?     CKDPWebAuthTokenRetrieveResponse * _webAuthTokenRetrieveResponse;
+  // ?     CKDPZoneDeleteResponse * _zoneDeleteResponse;
+  // ?     CKDPZoneRetrieveChangesResponse * _zoneRetrieveChangesResponse;
+  // 201   CKDPZoneRetrieveResponse * _zoneRetrieveResponse;
+  // ?     CKDPZoneSaveResponse * _zoneSaveResponse;
 }
 
-message RequestOperationHeader {  // CKDPRequestOperationHeader
+message RequestOperationHeader {
   optional string applicationContainer = 2;
   optional string applicationBundle = 3;
   optional Identifier deviceIdentifier = 7;
@@ -100,7 +150,7 @@ message RequestOperationHeader {  // CKDPRequestOperationHeader
   optional uint32 f23 = 23;
   optional uint32 f25 = 25;
 
-
+  // CKDPRequestOperationHeader
       //NSString * _applicationBundle;
   //unsigned long long  _applicationConfigVersion;
       //NSString * _applicationContainer;
@@ -140,10 +190,16 @@ message RequestOperationHeader {  // CKDPRequestOperationHeader
 
 }
 
-message Message {
+message Operation {
   optional string uuid = 1;
   optional uint32 type = 2;
   optional uint32 f4 = 4;
+
+  // CKDPOperation
+  //    BOOL  _last;
+  //    NSString * _operationUUID;
+  //    BOOL  _synchronousMode;
+  //    int  _type;
 }
 
 message QueryRetrieveRequest {
@@ -381,20 +437,35 @@ message FileToken {
 
 }
 
-message Asset { // TODO rename to file attribute or similar
-  optional string dsPrsID = 1; // Or dsid
+message Asset {
+  optional string dsPrsID = 1;
   optional bytes fileChecksum = 2;  // fileChecksum
-  optional uint64 size = 4; // guesstimate
-  optional string token = 5;
-  optional string contentBaseURL = 8; // content url
-  optional string dsid = 9; // Or dsPrsID
+  optional uint64 size = 4;
+  optional string downloadToken = 5;
+  optional string contentBaseURL = 8;
+  optional string dsid = 9;
   repeated bytes f15 = 15; // 192 bit something or other
   optional bytes fileSignature = 17; // 90% certain of this
   optional uint64 timestamp = 18;
 
-  // dsid/ dsPrsID order? does it really matter? are they not always the same???
-  // candidates for unknowns
-  // file checksum, sha256, file signature, encryption key,
+  // CKDPAsset
+  // 8?9  NSString * _contentBaseURL;
+  // ?    NSData * _data;
+  // ?    NSString * _derivedContentType;
+  // ?    NSString * _downloadBaseURL;
+  // ?    NSData * _downloadRequest;
+  // 5    NSString * _downloadToken;
+  // ?    long long  _downloadTokenExpiration;
+  // ?    long long  _downloadURLExpiration;
+  // ?    NSData * _header;
+  // ?1 9 NSString * _owner;
+  // ?    CKDPProtectionInfo * _protectionInfo;
+  // ?    CKDPRecordIdentifier * _recordId;
+  // ?2 1 NSData * _referenceSignature;
+  // ?9 1 NSString * _requestor;
+  // ?1 2 NSData * _signature;
+  // 4    long long  _size;
+  // ?    NSString * _uploadReceipt;
 }
 
 message Fixed64Pair { // References?
@@ -455,12 +526,6 @@ message Zone {
 // 1   CKDPRecordZoneIdentifier * _zoneIdentifier;
 }
 
-
-
-
-
-// fixed64 could be dates
-// consider handle suffix for id + X
 // can try passing malformed fields, the server sometimes returns an error giving us the field name
 // naming conventions for boxed/ unboxed pairs
 // probably missing repeated types

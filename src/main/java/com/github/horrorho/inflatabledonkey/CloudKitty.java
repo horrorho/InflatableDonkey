@@ -48,7 +48,7 @@ public final class CloudKitty {
             .build();
 
     private final Headers coreHeaders;
-    private final InputStreamResponseHandler<List<CloudKit.Response>> responseHandler;
+    private final InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler;
     private final CloudKit.RequestOperationHeader requestOperationHeaderProto;
     private final CloudKit.Identifier userId;
     private final CKInit init;
@@ -59,7 +59,7 @@ public final class CloudKitty {
             String cloudKitToken,
             String deviceID,
             Headers coreHeaders,
-            InputStreamResponseHandler<List<CloudKit.Response>> responseHandler) {
+            InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler) {
 
         this.coreHeaders = Objects.requireNonNull(coreHeaders);
         this.responseHandler = Objects.requireNonNull(responseHandler);
@@ -99,7 +99,7 @@ public final class CloudKitty {
                 .setOperation(ckdFetchRecordZonesOperation)
                 .build();
 
-        CloudKit.Message message = CloudKit.Message.newBuilder()
+        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
                 .setUuid(UUID.randomUUID().toString())
                 .setType(201)
                 .setF4(1)
@@ -115,12 +115,12 @@ public final class CloudKitty {
                 .setZoneIdentifier(recordZoneID)
                 .build();
 
-        CloudKit.Request request = CloudKit.Request.newBuilder()
+        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
                 .setRequestOperationHeader(requestOperationHeader)
-                .setMessage(message)
+                .setRequest(operation)
                 .setZoneRetrieveRequest(requestProto)
                 .build();
-        logger.debug("-- zoneRetrieveRequest() request: {}", request);
+        logger.debug("-- zoneRetrieveRequest() request: {}", requestOperation);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 init.production().url() + "/record/retrieve",
@@ -129,15 +129,15 @@ public final class CloudKitty {
                 init.cloudKitUserId(),
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                Arrays.asList(request),
+                Arrays.asList(requestOperation),
                 coreHeaders);
 
-        List<CloudKit.Response> response = httpClient.execute(uriRequest, responseHandler);
+        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
 
         logger.debug("-- zoneRetrieveRequest() response: {}", response);
 
         return response.stream()
-                .map(CloudKit.Response::getZoneRetrieveResponse)
+                .map(CloudKit.ResponseOperation::getZoneRetrieveResponse)
                 .collect(Collectors.toList());
     }
 
@@ -153,7 +153,7 @@ public final class CloudKitty {
                 .setOperation(ckdFetchRecordZonesOperation)
                 .build();
 
-        CloudKit.Message message = CloudKit.Message.newBuilder()
+        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
                 .setUuid(UUID.randomUUID().toString())
                 .setType(211)
                 .setF4(1)
@@ -175,12 +175,12 @@ public final class CloudKitty {
                 .setF6(one)
                 .build();
 
-        CloudKit.Request request = CloudKit.Request.newBuilder()
+        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
                 .setRequestOperationHeader(requestOperationHeader)
-                .setMessage(message)
+                .setRequest(operation)
                 .setRecordRetrieveRequest(recordRetrieveRequest)
                 .build();
-        logger.debug("-- recordRetrieveRequest() request: {}", request);
+        logger.debug("-- recordRetrieveRequest() request: {}", requestOperation);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 init.production().url() + "/record/retrieve",
@@ -189,14 +189,14 @@ public final class CloudKitty {
                 init.cloudKitUserId(),
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                Arrays.asList(request),
+                Arrays.asList(requestOperation),
                 coreHeaders);
 
-        List<CloudKit.Response> response = httpClient.execute(uriRequest, responseHandler);
+        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
         logger.debug("-- recordRetrieveRequest() response: {}", response);
 
         return response.stream()
-                .map(CloudKit.Response::getRecordRetrieveResponse)
+                .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
                 .collect(Collectors.toList());
     }
 
@@ -212,7 +212,7 @@ public final class CloudKitty {
                 .setOperation(ckdQueryOperation)
                 .build();
 
-        CloudKit.Message message = CloudKit.Message.newBuilder()
+        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
                 .setUuid(UUID.randomUUID().toString())
                 .setType(220)
                 .setF4(1)
@@ -255,12 +255,12 @@ public final class CloudKitty {
                 .setF6(CloudKit.UInt32.newBuilder().setValue(1))
                 .build();
 
-        CloudKit.Request request = CloudKit.Request.newBuilder()
+        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
                 .setQueryRetrieveRequest(keybagQueryRetrieveQuest)
                 .setRequestOperationHeader(requestOperationHeader)
-                .setMessage(message)
+                .setRequest(operation)
                 .build();
-        logger.debug("-- queryRetrieveRequest() request: {}", request);
+        logger.debug("-- queryRetrieveRequest() request: {}", requestOperation);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 init.production().url() + "/query/retrieve",
@@ -269,14 +269,14 @@ public final class CloudKitty {
                 init.cloudKitUserId(),
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                Arrays.asList(request),
+                Arrays.asList(requestOperation),
                 coreHeaders);
 
-        List<CloudKit.Response> response = httpClient.execute(uriRequest, responseHandler);
+        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
         logger.debug("-- queryRetrieveRequest() response: {}", response);
 
         return response.stream()
-                .map(CloudKit.Response::getQueryRetrieveRequestResponse)
+                .map(CloudKit.ResponseOperation::getQueryRetrieveRequestResponse)
                 .collect(Collectors.toList());
     }
 }

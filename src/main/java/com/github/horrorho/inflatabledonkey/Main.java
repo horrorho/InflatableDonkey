@@ -158,7 +158,7 @@ public class Main {
                 ? null
                 : new RawProtoDecoder(protocPath);
 
-        IOFunction<InputStream, List<CloudKit.Response>> spyDecode
+        IOFunction<InputStream, List<CloudKit.ResponseOperation>> spyDecode
                 = input -> {
                     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                         IOUtils.copy(input, baos);
@@ -171,7 +171,7 @@ public class Main {
                             logger.debug("-- main() - raw decode: no protoc decoder specified");
                         }
 
-                        return ProtoBufArray.decode(new ByteArrayInputStream(baos.toByteArray()), CloudKit.Response.PARSER);
+                        return ProtoBufArray.decode(new ByteArrayInputStream(baos.toByteArray()), CloudKit.ResponseOperation.PARSER);
 
                     } catch (InterruptedException ex) {
                         // Unchecked rethrow.
@@ -179,7 +179,7 @@ public class Main {
                     }
                 };
 
-        InputStreamResponseHandler<List<CloudKit.Response>> ckResponseHandler
+        InputStreamResponseHandler<List<CloudKit.ResponseOperation>> ckResponseHandler
                 = new InputStreamResponseHandler<>(spyDecode);
 
         // Default HttpClient.
