@@ -13,8 +13,8 @@ option java_outer_classname = "CloudKit";
 message Request { // CKDPRequestOperation
   optional RequestOperationHeader requestOperationHeader = 1;
   optional Message message = 2;
-  optional M201Request m201Request = 201;
-  optional M211Request m211Request = 211;
+  optional ZoneRetrieveRequest zoneRetrieveRequest = 201;
+  optional RecordRetrieveRequest recordRetrieveRequest = 211;
   optional QueryRetrieveRequest queryRetrieveRequest = 220;
   // CKDPRequestOperation
   // ?     CKDPAssetUploadTokenRetrieveRequest * _assetUploadTokenRetrieveRequest;
@@ -67,7 +67,7 @@ message Request { // CKDPRequestOperation
   // ?     CKDPWebAuthTokenRetrieveRequest * _webAuthTokenRetrieveRequest;
   // ?     CKDPZoneDeleteRequest * _zoneDeleteRequest;
   // ?     CKDPZoneRetrieveChangesRequest * _zoneRetrieveChangesRequest;
-  // ?     CKDPZoneRetrieveRequest * _zoneRetrieveRequest;
+  // 201     CKDPZoneRetrieveRequest * _zoneRetrieveRequest;
   // ?     CKDPZoneSaveRequest * _zoneSaveRequest;
 }
 
@@ -75,7 +75,7 @@ message Response { // CKDPResponseOperation
   optional uint32 operationCost = 1;
   optional Message message = 2;
   optional ResponseOperationResult result = 3;
-  optional M201Response m201Response = 201;
+  optional ZoneRetrieveResponse zoneRetrieveResponse = 201;
   optional RecordRetrieveResponse recordRetrieveResponse = 211;
   optional QueryRetrieveRequestResponse queryRetrieveRequestResponse = 220;
 }
@@ -146,22 +146,6 @@ message Message {
   optional uint32 f4 = 4;
 }
 
-message M201Request {
-  optional RecordZoneIdentifier recordZoneID = 1; // Possibly repeated
-}
-
-message M201Response {
-  optional M201ResponseBody body = 1;
-}
-
-message M201ResponseBody {
-//  optional OpResult result = 1;
-//  optional bytes f2 = 2;
-//  optional uint32 f4 = 4;
-//  optional uint32 f5 = 5;
-//  optional uint32 f6 = 6;
-}
-
 message QueryRetrieveRequest {
   optional Query query = 1;
   optional RecordZoneIdentifier zoneIdentifier = 4;
@@ -196,15 +180,16 @@ message QueryRetrieveRequestResponseQueryResult {
   // 3?  int  _type;
 }
 
-message M211Request { // CKDPRecordRetrieveRequest ?
+message RecordRetrieveRequest {
   optional RecordIdentifier recordID = 1;
   optional UInt32 f6 = 6;
 
-  //  NSString * _clientVersionETag;
-  //  CKDPRecordRetrieveRequestRetrieveAssetURL * _getAssetURL;
-  //  CKDPRecordIdentifier * _recordIdentifier;
-  //  CKDPRequestedFields * _requestedFields;
-  //  NSString * _versionETag;
+  // CKDPRecordRetrieveRequest - M211
+  // ?  NSString * _clientVersionETag;
+  // ?  CKDPRecordRetrieveRequestRetrieveAssetURL * _getAssetURL;
+  // 1  CKDPRecordIdentifier * _recordIdentifier;
+  // ?  CKDPRequestedFields * _requestedFields;
+  // ?  NSString * _versionETag;
 }
 
 message RecordRetrieveResponse {
@@ -381,11 +366,6 @@ message RecordZoneIdentifier { // CKDPRecordZoneIdentifier.
   optional Identifier ownerIdentifier = 2;
 }
 
-message String {  // TODO remove, this is wrong. Probably should be using Identifier.
-  optional string value = 1;
-  optional uint32 encoding = 2; // encoding
-}
-
 message FileTokens {
   repeated FileToken fileTokens = 1;
 }
@@ -426,10 +406,6 @@ message Fixed64 {  // Reference? Record_Response_211_1_7_2_11_6
   optional fixed64 value = 1;
 }
 
-message Strings { // StringArray
-  repeated String name = 1;
-}
-
 message String32 {
   optional fixed32 value = 1;
 }
@@ -441,6 +417,48 @@ message String64 {
 message UInt32 {
   optional uint32 value = 1;
 }
+
+
+message ZoneRetrieveRequest {
+  optional  RecordZoneIdentifier zoneIdentifier = 1;
+
+  // CKDPZoneRetrieveRequest - M201
+  // 1  CKDPRecordZoneIdentifier * _zoneIdentifier;
+}
+
+message ZoneRetrieveResponse {
+  repeated ZoneRetrieveResponseZoneSummary zoneSummarys = 1;
+
+  // CKDPZoneRetrieveResponse
+  // 1  NSMutableArray * _zoneSummarys;
+}
+
+message ZoneRetrieveResponseZoneSummary {
+  optional Zone targetZone = 1;
+
+  // CKDPZoneRetrieveResponseZoneSummary
+  // ?4 5 6  long long  _assetQuotaUsage;
+  // ?2      NSData * _clientChangeToken;
+  // ?2      NSData * _currentServerContinuationToken;
+  // ?4 5 6  int  _deviceCount;
+  // ?4 5 6  long long  _metadataQuotaUsage;
+  // 1       CKDPZone * _targetZone;
+}
+
+message Zone {
+  optional RecordZoneIdentifier zoneIdentifier = 1;
+  optional ProtectionInfo protectionInfo = 3;
+
+// CKDPZone
+// ?2  NSString * _etag;
+// 3   CKDPProtectionInfo * _protectionInfo;
+// 1   CKDPRecordZoneIdentifier * _zoneIdentifier;
+}
+
+
+
+
+
 // fixed64 could be dates
 // consider handle suffix for id + X
 // can try passing malformed fields, the server sometimes returns an error giving us the field name
