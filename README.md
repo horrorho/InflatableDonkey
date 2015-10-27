@@ -58,7 +58,7 @@ Select the first device, second snapshot, tenth manifest, first non-empty file.
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --manifest 9
 ```
 
-Protoc --decode_raw logging. Recommended as the protobuf definitions are incomplete. Specify the path to the protoc executable or leave blank to default to 'protoc' on the default path/s.
+[Protoc](https://developers.google.com/protocol-buffers) --decode_raw logging. Specify the path to the protoc executable or leave blank to default to 'protoc' on the default path/s.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --protoc
 ```
