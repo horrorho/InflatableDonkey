@@ -1,15 +1,74 @@
 // Ahseya https://github.com/horrorho
 // ItsASmallWorld https://github.com/ItsASmallWorld
+// Partial CloudKit protobuf
 
 option java_package = "com.github.horrorho.inflatabledonkey.protocol";
 option java_outer_classname = "CloudKit";
+
+
+// Appear to be more operations than message types.
+// Possibly another abstraction layer in place.
+// Requests converted to the appropriate Mxxx type.
 
 message Request { // CKDPRequestOperation
   optional RequestOperationHeader requestOperationHeader = 1;
   optional Message message = 2;
   optional M201Request m201Request = 201;
   optional M211Request m211Request = 211;
-
+  optional QueryRetrieveRequest queryRetrieveRequest = 220;
+  // CKDPRequestOperation
+  // ?     CKDPAssetUploadTokenRetrieveRequest * _assetUploadTokenRetrieveRequest;
+  // ?     CKDPDeleteCommentRequest * _deleteCommentRequest;
+  // ?     CKDPDeleteContainerRequest * _deleteContainerRequest;
+  // ?     CKDPGetCommentRequest * _getCommentRequest;
+  // ?     CKDPGetCommentsRequest * _getCommentsRequest;
+  // ?     CKDPGetLikesRequest * _getLikesRequest;
+  // ?     CKDPRequestOperationHeader * _header;
+  // ?     CKDPLikeRequest * _likeRequest;
+  // ?     CKDPMescalCertificateRequest * _mescalCertificateRequest;
+  // ?     CKDPMescalSessionInfoRequest * _mescalSessionInfoRequest;
+  // ?     CKDPMescalSignatureRequest * _mescalSignatureRequest;
+  // ?     CKDPNotificationMarkReadRequest * _notificationMarkReadRequest;
+  // ?     CKDPNotificationSyncRequest * _notificationSyncRequest;
+  // ?     CKDPPkiRegisterRequest * _pkiRegisterRequest;
+  // ?     CKDPPkiRetrieveRequest * _pkiRetrieveRequest;
+  // ?     CKDPPostCommentRequest * _postCommentRequest;
+  // ?     CKDPPromoteContainerSchemaRequest * _promoteContainerSchemaRequest;
+  // ?     CKDPPulseRequest * _pulseRequest;
+  // ?     CKDPQueryRetrieveRequest * _queryRetrieveRequest;
+  // ?     CKDPRecordDeleteRequest * _recordDeleteRequest;
+  // ?     CKDPRecordRetrieveChangesRequest * _recordRetrieveChangesRequest;
+  // 211   CKDPRecordRetrieveRequest * _recordRetrieveRequest;
+  // ?     CKDPRecordRetrieveVersionsRequest * _recordRetrieveVersionsRequest;
+  // ?     CKDPRecordSaveRequest * _recordSaveRequest;
+  // ?     CKDPOperation * _request;
+  // ?     CKDPResetContainerRequest * _resetContainerRequest;
+  // ?     CKDPSetBadgeCountRequest * _setBadgeCountRequest;
+  // ?     CKDPShareAcceptRequest * _shareAcceptRequest;
+  // ?     CKDPShareDeleteRequest * _shareDeleteRequest;
+  // ?     CKDPShareRetrieveRequest * _shareRetrieveRequest;
+  // ?     CKDPShareSaveRequest * _shareSaveRequest;
+  // ?     CKDPShareTokenDeleteRequest * _shareTokenDeleteRequest;
+  // ?     CKDPShareTokenRetrieveRequest * _shareTokenRetrieveRequest;
+  // ?     CKDPShareTokenSaveRequest * _shareTokenSaveRequest;
+  // ?     CKDPSubscriptionCreateRequest * _subscriptionCreateRequest;
+  // ?     CKDPSubscriptionDeleteRequest * _subscriptionDeleteRequest;
+  // ?     CKDPSubscriptionRetrieveRequest * _subscriptionRetrieveRequest;
+  // ?     CKDPTokenRegistrationRequest * _tokenRegistrationRequest;
+  // ?     CKDPTokenUnregistrationRequest * _tokenUnregistrationRequest;
+  // ?     CKDPUnlikeRequest * _unlikeRequest;
+  // ?     CKDPUserAvailableQuotaRequest * _userAvailableQuotaRequest;
+  // ?     CKDPUserPrivacySettingsBatchLookupRequest * _userPrivacySettingsBatchLookupRequest;
+  // ?     CKDPUserPrivacySettingsResetRequest * _userPrivacySettingsResetRequest;
+  // ?     CKDPUserPrivacySettingsRetrieveRequest * _userPrivacySettingsRetrieveRequest;
+  // ?     CKDPUserPrivacySettingsUpdateRequest * _userPrivacySettingsUpdateRequest;
+  // ?     CKDPUserQueryRequest * _userQueryRequest;
+  // ?     CKDPUserRetrieveRequest * _userRetrieveRequest;
+  // ?     CKDPWebAuthTokenRetrieveRequest * _webAuthTokenRetrieveRequest;
+  // ?     CKDPZoneDeleteRequest * _zoneDeleteRequest;
+  // ?     CKDPZoneRetrieveChangesRequest * _zoneRetrieveChangesRequest;
+  // ?     CKDPZoneRetrieveRequest * _zoneRetrieveRequest;
+  // ?     CKDPZoneSaveRequest * _zoneSaveRequest;
 }
 
 message Response { // CKDPResponseOperation
@@ -18,10 +77,7 @@ message Response { // CKDPResponseOperation
   optional ResponseOperationResult result = 3;
   optional M201Response m201Response = 201;
   optional RecordRetrieveResponse recordRetrieveResponse = 211;
-
-  // Appear to be more operations than message types.
-  // Possibly duplicated message types.
-  // May need an map.
+  optional QueryRetrieveRequestResponse queryRetrieveRequestResponse = 220;
 }
 
 message RequestOperationHeader {  // CKDPRequestOperationHeader
@@ -106,27 +162,65 @@ message M201ResponseBody {
 //  optional uint32 f6 = 6;
 }
 
-message M211Request { // CKDPRecordRetrieveRequest
+message QueryRetrieveRequest {
+  optional Query query = 1;
+  optional RecordZoneIdentifier zoneIdentifier = 4;
+  optional RequestedFields requestedFields = 5;
+  optional UInt32 f6 = 6;
+
+// CKDPQueryRetrieveRequest - M220
+// ?6   NSData * _continuationMarker;
+// ?   unsigned int  _limit;
+// 1   CKDPQuery * _query;
+// 5   CKDPRequestedFields * _requestedFields;
+// 4   CKDPRecordZoneIdentifier * _zoneIdentifier;
+}
+
+message QueryRetrieveRequestResponse {
+  optional QueryRetrieveRequestResponseQueryResult results = 1;
+
+  // CKDPQueryRetrieveResponse - M220
+  // ?  NSData * _continuationMarker;
+  // 1  NSMutableArray * _queryResults;
+}
+
+message QueryRetrieveRequestResponseQueryResult {
+  optional RecordIdentifier identifier = 1;
+  optional uint32 type = 3;
+  optional Record record = 4;
+
+  // CKDPQueryRetrieveRequestResponseQueryResult
+  // ?   NSString * _etag;
+  // 1   CKDPRecordIdentifier * _identifier;
+  // 4   CKDPRecord * _record;
+  // 3?  int  _type;
+}
+
+message M211Request { // CKDPRecordRetrieveRequest ?
   optional RecordIdentifier recordID = 1;
   optional UInt32 f6 = 6;
+
+  //  NSString * _clientVersionETag;
+  //  CKDPRecordRetrieveRequestRetrieveAssetURL * _getAssetURL;
+  //  CKDPRecordIdentifier * _recordIdentifier;
+  //  CKDPRequestedFields * _requestedFields;
+  //  NSString * _versionETag;
 }
 
-message RecordRetrieveResponse { // CKDPRecordRetrieveResponse - M211
+message RecordRetrieveResponse {
   optional Record record = 1;
   optional bool clientVersionETagMatch = 2;
+
+  // CKDPRecordRetrieveResponse - M211
+  // 2  BOOL  _clientVersionETagMatch;
+  // 1  CKDPRecord * _record;
 }
 
-message Record { // CKDPRecord
-  optional string etag= 1; // Probably
-  optional RecordIdentifier RecordIdentifier = 2;
-  optional RecordType type = 3;
-  optional Identifier createdBy = 4; // Possibly 9
-  optional DateStatistics timeStatistics = 5;
-  repeated RecordField recordField = 7;
-  optional Identifier modifiedBy = 9; // Possibly 4
-  optional string modifiedByDevice = 11;
-  optional ProtectionInfo protectionInfo = 13;
-  optional uint32 permission = 15; // Probably.
+message RequestedFields {
+  repeated string field = 1;
+
+  // CKDPRequestedFields
+  // 1  NSMutableArray * _fields;
 }
 
 message ResponseOperationResult { // CKDPResponseOperationResult
@@ -134,24 +228,35 @@ message ResponseOperationResult { // CKDPResponseOperationResult
   optional Error error = 2; // TODO CKDPResponseOperationResultError
 }
 
-message Error {
+message Error { // TODO expand to CKDPResponseOperationResultError
   optional UInt32 code = 1;
   optional string message = 4;
   optional string id = 5;
 }
 
-message DateStatistics { // CKDPDateStatistics
+message DateStatistics {
   optional Date creation = 1;
   optional Date modification = 2;
+
+  // CKDPDateStatistics
+  // 1  CKDPDate * _creation;
+  // 2  CKDPDate * _modification;
 }
 
-message Date { // CKDPDate
-  optional uint64 time = 1;
+message Date {
+  optional double time = 1;
+
+  // CKDPDate
+  // 1  double  _time;
 }
 
-message Identifier { // CKDPIdentifier.
+message Identifier {
   optional string name = 1;
   optional uint32 type = 2;
+
+  // CKDPIdentifier
+  // 1  NSString * _name;
+  // 2  int  _type;
 }
 
 message Locale { // CKDPLocale
@@ -166,12 +271,74 @@ message ProtectionInfo { // CKDPProtectionInfo
   optional string protectionInfoTag  = 2;
 }
 
+message Query {
+  repeated RecordType type = 1;
+  repeated QueryFilter filter = 2;
+  optional uint32 queryOperator = 4; // Or possibly  bool distinct
+
+  // CKDPQuery
+  // ?4  BOOL  _distinct;
+  // 2   NSMutableArray * _filters;
+  // 4?  int  _queryOperator;
+  // ?   NSMutableArray * _sorts;
+  // 1   NSMutableArray * _types;
+}
+
+message QueryFilter {
+  optional RecordFieldIdentifier fieldName = 1;
+  optional RecordFieldValue fieldValue = 2;
+  optional uint32 type = 4;
+
+  // CKDPQueryFilter
+  // ?  CKDPLocationBound * _bounds;
+  // 1  CKDPRecordFieldIdentifier * _fieldName;
+  // 2  CKDPRecordFieldValue * _fieldValue;
+  // 4  int  _type;
+}
+
+message Record {
+  optional string etag= 1; // Probably
+  optional RecordIdentifier RecordIdentifier = 2;
+  optional RecordType type = 3;
+  optional Identifier createdBy = 4; // Possibly 9
+  optional DateStatistics timeStatistics = 5;
+  repeated RecordField recordField = 7;
+  optional Identifier modifiedBy = 9; // Possibly 4
+  optional string modifiedByDevice = 11;
+  optional ProtectionInfo protectionInfo = 13;
+  optional uint32 permission = 15; // Probably.
+
+  // CKDPRecord
+  // ?    NSMutableArray * _conflictLoserEtags;
+  // 4/9  CKDPIdentifier * _createdBy;
+  // 2    NSString * _etag;
+  // 7    NSMutableArray * _fields;
+  // 9/4  CKDPIdentifier * _modifiedBy;
+  // 11   NSString * _modifiedByDevice;
+  // 15?  int  _permission;
+  // ?    NSMutableArray * _pluginFields;
+  // 13   CKDPProtectionInfo * _protectionInfo;
+  // 2    CKDPRecordIdentifier * _recordIdentifier;
+  // ?    CKDPShareIdentifier * _shareId;
+  // 5    CKDPDateStatistics * _timeStatistics;
+  // 3    CKDPRecordType * _type;
+}
+
 message RecordField { // CKDPRecordField.
   optional RecordFieldIdentifier id = 1;
   optional RecordFieldValue value = 2;
 }
 
-message RecordFieldValue { // CKDPRecordFieldValue
+message RecordReference {
+  optional uint32 type = 1;
+  optional RecordIdentifier recordIdentifier = 2;
+
+  // CKDPRecordReference.h
+  // 2   CKDPRecordIdentifier * _recordIdentifier;
+  // 1   int  _type;
+}
+
+message RecordFieldValue {
   optional uint32 type = 1;
   optional bytes bytesValue = 2;
   optional uint32 uint32 = 4;
@@ -181,35 +348,24 @@ message RecordFieldValue { // CKDPRecordFieldValue
   optional Asset assetValue = 10;
   repeated RecordFieldValue recordFieldValue = 11;
 
-      // CKDPAsset * _assetValue;
-      // NSData * _bytesValue;
-      // CKDPDate * _dateValue;
-  // double  _doubleValue;
-      // struct {
-      //     unsigned int doubleValue : 1;
-      //     unsigned int signedValue : 1;
-      //     unsigned int type : 1;
-      // }  _has;
-      // NSMutableArray * _listValues;
-  // CKDPLocationCoordinate * _locationValue;
-  // CKDPPackage * _packageValue;
-      // CKDPRecordReference * _referenceValue;
-  // long long  _signedValue;
-      // NSString * _stringValue;
-      // int  _type;
+  // CKDPRecordFieldValue
+  // 10  CKDPAsset * _assetValue;
+  // 2   NSData * _bytesValue;
+  // 6   CKDPDate * _dateValue;
+  // ?   CKDPLocationCoordinate * _locationValue;
+  // ?   CKDPPackage * _packageValue;
+  // 9   CKDPRecordReference * _referenceValue;
+  // ?   long long  _signedValue;
+  // 7   NSString * _stringValue;
+  // 1   int  _type;
 }
 
 message RecordType {
   optional string name = 1;
+
+  // CKDPRecordType
+  // 1 NSString * _name;
 }
-
-message RecordReference { // CKDPRecordReference.h (but uint32 = 2 doesn't match enum?)
-  optional uint32 type = 1;
-  optional RecordIdentifier recordIdentifier = 2;
-}
-
-
-
 
 message RecordIdentifier {  // CKDPRecordIdentifier.
   optional Identifier value = 1;
