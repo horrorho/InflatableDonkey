@@ -34,6 +34,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -50,15 +51,9 @@ public final class RawProtoDecoder {
     private static final Logger logger = LoggerFactory.getLogger(RawProtoDecoder.class);
 
     private final String protocPath;
-    private final int bufferSize;
-
-    public RawProtoDecoder(String protocPath, int bufferSize) {
-        this.protocPath = protocPath;
-        this.bufferSize = bufferSize;
-    }
 
     public RawProtoDecoder(String protocPath) {
-        this(protocPath, 4096);
+        this.protocPath = protocPath;
     }
 
     public RawProtoDecoder() {
@@ -81,7 +76,7 @@ public final class RawProtoDecoder {
                 IOUtils.copy(protoBytes, execOut);
             }
 
-            exec.waitFor();
+            boolean completed = exec.waitFor(15, TimeUnit.SECONDS);
 
             try (BufferedReader br = new BufferedReader(new InputStreamReader(exec.getInputStream()))) {
                 StringWriter decoded = new StringWriter();
@@ -89,7 +84,7 @@ public final class RawProtoDecoder {
 
                 br.lines().forEach(print::println);
 
-                return decoded.toString();
+                return decoded.toString() + (completed ? "" : "\nIncomplete\n");
             }
 
         } finally {
@@ -100,10 +95,13 @@ public final class RawProtoDecoder {
     public List<String> decodeProtos(InputStream protoArrayBytes) throws IOException, InterruptedException {
         List<byte[]> split = split(protoArrayBytes);
 
+        logger.debug("-- decodeProtos() - split: {}", split);
+
         List<String> decoded = new ArrayList<>();
         for (byte[] protoBytes : split) {
-            decoded.add(decodeProto(new ByteArrayInputStream(protoBytes)));
+            logger.debug("-- decodeProtos() - protoBytes: {}", protoBytes.length);
 
+            decoded.add(decodeProto(new ByteArrayInputStream(protoBytes)));
         }
         return decoded;
     }
@@ -112,8 +110,13 @@ public final class RawProtoDecoder {
         try {
             CodedInputStream stream = CodedInputStream.newInstance(arrayBytes);
             List<byte[]> list = new ArrayList<>();
+
             while (!stream.isAtEnd()) {
                 int size = stream.readRawVarint32();
+                if (size == 0) {
+                    break;
+                }
+
                 byte[] element = stream.readRawBytes(size);
                 list.add(element);
             }

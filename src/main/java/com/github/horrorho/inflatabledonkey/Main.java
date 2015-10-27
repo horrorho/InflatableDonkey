@@ -131,8 +131,11 @@ public class Main {
             snapshotIndex = intArgument.apply(Property.SELECT_SNAPSHOT_INDEX);
             manifestIndex = intArgument.apply(Property.SELECT_MANIFEST_INDEX);
 
-            protocPath = getProperty.apply(Property.PROTOC_PATH);
-
+            protocPath = arguments.containsKey(Property.PROTOC_PATH)
+                    ? arguments.get(Property.PROTOC_PATH) == null
+                            ? Property.PROTOC_PATH.defaultValue()
+                            : arguments.get(Property.PROTOC_PATH)
+                    : null;
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
@@ -158,29 +161,8 @@ public class Main {
                 ? null
                 : new RawProtoDecoder(protocPath);
 
-        IOFunction<InputStream, List<CloudKit.ResponseOperation>> spyDecode
-                = input -> {
-                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                        IOUtils.copy(input, baos);
-
-                        if (rawProtoDecoder != null) {
-                            List<String> rawProtos = rawProtoDecoder.decodeProtos(new ByteArrayInputStream(baos.toByteArray()));
-                            logger.debug("-- main() - raw decode: {}", rawProtos);
-
-                        } else {
-                            logger.debug("-- main() - raw decode: no protoc decoder specified");
-                        }
-
-                        return ProtoBufArray.decode(new ByteArrayInputStream(baos.toByteArray()), CloudKit.ResponseOperation.PARSER);
-
-                    } catch (InterruptedException ex) {
-                        // Unchecked rethrow.
-                        throw new RuntimeException(ex);
-                    }
-                };
-
         InputStreamResponseHandler<List<CloudKit.ResponseOperation>> ckResponseHandler
-                = new InputStreamResponseHandler<>(spyDecode);
+                = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(rawProtoDecoder));
 
         // Default HttpClient.
         HttpClient httpClient = HttpClients.createDefault();
@@ -295,7 +277,7 @@ public class Main {
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .filter(value -> value.getId().getName().equals("devices"))
+                .filter(value -> value.getIdentifier().getName().equals("devices"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
@@ -338,7 +320,7 @@ public class Main {
                 .collect(Collectors.toList());
 
         List<String> snapshots = recordFieldsC.stream()
-                .filter(value -> value.getId().getName().equals("snapshots"))
+                .filter(value -> value.getIdentifier().getName().equals("snapshots"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
@@ -350,7 +332,7 @@ public class Main {
         logger.info("-- main() - snapshots: {}", snapshots);
 
         String keybagUUID = recordFieldsC.stream()
-                .filter(value -> value.getId().getName().equals("currentKeybagUUID"))
+                .filter(value -> value.getIdentifier().getName().equals("currentKeybagUUID"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getStringValue)
                 .findFirst()
@@ -390,7 +372,7 @@ public class Main {
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .filter(value -> value.getId().getName().equals("manifestIDs"))
+                .filter(value -> value.getIdentifier().getName().equals("manifestIDs"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
@@ -433,7 +415,7 @@ public class Main {
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .filter(c -> c.getId().getName().equals("files"))
+                .filter(c -> c.getIdentifier().getName().equals("files"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
@@ -495,7 +477,7 @@ public class Main {
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .filter(c -> c.getId().getName().equals("contents"))
+                .filter(c -> c.getIdentifier().getName().equals("contents"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getAssetValue)
                 .collect(Collectors.toList());
@@ -512,7 +494,7 @@ public class Main {
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .filter(c -> c.getId().getName().equals("encryptedAttributes"))
+                .filter(c -> c.getIdentifier().getName().equals("encryptedAttributes"))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getBytesValue)
                 .collect(Collectors.toList());

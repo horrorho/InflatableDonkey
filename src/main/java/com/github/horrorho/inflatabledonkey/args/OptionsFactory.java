@@ -75,8 +75,8 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
                 Property.SELECT_MANIFEST_INDEX);
         
         options.put(Option.builder().longOpt("protoc")
-                .desc("Protoc binary path, default: 'protoc', leave blank to disable")
-                .argName("path")
+                .desc("Protoc --decode_raw logging, null path defaults to 'protoc'")
+                .argName("protoc executable path")
                 .numberOfArgs(1)
                 .optionalArg(true) 
                 .build(),

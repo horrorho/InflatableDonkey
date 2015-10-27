@@ -1,6 +1,8 @@
+// Partial CloudKit protobuf definitions.
+// Reversed by:
 // Ahseya https://github.com/horrorho
 // ItsASmallWorld https://github.com/ItsASmallWorld
-// Partial CloudKit protobuf
+
 
 option java_package = "com.github.horrorho.inflatabledonkey.protocol";
 option java_outer_classname = "CloudKit";
@@ -151,43 +153,31 @@ message RequestOperationHeader {
   optional uint32 f25 = 25;
 
   // CKDPRequestOperationHeader
-      //NSString * _applicationBundle;
-  //unsigned long long  _applicationConfigVersion;
-      //NSString * _applicationContainer;
-  //int  _applicationContainerEnvironment;
-  //NSString * _applicationVersion;
-  //NSData * _clientChangeToken;
-      //NSString * _deviceAssignedName;
-      //unsigned long long  _deviceFlowControlBudget;
-      //unsigned long long  _deviceFlowControlBudgetCap;
-      //NSString * _deviceFlowControlKey;
-  //float  _deviceFlowControlRegeneration;
-      //NSString * _deviceHardwareID;
-      //NSString * _deviceHardwareVersion;
-      //CKDPIdentifier * _deviceIdentifier;
-      //NSString * _deviceLibraryName;
-      //NSString * _deviceLibraryVersion;
-  //unsigned long long  _deviceProtocolVersion;
-      //NSString * _deviceSoftwareVersion;
-  //unsigned long long  _globalConfigVersion;
-  //struct {
-  //    unsigned int applicationConfigVersion : 1;
-  //    unsigned int deviceFlowControlBudget : 1;
-  //    unsigned int deviceFlowControlBudgetCap : 1;
-  //    unsigned int deviceProtocolVersion : 1;
-  //    unsigned int globalConfigVersion : 1;
-  //    unsigned int applicationContainerEnvironment : 1;
-  //    unsigned int deviceFlowControlRegeneration : 1;
-  //    unsigned int isolationLevel : 1;
-  //    unsigned int targetDatabase : 1;
-  //}  _has;
-  //int  _isolationLevel;
-      //CKDPLocale * _locale;
-  //NSString * _mmcsProtocolVersion;
-  //int  _targetDatabase;
-  //NSString * _userIDContainerID;
-  //NSString * _userToken;
-
+  // 3     NSString * _applicationBundle;
+  //       unsigned long long  _applicationConfigVersion;
+  // 2     NSString * _applicationContainer;
+  // ?     int  _applicationContainerEnvironment;
+  // ?     NSString * _applicationVersion;
+  // ?     NSData * _clientChangeToken;
+  // 21    NSString * _deviceAssignedName;
+  // 13?   unsigned long long  _deviceFlowControlBudget;
+  // 14?   unsigned long long  _deviceFlowControlBudgetCap;
+  // 15??  NSString * _deviceFlowControlKey;
+  // ?     float  _deviceFlowControlRegeneration;
+  // ?     NSString * _deviceHardwareID;
+  // ?     NSString * _deviceHardwareVersion;
+  // 7     CKDPIdentifier * _deviceIdentifier;
+  // 10?   NSString * _deviceLibraryName;
+  // 11?   NSString * _deviceLibraryVersion;
+  // ?     unsigned long long  _deviceProtocolVersion;
+  // ?     NSString * _deviceSoftwareVersion;
+  // ?     unsigned long long  _globalConfigVersion;
+  //      _isolationLevel;
+  // 17   CKDPLocale * _locale;
+  // ?    NSString * _mmcsProtocolVersion;
+  // ?    int  _targetDatabase;
+  // ?    NSString * _userIDContainerID;
+  // ?    NSString * _userToken;
 }
 
 message Operation {
@@ -300,16 +290,26 @@ message Identifier {
   // 2  int  _type;
 }
 
-message Locale { // CKDPLocale
+message Locale {
   optional string languageCode = 1;
   optional string regionCode = 2;
   repeated string enabledKeyboard = 3;
   optional string activeKeyboard = 4;
+
+  // CKDPLocale
+  // 1  NSString * _activeKeyboard;
+  // 2  NSMutableArray * _enabledKeyboards;
+  // 3  NSString * _languageCode;
+  // 4  NSString * _regionCode;
 }
 
-message ProtectionInfo { // CKDPProtectionInfo
+message ProtectionInfo {
   optional bytes protectionInfo = 1;
   optional string protectionInfoTag  = 2;
+
+  // CKDPProtectionInfo
+  // 1  NSData * _protectionInfo;
+  // 2  NSString * _protectionInfoTag;
 }
 
 message Query {
@@ -365,9 +365,13 @@ message Record {
   // 3    CKDPRecordType * _type;
 }
 
-message RecordField { // CKDPRecordField.
-  optional RecordFieldIdentifier id = 1;
+message RecordField {
+  optional RecordFieldIdentifier identifier = 1;
   optional RecordFieldValue value = 2;
+
+  // CKDPRecordField.
+  // 1  CKDPRecordFieldIdentifier * _identifier;
+  // 2  CKDPRecordFieldValue * _value;
 }
 
 message RecordReference {
@@ -408,18 +412,29 @@ message RecordType {
   // 1 NSString * _name;
 }
 
-message RecordIdentifier {  // CKDPRecordIdentifier.
+message RecordIdentifier {
   optional Identifier value = 1;
   optional RecordZoneIdentifier zoneIdentifier = 2;
+
+  // CKDPRecordIdentifier.
+  // 1  CKDPIdentifier * _value;
+  // 2  CKDPRecordZoneIdentifier * _zoneIdentifier;
 }
 
-message RecordFieldIdentifier { // CKDPRecordFieldIdentifier.
+message RecordFieldIdentifier {
   optional string name = 1;
+
+  // CKDPRecordFieldIdentifier.
+  // 1  NSString * _name;
 }
 
-message RecordZoneIdentifier { // CKDPRecordZoneIdentifier.
+message RecordZoneIdentifier {
   optional Identifier value = 1;
   optional Identifier ownerIdentifier = 2;
+
+  // CKDPRecordZoneIdentifier.
+  // 2  CKDPIdentifier * _ownerIdentifier;
+  // 1  CKDPIdentifier * _value;
 }
 
 message FileTokens {
@@ -447,7 +462,7 @@ message Asset {
   optional RecordIdentifier recordId = 10;
   repeated bytes f15 = 15; // 192 bit something or other
   optional bytes fileSignature = 17; // 90% certain of this
-  optional uint64 timestamp = downloadTokenExpiration;
+  optional uint64 downloadTokenExpiration = 18;
 
   // CKDPAsset
   // 8?9  NSString * _contentBaseURL;
@@ -467,23 +482,6 @@ message Asset {
   // ?1 2 NSData * _signature;
   // 4    long long  _size;
   // ?    NSString * _uploadReceipt;
-}
-
-message Fixed64Pair { // References?
-  optional Fixed64 one = 1;
-  optional Fixed64 two = 2;
-}
-
-message Fixed64 {  // Reference? Record_Response_211_1_7_2_11_6
-  optional fixed64 value = 1;
-}
-
-message String32 {
-  optional fixed32 value = 1;
-}
-
-message String64 {
-  optional fixed64 value = 1;
 }
 
 message UInt32 {
@@ -528,8 +526,4 @@ message Zone {
 }
 
 // can try passing malformed fields, the server sometimes returns an error giving us the field name
-// naming conventions for boxed/ unboxed pairs
-// probably missing repeated types
-// naming is presently non-idiomatic
-// responsebodies represent nested types, to refactor
 // known message types: 200, 201, 202, 210, 211, 212, 213, 214, 220, 230, 240, 241, 242, 243, 300, 301, 302, 400, 800, 801, 802, 803, 804, 900, 901
