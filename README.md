@@ -30,7 +30,7 @@ usage: InflatableDonkey [OPTION]... (<token> | <appleid> <password>)
     --protoc <protoc executable path>   Protoc --decode_raw logging, null
                                         path defaults to 'protoc'
     --help                              Display this help and exit.
-    --token                             Display the dsPrsID:mmeAuthToken
+    --token                             Display dsPrsID:mmeAuthToken
                                         and exit.
 ```
 
@@ -108,7 +108,7 @@ Postulated steps and current status are as follows:
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
   8. Retrieve list of assets. Functional.
-  9. Retrieve asset tokens. Broken. EncryptedAttributes remains undecrypted. I suspect this contains the metadata required to manage/ decrypt our files c.f. [MBSFile](https://github.com/hackappcom/iloot/blob/master/icloud.proto).
+  9. Retrieve asset tokens. Partly broken. EncryptedAttributes remains undecrypted. I suspect this contains the metadata required to manage/ decrypt our files c.f. [MBSFile](https://github.com/hackappcom/iloot/blob/master/icloud.proto).
   10. AuthorizeGet. Functional.
   11. ChunkServer.FileGroups retrieval. Functional on a private tool(1).
   12. Assemble assets/ files. Functional on a private tool(1).
