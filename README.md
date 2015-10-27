@@ -22,11 +22,16 @@ The executable Jar is located at /target/InflatableDonkey.jar
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar --help
 usage: InflatableDonkey [OPTION]... (<token> | <appleid> <password>)
- -d,--device <int>     Device, default: 0 = first device.
- -s,--snapshot <int>   Snapshot, default: 0 = first snapshot.
- -m,--manifest <int>   Manifest, default: 0 = first manifest.
-    --help             Display this help and exit.
-    --token            Display the dsPrsID:mmeAuthToken and exit.
+ -d,--device <int>                      Device, default: 0 = first device.
+ -s,--snapshot <int>                    Snapshot, default: 0 = first
+                                        snapshot.
+ -m,--manifest <int>                    Manifest, default: 0 = first
+                                        manifest.
+    --protoc <protoc executable path>   Protoc --decode_raw logging, null
+                                        path defaults to 'protoc'
+    --help                              Display this help and exit.
+    --token                             Display the dsPrsID:mmeAuthToken
+                                        and exit.
 ```
 
 AppleId/ password.
@@ -51,6 +56,11 @@ The device, snapshot and manifest index can be specified, with 0 representing th
 Select the first device, second snapshot, tenth manifest, first non-empty file.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --manifest 9
+```
+
+Protoc --decode_raw logging. Recommended as the protobuf definitions are incomplete. Specify the path to the protoc executable or leave blank to default to 'protoc' on the default path/s.
+```
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --protoc
 ```
 
 Output snippet.
@@ -97,24 +107,28 @@ Postulated steps and current status are as follows:
   5. Backup list. Functional.
   6. Snapshot list. Functional.
   7. Manifest list. Functional.
-  8. Retrieve list of assets. Unknown -> now functional.
-  9. Retrieve asset tokens. Unknown -> now functional except encryptedAttributes remains undecrypted.
-  10. AuthorizeGet. Known if unchanged from iOS8. -> altered but now functional.
-  11. ChunkServer.FileGroups retrieval. Known if unchanged from iOS8.
-  12. Assemble assets/ files. Known if unchanged from iOS8.
-  13. Decrypt files. Known if unchanged from iOS8 -> altered, at present unknown/ broken.
+  8. Retrieve list of assets. Functional.
+  9. Retrieve asset tokens. Broken. EncryptedAttributes remains undecrypted. I suspect this contains the metadata required to manage/ decrypt our files c.f. [MBSFile](https://github.com/hackappcom/iloot/blob/master/icloud.proto).
+  10. AuthorizeGet. Functional.
+  11. ChunkServer.FileGroups retrieval. Functional on a private tool*.
+  12. Assemble assets/ files. Functional on a private tool*.
+  13. Decrypt files. Broken. Keybag retrieval functional but remains undecrypted.
+
+* Memory/ disk caching, multi-threaded chunk downloader proof of concept. Alpha version and overly complicated for this tool, I'll knock up a simple equivalent later this week.
 
 For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
 
 
 At present steps 8 and 9 remain undiscovered. If you have any additional information, we would love hear it! Please open a ticket and pour your heart out. However if you would prefer to remain under the radar, then email me directly.
 
-**Update**, 23 October 2015. Ok! I figured out step 8 and have updated the tool. The casualty being the cloud_kit.proto file, which is a complete mess. At some point it will need refactoring, cleaning and more idiomatic names applied.
-
 **Update**, 24 October 2015. Good news and bad news! Good, steps 9 and 10 are functional. Bad, step 9 returns [encryptedAttributes](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java#L683) for files. Without this we do not know what the files represent, nor can we decrypt them if needed. Unless this is solved, it's potentially a deal breaker. It's possible we may be missing additional client-server responses. If anyone has any ideas I would be keen to hear them!
 
-### Backups!
+**Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. Well I'm hoping it does.
+
+### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
+
+** Update ** 27 October 2015. [Solved](https://github.com/hackappcom/iloot/issues/62#issuecomment-151144868)!
 
 ### What about LiquidDonkey?
 Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
