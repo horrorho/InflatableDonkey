@@ -444,9 +444,10 @@ message Asset {
   optional string downloadToken = 5;
   optional string contentBaseURL = 8;
   optional string dsid = 9;
+  optional RecordIdentifier recordId = 10;
   repeated bytes f15 = 15; // 192 bit something or other
   optional bytes fileSignature = 17; // 90% certain of this
-  optional uint64 timestamp = 18;
+  optional uint64 timestamp = downloadTokenExpiration;
 
   // CKDPAsset
   // 8?9  NSString * _contentBaseURL;
@@ -455,12 +456,12 @@ message Asset {
   // ?    NSString * _downloadBaseURL;
   // ?    NSData * _downloadRequest;
   // 5    NSString * _downloadToken;
-  // ?    long long  _downloadTokenExpiration;
+  // 18?  long long  _downloadTokenExpiration;
   // ?    long long  _downloadURLExpiration;
   // ?    NSData * _header;
   // ?1 9 NSString * _owner;
   // ?    CKDPProtectionInfo * _protectionInfo;
-  // ?    CKDPRecordIdentifier * _recordId;
+  // 10   CKDPRecordIdentifier * _recordId;
   // ?2 1 NSData * _referenceSignature;
   // ?9 1 NSString * _requestor;
   // ?1 2 NSData * _signature;
