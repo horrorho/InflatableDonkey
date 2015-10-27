@@ -123,7 +123,7 @@ At present steps 8 and 9 remain undiscovered. If you have any additional informa
 
 **Update**, 24 October 2015. Good news and bad news! Good, steps 9 and 10 are functional. Bad, step 9 returns [encryptedAttributes](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java#L683) for files. Without this we do not know what the files represent, nor can we decrypt them if needed. Unless this is solved, it's potentially a deal breaker. It's possible we may be missing additional client-server responses. If anyone has any ideas I would be keen to hear them!
 
-**Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. Well I'm hoping it does.
+**Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. I'm rather hoping the keybag decryption will follow in a similar vein.
 
 ### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
