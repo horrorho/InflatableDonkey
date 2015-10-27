@@ -394,7 +394,6 @@ public class Main {
          Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
         
          Returns a rather somewhat familiar looking set of results but with encoded bytes.
-         Are these protobufs in protobufs?
          */
         logger.info("-- main() - STEP 8. Retrieve list of assets");
 
@@ -471,8 +470,6 @@ public class Main {
          */
         logger.info("-- main() - STEP 10. AuthorizeGet");
 
-        // Contents are protobufs within protobufs
-        // They parse to form a file attributes object that contains our tokens.
         List<CloudKit.Asset> contents = assetTokens.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
@@ -486,10 +483,21 @@ public class Main {
         CloudKit.Asset asset = contents.get(0);
         logger.debug("-- main() - file attributes: {}", asset);
 
-        // TODO these encrypted attributes needs deciphering. 
-        // TODO Without them we don't know what our binary file data represents.
-        // TODO But where is our decryption key?
-        // TODO Possibly AES encrypted.
+        /*
+        TODO
+        
+        encryptedAttributes need deciphering.
+        I suspect this contains the metadata required to manage/ decrypt our files c.f. ICloud.MBSFile.
+        https://www.apple.com/business/docs/iOS_Security_Guide.pdf refers to a Cloudkit Service key.
+        This is available after authentication but may well be wrapped. 
+        We need to track down the appropriate api call.
+        Hopefully this key will decrypt the zone data in step 4 to reveal zone-wide keys.
+        
+        So:
+        
+        cloudkit service key > zone wide key > file key
+        
+        */
         List<ByteString> encryptedAttributes = assetTokens.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
@@ -533,7 +541,7 @@ public class Main {
                         "mbksync",
                         "K:" + keybagUUID);
 
-        // TODO Possibility of multiple keybags.
+        // TODO Possibility of multiple keybags. iOS8 backups could have multiple keybags.
     }
 
     static void dump(byte[] data, String path) throws IOException {
