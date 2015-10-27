@@ -110,11 +110,11 @@ Postulated steps and current status are as follows:
   8. Retrieve list of assets. Functional.
   9. Retrieve asset tokens. Broken. EncryptedAttributes remains undecrypted. I suspect this contains the metadata required to manage/ decrypt our files c.f. [MBSFile](https://github.com/hackappcom/iloot/blob/master/icloud.proto).
   10. AuthorizeGet. Functional.
-  11. ChunkServer.FileGroups retrieval. Functional on a private tool*.
-  12. Assemble assets/ files. Functional on a private tool*.
+  11. ChunkServer.FileGroups retrieval. Functional on a private tool(1).
+  12. Assemble assets/ files. Functional on a private tool(1).
   13. Decrypt files. Broken. Keybag retrieval functional but remains undecrypted.
 
-* Memory/ disk caching, multi-threaded chunk downloader proof of concept. Alpha version and overly complicated for this tool, I'll knock up a simple equivalent later this week.
+(1) Memory/ disk caching, multi-threaded chunk downloader proof of concept. Alpha version and overly complicated for this tool, I'll knock up a simple equivalent later this week.
 
 For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
 
