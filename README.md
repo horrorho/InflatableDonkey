@@ -6,7 +6,7 @@ Java playground/ proof of concept command-line tool (currently a work in progres
 
 The tool itself logs client-server interaction including headers and protobufs. Along with the source-code this should assist in developing/ upgrading existing iCloud retrieval tools to iOS9 (all those iLoot forks, I'm looking at you).
 
-Sadly a couple of elusive client-server interactions remain undiscovered. See below.
+The CloudKit API calls are largely there. The cryptographical aspects/ key retrieval remain problematic. See below.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
