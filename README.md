@@ -128,7 +128,7 @@ At present steps 8 and 9 remain undiscovered. If you have any additional informa
 ### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
 
-** Update ** 27 October 2015. [Solved](https://github.com/hackappcom/iloot/issues/62#issuecomment-151144868)!
+**Update** 27 October 2015. [Solved](https://github.com/hackappcom/iloot/issues/62#issuecomment-151144868)!
 
 ### What about LiquidDonkey?
 Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
