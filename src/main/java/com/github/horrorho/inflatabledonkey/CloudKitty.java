@@ -24,6 +24,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * CloudKit helper.
+ * <p>
+ * Small and inflexible subset of CloudKit API calls. No error handling.
+ * <p>
+ * The protobuf definitions are experimental.
  *
  * @author Ahseya
  */
@@ -57,7 +61,8 @@ public final class CloudKitty {
     public CloudKitty(
             CKInit init,
             String cloudKitToken,
-            String deviceID,
+            String deviceHardwareID,
+            String deviceIdentifier,
             Headers coreHeaders,
             InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler) {
 
@@ -67,7 +72,7 @@ public final class CloudKitty {
         this.cloudKitToken = Objects.requireNonNull(cloudKitToken);
 
         this.requestOperationHeaderProto = CloudKit.RequestOperationHeader.newBuilder()
-                .setDeviceIdentifier(CloudKit.Identifier.newBuilder().setName(deviceID).setType(2))
+                .setDeviceIdentifier(CloudKit.Identifier.newBuilder().setName(deviceIdentifier).setType(2))
                 .setDeviceSoftwareVersion("9.0.1")
                 .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
                 .setDeviceLibraryVersion("479")
@@ -76,7 +81,7 @@ public final class CloudKitty {
                 .setVersion("4.0")
                 .setF19(1)
                 .setDeviceAssignedName("My iPhone")
-                .setDeviceHardwareID(deviceID)
+                .setDeviceHardwareID(deviceHardwareID)
                 .setF23(1)
                 .setF25(1)
                 .build();
@@ -123,7 +128,7 @@ public final class CloudKitty {
         logger.debug("-- zoneRetrieveRequest() request: {}", requestOperation);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
-                init.production().url() + "/record/retrieve",
+                init.production().url() + "/zone/retrieve",
                 container,
                 bundle,
                 init.cloudKitUserId(),
@@ -280,3 +285,4 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 }
+// Note: Protobufs, we could pass builders on to other builders, save us an objection creation.

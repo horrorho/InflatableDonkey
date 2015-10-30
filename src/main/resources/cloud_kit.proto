@@ -1,4 +1,4 @@
-// Partial CloudKit protobuf definitions.
+// Experimental/ partial CloudKit protobuf definitions.
 // Reversed by:
 // Ahseya https://github.com/horrorho
 // ItsASmallWorld https://github.com/ItsASmallWorld
@@ -186,10 +186,10 @@ message Operation {
   optional uint32 f4 = 4;
 
   // CKDPOperation
-  //    BOOL  _last;
-  //    NSString * _operationUUID;
-  //    BOOL  _synchronousMode;
-  //    int  _type;
+  // ?   BOOL  _last;
+  // 1   NSString * _operationUUID;
+  // ?   BOOL  _synchronousMode;
+  // 2   int  _type;
 }
 
 message QueryRetrieveRequest {

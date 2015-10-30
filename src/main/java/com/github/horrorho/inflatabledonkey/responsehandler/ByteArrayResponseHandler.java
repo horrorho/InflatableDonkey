@@ -37,7 +37,7 @@ import org.apache.http.util.EntityUtils;
 @Immutable
 public final class ByteArrayResponseHandler extends AbstractResponseHandler<byte[]> {
 
-    public static ByteArrayResponseHandler create() {
+    public static ByteArrayResponseHandler instance() {
         return instance;
     }
 

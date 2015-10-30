@@ -29,15 +29,14 @@ import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
 import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
 import com.github.horrorho.inflatabledonkey.data.AccountInfo;
 import com.github.horrorho.inflatabledonkey.data.Auth;
 import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
-import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import com.github.horrorho.inflatabledonkey.protocol.ProtoBufArray;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
@@ -48,10 +47,7 @@ import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -64,9 +60,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -144,7 +140,8 @@ public class Main {
 
         // Constants        
         // TODO can we retrieve this value?
-        String deviceID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
+        String deviceIdentifier = UUID.randomUUID().toString();
+        String deviceHardwareID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
 
         String container = "com.apple.backup.ios";
         String bundle = "com.apple.backupd";
@@ -227,19 +224,15 @@ public class Main {
         CKInit ckInit = httpClient.execute(ckAppInitRequest, jsonResponseHandler);
         logger.debug("-- main() - ckInit: {}", ckInit);
 
-        CloudKit.Identifier ckUserId = CloudKit.Identifier.newBuilder()
-                .setName(ckInit.cloudKitUserId())
-                .setType(7)
-                .build();
-
         /*
-         CloudKitty. Meow.
+         CloudKitty, simple client-server CloudKit calls. Meow.
          */
         CloudKitty cloudKitty
                 = new CloudKitty(
                         ckInit,
                         tokens.cloudKitToken(),
-                        deviceID,
+                        deviceHardwareID,
+                        deviceIdentifier,
                         coreHeaders,
                         ckResponseHandler);
 
@@ -255,6 +248,8 @@ public class Main {
          Possibility of passing multiple requests not yet explored.
         
          Returns record zone data which needs further analysis.
+         The encrypted protectedInfo should be decryptable with the CloudKit Service Key,
+         and in return give us zone keys.
         
          */
         logger.info("-- main() - STEP 4. Record zones.");
@@ -339,11 +334,21 @@ public class Main {
                 .orElse(null);
         logger.info("-- main() - keybagUUID: {}", keybagUUID);
 
+        // Device journal information. Output not used.
+        logger.info("-- main() - device journal information");
+
+        List<CloudKit.RecordRetrieveResponse> deviceJournal
+                = cloudKitty.recordRetrieveRequest(
+                        httpClient,
+                        container,
+                        bundle,
+                        "mbksync",
+                        token(devices.get(deviceIndex), 1) + ":Journal");
+
         if (snapshots.isEmpty()) {
             logger.info("-- main() - no snapshots for device: {}", devices.get(deviceIndex));
             System.exit(0);
         }
-
         /* 
          STEP 7. Manifest list.
         
@@ -484,20 +489,21 @@ public class Main {
         logger.debug("-- main() - file attributes: {}", asset);
 
         /*
-        TODO
+         TODO
         
-        encryptedAttributes need deciphering.
-        I suspect this contains the metadata required to manage/ decrypt our files c.f. ICloud.MBSFile.
-        https://www.apple.com/business/docs/iOS_Security_Guide.pdf refers to a Cloudkit Service key.
-        This is available after authentication but may well be wrapped. 
-        We need to track down the appropriate api call.
-        Hopefully this key will decrypt the zone data in step 4 to reveal zone-wide keys.
+         encryptedAttributes need deciphering.
+         I suspect this contains the metadata required to manage/ decrypt our files c.f. ICloud.MBSFile.
+         https://www.apple.com/business/docs/iOS_Security_Guide.pdf refers to a Cloudkit Service key.
+         This is available after authentication but may well be wrapped. 
+         We need to track down the appropriate api call.
+         Hopefully this key will decrypt the zone data in step 4 to reveal zone-wide keys.
+         AES is the likely cipher. 
         
-        So:
+         So:
         
-        cloudkit service key > zone wide key > file key
+         cloudkit service key > zone wide key > file key
         
-        */
+         */
         List<ByteString> encryptedAttributes = assetTokens.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
@@ -526,9 +532,18 @@ public class Main {
 
         /* 
          STEP 11. ChunkServer.FileGroups.
-        
-         TODO. 
+
+         At present, we are missing file attributes. 
+         The chunk decryption key mechanic has also changed.
+         We can download data, but we are unable to decrypt the chunks.
          */
+        logger.info("-- main() - STEP 11. ChunkServer.FileGroups.");
+        ChunkClient chunkClient = new ChunkClient(coreHeaders);
+
+        BiConsumer<ByteString, List<byte[]>> dataConsumer
+                = (fileChecksum, data) -> write(Hex.toHexString(fileChecksum.toByteArray()) + ".bin", data);
+
+        //chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
         /*
          STEP 12. Assemble assets/ files.
          */
@@ -542,12 +557,25 @@ public class Main {
                         "K:" + keybagUUID);
 
         // TODO Possibility of multiple keybags. iOS8 backups could have multiple keybags.
+        // TODO File attribute code/ encryptedAttributes.
+        // TODO For now just write out the 
     }
 
-    static void dump(byte[] data, String path) throws IOException {
+    static String token(String delimited, int index) {
+        String[] split = delimited.split(":");
+        return (index < split.length) ? split[index] : "";
+    }
+
+    static void write(String path, List<byte[]> data) {
         // Dump out binary data to file.
         try (OutputStream outputStream = Files.newOutputStream(Paths.get(path))) {
-            outputStream.write(data);
+            for (byte[] d : data) {
+                outputStream.write(d);
+            }
+            logger.info("-- write() - file written: {}", path);
+
+        } catch (IOException ex) {
+            logger.warn("-- write() - exception: {}", ex);
         }
     }
 }

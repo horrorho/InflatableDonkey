@@ -7,11 +7,11 @@ package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import com.github.horrorho.inflatabledonkey.protocol.ProtoBufArray;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
@@ -47,7 +47,14 @@ public class RawProtoDecoderLogger implements IOFunction<InputStream, List<Cloud
                 logger.debug("-- main() - raw decode: no protoc decoder specified");
             }
 
-            return ProtoBufArray.decode(new ByteArrayInputStream(baos.toByteArray()), CloudKit.ResponseOperation.PARSER);
+            InputStream copy = new ByteArrayInputStream(baos.toByteArray());
+            List<CloudKit.ResponseOperation> responseOperations = new ArrayList<>();
+            CloudKit.ResponseOperation responseOperation;
+            while ((responseOperation = CloudKit.ResponseOperation.parseDelimitedFrom(copy)) != null) {
+                responseOperations.add(responseOperation);
+            }
+
+            return responseOperations;
 
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);

@@ -23,9 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.protocol.ProtoBufArray;
 import com.google.protobuf.GeneratedMessage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.methods.HttpPost;
@@ -59,7 +60,17 @@ public final class ProtoBufsRequestFactory {
             Headers headers
     ) throws IOException {
 
-        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(ProtoBufArray.encode(protobufs));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        protobufs.forEach(message -> {
+            try {
+                message.writeDelimitedTo(baos);
+
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
+
+        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(baos.toByteArray());
 
         HttpPost post = new HttpPost(url);
         post.setHeader(Headers.xAppleRequestUUID, uuid);
