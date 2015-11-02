@@ -38,7 +38,7 @@ There are more [advanced](https://www.sysdream.com/reverse-engineering-protobuf-
 
 Can be skipped if you already have a dsPrsID:mmeAuthToken pair.
 
-$BASIC_AUTHORIZATION$: [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using appleID:password.
+- $BASIC_AUTHORIZATION$: [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using appleID:password.
 
 ```http
 GET /setup/authenticate/$APPLE_ID$ HTTP/1.1
@@ -68,7 +68,7 @@ dictionary={
 ```
 **Phase two:**
 
-$BASIC_AUTHORIZATION$ : [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using dsPrsID:mmeAuthToken.
+- $BASIC_AUTHORIZATION$ : [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using dsPrsID:mmeAuthToken.
 
 ```http
 POST /setup/get_account_settings HTTP/1.1
@@ -95,13 +95,13 @@ This returns us another [property list](https://en.wikipedia.org/wiki/Property_l
 
 **Phase three:**
 
-$BASIC_AUTHORIZATION$ : [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using dsPrsID:mmeAuthToken.
+- $BASIC_AUTHORIZATION$ : [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) using dsPrsID:mmeAuthToken.
 
-$CLOUDKIT_AUTH_TOKEN$ : our cloudKitToken
+- $CLOUDKIT_AUTH_TOKEN$ : our cloudKitToken
 
-$BUNDLE_ID$ : required CloudKit bundle id e.g. com.apple.backupd
+- $BUNDLE_ID$ : required CloudKit bundle id e.g. com.apple.backupd
 
-$CONTAINER_ID$ : required CloudKit container id e.g. com.apple.backup.ios
+- $CONTAINER_ID$ : required CloudKit container id e.g. com.apple.backup.ios
 
 ```http
 POST /setup/ck/v1/ckAppInit?container=com.apple.backup.ios HTTP/1.1
@@ -220,15 +220,15 @@ Additional notes:
 
 Our completed protobuf message is [delimited](https://developers.google.com/protocol-buffers/docs/techniques?hl=en) (multiple messages can be sent) and the raw bytes passed as post data.
 
-$CLOUDKIT_AUTH_TOKEN$ : our cloudKitToken
+- $CLOUDKIT_AUTH_TOKEN$ : our cloudKitToken
 
-$CLOUDKIT_USERID$ : our cloudKitUserId
+- $CLOUDKIT_USERID$ : our cloudKitUserId
 
-$BUNDLE_ID$ : required CloudKit bundle id e.g. com.apple.backupd
+- $BUNDLE_ID$ : required CloudKit bundle id e.g. com.apple.backupd
 
-$CONTAINER_ID$ : required CloudKit container id e.g. com.apple.backup.ios
+- $CONTAINER_ID$ : required CloudKit container id e.g. com.apple.backup.ios
 
-$REQUEST_UUID : randomly generated [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) per request
+- $REQUEST_UUID : randomly generated [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) per request
 
 The url corresponds to our JSON production ckdatabase url.
 
