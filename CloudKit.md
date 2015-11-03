@@ -3,11 +3,11 @@
 ### CloudKit?
 [Apple](http://www.apple.com/)'s [iOS9](https://en.wikipedia.org/wiki/IOS_9) [iCloud](http://www.apple.com/icloud/) backups are based on [CloudKit](https://developer.apple.com/library/prerelease/ios/documentation/CloudKit/Reference/CloudKit_Framework_Reference/index.html), a framework to support the movement of data in and out of iCloud storage. The underlying mechanisms at present are not well described. To this end, I hope to share some of what we discovered in creating [InflatableDonkey](https://github.com/horrorho/InflatableDonkey). Bear in mind, these are early days and we are certainly not experts in the field. I didn't really know what CloudKit was until the other week, but shh, that's our secret...
 
-In short we'll look at Protocol Buffer messages, CloudKit authentication and a simple low level message request. 
+We'll look at Protocol Buffer messages, basic CloudKit authentication and a simple low level message request.
 
 
 ### Protocol Buffers
-CloudKit makes extensive use of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/?hl=en)/ [Protobuf](https://github.com/google/protobuf). In short, a nice mechanism for sending data from here to somewhere in binary form. This data is defined in [messages](https://developers.google.com/protocol-buffers/docs/proto?hl=en) which are similar to code books: that part there corresponds to this thingy over here.
+CloudKit makes extensive use of [Google's Protocol Buffers](https://developers.google.com/protocol-buffers/?hl=en)/ [Protobuf](https://github.com/google/protobuf). A nice mechanism for sending data from here to somewhere in binary form. This data is defined in [messages](https://developers.google.com/protocol-buffers/docs/proto?hl=en) which are similar to code books: that part there corresponds to this thingy over here.
 
 ```
 message RecordID {
