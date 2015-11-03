@@ -126,7 +126,7 @@ So: cloudkit service key > zone wide key > file key
 
 **Update**, 3 November 2015. It's been a tough week. Apple has beefed up the security model and it's proving difficult. We have assistance from a mysterious cryptographer (aren't they all) and hopefully we can make progress.
 
-[CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood in CloudKit.
+[CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood.
 
 ### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
