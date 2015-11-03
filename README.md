@@ -122,7 +122,7 @@ The cryptographical aspects are troublesome. If you have any additional informat
 
 **Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. I'm rather hoping the keybag decryption will follow in a similar vein.
 
-So: cloudkit service key > zone wide key > file key
+So: cloudkit service key > zone wide key > chunk/ file key
 
 **Update**, 3 November 2015. It's been a tough week. Apple has beefed up the security model and it's proving difficult. We have assistance from a mysterious cryptographer (aren't they all) and hopefully we can make progress.
 
