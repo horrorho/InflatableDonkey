@@ -142,4 +142,6 @@ Hopefully the remaining steps will be revealed in a timely fashion, at which poi
 ### Credits
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions. Please send him lots of cakes for advancing the project on so quickly.
 
+Oleksii K - who continues to work tirelessy on the cryptographical side of the project, the most difficult aspect by far. I'm baking a cake for him as we speak. Wish him luck!
+
 There have been some contributors who, rather like vampires, prefer the cover of darkness. You know who you are and thank you!
