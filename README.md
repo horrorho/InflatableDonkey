@@ -128,6 +128,9 @@ So: cloudkit service key > zone wide key > chunk/ file key
 
 [CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood.
 
+### Python
+[devzero0](https://github.com/devzero0) has created a [Python implementation](https://github.com/devzero0/iOS9_iCloud_POC) of InflatableDonkey. Thank you!
+
 ### Backups! (Solved)
 The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
 
@@ -140,8 +143,14 @@ Hopefully the remaining steps will be revealed in a timely fashion, at which poi
 [CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) describes some of the low level mechanics we have discovered over the last couple of weeks.
 
 ### Credits
-[ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions. Please send him lots of cakes for advancing the project on so quickly.
+[ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions.
 
-Oleksii K - who continues to work tirelessy on the cryptographical side of the project, the most difficult aspect by far. I'm baking a cake for him as we speak. Wish him luck!
+Oleksii K - who continues to work tirelessy on the cryptographical side of the project, the most difficult aspect by far.
+
+[devzero0](https://github.com/devzero0) for creating a [Python implementation](https://github.com/devzero0/iOS9_iCloud_POC) of InflatableDonkey.
+
+[hackappcom](https://github.com/hackappcom) for the venerable [iLoot](https://github.com/hackappcom/iloot).
+
+[iphone-dataprotection](https://code.google.com/p/iphone-dataprotection/) highly influential and brilliant work.
 
 There have been some contributors who, rather like vampires, prefer the cover of darkness. You know who you are and thank you!
