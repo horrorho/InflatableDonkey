@@ -126,7 +126,7 @@ So: cloudkit service key > zone wide key > chunk/ file key
 
 **Update**, 3 November 2015. It's been a tough week. Apple has beefed up the security model and it's proving difficult. We have assistance from a mysterious cryptographer (aren't they all) and hopefully we can make progress.
 
-[CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood.
+[CloudKit Notes](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood.
 
 ### Python
 [devzero0](https://github.com/devzero0) has created a [Python implementation](https://github.com/devzero0/iOS9_iCloud_POC) of InflatableDonkey. Thank you!
@@ -140,7 +140,7 @@ The elucidation of client-server calls has been greatly inhibited by the lack of
 Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
 
 ### Additional notes
-[CloudKit](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) describes some of the low level mechanics we have discovered over the last couple of weeks.
+[CloudKit Notes](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) describes some of the low level mechanics we have discovered over the last couple of weeks.
 
 ### Credits
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions.
