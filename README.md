@@ -1,7 +1,7 @@
 ## InflatableDonkey
 iOS9 iCloud backup retrieval proof of concept development tool
 
-* Ok! So I'm going to be snowed under with work and other commitments. Sadly this does mean that my Github projects will be on indefinite hiatus.
+* Ok! So I'm going to be snowed under with work and other commitments. Sadly this does mean that my Github projects will remain on indefinite hiatus.
 
 ### What is it?
 Java playground/ proof of concept command-line tool (currently a work in progress) to demonstrate the key steps in recovering iOS9 iCloud backups. It does not and will not offer a complete iCloud backup retrieval solution. It's primarily intended for developers or otherwise generally nosy folk.
