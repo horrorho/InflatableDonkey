@@ -4,7 +4,8 @@
     <groupId>com.github.horrorho</groupId>
     <artifactId>InflatableDonkey</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>jar</packaging><build>
+    <packaging>jar</packaging>
+    <build>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
