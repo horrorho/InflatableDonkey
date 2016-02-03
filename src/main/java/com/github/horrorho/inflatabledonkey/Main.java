@@ -161,8 +161,8 @@ public class Main {
         InputStreamResponseHandler<List<CloudKit.ResponseOperation>> ckResponseHandler
                 = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(rawProtoDecoder));
 
-        // Default HttpClient.
-        HttpClient httpClient = HttpClients.createDefault();
+        // System HttpClient.
+        HttpClient httpClient = HttpClients.createSystem();
 
         /*        
          STEP 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
