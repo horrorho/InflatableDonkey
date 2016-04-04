@@ -36,6 +36,19 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class PLists {
 
+    /*
+    TODO
+    static <T> T cast(ASN1Primitive primitive, Class<T> to) {
+        try {
+            return to.cast(primitive);
+
+        } catch (ClassCastException ex) {
+            throw new IllegalArgumentException("Unexpected ASN1Primitive type", ex);
+        }
+    }
+    }
+    
+    */
     public static <T extends NSObject> T get(NSDictionary dictionary, String key) throws BadDataException {
         if (dictionary.containsKey(key)) {
             return cast(key, dictionary);

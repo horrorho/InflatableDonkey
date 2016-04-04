@@ -49,6 +49,9 @@ public final class ProtoBufsRequestFactory {
 
     private static final ProtoBufsRequestFactory instance = new ProtoBufsRequestFactory();
 
+    private ProtoBufsRequestFactory() {
+    }
+
     public <T extends GeneratedMessage> HttpUriRequest newRequest(
             String url,
             String container,

@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.dd.plist.NSDictionary;
+import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.args.ArgsParser;
 import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
 import com.github.horrorho.inflatabledonkey.args.Help;
@@ -40,6 +41,7 @@ import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
+import com.github.horrorho.inflatabledonkey.requests.EscrowProxyApi;
 import com.github.horrorho.inflatabledonkey.requests.Headers;
 import com.github.horrorho.inflatabledonkey.requests.MappedHeaders;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
@@ -50,8 +52,10 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,12 +67,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.BigIntegers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,8 +122,8 @@ public class Main {
 
             Function<Property, String> getProperty = property
                     -> arguments.containsKey(property)
-                            ? arguments.get(property)
-                            : property.defaultValue();
+                    ? arguments.get(property)
+                    : property.defaultValue();
 
             Function<Property, Integer> intArgument = property
                     -> Integer.parseInt(getProperty.apply(property));
@@ -129,8 +134,8 @@ public class Main {
 
             protocPath = arguments.containsKey(Property.PROTOC_PATH)
                     ? arguments.get(Property.PROTOC_PATH) == null
-                            ? Property.PROTOC_PATH.defaultValue()
-                            : arguments.get(Property.PROTOC_PATH)
+                    ? Property.PROTOC_PATH.defaultValue()
+                    : arguments.get(Property.PROTOC_PATH)
                     : null;
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
@@ -161,7 +166,7 @@ public class Main {
         InputStreamResponseHandler<List<CloudKit.ResponseOperation>> ckResponseHandler
                 = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(rawProtoDecoder));
 
-        // System HttpClient.
+        // SystemDefault HttpClient.
         HttpClient httpClient = HttpClients.createSystem();
 
         /*        
@@ -223,6 +228,69 @@ public class Main {
 
         CKInit ckInit = httpClient.execute(ckAppInitRequest, jsonResponseHandler);
         logger.debug("-- main() - ckInit: {}", ckInit);
+
+        /* 
+         STEP -. CloudKit Application Initialization.
+         
+         EscrowService SRP-6a exchange. Coding critical as repeated errors will lock the account.   
+                 
+         https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
+        
+         escrow user id = dsid
+         escrow password = dsid        
+         */
+        logger.info("-- main() - STEP - EscrowService SRP exchange.");
+
+        // TODO fail if only a limited amount of attempts left.
+        NSDictionary mobileme = PLists.<NSDictionary>get(settings, "com.apple.mobileme");
+        NSDictionary keychainSync = PLists.<NSDictionary>get(mobileme, "com.apple.Dataclass.KeychainSync");
+        String escrowProxyUrl = PLists.<NSString>get(keychainSync, "escrowProxyUrl").toString();
+        logger.debug("-- main() - escrowProxyUrl: {}", escrowProxyUrl);
+
+        EscrowProxyApi escrowProxy = new EscrowProxyApi(accountInfo.dsPrsID(), escrowProxyUrl, coreHeaders);
+        NSDictionary records = escrowProxy.getRecords(httpClient, tokens.mmeAuthToken());
+        logger.debug("-- main() - getRecords response: {}", records.toASCIIPropertyList());
+
+        SecureRandom secureRandom = new SecureRandom();
+        SRP srp = SRPFactory.createDefault(secureRandom);
+        BigInteger randomKey = srp.generateClientCredentials();
+        NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), BigIntegers.asUnsignedByteArray(randomKey));
+        SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);
+        logger.debug("-- main() - srpInit response: {}", srpInit.toASCIIPropertyList());
+
+        byte[] dsid = srpInitResponse.dsid().getBytes(StandardCharsets.UTF_8);
+        logger.debug("-- main() - escrow service id: {}", Hex.encodeHexString(dsid));
+        logger.debug("-- main() - escrow service password: {}", Hex.encodeHexString(dsid));
+
+        BigInteger M = srp.calculateClientEvidenceMessage(srpInitResponse.salt(), dsid, dsid, srpInitResponse.B());
+        if (M == null) {
+            logger.error("-- main() - invalid server SRP init response(B): {}", srpInitResponse.B().toString(16));
+            System.exit(0);
+        }
+        logger.debug("-- main() - M: 0x{}", M.toString(16));
+
+        NSDictionary recover = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), M, srpInitResponse.tag(), srpInitResponse.x());
+        logger.debug("-- main() - srpInit response: {}", recover.toASCIIPropertyList());
+
+        // TODO verify ***
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+       // System.exit(0);
 
         /*
          CloudKitty, simple client-server CloudKit calls. Meow.
@@ -514,7 +582,7 @@ public class Main {
                 .collect(Collectors.toList());
 
         encryptedAttributes.forEach(
-                x -> logger.debug("-- main() - encryptedAttributes: {}", Hex.toHexString(x.toByteArray())));
+                x -> logger.debug("-- main() - encryptedAttributes: {}", Hex.encodeHex(x.toByteArray())));
 
         // FileTokens. Expanded from iOS8.
         CloudKit.FileTokens fileTokens = FileTokensFactory.instance().apply(Arrays.asList(asset));
@@ -541,7 +609,7 @@ public class Main {
         ChunkClient chunkClient = new ChunkClient(coreHeaders);
 
         BiConsumer<ByteString, List<byte[]>> dataConsumer
-                = (fileChecksum, data) -> write(Hex.toHexString(fileChecksum.toByteArray()) + ".bin", data);
+                = (fileChecksum, data) -> write(Hex.encodeHex(fileChecksum.toByteArray()) + ".bin", data);
 
         //chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
         /*
@@ -578,4 +646,5 @@ public class Main {
             logger.warn("-- write() - exception: {}", ex);
         }
     }
+
 }
