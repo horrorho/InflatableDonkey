@@ -86,7 +86,7 @@ public final class SRPCore {
         int length = primeLength(N);
 
         update(digest, padded(A, length));
-        update(digest, padded(M1, length));
+        update(digest, padded(M1, digest.getDigestSize()));
         update(digest, padded(K, digest.getDigestSize()));
 
         byte[] output = new byte[digest.getDigestSize()];

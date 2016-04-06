@@ -62,11 +62,13 @@ public class SRPClient {
         logger.debug(" **SRP() - g: 0x{}", g.toString(16));
     }
 
+    // TODO byte[] result
     public BigInteger generateClientCredentials() {
         return generateClientCredentials(SRP6Util.generatePrivateValue(digest, N, g, random));
     }
 
-    BigInteger generateClientCredentials(BigInteger a) {
+    // TODO to package private
+    public BigInteger generateClientCredentials(BigInteger a) {
         // Package private test injection point.
         this.a = a;
         logger.debug("-- generateClientCredentials() - a: 0x{}", a.toString(16));
@@ -77,6 +79,8 @@ public class SRPClient {
         return A;
     }
 
+    // TODO optional result
+    // TODO byte[] result
     public BigInteger
             calculateClientEvidenceMessage(byte[] salt, byte[] identity, byte[] password, BigInteger serverB) {
 
@@ -116,8 +120,7 @@ public class SRPClient {
 
         if (computedM2.equals(serverM2)) {
             logger.debug("-- verifyServerEvidenceMessage() - server M2 verification passed");
-            int length = SRPCore.primeLength(N);
-            byte[] key = SRPCore.padded(K, length);
+            byte[] key = SRPCore.padded(K, digest.getDigestSize());
             return Optional.of(key);
         }
 
