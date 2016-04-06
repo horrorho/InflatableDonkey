@@ -26,19 +26,20 @@ package com.github.horrorho.inflatabledonkey.crypto.srp;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSString;
+import com.github.horrorho.inflatabledonkey.data.blob.BlobA4;
 import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.util.PLists;
-import java.util.Base64;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Base64;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  *
+ * SRPInitResponse.
+ *
  * @author Ahseya
  */
 @Immutable
@@ -52,69 +53,35 @@ public final class SRPInitResponse {
     private final String status;
     private final String message;
     private final String dsid;
-    private final byte[] salt;
-    private final BigInteger B;
-    private final byte[] tag; // Unknown string identifier
-    private final byte[] x; // Unknown 256 bit entity
+    private final BlobA4 blob;
 
-    SRPInitResponse(int version, String status, String message, String dsid, byte[] salt, BigInteger B, byte[] tag, byte[] x) {
+    SRPInitResponse(
+            int version,
+            String status,
+            String message,
+            String dsid,
+            BlobA4 blob) {
+
         this.version = version;
-        this.status = status;
-        this.message = message;
-        this.dsid = dsid;
-        this.salt = salt;
-        this.B = B;
-        this.tag = tag;
-        this.x = x;
+        this.status = Objects.requireNonNull(status, "status");
+        this.message = Objects.requireNonNull(message, "message");
+        this.dsid = Objects.requireNonNull(dsid, "dsid");
+        this.blob = Objects.requireNonNull(blob, "blob");
     }
 
     public SRPInitResponse(NSDictionary response) throws BadDataException {
         version = PLists.<NSNumber>getOrDefault(response, "version", zero).intValue();
         status = PLists.<NSString>getOrDefault(response, "status", empty).toString();
         message = PLists.<NSString>getOrDefault(response, "message", empty).toString();
-
         dsid = PLists.<NSString>get(response, "dsid").toString();
+        
         String respBlob = PLists.<NSString>get(response, "respBlob").toString();
 
-        byte[] data;
-        try {
-            data = Base64.getDecoder().decode(respBlob);
+        byte[] data = Base64.getDecoder().decode(respBlob);
+        logger.debug("** SRPInitResponse() - respBlob data: 0x{}", Hex.encodeHexString(data));
 
-        } catch (IllegalArgumentException ex) {
-            throw new BadDataException(ex);
-        }
-
-        logger.trace("-- SRPInitResponse() - respBlob data: 0x{}", Hex.encodeHexString(data));
-
-        // TODO brittle code
-        // TODO at a minimum length validation
-        // TODO ideally formal format parsing
-        // TODO tidy
-        // Network byte ordering/ big endian.
         ByteBuffer buffer = ByteBuffer.wrap(data);
-
-        x = Arrays.copyOfRange(data, 0x0C, 0x1C);
-
-        int b1 = buffer.getInt(0x1C); //0
-        int tagIndex = b1 + 0x30;
-        int tagLength = buffer.getInt(b1 + 0x2C);
-        tag = Arrays.copyOfRange(data, tagIndex, tagIndex + tagLength);
-
-        int b2 = buffer.getInt(0x20); //14
-        int saltIndex = b2 + 0x30;
-        int saltLength = buffer.getInt(b2 + 0x2C);
-        salt = Arrays.copyOfRange(data, saltIndex, saltIndex + saltLength);
-
-        int b3 = buffer.getInt(0x24); //14
-        int BIndex = b3 + 0x30;
-        int BLength = buffer.getInt(b3 + 0x2C);
-        byte[] Bdata = Arrays.copyOfRange(data, BIndex, BIndex + BLength);
-        B = new BigInteger(1, Bdata);
-
-        logger.trace("-- SRPInitResponse() - salt: 0x{}", Hex.encodeHexString(salt));
-        logger.trace("-- SRPInitResponse() - B: 0x{}", B.toString(16));
-        logger.trace("-- SRPInitResponse() - tag: 0x{}", Hex.encodeHexString(tag));
-        logger.trace("-- SRPInitResponse() - x: 0x{}", Hex.encodeHexString(x));
+        blob = new BlobA4(buffer);
     }
 
     public int version() {
@@ -133,20 +100,20 @@ public final class SRPInitResponse {
         return dsid;
     }
 
-    public byte[] salt() {
-        return Arrays.copyOf(salt, salt.length);
+    public byte[] uid() {
+        return blob.uid();
     }
 
-    public BigInteger B() {
-        return B;
+    public byte[] salt() {
+        return blob.salt();
+    }
+
+    public byte[] ephemeralKeyB() {
+        return blob.ephemeralKey();
     }
 
     public byte[] tag() {
-        return Arrays.copyOf(tag, tag.length);
-    }
-
-    public byte[] x() {
-        return Arrays.copyOf(x, x.length);
+        return blob.tag();
     }
 
     @Override
@@ -156,10 +123,7 @@ public final class SRPInitResponse {
                 + ", status=" + status
                 + ", message=" + message
                 + ", dsid=" + dsid
-                + ", salt=0x" + Hex.encodeHexString(salt)
-                + ", B=0x" + B.toString(16)
-                + ", tag=" + Hex.encodeHexString(tag)
-                + ", x=0x" + Hex.encodeHexString(x)
+                + ", blob=" + blob
                 + '}';
     }
 }
