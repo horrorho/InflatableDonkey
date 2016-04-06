@@ -43,22 +43,22 @@ public final class SRPCore {
 
     public static byte[] generateEphemeralKeyA(BigInteger N, BigInteger g, BigInteger a) {
         BigInteger A = g.modPow(a, N);
-        int length = primeLength(N);
-        return toByteArray(A, length);
+        int length = length(N);
+        return padded(A, length);
     }
 
-    public static BigInteger calculatek(Digest digest, BigInteger N, BigInteger g) {
-        int length = primeLength(N);
-        byte[] hash = hash(digest, toByteArray(N, length), toByteArray(g, length));
+    public static BigInteger generatek(Digest digest, BigInteger N, BigInteger g) {
+        int length = length(N);
+        byte[] hash = hash(digest, padded(N, length), padded(g, length));
         return new BigInteger(1, hash);
     }
 
     public static byte[] generateKey(Digest digest, BigInteger N, BigInteger S) {
-        int length = primeLength(N);
-        return hash(digest, toByteArray(S, length));
+        int length = length(N);
+        return hash(digest, padded(S, length));
     }
 
-    public static byte[] calculateM1(
+    public static byte[] generateM1(
             Digest digest,
             BigInteger N,
             BigInteger g,
@@ -69,22 +69,22 @@ public final class SRPCore {
             byte[] identity) {
 
         // M1 = H(H(N) XOR H(g) | H(I) | s | A | B | K) 
-        int length = primeLength(N);
+        int length = length(N);
 
         // hI = H(I)
         byte[] hI = SRPCore.hash(digest, identity);
 
         // tmp = H(N) XOR H(g)
-        byte[] hNxhG = ByteUtils.xor(SRPCore.hash(digest, toByteArray(N, length)), SRPCore.hash(digest, toByteArray(g, length)));
+        byte[] hNxhG = ByteUtils.xor(SRPCore.hash(digest, padded(N, length)), SRPCore.hash(digest, padded(g, length)));
 
         return hash(digest, hNxhG, hI, salt, ephemeralKeyA, ephemeralKeyB, key);
     }
 
-    public static byte[] calculateM2(Digest digest, BigInteger N, byte[] A, byte[] M1, byte[] K) {
+    public static byte[] generateM2(Digest digest, BigInteger N, byte[] A, byte[] M1, byte[] K) {
         return hash(digest, A, M1, K);
     }
 
-    public static BigInteger calculateS(
+    public static BigInteger generateS(
             Digest digest,
             BigInteger N,
             BigInteger g,
@@ -100,7 +100,7 @@ public final class SRPCore {
         return B.subtract(tmp).mod(N).modPow(exp, N);
     }
 
-    public static BigInteger calculateu(Digest digest, byte[] A, byte[] B) {
+    public static BigInteger generateu(Digest digest, byte[] A, byte[] B) {
         return new BigInteger(1, hash(digest, A, B));
     }
 
@@ -110,10 +110,6 @@ public final class SRPCore {
         byte[] hash = hash(digest, salt, tmp);
 
         return new BigInteger(1, hash);
-    }
-
-    public static boolean isZero(BigInteger N, byte[] ephemeralKey) {
-        return isZero(N, new BigInteger(1, ephemeralKey));
     }
 
     public static boolean isZero(BigInteger N, BigInteger i) {
@@ -134,11 +130,11 @@ public final class SRPCore {
         return output;
     }
 
-    public static int primeLength(BigInteger prime) {
-        return (prime.bitLength() + 7) / 8;
+    public static int length(BigInteger i) {
+        return (i.bitLength() + 7) / 8;
     }
 
-    public static byte[] toByteArray(BigInteger n, int length) {
+    public static byte[] padded(BigInteger n, int length) {
         // org.bouncycastle.crypto.agreement.srp.SRP6Util#getPadded() with overflow check
         byte[] byteArray = BigIntegers.asUnsignedByteArray(n);
 

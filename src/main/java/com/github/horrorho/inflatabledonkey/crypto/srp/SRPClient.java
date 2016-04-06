@@ -69,7 +69,6 @@ public class SRPClient {
         return generateClientCredentials(SRP6Util.generatePrivateValue(digest, N, g, random));
     }
 
-    // TODO to package private
     public byte[] generateClientCredentials(BigInteger a) {
         // Package private test injection point.
         this.a = a;
@@ -90,33 +89,33 @@ public class SRPClient {
 
         BigInteger B = new BigInteger(1, serverB);
 
-        if (SRPCore.isZero(N, serverB)) {
+        if (SRPCore.isZero(N, B)) {
             return Optional.empty();
         }
 
-        BigInteger u = SRPCore.calculateu(digest, ephemeralKeyA, serverB);
+        BigInteger u = SRPCore.generateu(digest, ephemeralKeyA, serverB);
         logger.debug("-- calculateClientEvidenceMessage() - u: 0x{}", u.toString(16));
 
         BigInteger x = SRPCore.generatex(digest, N, salt, identity, password);
         logger.debug("-- calculateClientEvidenceMessage() - x: 0x{}", x.toString(16));
 
-        BigInteger k = SRPCore.calculatek(digest, N, g);
+        BigInteger k = SRPCore.generatek(digest, N, g);
         logger.debug("-- calculateClientEvidenceMessage() - k: 0x{}", k.toString(16));
 
-        BigInteger S = SRPCore.calculateS(digest, N, g, a, k, u, x, B);
+        BigInteger S = SRPCore.generateS(digest, N, g, a, k, u, x, B);
         logger.debug("-- calculateClientEvidenceMessage() - S: 0x{}", S.toString(16));
 
         key = SRPCore.generateKey(digest, N, S);
         logger.debug("-- calculateClientEvidenceMessage() - key: 0x{}", Hex.toHexString(key));
 
-        M1 = SRPCore.calculateM1(digest, N, g, ephemeralKeyA, serverB, key, salt, identity);
+        M1 = SRPCore.generateM1(digest, N, g, ephemeralKeyA, serverB, key, salt, identity);
         logger.debug("-- calculateClientEvidenceMessage() - M1: 0x{}", Hex.toHexString(M1));
 
         return Optional.of(M1);
     }
 
     public Optional<byte[]> verifyServerEvidenceMessage(byte[] serverM2) {
-        byte[] computedM2 = SRPCore.calculateM2(digest, N, ephemeralKeyA, M1, key);
+        byte[] computedM2 = SRPCore.generateM2(digest, N, ephemeralKeyA, M1, key);
         logger.debug("-- verifyServerEvidenceMessage() - computed M2: {}", Hex.toHexString(computedM2));
 
         if (Arrays.equals(computedM2, serverM2)) {
