@@ -51,4 +51,10 @@ public class BlobUtils {
     public static void align(ByteBuffer blob) {
         blob.position(align(blob.position()));
     }
+
+    public static void pad(ByteBuffer blob) {
+        for (int i = blob.position(); i < align(blob.position()); i++) {
+            blob.put((byte) 0x00);
+        }
+    }
 }
