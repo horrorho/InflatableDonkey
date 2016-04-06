@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.data.blob;
 
-import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +39,7 @@ import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 @Immutable
 public final class BlobLists {
 
-    public static List<byte[]> parse(ByteBuffer buffer) {
+    public static List<byte[]> importList(ByteBuffer buffer) {
         List<Integer> indices = new ArrayList<>();
 
         int index;
@@ -67,6 +66,33 @@ public final class BlobLists {
                 }).collect(Collectors.toList());
     }
 
+    public static void exportList(ByteBuffer buffer, List<byte[]> list) {
+        int offset = 0;
+        for (byte[] bytes : list) {
+            int length = BlobUtils.align(bytes.length) + 4;
+            buffer.putInt(offset);
+            offset += length;
+        }
+        buffer.putInt(offset);
+
+        list.stream()
+                .forEach(bytes -> {
+                    buffer.putInt(bytes.length);
+                    buffer.put(bytes);
+                    BlobUtils.pad(buffer);
+                });
+    }
+
+    public static int exportListSize(List<byte[]> list) {
+        int sum = list.stream()
+                .mapToInt(bytes -> bytes.length)
+                .map(BlobUtils::align)
+                .sum();
+
+        return sum + list.size() * 8 + 4;
+    }
+
+    @Deprecated
     private final List<byte[]> items;
 
     @Deprecated
