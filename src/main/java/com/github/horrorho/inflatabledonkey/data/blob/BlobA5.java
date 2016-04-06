@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.blob;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -50,8 +51,8 @@ public final class BlobA5 {
     private final byte[] message;
 
     public BlobA5(int x, byte[] tag, byte[] uid, byte[] message) {
-        if (tag.length > 0x10) {
-            logger.warn("** BlobA5() - long tag truncated: {}", tag.length);
+        if (tag.length != 0x10) {
+            throw new IllegalArgumentException("bad tag 0x" + Hex.toHexString(tag));
         }
 
         this.x = x;
@@ -105,7 +106,7 @@ public final class BlobA5 {
         return Arrays.copyOf(message, message.length);
     }
 
-    public ByteBuffer export() {
+    public ByteBuffer export(ByteOrder byteOrder) {
         List<byte[]> list = Arrays.asList(uid, message);
         int size = 0x1C + BlobLists.exportListSize(list);
 

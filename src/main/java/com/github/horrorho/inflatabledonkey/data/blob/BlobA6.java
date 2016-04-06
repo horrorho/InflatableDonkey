@@ -5,13 +5,13 @@
  */
 package com.github.horrorho.inflatabledonkey.data.blob;
 
-import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
@@ -52,7 +52,7 @@ public final class BlobA6 extends BlobBase {
         return Arrays.copyOf(tag, tag.length);
     }
 
-    public byte[] key() {
+    public byte[] m2() {
         return list.get(0);
     }
 
@@ -71,7 +71,7 @@ public final class BlobA6 extends BlobBase {
                 + ",length=0x" + Integer.toHexString(length())
                 + ", x=" + x
                 + ", tag=0x" + Hex.encodeHexString(tag)
-                + ", key=0x" + Hex.encodeHexString(key())
+                + ", key=0x" + Hex.encodeHexString(m2())
                 + ", iv=0x" + Hex.encodeHexString(iv())
                 + ", data=0x" + Hex.encodeHexString(data())
                 + '}';

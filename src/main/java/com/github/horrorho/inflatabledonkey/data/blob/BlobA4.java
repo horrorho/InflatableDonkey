@@ -50,8 +50,8 @@ public final class BlobA4 {
     private final byte[] ephemeralKey;
 
     BlobA4(int x, byte[] tag, byte[] uid, byte[] salt, byte[] ephemeralKey) {
-        if (tag.length > 0x10) {
-            logger.warn("** BlobA4() - long tag truncated: {}", tag.length);
+        if (tag.length != 0x10) {
+            throw new IllegalArgumentException("bad tag 0x" + Hex.toHexString(tag));
         }
 
         this.x = x;
