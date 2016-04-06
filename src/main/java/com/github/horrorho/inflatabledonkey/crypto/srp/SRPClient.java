@@ -97,7 +97,7 @@ public class SRPClient {
         BigInteger u = SRPCore.calculateu(digest, ephemeralKeyA, serverB);
         logger.debug("-- calculateClientEvidenceMessage() - u: 0x{}", u.toString(16));
 
-        BigInteger x = SRPCore.calculatex(digest, N, salt, identity, password);
+        BigInteger x = SRPCore.generatex(digest, N, salt, identity, password);
         logger.debug("-- calculateClientEvidenceMessage() - x: 0x{}", x.toString(16));
 
         BigInteger k = SRPCore.calculatek(digest, N, g);
@@ -106,7 +106,7 @@ public class SRPClient {
         BigInteger S = SRPCore.calculateS(digest, N, g, a, k, u, x, B);
         logger.debug("-- calculateClientEvidenceMessage() - S: 0x{}", S.toString(16));
 
-        key = SRPCore.calculateKey(digest, N, S);
+        key = SRPCore.generateKey(digest, N, S);
         logger.debug("-- calculateClientEvidenceMessage() - key: 0x{}", Hex.toHexString(key));
 
         M1 = SRPCore.calculateM1(digest, N, g, ephemeralKeyA, serverB, key, salt, identity);

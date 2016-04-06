@@ -53,7 +53,7 @@ public final class SRPCore {
         return new BigInteger(1, hash);
     }
 
-    public static byte[] calculateKey(Digest digest, BigInteger N, BigInteger S) {
+    public static byte[] generateKey(Digest digest, BigInteger N, BigInteger S) {
         int length = primeLength(N);
         return hash(digest, toByteArray(S, length));
     }
@@ -104,7 +104,7 @@ public final class SRPCore {
         return new BigInteger(1, hash(digest, A, B));
     }
 
-    public static BigInteger calculatex(Digest digest, BigInteger N, byte[] salt, byte[] identity, byte[] password) {
+    public static BigInteger generatex(Digest digest, BigInteger N, byte[] salt, byte[] identity, byte[] password) {
         // x = SHA1(s | SHA1(I | ":" | P))
         byte[] tmp = hash(digest, identity, COLON, password);
         byte[] hash = hash(digest, salt, tmp);
