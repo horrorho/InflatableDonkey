@@ -71,7 +71,7 @@ public final class BlobA6 extends BlobBase {
                 + ",length=0x" + Integer.toHexString(length())
                 + ", x=" + x
                 + ", tag=0x" + Hex.encodeHexString(tag)
-                + ", key=0x" + Hex.encodeHexString(m2())
+                + ", m2=0x" + Hex.encodeHexString(m2())
                 + ", iv=0x" + Hex.encodeHexString(iv())
                 + ", data=0x" + Hex.encodeHexString(data())
                 + '}';

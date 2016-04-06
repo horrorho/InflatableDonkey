@@ -24,9 +24,9 @@
 package com.github.horrorho.inflatabledonkey.requests;
 
 import com.dd.plist.NSDictionary;
+import com.github.horrorho.inflatabledonkey.data.blob.BlobA5;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -38,7 +38,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.StringEntity;
-import org.bouncycastle.util.BigIntegers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,11 +127,12 @@ public final class EscrowProxyApi {
         return dictionary;
     }
 
-    public NSDictionary recover(HttpClient httpClient, String mmeAuthToken, BigInteger M1, byte[] tag, byte[] x) throws IOException {
+    public NSDictionary recover(HttpClient httpClient, String mmeAuthToken, byte[] m1, byte[] uuid, byte[] tag) throws IOException {
         String uri = escrowProxyUrl + "/escrowproxy/api/recover";
         String mobilemeAuthToken = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
 
-        byte[] data = recoveryBlob(x, tag, BigIntegers.asUnsignedByteArray(M1));
+        BlobA5 blob = new BlobA5(tag, uuid, m1);
+        byte[] data = blob.export().array();
 
         String encodedMessage = Base64.getEncoder().encodeToString(data);
 
@@ -163,40 +163,5 @@ public final class EscrowProxyApi {
 
         // TODO 409 conflict on bad value
         return httpClient.execute(request, PropertyListResponseHandler.nsDictionaryResponseHandler());
-    }
-
-    public byte[] recoveryBlob(byte[] x, byte[] tag, byte[] M1) {
-        // Network byte ordering/ big endian.
-        if (x.length != 0x10) {
-            logger.warn("-- recoveryBlob() - unexpected x length: {}", x.length);
-            // TODO 
-        }
-
-        // TODO merge into data.blob
-        byte[] paddedTag = pad(tag);
-        byte[] paddedM1 = pad(M1);
-
-        int length = paddedTag.length + paddedM1.length + 0x30;
-
-        ByteBuffer buffer = ByteBuffer.allocate(length);
-
-        buffer.putInt(length);
-        buffer.putInt(0x000000A5);
-        buffer.putInt(0x00000000);
-        buffer.put(x);
-        buffer.putInt(0x00000000);
-        buffer.putInt(paddedTag.length + 0x04);
-        buffer.putInt(paddedTag.length + paddedM1.length + 0x08);
-        buffer.putInt(tag.length);
-        buffer.put(paddedTag);
-        buffer.putInt(M1.length);
-        buffer.put(paddedM1);
-
-        return buffer.array();
-    }
-
-    private static byte[] pad(byte[] bytes) {
-        int length = bytes.length + 3 & 0xFFFFFFFC;
-        return Arrays.copyOf(bytes, length);
     }
 }

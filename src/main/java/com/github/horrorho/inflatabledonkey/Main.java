@@ -29,17 +29,20 @@ import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPInitResponse;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
+import com.dd.plist.PropertyListFormatException;
 import com.github.horrorho.inflatabledonkey.args.ArgsParser;
 import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
 import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
+import com.github.horrorho.inflatabledonkey.crypto.srp.SRPTest;
 import com.github.horrorho.inflatabledonkey.data.AccountInfo;
 import com.github.horrorho.inflatabledonkey.data.Auth;
 import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
+import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
@@ -56,21 +59,26 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -80,6 +88,7 @@ import org.apache.http.message.BasicHeader;
 import org.bouncycastle.util.BigIntegers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * iOS9 backup retrieval proof of concept - work in progress. Development tool intended to demonstrate a functional
@@ -102,7 +111,7 @@ public class Main {
      * @param args the command line arguments
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
         // Command line arguments.
         AuthenticationMapper authenticationMapper = AuthenticationMapper.instance();
         OptionsFactory optionsFactory = OptionsFactory.create();
@@ -258,8 +267,9 @@ public class Main {
 
         SecureRandom secureRandom = new SecureRandom();
         SRPClient srp = SRPFactory.rfc5054(secureRandom);
-        BigInteger randomKey = srp.generateClientCredentials();
-        NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), BigIntegers.asUnsignedByteArray(randomKey));
+        byte[] ephemeralKeyA = srp.generateClientCredentials();
+        NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), ephemeralKeyA);
+
         SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);
         logger.debug("-- main() - srpInit response: {}", srpInit.toASCIIPropertyList());
 
@@ -267,35 +277,39 @@ public class Main {
         logger.debug("-- main() - escrow service id: {}", Hex.encodeHexString(dsid));
         logger.debug("-- main() - escrow service password: {}", Hex.encodeHexString(dsid));
 
-        BigInteger M = srp.calculateClientEvidenceMessage(srpInitResponse.salt(), dsid, dsid, srpInitResponse.B());
-        if (M == null) {
-            logger.error("-- main() - invalid server SRP init response(B): {}", srpInitResponse.B().toString(16));
+        Optional<byte[]> optionalM1
+                = srp.calculateClientEvidenceMessage(srpInitResponse.salt(), dsid, dsid, srpInitResponse.ephemeralKeyB());
+        if (!optionalM1.isPresent()) {
+            logger.error("-- main() - bad ephemeral key from server: 0x{}", Hex.encodeHex(srpInitResponse.ephemeralKeyB()));
             System.exit(0);
         }
-        logger.debug("-- main() - M: 0x{}", M.toString(16));
+        byte[] m1 = optionalM1.get();
 
-        NSDictionary recover = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), M, srpInitResponse.tag(), srpInitResponse.x());
+        logger.debug("-- main() - m1: 0x{}", Hex.encodeHexString(m1));
+
+        NSDictionary recover = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), m1, srpInitResponse.uid(), srpInitResponse.tag());
         logger.debug("-- main() - srpInit response: {}", recover.toASCIIPropertyList());
 
-        // TODO verify ***
+        byte[] recoverRespBlob = Base64.getDecoder().decode(PLists.<NSString>get(recover, "respBlob").getContent());
+
+        BlobA6 blobA6 = new BlobA6(ByteBuffer.wrap(recoverRespBlob));
+        logger.debug("-- main() - blobA6: {}", blobA6);
+
+        Optional<byte[]> optionalKey = srp.verifyServerEvidenceMessage(blobA6.m2());
+        if (!optionalKey.isPresent()) {
+            logger.debug("-- main() - failed to verify m2");
+        }
+
+        byte[] key = optionalKey.get();
+        logger.debug("-- main() - key: {}", Hex.encodeHexString(key));
+
+        SRPTest.test(blobA6, key);
         
         
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-       // System.exit(0);
+        System.exit(0);
 
         /*
          CloudKitty, simple client-server CloudKit calls. Meow.

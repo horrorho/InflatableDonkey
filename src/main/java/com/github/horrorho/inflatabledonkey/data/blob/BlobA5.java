@@ -106,7 +106,7 @@ public final class BlobA5 {
         return Arrays.copyOf(message, message.length);
     }
 
-    public ByteBuffer export(ByteOrder byteOrder) {
+    public ByteBuffer export() {
         List<byte[]> list = Arrays.asList(uid, message);
         int size = 0x1C + BlobLists.exportListSize(list);
 
