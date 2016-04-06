@@ -25,11 +25,13 @@ package com.github.horrorho.inflatabledonkey.crypto.srp;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.NotThreadSafe;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.agreement.srp.SRP6Util;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 @NotThreadSafe
 public class SRPClient {
+    // https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
 
     protected static final Logger logger = LoggerFactory.getLogger(SRPClient.class);
 
@@ -48,9 +51,9 @@ public class SRPClient {
     protected final BigInteger N;
     protected final BigInteger g;
     protected BigInteger a;
-    protected BigInteger A;
-    protected BigInteger K;
-    protected BigInteger M1;
+    protected byte[] ephemeralKeyA;
+    protected byte[] key;
+    protected byte[] M1;
 
     public SRPClient(SecureRandom random, Digest digest, BigInteger N, BigInteger g) {
         this.random = Objects.requireNonNull(random, "random");
@@ -62,37 +65,36 @@ public class SRPClient {
         logger.debug(" **SRP() - g: 0x{}", g.toString(16));
     }
 
-    // TODO byte[] result
-    public BigInteger generateClientCredentials() {
+    public byte[] generateClientCredentials() {
         return generateClientCredentials(SRP6Util.generatePrivateValue(digest, N, g, random));
     }
 
     // TODO to package private
-    public BigInteger generateClientCredentials(BigInteger a) {
+    public byte[] generateClientCredentials(BigInteger a) {
         // Package private test injection point.
         this.a = a;
         logger.debug("-- generateClientCredentials() - a: 0x{}", a.toString(16));
 
-        A = SRPCore.calculateA(N, g, a);
-        logger.debug("-- generateClientCredentials() - A: 0x{}", A.toString(16));
+        ephemeralKeyA = SRPCore.generateEphemeralKeyA(N, g, a);
+        logger.debug("-- generateClientCredentials() - ephemeral key A: 0x{}", Hex.toHexString(ephemeralKeyA));
 
-        return A;
+        return Arrays.copyOf(ephemeralKeyA, ephemeralKeyA.length);
     }
 
-    // TODO optional result
-    // TODO byte[] result
-    public BigInteger
-            calculateClientEvidenceMessage(byte[] salt, byte[] identity, byte[] password, BigInteger serverB) {
+    public Optional<byte[]>
+            calculateClientEvidenceMessage(byte[] salt, byte[] identity, byte[] password, byte[] serverB) {
 
-        if (this.A == null) {
+        if (this.ephemeralKeyA == null) {
             throw new IllegalStateException("Client credentials not yet generated");
         }
 
+        BigInteger B = new BigInteger(1, serverB);
+
         if (SRPCore.isZero(N, serverB)) {
-            return null;
+            return Optional.empty();
         }
 
-        BigInteger u = SRPCore.calculateu(digest, N, A, serverB);
+        BigInteger u = SRPCore.calculateu(digest, ephemeralKeyA, serverB);
         logger.debug("-- calculateClientEvidenceMessage() - u: 0x{}", u.toString(16));
 
         BigInteger x = SRPCore.calculatex(digest, N, salt, identity, password);
@@ -101,27 +103,25 @@ public class SRPClient {
         BigInteger k = SRPCore.calculatek(digest, N, g);
         logger.debug("-- calculateClientEvidenceMessage() - k: 0x{}", k.toString(16));
 
-        BigInteger S = SRPCore.calculateS(digest, N, g, a, k, u, x, serverB);
+        BigInteger S = SRPCore.calculateS(digest, N, g, a, k, u, x, B);
         logger.debug("-- calculateClientEvidenceMessage() - S: 0x{}", S.toString(16));
 
-        K = SRPCore.calculateK(digest, N, S);
-        logger.debug("-- calculateClientEvidenceMessage() - K: 0x{}", K.toString(16));
+        key = SRPCore.calculateKey(digest, N, S);
+        logger.debug("-- calculateClientEvidenceMessage() - key: 0x{}", Hex.toHexString(key));
 
-        M1 = SRPCore.calculateM1(digest, N, g, A, serverB, K, salt, identity);
-        logger.debug("-- calculateClientEvidenceMessage() - M1: 0x{}", M1.toString(16));
+        M1 = SRPCore.calculateM1(digest, N, g, ephemeralKeyA, serverB, key, salt, identity);
+        logger.debug("-- calculateClientEvidenceMessage() - M1: 0x{}", Hex.toHexString(M1));
 
-        return M1;
+        return Optional.of(M1);
     }
 
-    public Optional<byte[]> verifyServerEvidenceMessage(BigInteger serverM2) {
+    public Optional<byte[]> verifyServerEvidenceMessage(byte[] serverM2) {
+        byte[] computedM2 = SRPCore.calculateM2(digest, N, ephemeralKeyA, M1, key);
+        logger.debug("-- verifyServerEvidenceMessage() - computed M2: {}", Hex.toHexString(computedM2));
 
-        BigInteger computedM2 = SRPCore.calculateM2(digest, N, A, M1, K);
-        logger.debug("-- verifyServerEvidenceMessage() - computed M2: {}", computedM2.toString(16));
-
-        if (computedM2.equals(serverM2)) {
+        if (Arrays.equals(computedM2, serverM2)) {
             logger.debug("-- verifyServerEvidenceMessage() - server M2 verification passed");
-            byte[] key = SRPCore.padded(K, digest.getDigestSize());
-            return Optional.of(key);
+            return Optional.of(Arrays.copyOf(key, key.length));
         }
 
         logger.warn("-- verifyServerEvidenceMessage() - server M2 verification failed");
