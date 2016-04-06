@@ -21,33 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.crypto.srp;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
+ * SRPFactory.
  *
  * @author Ahseya
  */
 @Immutable
 public final class SRPFactory {
 
-    public static SRP createDefault(SecureRandom random) {
+    public static SRPClient rfc5054(SecureRandom random) {
         BigInteger N = new BigInteger(1, Hex.decode(DEFAULT_PRIME_HEX));
-        Digest digest = DEFAULT_DIGEST_SUPPLIER.get();
-        return new SRP(random, digest, N, DEFAULT_GENERATOR);
+        Digest digest = new SHA256Digest();
+        return new SRPClient(random, digest, N, BigInteger.valueOf(2));
     }
 
-    // Default n = 2
-    private static final BigInteger DEFAULT_GENERATOR = BigInteger.valueOf(2);
-
-    // Default https://tools.ietf.org/html/rfc5054 2048-bit Group
+    // https://tools.ietf.org/html/rfc5054 2048-bit Group
     private static final String DEFAULT_PRIME_HEX
             = "AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC319294"
             + "3DB56050A37329CBB4A099ED8193E0757767A13DD52312AB4B03310D"
@@ -59,7 +56,4 @@ public final class SRPFactory {
             + "03CE53299CCC041C7BC308D82A5698F3A8D0C38271AE35F8E9DBFBB6"
             + "94B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F"
             + "9E4AFF73";
-
-    // Default SHA256
-    private static final Supplier<Digest> DEFAULT_DIGEST_SUPPLIER = SHA256Digest::new;
 }

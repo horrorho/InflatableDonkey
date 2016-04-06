@@ -23,6 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
+import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
+import com.github.horrorho.inflatabledonkey.crypto.srp.SRPInitResponse;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.args.ArgsParser;
@@ -240,6 +244,7 @@ public class Main {
          escrow password = dsid        
          */
         logger.info("-- main() - STEP - EscrowService SRP exchange.");
+        logger.info("-- main() - SRP-6a exchange correctness is critical. Limited attempts before account is locked.");
 
         // TODO fail if only a limited amount of attempts left.
         NSDictionary mobileme = PLists.<NSDictionary>get(settings, "com.apple.mobileme");
@@ -252,7 +257,7 @@ public class Main {
         logger.debug("-- main() - getRecords response: {}", records.toASCIIPropertyList());
 
         SecureRandom secureRandom = new SecureRandom();
-        SRP srp = SRPFactory.createDefault(secureRandom);
+        SRPClient srp = SRPFactory.rfc5054(secureRandom);
         BigInteger randomKey = srp.generateClientCredentials();
         NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), BigIntegers.asUnsignedByteArray(randomKey));
         SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);

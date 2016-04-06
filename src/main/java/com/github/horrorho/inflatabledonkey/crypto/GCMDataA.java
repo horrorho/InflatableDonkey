@@ -136,7 +136,7 @@ public final class GCMDataA {
             logger.debug("-- doDecrypt() - optional: 0x{}", Hex.toHexString(optional.get()));
         }
 
-        byte[] decrypted = GCMAES.decrypt(key, nonce, header, encrypted, tag, optional);
+        byte[] decrypted = AESGCM.decrypt(key, nonce, header, encrypted, tag, optional);
 
         logger.trace(">> doDecrypt() - decrypted: 0x{}", Hex.toHexString(decrypted));
         return decrypted;

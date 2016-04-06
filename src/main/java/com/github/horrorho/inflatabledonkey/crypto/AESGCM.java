@@ -38,7 +38,7 @@ import org.bouncycastle.util.Arrays;
  * @author Ahseya
  */
 @Immutable
-public final class GCMAES {
+public final class AESGCM {
 
     /**
      * Returns decrypted data.

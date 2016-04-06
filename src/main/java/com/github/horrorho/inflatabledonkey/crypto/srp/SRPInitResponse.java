@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.crypto.srp;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
@@ -31,7 +31,6 @@ import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.Base64;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.codec.binary.Hex;

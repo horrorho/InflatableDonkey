@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
@@ -92,7 +92,7 @@ public final class CloudKitty {
                 .build();
     }
 
-    List<CloudKit.ZoneRetrieveResponse>
+   public List<CloudKit.ZoneRetrieveResponse>
             zoneRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone)
             throws IOException {
 
@@ -146,7 +146,7 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
-    List<CloudKit.RecordRetrieveResponse>
+  public   List<CloudKit.RecordRetrieveResponse>
             recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
             throws IOException {
 
@@ -205,7 +205,7 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
-    List<CloudKit.QueryRetrieveRequestResponse>
+  public   List<CloudKit.QueryRetrieveRequestResponse>
             queryRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
             throws IOException {
 

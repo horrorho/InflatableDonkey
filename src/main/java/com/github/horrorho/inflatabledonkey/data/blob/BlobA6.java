@@ -13,6 +13,8 @@ import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
+import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
+import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 
 /**
  * Unspecified format.
@@ -26,21 +28,21 @@ public final class BlobA6 extends BlobBase {
 
     private final int x;
     private final byte[] tag = new byte[0x10];
-    private final BlobList list;
+    private final BlobLists list;
 
     public BlobA6(ByteBuffer blob) {
         super(blob);
 
         if (type() != 0x000000A6) {
             // Presumed type 0x000000A6, consider throwing exception.
-            logger.warn("** RespBlob() - unexpected type: 0x{}", Integer.toHexString(type()));
+            logger.warn("** RespA6() - unexpected type: 0x{}", Integer.toHexString(type()));
         }
 
         x = blob.getInt();
         blob.get(tag);
         align(blob);
 
-        list = new BlobList(blob);
+        list = new BlobLists(blob);
         if (list.size() < 3) {
             throw new IllegalArgumentException("too few blob fields: " + list.size());
         }

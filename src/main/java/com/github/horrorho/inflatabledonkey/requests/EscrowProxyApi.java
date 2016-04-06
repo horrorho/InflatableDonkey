@@ -43,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AuthorizeGetRequestFactory HttpUriRequest factory.
+ * EscrowProxyApi.
  *
  * @author Ahseya
  */
@@ -99,7 +99,6 @@ public final class EscrowProxyApi {
 
         String encodedKey = Base64.getEncoder().encodeToString(key);
 
-        // TODO length
         String post = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                 + "<plist version=\"1.0\">\n"
@@ -137,7 +136,6 @@ public final class EscrowProxyApi {
 
         String encodedMessage = Base64.getEncoder().encodeToString(data);
 
-        // TODO length
         String post = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                 + "<plist version=\"1.0\">\n"
@@ -163,33 +161,18 @@ public final class EscrowProxyApi {
                 .setEntity(new StringEntity(post, StandardCharsets.UTF_8))
                 .build();
 
-        NSDictionary dictionary = httpClient.execute(request, PropertyListResponseHandler.nsDictionaryResponseHandler());
-//        HttpResponse response = httpClient.execute(request);
-//
-//        String toString = EntityUtils.toString(response.getEntity());
-//        System.out.println(toString);
-//
-//        return null;
-        return dictionary;
         // TODO 409 conflict on bad value
+        return httpClient.execute(request, PropertyListResponseHandler.nsDictionaryResponseHandler());
     }
 
-    /*
-    00000060
-    000000a5
-    00000000
-    a815b4ec465a5067abbe931ccb4f96490000000000000014000000380000000e314234442d334130432d304433410000000000200344fd8a918d56ff4bf04f372adf4daeafbf9a40a65707497df039aebc8fd537
-
-     */
     public byte[] recoveryBlob(byte[] x, byte[] tag, byte[] M1) {
         // Network byte ordering/ big endian.
-
-        // TODO is x more formally known as stamp?
         if (x.length != 0x10) {
             logger.warn("-- recoveryBlob() - unexpected x length: {}", x.length);
-            // TODO throw exception or work out how to transmit larger x
+            // TODO 
         }
 
+        // TODO merge into data.blob
         byte[] paddedTag = pad(tag);
         byte[] paddedM1 = pad(M1);
 

@@ -43,7 +43,7 @@ public final class BlobA0 extends BlobBase {
     private final int x;
     private final int iterations;
     private final int y;
-    private final BlobList list;
+    private final BlobLists list;
     private final String label;
     private final String timestamp;
 
@@ -52,14 +52,14 @@ public final class BlobA0 extends BlobBase {
 
         if (type() != 0x000000A0) {
             // Presumed type 0x000000A0, consider throwing exception.
-            logger.warn("** BlobB() - unexpected type: 0x{}", Integer.toHexString(type()));
+            logger.warn("** BlobA0() - unexpected type: 0x{}", Integer.toHexString(type()));
         }
 
         x = blob.getInt();
         iterations = blob.getInt();
         y = blob.getInt();
 
-        list = new BlobList(blob);
+        list = new BlobLists(blob);
         if (list.size() < 5) {
             throw new IllegalArgumentException("too few blob fields: " + list.size());
         }

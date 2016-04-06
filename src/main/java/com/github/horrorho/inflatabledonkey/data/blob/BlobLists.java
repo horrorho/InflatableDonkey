@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 
 /**
  * Unspecified format.
@@ -37,18 +38,44 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class BlobList {
+public final class BlobLists {
 
-    private final List<byte[]> items;
-
-    public BlobList(ByteBuffer buffer) {
+    public static List<byte[]> parse(ByteBuffer buffer) {
         List<Integer> indices = new ArrayList<>();
 
         int index;
         while ((index = buffer.getInt()) + buffer.position() != buffer.limit()) {
             if (index < 0 || index > buffer.limit()) {
+                throw new IllegalArgumentException("bad blob index: " + index);
+            }
+            indices.add(index);
+        }
 
-                System.out.println(Integer.toHexString(index));
+        int itemsOffset = buffer.position();
+        return indices.stream()
+                .map(i -> {
+                    if (i + itemsOffset != buffer.position()) {
+                        throw new IllegalArgumentException("bad blob data structure");
+                    }
+
+                    int itemLength = buffer.getInt();
+                    byte[] item = new byte[itemLength];
+                    buffer.get(item);
+                    align(buffer);
+
+                    return item;
+                }).collect(Collectors.toList());
+    }
+
+    private final List<byte[]> items;
+
+    @Deprecated
+    public BlobLists(ByteBuffer buffer) {
+        List<Integer> indices = new ArrayList<>();
+
+        int index;
+        while ((index = buffer.getInt()) + buffer.position() != buffer.limit()) {
+            if (index < 0 || index > buffer.limit()) {
                 throw new IllegalArgumentException("bad blob index: " + index);
             }
             indices.add(index);
@@ -70,15 +97,18 @@ public final class BlobList {
                 }).collect(Collectors.toList());
     }
 
+    @Deprecated
     public byte[] get(int index) {
         byte[] item = items.get(index);
         return Arrays.copyOf(item, item.length);
     }
 
+    @Deprecated
     public int size() {
         return items.size();
     }
 
+    @Deprecated
     @Override
     public String toString() {
         return "BlobData{" + "items=" + items + '}';
