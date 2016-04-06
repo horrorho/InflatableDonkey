@@ -74,7 +74,7 @@ public final class SRPCore {
         update(digest, salt);
         update(digest, padded(A, length));
         update(digest, padded(B, length));
-        update(digest, padded(K, length));  // hash length
+        update(digest, padded(K, digest.getDigestSize()));
 
         byte[] output = new byte[digest.getDigestSize()];
         digest.doFinal(output, 0);
@@ -87,7 +87,7 @@ public final class SRPCore {
 
         update(digest, padded(A, length));
         update(digest, padded(M1, length));
-        update(digest, padded(K, length));
+        update(digest, padded(K, digest.getDigestSize()));
 
         byte[] output = new byte[digest.getDigestSize()];
         digest.doFinal(output, 0);
