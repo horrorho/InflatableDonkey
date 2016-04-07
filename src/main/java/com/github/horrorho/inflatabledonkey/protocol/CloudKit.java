@@ -3495,6 +3495,20 @@ public final class CloudKit {
         getApplicationBundleBytes();
 
     /**
+     * <code>optional string f4 = 4;</code>
+     */
+    boolean hasF4();
+    /**
+     * <code>optional string f4 = 4;</code>
+     */
+    java.lang.String getF4();
+    /**
+     * <code>optional string f4 = 4;</code>
+     */
+    com.google.protobuf.ByteString
+        getF4Bytes();
+
+    /**
      * <code>optional .Identifier deviceIdentifier = 7;</code>
      */
     boolean hasDeviceIdentifier();
@@ -3831,9 +3845,15 @@ public final class CloudKit {
               applicationBundle_ = bs;
               break;
             }
+            case 34: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000004;
+              f4_ = bs;
+              break;
+            }
             case 58: {
               com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              if (((bitField0_ & 0x00000008) == 0x00000008)) {
                 subBuilder = deviceIdentifier_.toBuilder();
               }
               deviceIdentifier_ = input.readMessage(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.PARSER, extensionRegistry);
@@ -3841,58 +3861,58 @@ public final class CloudKit {
                 subBuilder.mergeFrom(deviceIdentifier_);
                 deviceIdentifier_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x00000004;
+              bitField0_ |= 0x00000008;
               break;
             }
             case 66: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000008;
+              bitField0_ |= 0x00000010;
               deviceSoftwareVersion_ = bs;
               break;
             }
             case 74: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000010;
+              bitField0_ |= 0x00000020;
               f9_ = bs;
               break;
             }
             case 82: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000040;
               deviceLibraryName_ = bs;
               break;
             }
             case 90: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000040;
+              bitField0_ |= 0x00000080;
               deviceLibraryVersion_ = bs;
               break;
             }
             case 98: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000080;
+              bitField0_ |= 0x00000100;
               operation_ = bs;
               break;
             }
             case 104: {
-              bitField0_ |= 0x00000100;
+              bitField0_ |= 0x00000200;
               deviceFlowControlBudget_ = input.readUInt64();
               break;
             }
             case 112: {
-              bitField0_ |= 0x00000200;
+              bitField0_ |= 0x00000400;
               deviceFlowControlBudgetCap_ = input.readUInt64();
               break;
             }
             case 122: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000400;
+              bitField0_ |= 0x00000800;
               deviceFlowControlKey_ = bs;
               break;
             }
             case 138: {
               com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000800) == 0x00000800)) {
+              if (((bitField0_ & 0x00001000) == 0x00001000)) {
                 subBuilder = locale_.toBuilder();
               }
               locale_ = input.readMessage(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.PARSER, extensionRegistry);
@@ -3900,39 +3920,39 @@ public final class CloudKit {
                 subBuilder.mergeFrom(locale_);
                 locale_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x00000800;
+              bitField0_ |= 0x00001000;
               break;
             }
             case 146: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00001000;
+              bitField0_ |= 0x00002000;
               version_ = bs;
               break;
             }
             case 152: {
-              bitField0_ |= 0x00002000;
+              bitField0_ |= 0x00004000;
               f19_ = input.readUInt32();
               break;
             }
             case 170: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00004000;
+              bitField0_ |= 0x00008000;
               deviceAssignedName_ = bs;
               break;
             }
             case 178: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00008000;
+              bitField0_ |= 0x00010000;
               deviceHardwareID_ = bs;
               break;
             }
             case 184: {
-              bitField0_ |= 0x00010000;
+              bitField0_ |= 0x00020000;
               f23_ = input.readUInt32();
               break;
             }
             case 200: {
-              bitField0_ |= 0x00020000;
+              bitField0_ |= 0x00040000;
               f25_ = input.readUInt32();
               break;
             }
@@ -4060,13 +4080,55 @@ public final class CloudKit {
       }
     }
 
+    public static final int F4_FIELD_NUMBER = 4;
+    private java.lang.Object f4_;
+    /**
+     * <code>optional string f4 = 4;</code>
+     */
+    public boolean hasF4() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional string f4 = 4;</code>
+     */
+    public java.lang.String getF4() {
+      java.lang.Object ref = f4_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          f4_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string f4 = 4;</code>
+     */
+    public com.google.protobuf.ByteString
+        getF4Bytes() {
+      java.lang.Object ref = f4_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        f4_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     public static final int DEVICEIDENTIFIER_FIELD_NUMBER = 7;
     private com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier deviceIdentifier_;
     /**
      * <code>optional .Identifier deviceIdentifier = 7;</code>
      */
     public boolean hasDeviceIdentifier() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional .Identifier deviceIdentifier = 7;</code>
@@ -4087,7 +4149,7 @@ public final class CloudKit {
      * <code>optional string deviceSoftwareVersion = 8;</code>
      */
     public boolean hasDeviceSoftwareVersion() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional string deviceSoftwareVersion = 8;</code>
@@ -4133,7 +4195,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasF9() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>optional string f9 = 9;</code>
@@ -4187,7 +4249,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasDeviceLibraryName() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <code>optional string deviceLibraryName = 10;</code>
@@ -4241,7 +4303,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasDeviceLibraryVersion() {
-      return ((bitField0_ & 0x00000040) == 0x00000040);
+      return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
      * <code>optional string deviceLibraryVersion = 11;</code>
@@ -4291,7 +4353,7 @@ public final class CloudKit {
      * <code>optional string operation = 12;</code>
      */
     public boolean hasOperation() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
+      return ((bitField0_ & 0x00000100) == 0x00000100);
     }
     /**
      * <code>optional string operation = 12;</code>
@@ -4337,7 +4399,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasDeviceFlowControlBudget() {
-      return ((bitField0_ & 0x00000100) == 0x00000100);
+      return ((bitField0_ & 0x00000200) == 0x00000200);
     }
     /**
      * <code>optional uint64 deviceFlowControlBudget = 13;</code>
@@ -4360,7 +4422,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasDeviceFlowControlBudgetCap() {
-      return ((bitField0_ & 0x00000200) == 0x00000200);
+      return ((bitField0_ & 0x00000400) == 0x00000400);
     }
     /**
      * <code>optional uint64 deviceFlowControlBudgetCap = 14;</code>
@@ -4383,7 +4445,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasDeviceFlowControlKey() {
-      return ((bitField0_ & 0x00000400) == 0x00000400);
+      return ((bitField0_ & 0x00000800) == 0x00000800);
     }
     /**
      * <code>optional string deviceFlowControlKey = 15;</code>
@@ -4433,7 +4495,7 @@ public final class CloudKit {
      * <code>optional .Locale locale = 17;</code>
      */
     public boolean hasLocale() {
-      return ((bitField0_ & 0x00000800) == 0x00000800);
+      return ((bitField0_ & 0x00001000) == 0x00001000);
     }
     /**
      * <code>optional .Locale locale = 17;</code>
@@ -4458,7 +4520,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasVersion() {
-      return ((bitField0_ & 0x00001000) == 0x00001000);
+      return ((bitField0_ & 0x00002000) == 0x00002000);
     }
     /**
      * <code>optional string version = 18;</code>
@@ -4508,7 +4570,7 @@ public final class CloudKit {
      * <code>optional uint32 f19 = 19;</code>
      */
     public boolean hasF19() {
-      return ((bitField0_ & 0x00002000) == 0x00002000);
+      return ((bitField0_ & 0x00004000) == 0x00004000);
     }
     /**
      * <code>optional uint32 f19 = 19;</code>
@@ -4523,7 +4585,7 @@ public final class CloudKit {
      * <code>optional string deviceAssignedName = 21;</code>
      */
     public boolean hasDeviceAssignedName() {
-      return ((bitField0_ & 0x00004000) == 0x00004000);
+      return ((bitField0_ & 0x00008000) == 0x00008000);
     }
     /**
      * <code>optional string deviceAssignedName = 21;</code>
@@ -4565,7 +4627,7 @@ public final class CloudKit {
      * <code>optional string deviceHardwareID = 22;</code>
      */
     public boolean hasDeviceHardwareID() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
+      return ((bitField0_ & 0x00010000) == 0x00010000);
     }
     /**
      * <code>optional string deviceHardwareID = 22;</code>
@@ -4607,7 +4669,7 @@ public final class CloudKit {
      * <code>optional uint32 f23 = 23;</code>
      */
     public boolean hasF23() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
+      return ((bitField0_ & 0x00020000) == 0x00020000);
     }
     /**
      * <code>optional uint32 f23 = 23;</code>
@@ -4622,7 +4684,7 @@ public final class CloudKit {
      * <code>optional uint32 f25 = 25;</code>
      */
     public boolean hasF25() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
+      return ((bitField0_ & 0x00040000) == 0x00040000);
     }
     /**
      * <code>optional uint32 f25 = 25;</code>
@@ -4634,6 +4696,7 @@ public final class CloudKit {
     private void initFields() {
       applicationContainer_ = "";
       applicationBundle_ = "";
+      f4_ = "";
       deviceIdentifier_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.getDefaultInstance();
       deviceSoftwareVersion_ = "";
       f9_ = "";
@@ -4671,51 +4734,54 @@ public final class CloudKit {
         output.writeBytes(3, getApplicationBundleBytes());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(7, deviceIdentifier_);
+        output.writeBytes(4, getF4Bytes());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBytes(8, getDeviceSoftwareVersionBytes());
+        output.writeMessage(7, deviceIdentifier_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeBytes(9, getF9Bytes());
+        output.writeBytes(8, getDeviceSoftwareVersionBytes());
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeBytes(10, getDeviceLibraryNameBytes());
+        output.writeBytes(9, getF9Bytes());
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeBytes(11, getDeviceLibraryVersionBytes());
+        output.writeBytes(10, getDeviceLibraryNameBytes());
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeBytes(12, getOperationBytes());
+        output.writeBytes(11, getDeviceLibraryVersionBytes());
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        output.writeUInt64(13, deviceFlowControlBudget_);
+        output.writeBytes(12, getOperationBytes());
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeUInt64(14, deviceFlowControlBudgetCap_);
+        output.writeUInt64(13, deviceFlowControlBudget_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        output.writeBytes(15, getDeviceFlowControlKeyBytes());
+        output.writeUInt64(14, deviceFlowControlBudgetCap_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        output.writeMessage(17, locale_);
+        output.writeBytes(15, getDeviceFlowControlKeyBytes());
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        output.writeBytes(18, getVersionBytes());
+        output.writeMessage(17, locale_);
       }
       if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        output.writeUInt32(19, f19_);
+        output.writeBytes(18, getVersionBytes());
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        output.writeBytes(21, getDeviceAssignedNameBytes());
+        output.writeUInt32(19, f19_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        output.writeBytes(22, getDeviceHardwareIDBytes());
+        output.writeBytes(21, getDeviceAssignedNameBytes());
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        output.writeUInt32(23, f23_);
+        output.writeBytes(22, getDeviceHardwareIDBytes());
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
+        output.writeUInt32(23, f23_);
+      }
+      if (((bitField0_ & 0x00040000) == 0x00040000)) {
         output.writeUInt32(25, f25_);
       }
       getUnknownFields().writeTo(output);
@@ -4737,65 +4803,69 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, deviceIdentifier_);
+          .computeBytesSize(4, getF4Bytes());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(8, getDeviceSoftwareVersionBytes());
+          .computeMessageSize(7, deviceIdentifier_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(9, getF9Bytes());
+          .computeBytesSize(8, getDeviceSoftwareVersionBytes());
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(10, getDeviceLibraryNameBytes());
+          .computeBytesSize(9, getF9Bytes());
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(11, getDeviceLibraryVersionBytes());
+          .computeBytesSize(10, getDeviceLibraryNameBytes());
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(12, getOperationBytes());
+          .computeBytesSize(11, getDeviceLibraryVersionBytes());
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(13, deviceFlowControlBudget_);
+          .computeBytesSize(12, getOperationBytes());
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(14, deviceFlowControlBudgetCap_);
+          .computeUInt64Size(13, deviceFlowControlBudget_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(15, getDeviceFlowControlKeyBytes());
+          .computeUInt64Size(14, deviceFlowControlBudgetCap_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(17, locale_);
+          .computeBytesSize(15, getDeviceFlowControlKeyBytes());
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(18, getVersionBytes());
+          .computeMessageSize(17, locale_);
       }
       if (((bitField0_ & 0x00002000) == 0x00002000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(19, f19_);
+          .computeBytesSize(18, getVersionBytes());
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(21, getDeviceAssignedNameBytes());
+          .computeUInt32Size(19, f19_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(22, getDeviceHardwareIDBytes());
+          .computeBytesSize(21, getDeviceAssignedNameBytes());
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(23, f23_);
+          .computeBytesSize(22, getDeviceHardwareIDBytes());
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(23, f23_);
+      }
+      if (((bitField0_ & 0x00040000) == 0x00040000)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(25, f25_);
       }
@@ -4922,46 +4992,48 @@ public final class CloudKit {
         bitField0_ = (bitField0_ & ~0x00000001);
         applicationBundle_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
+        f4_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
         if (deviceIdentifierBuilder_ == null) {
           deviceIdentifier_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.getDefaultInstance();
         } else {
           deviceIdentifierBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000004);
-        deviceSoftwareVersion_ = "";
         bitField0_ = (bitField0_ & ~0x00000008);
-        f9_ = "";
+        deviceSoftwareVersion_ = "";
         bitField0_ = (bitField0_ & ~0x00000010);
-        deviceLibraryName_ = "";
+        f9_ = "";
         bitField0_ = (bitField0_ & ~0x00000020);
-        deviceLibraryVersion_ = "";
+        deviceLibraryName_ = "";
         bitField0_ = (bitField0_ & ~0x00000040);
-        operation_ = "";
+        deviceLibraryVersion_ = "";
         bitField0_ = (bitField0_ & ~0x00000080);
-        deviceFlowControlBudget_ = 0L;
+        operation_ = "";
         bitField0_ = (bitField0_ & ~0x00000100);
-        deviceFlowControlBudgetCap_ = 0L;
+        deviceFlowControlBudget_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000200);
-        deviceFlowControlKey_ = "";
+        deviceFlowControlBudgetCap_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000400);
+        deviceFlowControlKey_ = "";
+        bitField0_ = (bitField0_ & ~0x00000800);
         if (localeBuilder_ == null) {
           locale_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.getDefaultInstance();
         } else {
           localeBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000800);
-        version_ = "";
         bitField0_ = (bitField0_ & ~0x00001000);
-        f19_ = 0;
+        version_ = "";
         bitField0_ = (bitField0_ & ~0x00002000);
-        deviceAssignedName_ = "";
+        f19_ = 0;
         bitField0_ = (bitField0_ & ~0x00004000);
-        deviceHardwareID_ = "";
+        deviceAssignedName_ = "";
         bitField0_ = (bitField0_ & ~0x00008000);
-        f23_ = 0;
+        deviceHardwareID_ = "";
         bitField0_ = (bitField0_ & ~0x00010000);
-        f25_ = 0;
+        f23_ = 0;
         bitField0_ = (bitField0_ & ~0x00020000);
+        f25_ = 0;
+        bitField0_ = (bitField0_ & ~0x00040000);
         return this;
       }
 
@@ -5001,73 +5073,77 @@ public final class CloudKit {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
+        result.f4_ = f4_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
         if (deviceIdentifierBuilder_ == null) {
           result.deviceIdentifier_ = deviceIdentifier_;
         } else {
           result.deviceIdentifier_ = deviceIdentifierBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.deviceSoftwareVersion_ = deviceSoftwareVersion_;
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
         }
-        result.f9_ = f9_;
+        result.deviceSoftwareVersion_ = deviceSoftwareVersion_;
         if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000020;
         }
-        result.deviceLibraryName_ = deviceLibraryName_;
+        result.f9_ = f9_;
         if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
           to_bitField0_ |= 0x00000040;
         }
-        result.deviceLibraryVersion_ = deviceLibraryVersion_;
+        result.deviceLibraryName_ = deviceLibraryName_;
         if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
           to_bitField0_ |= 0x00000080;
         }
-        result.operation_ = operation_;
+        result.deviceLibraryVersion_ = deviceLibraryVersion_;
         if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
           to_bitField0_ |= 0x00000100;
         }
-        result.deviceFlowControlBudget_ = deviceFlowControlBudget_;
+        result.operation_ = operation_;
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000200;
         }
-        result.deviceFlowControlBudgetCap_ = deviceFlowControlBudgetCap_;
+        result.deviceFlowControlBudget_ = deviceFlowControlBudget_;
         if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
           to_bitField0_ |= 0x00000400;
         }
-        result.deviceFlowControlKey_ = deviceFlowControlKey_;
+        result.deviceFlowControlBudgetCap_ = deviceFlowControlBudgetCap_;
         if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
           to_bitField0_ |= 0x00000800;
+        }
+        result.deviceFlowControlKey_ = deviceFlowControlKey_;
+        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
+          to_bitField0_ |= 0x00001000;
         }
         if (localeBuilder_ == null) {
           result.locale_ = locale_;
         } else {
           result.locale_ = localeBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
-          to_bitField0_ |= 0x00001000;
-        }
-        result.version_ = version_;
         if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
           to_bitField0_ |= 0x00002000;
         }
-        result.f19_ = f19_;
+        result.version_ = version_;
         if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
           to_bitField0_ |= 0x00004000;
         }
-        result.deviceAssignedName_ = deviceAssignedName_;
+        result.f19_ = f19_;
         if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
           to_bitField0_ |= 0x00008000;
         }
-        result.deviceHardwareID_ = deviceHardwareID_;
+        result.deviceAssignedName_ = deviceAssignedName_;
         if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
           to_bitField0_ |= 0x00010000;
         }
-        result.f23_ = f23_;
+        result.deviceHardwareID_ = deviceHardwareID_;
         if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
           to_bitField0_ |= 0x00020000;
+        }
+        result.f23_ = f23_;
+        if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
+          to_bitField0_ |= 0x00040000;
         }
         result.f25_ = f25_;
         result.bitField0_ = to_bitField0_;
@@ -5096,31 +5172,36 @@ public final class CloudKit {
           applicationBundle_ = other.applicationBundle_;
           onChanged();
         }
+        if (other.hasF4()) {
+          bitField0_ |= 0x00000004;
+          f4_ = other.f4_;
+          onChanged();
+        }
         if (other.hasDeviceIdentifier()) {
           mergeDeviceIdentifier(other.getDeviceIdentifier());
         }
         if (other.hasDeviceSoftwareVersion()) {
-          bitField0_ |= 0x00000008;
+          bitField0_ |= 0x00000010;
           deviceSoftwareVersion_ = other.deviceSoftwareVersion_;
           onChanged();
         }
         if (other.hasF9()) {
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
           f9_ = other.f9_;
           onChanged();
         }
         if (other.hasDeviceLibraryName()) {
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
           deviceLibraryName_ = other.deviceLibraryName_;
           onChanged();
         }
         if (other.hasDeviceLibraryVersion()) {
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
           deviceLibraryVersion_ = other.deviceLibraryVersion_;
           onChanged();
         }
         if (other.hasOperation()) {
-          bitField0_ |= 0x00000080;
+          bitField0_ |= 0x00000100;
           operation_ = other.operation_;
           onChanged();
         }
@@ -5131,7 +5212,7 @@ public final class CloudKit {
           setDeviceFlowControlBudgetCap(other.getDeviceFlowControlBudgetCap());
         }
         if (other.hasDeviceFlowControlKey()) {
-          bitField0_ |= 0x00000400;
+          bitField0_ |= 0x00000800;
           deviceFlowControlKey_ = other.deviceFlowControlKey_;
           onChanged();
         }
@@ -5139,7 +5220,7 @@ public final class CloudKit {
           mergeLocale(other.getLocale());
         }
         if (other.hasVersion()) {
-          bitField0_ |= 0x00001000;
+          bitField0_ |= 0x00002000;
           version_ = other.version_;
           onChanged();
         }
@@ -5147,12 +5228,12 @@ public final class CloudKit {
           setF19(other.getF19());
         }
         if (other.hasDeviceAssignedName()) {
-          bitField0_ |= 0x00004000;
+          bitField0_ |= 0x00008000;
           deviceAssignedName_ = other.deviceAssignedName_;
           onChanged();
         }
         if (other.hasDeviceHardwareID()) {
-          bitField0_ |= 0x00008000;
+          bitField0_ |= 0x00010000;
           deviceHardwareID_ = other.deviceHardwareID_;
           onChanged();
         }
@@ -5341,6 +5422,82 @@ public final class CloudKit {
         return this;
       }
 
+      private java.lang.Object f4_ = "";
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public boolean hasF4() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public java.lang.String getF4() {
+        java.lang.Object ref = f4_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            f4_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public com.google.protobuf.ByteString
+          getF4Bytes() {
+        java.lang.Object ref = f4_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          f4_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public Builder setF4(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        f4_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public Builder clearF4() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        f4_ = getDefaultInstance().getF4();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string f4 = 4;</code>
+       */
+      public Builder setF4Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        f4_ = value;
+        onChanged();
+        return this;
+      }
+
       private com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier deviceIdentifier_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.IdentifierOrBuilder> deviceIdentifierBuilder_;
@@ -5348,7 +5505,7 @@ public final class CloudKit {
        * <code>optional .Identifier deviceIdentifier = 7;</code>
        */
       public boolean hasDeviceIdentifier() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
        * <code>optional .Identifier deviceIdentifier = 7;</code>
@@ -5373,7 +5530,7 @@ public final class CloudKit {
         } else {
           deviceIdentifierBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         return this;
       }
       /**
@@ -5387,7 +5544,7 @@ public final class CloudKit {
         } else {
           deviceIdentifierBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         return this;
       }
       /**
@@ -5395,7 +5552,7 @@ public final class CloudKit {
        */
       public Builder mergeDeviceIdentifier(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier value) {
         if (deviceIdentifierBuilder_ == null) {
-          if (((bitField0_ & 0x00000004) == 0x00000004) &&
+          if (((bitField0_ & 0x00000008) == 0x00000008) &&
               deviceIdentifier_ != com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.getDefaultInstance()) {
             deviceIdentifier_ =
               com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.newBuilder(deviceIdentifier_).mergeFrom(value).buildPartial();
@@ -5406,7 +5563,7 @@ public final class CloudKit {
         } else {
           deviceIdentifierBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         return this;
       }
       /**
@@ -5419,14 +5576,14 @@ public final class CloudKit {
         } else {
           deviceIdentifierBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
       /**
        * <code>optional .Identifier deviceIdentifier = 7;</code>
        */
       public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Identifier.Builder getDeviceIdentifierBuilder() {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         onChanged();
         return getDeviceIdentifierFieldBuilder().getBuilder();
       }
@@ -5462,7 +5619,7 @@ public final class CloudKit {
        * <code>optional string deviceSoftwareVersion = 8;</code>
        */
       public boolean hasDeviceSoftwareVersion() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional string deviceSoftwareVersion = 8;</code>
@@ -5505,7 +5662,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
         deviceSoftwareVersion_ = value;
         onChanged();
         return this;
@@ -5514,7 +5671,7 @@ public final class CloudKit {
        * <code>optional string deviceSoftwareVersion = 8;</code>
        */
       public Builder clearDeviceSoftwareVersion() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         deviceSoftwareVersion_ = getDefaultInstance().getDeviceSoftwareVersion();
         onChanged();
         return this;
@@ -5527,7 +5684,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
         deviceSoftwareVersion_ = value;
         onChanged();
         return this;
@@ -5542,7 +5699,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasF9() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
        * <code>optional string f9 = 9;</code>
@@ -5597,7 +5754,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         f9_ = value;
         onChanged();
         return this;
@@ -5610,7 +5767,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearF9() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         f9_ = getDefaultInstance().getF9();
         onChanged();
         return this;
@@ -5627,7 +5784,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         f9_ = value;
         onChanged();
         return this;
@@ -5642,7 +5799,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasDeviceLibraryName() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
        * <code>optional string deviceLibraryName = 10;</code>
@@ -5697,7 +5854,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         deviceLibraryName_ = value;
         onChanged();
         return this;
@@ -5710,7 +5867,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearDeviceLibraryName() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         deviceLibraryName_ = getDefaultInstance().getDeviceLibraryName();
         onChanged();
         return this;
@@ -5727,7 +5884,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         deviceLibraryName_ = value;
         onChanged();
         return this;
@@ -5742,7 +5899,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasDeviceLibraryVersion() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
        * <code>optional string deviceLibraryVersion = 11;</code>
@@ -5797,7 +5954,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         deviceLibraryVersion_ = value;
         onChanged();
         return this;
@@ -5810,7 +5967,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearDeviceLibraryVersion() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         deviceLibraryVersion_ = getDefaultInstance().getDeviceLibraryVersion();
         onChanged();
         return this;
@@ -5827,7 +5984,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         deviceLibraryVersion_ = value;
         onChanged();
         return this;
@@ -5838,7 +5995,7 @@ public final class CloudKit {
        * <code>optional string operation = 12;</code>
        */
       public boolean hasOperation() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+        return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
        * <code>optional string operation = 12;</code>
@@ -5881,7 +6038,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000080;
+  bitField0_ |= 0x00000100;
         operation_ = value;
         onChanged();
         return this;
@@ -5890,7 +6047,7 @@ public final class CloudKit {
        * <code>optional string operation = 12;</code>
        */
       public Builder clearOperation() {
-        bitField0_ = (bitField0_ & ~0x00000080);
+        bitField0_ = (bitField0_ & ~0x00000100);
         operation_ = getDefaultInstance().getOperation();
         onChanged();
         return this;
@@ -5903,7 +6060,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000080;
+  bitField0_ |= 0x00000100;
         operation_ = value;
         onChanged();
         return this;
@@ -5918,7 +6075,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasDeviceFlowControlBudget() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+        return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
        * <code>optional uint64 deviceFlowControlBudget = 13;</code>
@@ -5938,7 +6095,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder setDeviceFlowControlBudget(long value) {
-        bitField0_ |= 0x00000100;
+        bitField0_ |= 0x00000200;
         deviceFlowControlBudget_ = value;
         onChanged();
         return this;
@@ -5951,7 +6108,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearDeviceFlowControlBudget() {
-        bitField0_ = (bitField0_ & ~0x00000100);
+        bitField0_ = (bitField0_ & ~0x00000200);
         deviceFlowControlBudget_ = 0L;
         onChanged();
         return this;
@@ -5966,7 +6123,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasDeviceFlowControlBudgetCap() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
+        return ((bitField0_ & 0x00000400) == 0x00000400);
       }
       /**
        * <code>optional uint64 deviceFlowControlBudgetCap = 14;</code>
@@ -5986,7 +6143,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder setDeviceFlowControlBudgetCap(long value) {
-        bitField0_ |= 0x00000200;
+        bitField0_ |= 0x00000400;
         deviceFlowControlBudgetCap_ = value;
         onChanged();
         return this;
@@ -5999,7 +6156,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearDeviceFlowControlBudgetCap() {
-        bitField0_ = (bitField0_ & ~0x00000200);
+        bitField0_ = (bitField0_ & ~0x00000400);
         deviceFlowControlBudgetCap_ = 0L;
         onChanged();
         return this;
@@ -6014,7 +6171,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasDeviceFlowControlKey() {
-        return ((bitField0_ & 0x00000400) == 0x00000400);
+        return ((bitField0_ & 0x00000800) == 0x00000800);
       }
       /**
        * <code>optional string deviceFlowControlKey = 15;</code>
@@ -6069,7 +6226,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
         deviceFlowControlKey_ = value;
         onChanged();
         return this;
@@ -6082,7 +6239,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearDeviceFlowControlKey() {
-        bitField0_ = (bitField0_ & ~0x00000400);
+        bitField0_ = (bitField0_ & ~0x00000800);
         deviceFlowControlKey_ = getDefaultInstance().getDeviceFlowControlKey();
         onChanged();
         return this;
@@ -6099,7 +6256,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
         deviceFlowControlKey_ = value;
         onChanged();
         return this;
@@ -6112,7 +6269,7 @@ public final class CloudKit {
        * <code>optional .Locale locale = 17;</code>
        */
       public boolean hasLocale() {
-        return ((bitField0_ & 0x00000800) == 0x00000800);
+        return ((bitField0_ & 0x00001000) == 0x00001000);
       }
       /**
        * <code>optional .Locale locale = 17;</code>
@@ -6137,7 +6294,7 @@ public final class CloudKit {
         } else {
           localeBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000800;
+        bitField0_ |= 0x00001000;
         return this;
       }
       /**
@@ -6151,7 +6308,7 @@ public final class CloudKit {
         } else {
           localeBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000800;
+        bitField0_ |= 0x00001000;
         return this;
       }
       /**
@@ -6159,7 +6316,7 @@ public final class CloudKit {
        */
       public Builder mergeLocale(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale value) {
         if (localeBuilder_ == null) {
-          if (((bitField0_ & 0x00000800) == 0x00000800) &&
+          if (((bitField0_ & 0x00001000) == 0x00001000) &&
               locale_ != com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.getDefaultInstance()) {
             locale_ =
               com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.newBuilder(locale_).mergeFrom(value).buildPartial();
@@ -6170,7 +6327,7 @@ public final class CloudKit {
         } else {
           localeBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000800;
+        bitField0_ |= 0x00001000;
         return this;
       }
       /**
@@ -6183,14 +6340,14 @@ public final class CloudKit {
         } else {
           localeBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000800);
+        bitField0_ = (bitField0_ & ~0x00001000);
         return this;
       }
       /**
        * <code>optional .Locale locale = 17;</code>
        */
       public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Locale.Builder getLocaleBuilder() {
-        bitField0_ |= 0x00000800;
+        bitField0_ |= 0x00001000;
         onChanged();
         return getLocaleFieldBuilder().getBuilder();
       }
@@ -6230,7 +6387,7 @@ public final class CloudKit {
        * </pre>
        */
       public boolean hasVersion() {
-        return ((bitField0_ & 0x00001000) == 0x00001000);
+        return ((bitField0_ & 0x00002000) == 0x00002000);
       }
       /**
        * <code>optional string version = 18;</code>
@@ -6285,7 +6442,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00001000;
+  bitField0_ |= 0x00002000;
         version_ = value;
         onChanged();
         return this;
@@ -6298,7 +6455,7 @@ public final class CloudKit {
        * </pre>
        */
       public Builder clearVersion() {
-        bitField0_ = (bitField0_ & ~0x00001000);
+        bitField0_ = (bitField0_ & ~0x00002000);
         version_ = getDefaultInstance().getVersion();
         onChanged();
         return this;
@@ -6315,7 +6472,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00001000;
+  bitField0_ |= 0x00002000;
         version_ = value;
         onChanged();
         return this;
@@ -6326,7 +6483,7 @@ public final class CloudKit {
        * <code>optional uint32 f19 = 19;</code>
        */
       public boolean hasF19() {
-        return ((bitField0_ & 0x00002000) == 0x00002000);
+        return ((bitField0_ & 0x00004000) == 0x00004000);
       }
       /**
        * <code>optional uint32 f19 = 19;</code>
@@ -6338,7 +6495,7 @@ public final class CloudKit {
        * <code>optional uint32 f19 = 19;</code>
        */
       public Builder setF19(int value) {
-        bitField0_ |= 0x00002000;
+        bitField0_ |= 0x00004000;
         f19_ = value;
         onChanged();
         return this;
@@ -6347,7 +6504,7 @@ public final class CloudKit {
        * <code>optional uint32 f19 = 19;</code>
        */
       public Builder clearF19() {
-        bitField0_ = (bitField0_ & ~0x00002000);
+        bitField0_ = (bitField0_ & ~0x00004000);
         f19_ = 0;
         onChanged();
         return this;
@@ -6358,7 +6515,7 @@ public final class CloudKit {
        * <code>optional string deviceAssignedName = 21;</code>
        */
       public boolean hasDeviceAssignedName() {
-        return ((bitField0_ & 0x00004000) == 0x00004000);
+        return ((bitField0_ & 0x00008000) == 0x00008000);
       }
       /**
        * <code>optional string deviceAssignedName = 21;</code>
@@ -6401,7 +6558,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00004000;
+  bitField0_ |= 0x00008000;
         deviceAssignedName_ = value;
         onChanged();
         return this;
@@ -6410,7 +6567,7 @@ public final class CloudKit {
        * <code>optional string deviceAssignedName = 21;</code>
        */
       public Builder clearDeviceAssignedName() {
-        bitField0_ = (bitField0_ & ~0x00004000);
+        bitField0_ = (bitField0_ & ~0x00008000);
         deviceAssignedName_ = getDefaultInstance().getDeviceAssignedName();
         onChanged();
         return this;
@@ -6423,7 +6580,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00004000;
+  bitField0_ |= 0x00008000;
         deviceAssignedName_ = value;
         onChanged();
         return this;
@@ -6434,7 +6591,7 @@ public final class CloudKit {
        * <code>optional string deviceHardwareID = 22;</code>
        */
       public boolean hasDeviceHardwareID() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+        return ((bitField0_ & 0x00010000) == 0x00010000);
       }
       /**
        * <code>optional string deviceHardwareID = 22;</code>
@@ -6477,7 +6634,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00008000;
+  bitField0_ |= 0x00010000;
         deviceHardwareID_ = value;
         onChanged();
         return this;
@@ -6486,7 +6643,7 @@ public final class CloudKit {
        * <code>optional string deviceHardwareID = 22;</code>
        */
       public Builder clearDeviceHardwareID() {
-        bitField0_ = (bitField0_ & ~0x00008000);
+        bitField0_ = (bitField0_ & ~0x00010000);
         deviceHardwareID_ = getDefaultInstance().getDeviceHardwareID();
         onChanged();
         return this;
@@ -6499,7 +6656,7 @@ public final class CloudKit {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00008000;
+  bitField0_ |= 0x00010000;
         deviceHardwareID_ = value;
         onChanged();
         return this;
@@ -6510,7 +6667,7 @@ public final class CloudKit {
        * <code>optional uint32 f23 = 23;</code>
        */
       public boolean hasF23() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+        return ((bitField0_ & 0x00020000) == 0x00020000);
       }
       /**
        * <code>optional uint32 f23 = 23;</code>
@@ -6522,7 +6679,7 @@ public final class CloudKit {
        * <code>optional uint32 f23 = 23;</code>
        */
       public Builder setF23(int value) {
-        bitField0_ |= 0x00010000;
+        bitField0_ |= 0x00020000;
         f23_ = value;
         onChanged();
         return this;
@@ -6531,7 +6688,7 @@ public final class CloudKit {
        * <code>optional uint32 f23 = 23;</code>
        */
       public Builder clearF23() {
-        bitField0_ = (bitField0_ & ~0x00010000);
+        bitField0_ = (bitField0_ & ~0x00020000);
         f23_ = 0;
         onChanged();
         return this;
@@ -6542,7 +6699,7 @@ public final class CloudKit {
        * <code>optional uint32 f25 = 25;</code>
        */
       public boolean hasF25() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+        return ((bitField0_ & 0x00040000) == 0x00040000);
       }
       /**
        * <code>optional uint32 f25 = 25;</code>
@@ -6554,7 +6711,7 @@ public final class CloudKit {
        * <code>optional uint32 f25 = 25;</code>
        */
       public Builder setF25(int value) {
-        bitField0_ |= 0x00020000;
+        bitField0_ |= 0x00040000;
         f25_ = value;
         onChanged();
         return this;
@@ -6563,7 +6720,7 @@ public final class CloudKit {
        * <code>optional uint32 f25 = 25;</code>
        */
       public Builder clearF25() {
-        bitField0_ = (bitField0_ & ~0x00020000);
+        bitField0_ = (bitField0_ & ~0x00040000);
         f25_ = 0;
         onChanged();
         return this;
@@ -31830,94 +31987,94 @@ public final class CloudKit {
       "eRetrieveResponse\0228\n\026recordRetrieveRespo" +
       "nse\030\323\001 \001(\0132\027.RecordRetrieveResponse\022D\n\034q" +
       "ueryRetrieveRequestResponse\030\334\001 \001(\0132\035.Que" +
-      "ryRetrieveRequestResponse\"\331\003\n\026RequestOpe" +
+      "ryRetrieveRequestResponse\"\345\003\n\026RequestOpe" +
       "rationHeader\022\034\n\024applicationContainer\030\002 \001" +
-      "(\t\022\031\n\021applicationBundle\030\003 \001(\t\022%\n\020deviceI" +
-      "dentifier\030\007 \001(\0132\013.Identifier\022\035\n\025deviceSo" +
-      "ftwareVersion\030\010 \001(\t\022\n\n\002f9\030\t \001(\t\022\031\n\021devic" +
-      "eLibraryName\030\n \001(\t\022\034\n\024deviceLibraryVersi",
-      "on\030\013 \001(\t\022\021\n\toperation\030\014 \001(\t\022\037\n\027deviceFlo" +
-      "wControlBudget\030\r \001(\004\022\"\n\032deviceFlowContro" +
-      "lBudgetCap\030\016 \001(\004\022\034\n\024deviceFlowControlKey" +
-      "\030\017 \001(\t\022\027\n\006locale\030\021 \001(\0132\007.Locale\022\017\n\007versi" +
-      "on\030\022 \001(\t\022\013\n\003f19\030\023 \001(\r\022\032\n\022deviceAssignedN" +
-      "ame\030\025 \001(\t\022\030\n\020deviceHardwareID\030\026 \001(\t\022\013\n\003f" +
-      "23\030\027 \001(\r\022\013\n\003f25\030\031 \001(\r\"3\n\tOperation\022\014\n\004uu" +
-      "id\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\022\n\n\002f4\030\004 \001(\r\"\234\001\n\024Q" +
-      "ueryRetrieveRequest\022\025\n\005query\030\001 \001(\0132\006.Que" +
-      "ry\022-\n\016zoneIdentifier\030\004 \001(\0132\025.RecordZoneI",
-      "dentifier\022)\n\017requestedFields\030\005 \001(\0132\020.Req" +
-      "uestedFields\022\023\n\002f6\030\006 \001(\0132\007.UInt32\"Y\n\034Que" +
-      "ryRetrieveRequestResponse\0229\n\007results\030\001 \001" +
-      "(\0132(.QueryRetrieveRequestResponseQueryRe" +
-      "sult\"w\n\'QueryRetrieveRequestResponseQuer" +
-      "yResult\022%\n\nidentifier\030\001 \001(\0132\021.RecordIden" +
-      "tifier\022\014\n\004type\030\003 \001(\r\022\027\n\006record\030\004 \001(\0132\007.R" +
-      "ecord\"Q\n\025RecordRetrieveRequest\022#\n\010record" +
-      "ID\030\001 \001(\0132\021.RecordIdentifier\022\023\n\002f6\030\006 \001(\0132" +
-      "\007.UInt32\"Q\n\026RecordRetrieveResponse\022\027\n\006re",
-      "cord\030\001 \001(\0132\007.Record\022\036\n\026clientVersionETag" +
-      "Match\030\002 \001(\010\" \n\017RequestedFields\022\r\n\005field\030" +
-      "\001 \003(\t\">\n\027ResponseOperationResult\022\014\n\004code" +
-      "\030\001 \001(\r\022\025\n\005error\030\002 \001(\0132\006.Error\";\n\005Error\022\025" +
-      "\n\004code\030\001 \001(\0132\007.UInt32\022\017\n\007message\030\004 \001(\t\022\n" +
-      "\n\002id\030\005 \001(\t\"F\n\016DateStatistics\022\027\n\010creation" +
-      "\030\001 \001(\0132\005.Date\022\033\n\014modification\030\002 \001(\0132\005.Da" +
-      "te\"\024\n\004Date\022\014\n\004time\030\001 \001(\001\"(\n\nIdentifier\022\014" +
-      "\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\"c\n\006Locale\022\024\n\014" +
-      "languageCode\030\001 \001(\t\022\022\n\nregionCode\030\002 \001(\t\022\027",
-      "\n\017enabledKeyboard\030\003 \003(\t\022\026\n\016activeKeyboar" +
-      "d\030\004 \001(\t\"C\n\016ProtectionInfo\022\026\n\016protectionI" +
-      "nfo\030\001 \001(\014\022\031\n\021protectionInfoTag\030\002 \001(\t\"W\n\005" +
-      "Query\022\031\n\004type\030\001 \003(\0132\013.RecordType\022\034\n\006filt" +
-      "er\030\002 \003(\0132\014.QueryFilter\022\025\n\rqueryOperator\030" +
-      "\004 \001(\r\"m\n\013QueryFilter\022)\n\tfieldName\030\001 \001(\0132" +
-      "\026.RecordFieldIdentifier\022%\n\nfieldValue\030\002 " +
-      "\001(\0132\021.RecordFieldValue\022\014\n\004type\030\004 \001(\r\"\302\002\n" +
-      "\006Record\022\014\n\004etag\030\001 \001(\t\022+\n\020RecordIdentifie" +
-      "r\030\002 \001(\0132\021.RecordIdentifier\022\031\n\004type\030\003 \001(\013",
-      "2\013.RecordType\022\036\n\tcreatedBy\030\004 \001(\0132\013.Ident" +
-      "ifier\022\'\n\016timeStatistics\030\005 \001(\0132\017.DateStat" +
-      "istics\022!\n\013recordField\030\007 \003(\0132\014.RecordFiel" +
-      "d\022\037\n\nmodifiedBy\030\t \001(\0132\013.Identifier\022\030\n\020mo" +
-      "difiedByDevice\030\013 \001(\t\022\'\n\016protectionInfo\030\r" +
-      " \001(\0132\017.ProtectionInfo\022\022\n\npermission\030\017 \001(" +
-      "\r\"[\n\013RecordField\022*\n\nidentifier\030\001 \001(\0132\026.R" +
-      "ecordFieldIdentifier\022 \n\005value\030\002 \001(\0132\021.Re" +
-      "cordFieldValue\"L\n\017RecordReference\022\014\n\004typ" +
-      "e\030\001 \001(\r\022+\n\020recordIdentifier\030\002 \001(\0132\021.Reco",
-      "rdIdentifier\"\346\001\n\020RecordFieldValue\022\014\n\004typ" +
-      "e\030\001 \001(\r\022\022\n\nbytesValue\030\002 \001(\014\022\016\n\006uint32\030\004 " +
-      "\001(\r\022\030\n\tdateValue\030\006 \001(\0132\005.Date\022\023\n\013stringV" +
-      "alue\030\007 \001(\t\022(\n\016referenceValue\030\t \001(\0132\020.Rec" +
-      "ordReference\022\032\n\nassetValue\030\n \001(\0132\006.Asset" +
-      "\022+\n\020recordFieldValue\030\013 \003(\0132\021.RecordField" +
-      "Value\"\032\n\nRecordType\022\014\n\004name\030\001 \001(\t\"]\n\020Rec" +
-      "ordIdentifier\022\032\n\005value\030\001 \001(\0132\013.Identifie" +
-      "r\022-\n\016zoneIdentifier\030\002 \001(\0132\025.RecordZoneId" +
-      "entifier\"%\n\025RecordFieldIdentifier\022\014\n\004nam",
-      "e\030\001 \001(\t\"X\n\024RecordZoneIdentifier\022\032\n\005value" +
-      "\030\001 \001(\0132\013.Identifier\022$\n\017ownerIdentifier\030\002" +
-      " \001(\0132\013.Identifier\",\n\nFileTokens\022\036\n\nfileT" +
-      "okens\030\001 \003(\0132\n.FileToken\"U\n\tFileToken\022\024\n\014" +
-      "fileChecksum\030\001 \001(\014\022\r\n\005token\030\002 \001(\t\022\014\n\004siz" +
-      "e\030\003 \001(\004\022\025\n\rfileSignature\030\004 \001(\014\"\343\001\n\005Asset" +
-      "\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileChecksum\030\002 \001(\014\022" +
-      "\014\n\004size\030\004 \001(\004\022\025\n\rdownloadToken\030\005 \001(\t\022\026\n\016" +
-      "contentBaseURL\030\010 \001(\t\022\014\n\004dsid\030\t \001(\t\022#\n\010re" +
-      "cordId\030\n \001(\0132\021.RecordIdentifier\022\013\n\003f15\030\017",
-      " \003(\014\022\025\n\rfileSignature\030\021 \001(\014\022\037\n\027downloadT" +
-      "okenExpiration\030\022 \001(\004\"\027\n\006UInt32\022\r\n\005value\030" +
-      "\001 \001(\r\"D\n\023ZoneRetrieveRequest\022-\n\016zoneIden" +
-      "tifier\030\001 \001(\0132\025.RecordZoneIdentifier\"N\n\024Z" +
-      "oneRetrieveResponse\0226\n\014zoneSummarys\030\001 \003(" +
-      "\0132 .ZoneRetrieveResponseZoneSummary\"<\n\037Z" +
-      "oneRetrieveResponseZoneSummary\022\031\n\ntarget" +
-      "Zone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016zoneIdentif" +
-      "ier\030\001 \001(\0132\025.RecordZoneIdentifier\022\'\n\016prot" +
-      "ectionInfo\030\003 \001(\0132\017.ProtectionInfoB9\n-com",
-      ".github.horrorho.inflatabledonkey.protoc" +
-      "olB\010CloudKit"
+      "(\t\022\031\n\021applicationBundle\030\003 \001(\t\022\n\n\002f4\030\004 \001(" +
+      "\t\022%\n\020deviceIdentifier\030\007 \001(\0132\013.Identifier" +
+      "\022\035\n\025deviceSoftwareVersion\030\010 \001(\t\022\n\n\002f9\030\t " +
+      "\001(\t\022\031\n\021deviceLibraryName\030\n \001(\t\022\034\n\024device",
+      "LibraryVersion\030\013 \001(\t\022\021\n\toperation\030\014 \001(\t\022" +
+      "\037\n\027deviceFlowControlBudget\030\r \001(\004\022\"\n\032devi" +
+      "ceFlowControlBudgetCap\030\016 \001(\004\022\034\n\024deviceFl" +
+      "owControlKey\030\017 \001(\t\022\027\n\006locale\030\021 \001(\0132\007.Loc" +
+      "ale\022\017\n\007version\030\022 \001(\t\022\013\n\003f19\030\023 \001(\r\022\032\n\022dev" +
+      "iceAssignedName\030\025 \001(\t\022\030\n\020deviceHardwareI" +
+      "D\030\026 \001(\t\022\013\n\003f23\030\027 \001(\r\022\013\n\003f25\030\031 \001(\r\"3\n\tOpe" +
+      "ration\022\014\n\004uuid\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\022\n\n\002f4" +
+      "\030\004 \001(\r\"\234\001\n\024QueryRetrieveRequest\022\025\n\005query" +
+      "\030\001 \001(\0132\006.Query\022-\n\016zoneIdentifier\030\004 \001(\0132\025",
+      ".RecordZoneIdentifier\022)\n\017requestedFields" +
+      "\030\005 \001(\0132\020.RequestedFields\022\023\n\002f6\030\006 \001(\0132\007.U" +
+      "Int32\"Y\n\034QueryRetrieveRequestResponse\0229\n" +
+      "\007results\030\001 \001(\0132(.QueryRetrieveRequestRes" +
+      "ponseQueryResult\"w\n\'QueryRetrieveRequest" +
+      "ResponseQueryResult\022%\n\nidentifier\030\001 \001(\0132" +
+      "\021.RecordIdentifier\022\014\n\004type\030\003 \001(\r\022\027\n\006reco" +
+      "rd\030\004 \001(\0132\007.Record\"Q\n\025RecordRetrieveReque" +
+      "st\022#\n\010recordID\030\001 \001(\0132\021.RecordIdentifier\022" +
+      "\023\n\002f6\030\006 \001(\0132\007.UInt32\"Q\n\026RecordRetrieveRe",
+      "sponse\022\027\n\006record\030\001 \001(\0132\007.Record\022\036\n\026clien" +
+      "tVersionETagMatch\030\002 \001(\010\" \n\017RequestedFiel" +
+      "ds\022\r\n\005field\030\001 \003(\t\">\n\027ResponseOperationRe" +
+      "sult\022\014\n\004code\030\001 \001(\r\022\025\n\005error\030\002 \001(\0132\006.Erro" +
+      "r\";\n\005Error\022\025\n\004code\030\001 \001(\0132\007.UInt32\022\017\n\007mes" +
+      "sage\030\004 \001(\t\022\n\n\002id\030\005 \001(\t\"F\n\016DateStatistics" +
+      "\022\027\n\010creation\030\001 \001(\0132\005.Date\022\033\n\014modificatio" +
+      "n\030\002 \001(\0132\005.Date\"\024\n\004Date\022\014\n\004time\030\001 \001(\001\"(\n\n" +
+      "Identifier\022\014\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\"c" +
+      "\n\006Locale\022\024\n\014languageCode\030\001 \001(\t\022\022\n\nregion",
+      "Code\030\002 \001(\t\022\027\n\017enabledKeyboard\030\003 \003(\t\022\026\n\016a" +
+      "ctiveKeyboard\030\004 \001(\t\"C\n\016ProtectionInfo\022\026\n" +
+      "\016protectionInfo\030\001 \001(\014\022\031\n\021protectionInfoT" +
+      "ag\030\002 \001(\t\"W\n\005Query\022\031\n\004type\030\001 \003(\0132\013.Record" +
+      "Type\022\034\n\006filter\030\002 \003(\0132\014.QueryFilter\022\025\n\rqu" +
+      "eryOperator\030\004 \001(\r\"m\n\013QueryFilter\022)\n\tfiel" +
+      "dName\030\001 \001(\0132\026.RecordFieldIdentifier\022%\n\nf" +
+      "ieldValue\030\002 \001(\0132\021.RecordFieldValue\022\014\n\004ty" +
+      "pe\030\004 \001(\r\"\302\002\n\006Record\022\014\n\004etag\030\001 \001(\t\022+\n\020Rec" +
+      "ordIdentifier\030\002 \001(\0132\021.RecordIdentifier\022\031",
+      "\n\004type\030\003 \001(\0132\013.RecordType\022\036\n\tcreatedBy\030\004" +
+      " \001(\0132\013.Identifier\022\'\n\016timeStatistics\030\005 \001(" +
+      "\0132\017.DateStatistics\022!\n\013recordField\030\007 \003(\0132" +
+      "\014.RecordField\022\037\n\nmodifiedBy\030\t \001(\0132\013.Iden" +
+      "tifier\022\030\n\020modifiedByDevice\030\013 \001(\t\022\'\n\016prot" +
+      "ectionInfo\030\r \001(\0132\017.ProtectionInfo\022\022\n\nper" +
+      "mission\030\017 \001(\r\"[\n\013RecordField\022*\n\nidentifi" +
+      "er\030\001 \001(\0132\026.RecordFieldIdentifier\022 \n\005valu" +
+      "e\030\002 \001(\0132\021.RecordFieldValue\"L\n\017RecordRefe" +
+      "rence\022\014\n\004type\030\001 \001(\r\022+\n\020recordIdentifier\030",
+      "\002 \001(\0132\021.RecordIdentifier\"\346\001\n\020RecordField" +
+      "Value\022\014\n\004type\030\001 \001(\r\022\022\n\nbytesValue\030\002 \001(\014\022" +
+      "\016\n\006uint32\030\004 \001(\r\022\030\n\tdateValue\030\006 \001(\0132\005.Dat" +
+      "e\022\023\n\013stringValue\030\007 \001(\t\022(\n\016referenceValue" +
+      "\030\t \001(\0132\020.RecordReference\022\032\n\nassetValue\030\n" +
+      " \001(\0132\006.Asset\022+\n\020recordFieldValue\030\013 \003(\0132\021" +
+      ".RecordFieldValue\"\032\n\nRecordType\022\014\n\004name\030" +
+      "\001 \001(\t\"]\n\020RecordIdentifier\022\032\n\005value\030\001 \001(\013" +
+      "2\013.Identifier\022-\n\016zoneIdentifier\030\002 \001(\0132\025." +
+      "RecordZoneIdentifier\"%\n\025RecordFieldIdent",
+      "ifier\022\014\n\004name\030\001 \001(\t\"X\n\024RecordZoneIdentif" +
+      "ier\022\032\n\005value\030\001 \001(\0132\013.Identifier\022$\n\017owner" +
+      "Identifier\030\002 \001(\0132\013.Identifier\",\n\nFileTok" +
+      "ens\022\036\n\nfileTokens\030\001 \003(\0132\n.FileToken\"U\n\tF" +
+      "ileToken\022\024\n\014fileChecksum\030\001 \001(\014\022\r\n\005token\030" +
+      "\002 \001(\t\022\014\n\004size\030\003 \001(\004\022\025\n\rfileSignature\030\004 \001" +
+      "(\014\"\343\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileChe" +
+      "cksum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\025\n\rdownloadTok" +
+      "en\030\005 \001(\t\022\026\n\016contentBaseURL\030\010 \001(\t\022\014\n\004dsid" +
+      "\030\t \001(\t\022#\n\010recordId\030\n \001(\0132\021.RecordIdentif",
+      "ier\022\013\n\003f15\030\017 \003(\014\022\025\n\rfileSignature\030\021 \001(\014\022" +
+      "\037\n\027downloadTokenExpiration\030\022 \001(\004\"\027\n\006UInt" +
+      "32\022\r\n\005value\030\001 \001(\r\"D\n\023ZoneRetrieveRequest" +
+      "\022-\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZoneIde" +
+      "ntifier\"N\n\024ZoneRetrieveResponse\0226\n\014zoneS" +
+      "ummarys\030\001 \003(\0132 .ZoneRetrieveResponseZone" +
+      "Summary\"<\n\037ZoneRetrieveResponseZoneSumma" +
+      "ry\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n" +
+      "\016zoneIdentifier\030\001 \001(\0132\025.RecordZoneIdenti" +
+      "fier\022\'\n\016protectionInfo\030\003 \001(\0132\017.Protectio",
+      "nInfoB9\n-com.github.horrorho.inflatabled" +
+      "onkey.protocolB\010CloudKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -31948,7 +32105,7 @@ public final class CloudKit {
     internal_static_RequestOperationHeader_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RequestOperationHeader_descriptor,
-        new java.lang.String[] { "ApplicationContainer", "ApplicationBundle", "DeviceIdentifier", "DeviceSoftwareVersion", "F9", "DeviceLibraryName", "DeviceLibraryVersion", "Operation", "DeviceFlowControlBudget", "DeviceFlowControlBudgetCap", "DeviceFlowControlKey", "Locale", "Version", "F19", "DeviceAssignedName", "DeviceHardwareID", "F23", "F25", });
+        new java.lang.String[] { "ApplicationContainer", "ApplicationBundle", "F4", "DeviceIdentifier", "DeviceSoftwareVersion", "F9", "DeviceLibraryName", "DeviceLibraryVersion", "Operation", "DeviceFlowControlBudget", "DeviceFlowControlBudgetCap", "DeviceFlowControlKey", "Locale", "Version", "F19", "DeviceAssignedName", "DeviceHardwareID", "F23", "F25", });
     internal_static_Operation_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_Operation_fieldAccessorTable = new
