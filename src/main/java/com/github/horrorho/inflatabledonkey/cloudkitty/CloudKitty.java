@@ -92,7 +92,7 @@ public final class CloudKitty {
                 .build();
     }
 
-   public List<CloudKit.ZoneRetrieveResponse>
+    public List<CloudKit.ZoneRetrieveResponse>
             zoneRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone)
             throws IOException {
 
@@ -146,7 +146,7 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
-  public   List<CloudKit.RecordRetrieveResponse>
+    public List<CloudKit.RecordRetrieveResponse>
             recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
             throws IOException {
 
@@ -205,7 +205,7 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
-  public   List<CloudKit.QueryRetrieveRequestResponse>
+    public List<CloudKit.QueryRetrieveRequestResponse>
             queryRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
             throws IOException {
 

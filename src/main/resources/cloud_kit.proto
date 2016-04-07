@@ -135,6 +135,7 @@ message ResponseOperation {
 message RequestOperationHeader {
   optional string applicationContainer = 2;
   optional string applicationBundle = 3;
+  optional string f4 = 4;
   optional Identifier deviceIdentifier = 7;
   optional string deviceSoftwareVersion = 8;
   optional string f9 = 9; // product type, TODO to String64
