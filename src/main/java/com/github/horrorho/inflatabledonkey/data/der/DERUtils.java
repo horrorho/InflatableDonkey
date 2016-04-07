@@ -55,8 +55,6 @@ public final class DERUtils {
     public static <T> Optional<T> parse(ASN1Primitive primitive, Function<ASN1Primitive, T> function) {
         try {
             T t = function.apply(primitive);
-            logger.debug("-- parse() - t: {}", t);
-
             return Optional.ofNullable(t);
 
         } catch (RuntimeException ex) {
