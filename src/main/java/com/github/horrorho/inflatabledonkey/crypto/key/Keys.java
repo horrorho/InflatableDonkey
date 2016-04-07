@@ -91,12 +91,12 @@ public final class Keys {
         };
     }
 
-    public static Function<PrivateKey, Optional<Key<ECPrivate>>>
-            importPrivateKeyData(
-                    Function<byte[], Optional<ECPrivate>> keyDataImport,
-                    BiFunction<ECPrivate, Optional<PublicKeyInfo>, Key<ECPrivate>> buildKey) {
-
-        return privateKey -> keyDataImport.apply(privateKey.privateKey())
-                .map(keyData -> buildKey.apply(keyData, privateKey.publicKeyInfo()));
-    }
+//    public static Function<PrivateKey, Optional<Key<ECPrivate>>>
+//            importPrivateKeyData(
+//                    Function<byte[], Optional<ECPrivate>> keyDataImport,
+//                    BiFunction<ECPrivate, Optional<PublicKeyInfo>, Key<ECPrivate>> buildKey) {
+//
+//        return privateKey -> keyDataImport.apply(privateKey.privateKey())
+//                .map(keyData -> buildKey.apply(keyData, privateKey.publicKeyInfo()));
+//    }
 }
