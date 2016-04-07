@@ -30,6 +30,7 @@ import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
 import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPublic;
 import com.github.horrorho.inflatabledonkey.crypto.eckey.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
+import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.EncryptedKey;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
@@ -98,14 +99,21 @@ public final class XZoneFactory {
         this.keyDerivationFunction = Objects.requireNonNull(keyDerivationFunction, "keyDerivationFunction");
     }
 
-    public Optional<XZone> create(byte[] protectionInfo, String protectionInfoTag, XKeySet xKeySet) {
+    public Optional<XZone> create(
+            byte[] protectionInfo,
+            String protectionInfoTag,
+            Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
 
         return DERUtils.parse(protectionInfo, ProtectionInfo::new)
-                .flatMap(pi -> create(pi, protectionInfoTag, xKeySet));
+                .flatMap(pi -> create(pi, protectionInfoTag, getMasterKey));
     }
 
-    public Optional<XZone> create(ProtectionInfo protectionInfo, String protectionInfoTag, XKeySet xKeySet) {
-        Optional<byte[]> optionalKDK = kdk(protectionInfo, xKeySet);
+    public Optional<XZone> create(
+            ProtectionInfo protectionInfo,
+            String protectionInfoTag,
+            Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
+
+        Optional<byte[]> optionalKDK = kdk(protectionInfo, getMasterKey);
         if (!optionalKDK.isPresent()) {
             return Optional.empty();
         }
@@ -156,7 +164,7 @@ public final class XZoneFactory {
                 .map(Map::values);
     }
 
-    Optional<byte[]> kdk(ProtectionInfo protectionInfo, XKeySet xKeySet) {
+    Optional<byte[]> kdk(ProtectionInfo protectionInfo, Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
         Set<EncryptedKey> encryptedKeySet = protectionInfo.encryptedKeys().encryptedKeySet();
         logger.debug("-- kdk() - encrypted key set: {}", encryptedKeySet);
 
@@ -165,21 +173,22 @@ public final class XZoneFactory {
         }
 
         Optional<byte[]> optionalKdk = encryptedKeySet.stream()
-                .map(ek -> kdk(ek, xKeySet))
+                .map(ek -> kdk(ek, getMasterKey))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();
 
         if (!optionalKdk.isPresent()) {
-            logger.warn("-- kdk() - no kdk recovered, protectionInfo: {} key set: {}", protectionInfo, xKeySet);
+            logger.warn("-- kdk() - no kdk recovered, protectionInfo: {} getMasterKey: {}",
+                    protectionInfo, getMasterKey);
         }
         return optionalKdk;
     }
 
-    Optional<byte[]> kdk(EncryptedKey encryptedKey, XKeySet xKeySet) {
+    Optional<byte[]> kdk(EncryptedKey encryptedKey, Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
         return importPublicKey.apply(encryptedKey.masterKey().key())
                 .map(Key::keyID)
-                .flatMap(xKeySet::key)
+                .flatMap(getMasterKey::apply)
                 .map(Key::keyData)
                 .map(ECPrivate::d)
                 .map(d -> unwrapData.apply(encryptedKey.wrappedKey(), d));
