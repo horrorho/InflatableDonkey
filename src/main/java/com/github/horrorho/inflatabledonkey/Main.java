@@ -50,8 +50,12 @@ import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XKeySet;
+import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.Zone;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponse;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponseZoneSummary;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
 import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
@@ -87,9 +91,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
@@ -186,8 +190,10 @@ public class Main {
                 = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(rawProtoDecoder));
 
         // SystemDefault HttpClient.
-        HttpClient httpClient = HttpClients.createSystem();
-
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setUserAgent("CloudKit/479 (13A404)")
+                .useSystemProperties()
+                .build();
         /*        
          Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
         
@@ -395,10 +401,26 @@ public class Main {
 
         if (!pcsRecordMetadata.isPresent()) {
             logger.warn("-- main() - unable to locate 'com.apple.protectedcloudstorage.record' metadata");
+            System.exit(-1);
         }
 
         Optional<ServiceKeySet> optionalEscrowServiceKeySet
                 = EscrowTest.decryptGetRecordsResponseMetadata(pcsRecordMetadata.get(), keySet::key);
+        if (!optionalEscrowServiceKeySet.isPresent()) {
+            logger.warn("-- main() - failed to retrieve escrow key set");
+            System.exit(-1);
+        }
+        ServiceKeySet escrowServiceKeySet = optionalEscrowServiceKeySet.get();
+
+        /* 
+         Protection zone setup.
+
+         XZones is our simplified and experimental protection zones handler.
+         */
+        logger.info("-- main() - *** Protection zone setup ***");
+
+        final XZones zones = XZones.create();
+        zones.put(escrowServiceKeySet.keys());
 
         /*
          CloudKitty, simple client-server CloudKit calls. Meow.
@@ -413,24 +435,55 @@ public class Main {
                         ckResponseHandler);
 
         /* 
-         Record zones -> SOLVED :)
+         Record zones: _defaultZone
         
          Url ckDatabase from ckInit + /record/retrieve
          ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
-         Headers similar to step 3
+        
+         Message type 201 request (cloud_kit.proto)    
+        
+         Return us an encrypted key which we pass to XZones.
+         */
+        logger.info("-- main() - *** Record zones: _defaultZone ***");
+        List<CloudKit.ZoneRetrieveResponse> recordZoneDefaultResponse
+                = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "_defaultZone");
+
+        recordZoneDefaultResponse
+                .stream()
+                .map(ZoneRetrieveResponse::getZoneSummarysList)
+                .flatMap(Collection::stream)
+                .filter(ZoneRetrieveResponseZoneSummary::hasTargetZone)
+                .map(ZoneRetrieveResponseZoneSummary::getTargetZone)
+                .filter(Zone::hasProtectionInfo)
+                .map(Zone::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+
+        /* 
+         Record zones: mbksync
+        
+         Url ckDatabase from ckInit + /record/retrieve
+         ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
         
          Message type 201 request (cloud_kit.proto)      
-         This proto is encoded with Apple's protobuf array encoding (see ProtoBufArray class).
-         Possibility of passing multiple requests not yet explored.
+
+         Return us an encrypted key which we pass to XZones.
         
-         Returns record zone data which needs further analysis.
-         The encrypted protectedInfo should be decryptable with the CloudKit Service Key,
-         and in return give us zone keys.
-        
+         We should really combine _defaultZone and mbksync requests into a single request using delimited protobuf
+         requests.         
          */
-        logger.info("-- main() - *** Record zones ***");
+        logger.info("-- main() - *** Record zones: mbksync ***");
         List<CloudKit.ZoneRetrieveResponse> zoneRetrieveRequest
                 = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "mbksync");
+
+        zoneRetrieveRequest
+                .stream()
+                .map(ZoneRetrieveResponse::getZoneSummarysList)
+                .flatMap(Collection::stream)
+                .filter(ZoneRetrieveResponseZoneSummary::hasTargetZone)
+                .map(ZoneRetrieveResponseZoneSummary::getTargetZone)
+                .filter(Zone::hasProtectionInfo)
+                .map(Zone::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         /* 
          Backup list.
