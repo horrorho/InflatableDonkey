@@ -57,8 +57,8 @@ public final class ServiceKeySetAssistant {
 
         // Logging via peeks here as opposed to introducing logging code downstream.
         Map<KeyID, Key<ECPrivate>> importedKeys = keys.stream()
-                .peek(privateKey -> {
-                    logger.debug("-- importPrivateKeys() > import: {}", privateKey);
+                .peek(pk -> {
+                    logger.debug("-- importPrivateKeys() > import: {}", pk);
                 })
                 .map(importFunction)
                 .peek(privateKey -> {
