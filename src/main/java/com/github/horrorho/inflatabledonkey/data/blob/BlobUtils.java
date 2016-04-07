@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.blob;
 
 import java.nio.ByteBuffer;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Unspecified format.
@@ -56,5 +57,18 @@ public class BlobUtils {
         for (int i = blob.position(); i < align(blob.position()); i++) {
             blob.put((byte) 0x00);
         }
+    }
+
+    public static int type(ByteBuffer blob) {
+        if (blob.limit() < 8) {
+            return -2;
+        }
+
+        int type = blob.getInt() == blob.limit()
+                ? blob.getInt()
+                : -1;
+
+        blob.rewind();
+        return type;
     }
 }
