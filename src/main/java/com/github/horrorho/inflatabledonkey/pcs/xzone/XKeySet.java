@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
+@Deprecated
 @Immutable
 public final class XKeySet {
 
