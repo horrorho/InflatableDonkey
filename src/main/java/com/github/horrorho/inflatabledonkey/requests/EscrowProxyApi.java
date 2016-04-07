@@ -112,7 +112,7 @@ public final class EscrowProxyApi {
                 + "	<integer>1</integer>\n"
                 + "</dict>\n"
                 + "</plist>";
-        logger.trace("-- srp_init() - post: {}", post);
+        logger.trace("-- srpInit() - post: {}", post);
 
         HttpUriRequest request = RequestBuilder.post(uri)
                 .addHeader(headers.get(Headers.userAgent))
@@ -127,13 +127,14 @@ public final class EscrowProxyApi {
         return dictionary;
     }
 
-    public NSDictionary recover(HttpClient httpClient, String mmeAuthToken, byte[] m1, byte[] uuid, byte[] tag) throws IOException {
+    public NSDictionary
+            recover(HttpClient httpClient, String mmeAuthToken, byte[] m1, byte[] uuid, byte[] tag) throws IOException {
+
         String uri = escrowProxyUrl + "/escrowproxy/api/recover";
         String mobilemeAuthToken = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
 
         BlobA5 blob = new BlobA5(tag, uuid, m1);
         byte[] data = blob.export().array();
-
         String encodedMessage = Base64.getEncoder().encodeToString(data);
 
         String post = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"

@@ -26,23 +26,30 @@ package com.github.horrorho.inflatabledonkey;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
-import com.github.horrorho.inflatabledonkey.crypto.srp.SRPInitResponse;
+import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPInitResponse;
 import com.dd.plist.NSDictionary;
+import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
+import com.dd.plist.PropertyListParser;
 import com.github.horrorho.inflatabledonkey.args.ArgsParser;
 import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
 import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
-import com.github.horrorho.inflatabledonkey.crypto.srp.SRPTest;
+import com.github.horrorho.inflatabledonkey.crypto.srp.EscrowTest;
+import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecords;
+import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecordsMetadata;
 import com.github.horrorho.inflatabledonkey.data.AccountInfo;
 import com.github.horrorho.inflatabledonkey.data.Auth;
 import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
+import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
+import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
+import com.github.horrorho.inflatabledonkey.pcs.xzone.XKeySet;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
@@ -85,7 +92,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
-import org.bouncycastle.util.BigIntegers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -183,11 +189,11 @@ public class Main {
         HttpClient httpClient = HttpClients.createSystem();
 
         /*        
-         STEP 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
+         Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
         
          No different to iOS8.
          */
-        logger.info("-- main() - STEP 1. Authenticate via appleId/ password or dsPrsID:mmeAuthToken.");
+        logger.info("-- main() - *** Authenticate via appleId/ password or dsPrsID:mmeAuthToken ***");
         Auth auth = arguments.containsKey(Property.AUTHENTICATION_TOKEN)
                 ? new Auth(arguments.get(Property.AUTHENTICATION_TOKEN))
                 : new Authenticator(coreHeaders).authenticate(
@@ -204,14 +210,14 @@ public class Main {
         }
 
         /*
-         STEP 2. Account settings.
+         Account settings.
                 
          New url/ headers otherwise comparable to iOS8.     
          https://setup.icloud.com/setup/get_account_settings
 
          Returns an account settings plist, that along with numerous other items includes a cloudKitToken.        
          */
-        logger.info("-- main() - STEP 2. Account settings.");
+        logger.info("-- main() - *** Account settings ***");
         HttpUriRequest accountSettingsRequest = new AccountSettingsRequestFactory(coreHeaders)
                 .apply(auth.dsPrsID(), auth.mmeAuthToken());
 
@@ -219,11 +225,13 @@ public class Main {
                 = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.nsDictionaryResponseHandler());
         logger.debug("-- main() - account settings: {}", settings.toASCIIPropertyList());
 
-        AccountInfo accountInfo = new AccountInfo(PLists.get(settings, "appleAccountInfo"));
+        AccountInfo accountInfo = new AccountInfo(PLists.<NSDictionary>get(settings, "appleAccountInfo"));
         Tokens tokens = new Tokens(PLists.get(settings, "tokens"));
+        MobileMe mobileMe = new MobileMe(PLists.<NSDictionary>get(settings, "com.apple.mobileme"));
+
 
         /* 
-         STEP 3. CloudKit Application Initialization.
+         CloudKit Application Initialization.
          
          Url/ headers are specific to the particular bundle/ container required 
          (in our case bundle = com.apple.backupd  container = com.apple.backup.ios)
@@ -232,7 +240,7 @@ public class Main {
         
          Returns a JSON response outlining various urls and a cloudKitUserId.        
          */
-        logger.info("-- main() - STEP 3. CloudKit Application Initialization.");
+        logger.info("-- main() - *** CloudKit Application Initialization ***");
         HttpUriRequest ckAppInitRequest
                 = CkAppInitBackupRequestFactory.create()
                 .newRequest(accountInfo.dsPrsID(), tokens.mmeAuthToken(), tokens.cloudKitToken());
@@ -243,35 +251,85 @@ public class Main {
         logger.debug("-- main() - ckInit: {}", ckInit);
 
         /* 
-         STEP -. CloudKit Application Initialization.
-         
-         EscrowService SRP-6a exchange. Coding critical as repeated errors will lock the account.   
-                 
+         EscrowService SRP-6a exchange.
+        
+         Coding critical as repeated errors will lock the account.                 
          https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
         
          escrow user id = dsid
-         escrow password = dsid        
+         escrow password = dsid                
          */
-        logger.info("-- main() - STEP - EscrowService SRP exchange.");
-        logger.info("-- main() - SRP-6a exchange correctness is critical. Limited attempts before account is locked.");
+        logger.info("-- main() - *** EscrowService SRP exchange ***");
 
-        // TODO fail if only a limited amount of attempts left.
-        NSDictionary mobileme = PLists.<NSDictionary>get(settings, "com.apple.mobileme");
-        NSDictionary keychainSync = PLists.<NSDictionary>get(mobileme, "com.apple.Dataclass.KeychainSync");
-        String escrowProxyUrl = PLists.<NSString>get(keychainSync, "escrowProxyUrl").toString();
-        logger.debug("-- main() - escrowProxyUrl: {}", escrowProxyUrl);
+        Optional<String> optionalEscrowProxyUrl = mobileMe.get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl");
+        if (!optionalEscrowProxyUrl.isPresent()) {
+            logger.error("-- main() - no escrowProxyUrl");
+            System.exit(-1);
+        }
 
+        String escrowProxyUrl = optionalEscrowProxyUrl.get();
         EscrowProxyApi escrowProxy = new EscrowProxyApi(accountInfo.dsPrsID(), escrowProxyUrl, coreHeaders);
+
+        /* 
+         EscrowService SRP-6a exchanges: GETRECORDS
+        
+         We'll do the last step first, so we can abort if only a few attempts remain rather than risk further depleting
+         them with experimental code. 
+         */
+        logger.info("-- main() - *** EscrowService SRP exchange: GETRECORDS ***");
+
         NSDictionary records = escrowProxy.getRecords(httpClient, tokens.mmeAuthToken());
         logger.debug("-- main() - getRecords response: {}", records.toASCIIPropertyList());
 
-        SecureRandom secureRandom = new SecureRandom();
-        SRPClient srp = SRPFactory.rfc5054(secureRandom);
+        SRPGetRecords srpGetRecords = new SRPGetRecords(records);
+
+        srpGetRecords.metadata()
+                .values()
+                .stream()
+                .forEach(v -> {
+                    byte[] metadata = Base64.getDecoder().decode(v.metadata());
+                    try {
+                        NSObject nsObject = PropertyListParser.parse(metadata);
+                        if (nsObject instanceof NSDictionary) {
+                            logger.debug("-- main() - label: {} dictionary: {}",
+                                    v.label(), ((NSDictionary) nsObject).toXMLPropertyList());
+                        }
+                    } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+                        logger.warn("-- main() - failed to parse property list: {}", v.metadata());
+                    }
+                });
+
+        int remainingAttempts = srpGetRecords.remainingAttempts();
+        logger.debug("-- main() - remaining attempts: {}", remainingAttempts);
+        if (remainingAttempts < 5) {
+            logger.warn("-- main() - remaining attempt threshold, aborting");
+            System.exit(-1);
+        }
+
+        /* 
+         EscrowService SRP-6a exchanges: SRP_INIT
+        
+         Randomly generated ephemeral key A presented to escrow server along with id (mmeAuthToken).
+         Server returns amongst other things a salt and an ephemeral key B.
+         */
+        logger.info("-- main() - *** EscrowService SRP exchange: SRP_INIT ***");
+
+        SRPClient srp = SRPFactory.rfc5054(new SecureRandom());
         byte[] ephemeralKeyA = srp.generateClientCredentials();
         NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), ephemeralKeyA);
 
         SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);
-        logger.debug("-- main() - srpInit response: {}", srpInit.toASCIIPropertyList());
+
+        logger.debug("-- main() - SRP_INIT dictionary: {}", srpInit.toASCIIPropertyList());
+        logger.debug("-- main() - SRP_INIT data: {}", srpInitResponse);
+
+        /* 
+         EscrowService SRP-6a exchanges: RECOVER
+        
+         CRITICAL step. Generate M1 verification message. Failure here will deplete attempts (we have 10 attempts max).
+         Server will abort on an invalid M1 or present us with, amongst other things, M2 which we can verify (or not).
+         */
+        logger.info("-- main() - *** EscrowService SRP exchange: RECOVER ***");
 
         byte[] dsid = srpInitResponse.dsid().getBytes(StandardCharsets.UTF_8);
         logger.debug("-- main() - escrow service id: {}", Hex.encodeHexString(dsid));
@@ -279,21 +337,28 @@ public class Main {
 
         Optional<byte[]> optionalM1
                 = srp.calculateClientEvidenceMessage(srpInitResponse.salt(), dsid, dsid, srpInitResponse.ephemeralKeyB());
+
         if (!optionalM1.isPresent()) {
-            logger.error("-- main() - bad ephemeral key from server: 0x{}", Hex.encodeHex(srpInitResponse.ephemeralKeyB()));
-            System.exit(0);
+            logger.error("-- main() - bad ephemeral key from server: 0x{}",
+                    Hex.encodeHex(srpInitResponse.ephemeralKeyB()));
+            System.exit(-1);
         }
         byte[] m1 = optionalM1.get();
-
         logger.debug("-- main() - m1: 0x{}", Hex.encodeHexString(m1));
 
-        NSDictionary recover = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), m1, srpInitResponse.uid(), srpInitResponse.tag());
+        NSDictionary recover
+                = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), m1, srpInitResponse.uid(), srpInitResponse.tag());
         logger.debug("-- main() - srpInit response: {}", recover.toASCIIPropertyList());
 
-        byte[] recoverRespBlob = Base64.getDecoder().decode(PLists.<NSString>get(recover, "respBlob").getContent());
+        /* 
+         EscrowService SRP-6a exchanges: session key
+        
+         Verify the server M2 message (or not). Either way we have a session key and an encrypted key set.
+         */
+        logger.info("-- main() - *** EscrowService SRP exchange: session key ***");
 
+        byte[] recoverRespBlob = Base64.getDecoder().decode(PLists.<NSString>get(recover, "respBlob").getContent());
         BlobA6 blobA6 = new BlobA6(ByteBuffer.wrap(recoverRespBlob));
-        logger.debug("-- main() - blobA6: {}", blobA6);
 
         Optional<byte[]> optionalKey = srp.verifyServerEvidenceMessage(blobA6.m2());
         if (!optionalKey.isPresent()) {
@@ -301,15 +366,39 @@ public class Main {
         }
 
         byte[] key = optionalKey.get();
-        logger.debug("-- main() - key: {}", Hex.encodeHexString(key));
+        logger.debug("-- main() - session key: {}", Hex.encodeHexString(key));
 
-        SRPTest.test(blobA6, key);
+        /*
+         EscrowService decrypt M2 key set.
+         
+         BlobA6 contains amongst other things, salt, iv and encrypted key set data.
+         */
+        Optional<ServiceKeySet> optionalServiceKeySet = EscrowTest.decryptRecoveryResponseBlob(blobA6, key);
+
+        if (!optionalServiceKeySet.isPresent()) {
+            logger.warn("-- main() - failed to recover key set");
+            System.exit(-1);
+        }
+        ServiceKeySet keySet = optionalServiceKeySet.get();
+
+
+        /* 
+         EscrowService SRP-6a exchanges: decrypt escrowed keys
         
-        
-        
-        
-        
-        System.exit(0);
+         Verify the server M2 message (or not). Either way we have a session key and an encrypted key set.
+         */
+        logger.info("-- main() - *** EscrowService SRP exchange: decrypt escrowed keys ***");
+
+        Optional<byte[]> pcsRecordMetadata = srpGetRecords.metadata("com.apple.protectedcloudstorage.record")
+                .map(SRPGetRecordsMetadata::metadata)
+                .map(s -> Base64.getDecoder().decode(s));
+
+        if (!pcsRecordMetadata.isPresent()) {
+            logger.warn("-- main() - unable to locate 'com.apple.protectedcloudstorage.record' metadata");
+        }
+
+        Optional<ServiceKeySet> optionalEscrowServiceKeySet
+                = EscrowTest.decryptGetRecordsResponseMetadata(pcsRecordMetadata.get(), keySet::key);
 
         /*
          CloudKitty, simple client-server CloudKit calls. Meow.
@@ -324,7 +413,7 @@ public class Main {
                         ckResponseHandler);
 
         /* 
-         STEP 4. Record zones.
+         Record zones -> SOLVED :)
         
          Url ckDatabase from ckInit + /record/retrieve
          ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
@@ -339,19 +428,19 @@ public class Main {
          and in return give us zone keys.
         
          */
-        logger.info("-- main() - STEP 4. Record zones.");
+        logger.info("-- main() - *** Record zones ***");
         List<CloudKit.ZoneRetrieveResponse> zoneRetrieveRequest
                 = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "mbksync");
 
         /* 
-         STEP 5. Backup list.
+         Backup list.
         
          Url/ headers as step 4.
          Message type 211 request, protobuf array encoded.
 
          Returns device data/ backups.        
          */
-        logger.info("-- main() - STEP 5. Backup list.");
+        logger.info("-- main() - *** Backup list ***");
         List<CloudKit.RecordRetrieveResponse> responseBackupList
                 = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "BackupAccount");
 
@@ -376,7 +465,7 @@ public class Main {
         }
 
         /* 
-         STEP 6. Snapshot list (+ Keybag)
+         Snapshot list (+ Keybag)
         
          Url/ headers as step 5.
          Message type 211 with the required backup uuid, protobuf array encoded.
@@ -437,7 +526,7 @@ public class Main {
             System.exit(0);
         }
         /* 
-         STEP 7. Manifest list.
+         Manifest list.
         
          Url/ headers as step 6.
          Message type 211 with the required snapshot uuid, protobuf array encoded.
@@ -445,7 +534,7 @@ public class Main {
          Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
         
          */
-        logger.info("-- main() - STEP 7. Manifest list.");
+        logger.info("-- main() - *** Manifest list ***");
 
         if (snapshotIndex >= snapshots.size()) {
             logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
@@ -478,7 +567,7 @@ public class Main {
         }
 
         /* 
-         STEP 8. Retrieve list of files.
+         Retrieve list of files.
     
          Url/ headers as step 7.
          Message type 211 with the required manifest, protobuf array encoded.
@@ -487,7 +576,7 @@ public class Main {
         
          Returns a rather somewhat familiar looking set of results but with encoded bytes.
          */
-        logger.info("-- main() - STEP 8. Retrieve list of assets");
+        logger.info("-- main() - *** Retrieve list of assets ***");
 
         if (manifestIndex >= manifests.size()) {
             logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
@@ -518,12 +607,12 @@ public class Main {
         logger.debug("-- main() - assets: {}", files);
 
         /* 
-         STEP 9. Retrieve asset tokens.
+         Retrieve asset tokens.
     
          Url/ headers as step 8.
          Message type 211 with the required file, protobuf array encoded.
          */
-        logger.info("-- main() - STEP 9. Retrieve list of asset tokens");
+        logger.info("-- main() - *** Retrieve list of asset tokens ***");
 
         // F:UUID:token:length:x
         // Find first file that isn't 0 length.
@@ -552,7 +641,7 @@ public class Main {
 
 
         /* 
-         STEP 10. AuthorizeGet.
+         AuthorizeGet.
         
          Process somewhat different to iOS8.
         
@@ -560,7 +649,7 @@ public class Main {
 
          Returns a ChunkServer.FileGroup protobuf which is largely identical to iOS8.        
          */
-        logger.info("-- main() - STEP 10. AuthorizeGet");
+        logger.info("-- main() - *** AuthorizeGet ***");
 
         List<CloudKit.Asset> contents = assetTokens.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
@@ -576,7 +665,7 @@ public class Main {
         logger.debug("-- main() - file attributes: {}", asset);
 
         /*
-         TODO
+         TODO -> SOLVED! :)
         
          encryptedAttributes need deciphering.
          I suspect this contains the metadata required to manage/ decrypt our files c.f. ICloud.MBSFile.
@@ -589,6 +678,7 @@ public class Main {
          So:
         
          cloudkit service key > zone wide key > file key
+                
         
          */
         List<ByteString> encryptedAttributes = assetTokens.stream()
@@ -618,13 +708,13 @@ public class Main {
         logger.debug("-- main() - fileGroups: {}", fileGroups);
 
         /* 
-         STEP 11. ChunkServer.FileGroups.
+         ChunkServer.FileGroups.
 
          At present, we are missing file attributes. 
          The chunk decryption key mechanic has also changed.
          We can download data, but we are unable to decrypt the chunks.
          */
-        logger.info("-- main() - STEP 11. ChunkServer.FileGroups.");
+        logger.info("-- main() - *** ChunkServer.FileGroups ***");
         ChunkClient chunkClient = new ChunkClient(coreHeaders);
 
         BiConsumer<ByteString, List<byte[]>> dataConsumer
