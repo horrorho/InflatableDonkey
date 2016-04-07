@@ -1,14 +1,20 @@
-## InflatableDonkey
-iOS9 iCloud backup retrieval proof of concept development tool
+**Update**, 7 April 2016. 
 
-* Ok! So I'm going to be snowed under with work and other commitments. Sadly this does mean that my Github projects will remain on indefinite hiatus.
+Ok! So I've had free time to work on InflatableDonkey. It's been painful, but there's been lots of progress. I've had to pull apart binaries to figure out the decryption process, which I hate doing. Like seriously, it's horrible.
+
+At present the escrow recovery is working so we have access to decryption keys. I do have the protection zone decryption figured and I'll be coding that in over the next few weeks. Keybag/ file protection mechanics seem to be unchanged so that code will follow.
+
+There's alot of cryptographical code from a non-cryptographer. So feel free to pull it apart and suggest any improvements. Some of the code is quite raw and will make your eyes bleed, but it should illustrate what's going on. I will tidy it up at some point.
+
+Sooo... what's left? Chunk decryption is the big one. I'm hoping it's a simple solution, otherwise it's back to pulling apart binaries. :'(
+
 
 ### What is it?
 Java playground/ proof of concept command-line tool (currently a work in progress) to demonstrate the key steps in recovering iOS9 iCloud backups. It does not and will not offer a complete iCloud backup retrieval solution. It's primarily intended for developers or otherwise generally nosy folk.
 
 The tool itself logs client-server interaction including headers and protobufs. Along with the source-code this should assist in developing/ upgrading existing iCloud retrieval tools to iOS9 (all those iLoot forks, I'm looking at you).
 
-The CloudKit API calls are largely there. The cryptographical aspects/ key retrieval remain problematic. See below.
+The CloudKit API calls are largely there. The cryptographical aspect is problematic but progressing.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
@@ -49,6 +55,11 @@ DsPrsID/mmeAuthToken. Preferable for consecutive runs as repeated appleId/ passw
 Print DsPrsID/mmeAuthToken and exit.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --token
+```
+
+With HTTPS proxy.
+```
+~/InflatableDonkey-master/target $ java -Dhttps.proxyHost=HOST -Dhttps.proxyPort=PORT -jar InflatableDonkey.jar elvis@lives.com uhhurhur --token
 ```
 
 Selection.
@@ -100,43 +111,12 @@ m201Response {
         ownerName {
 ```
 
-### iOS9 iCloud retrieval progress
-Postulated steps and current status are as follows:
-  1. Authentication. Functional.
-  2. Account settings. Functional.
-  3. CloudKit Application Initialization. Functional.
-  4. Record zones. Functional.
-  5. Backup list. Functional.
-  6. Snapshot list. Functional.
-  7. Manifest list. Functional.
-  8. Retrieve list of assets. Functional.
-  9. Retrieve asset tokens. Partly functional. EncryptedAttributes remains undecrypted. I suspect this contains the metadata required to manage/ decrypt our files c.f. [MBSFile](https://github.com/hackappcom/iloot/blob/master/icloud.proto).
-  10. AuthorizeGet. Functional.
-  11. ChunkServer.FileGroups retrieval. Partly functional. Chunk decryption broken.
-  12. Assemble assets/ files. Functional.
-  13. Decrypt files. Broken. Keybag retrieval functional but remains undecrypted.
-
-
 For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
-
-
-The cryptographical aspects are troublesome. If you have any additional information, we would love hear it! Please open a ticket and pour your heart out. However if you would prefer to remain under the radar, then email me directly.
-
-**Update**, 27 October 2015. General code clean-up. Protobufs more idiomatic. Keybag retrieval works, but it's encrypted. The search is on for [CloudKit Service key](https://www.apple.com/business/docs/iOS_Security_Guide.pdf). This should unlock the zone data in step 4, which should provide keys to unlock encryptedAttributes. I'm rather hoping the keybag decryption will follow in a similar vein.
-
-So: cloudkit service key > zone wide key > chunk/ file key
-
-**Update**, 3 November 2015. It's been a tough week. Apple has beefed up the security model and it's proving difficult. We have assistance from a mysterious cryptographer (aren't they all) and hopefully we can make progress.
 
 [CloudKit Notes](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) is new and describes a little of what goes on under the hood.
 
 ### Python
 [devzero0](https://github.com/devzero0) has created a [Python implementation](https://github.com/devzero0/iOS9_iCloud_POC) of InflatableDonkey. Thank you!
-
-### Backups! (Solved)
-The elucidation of client-server calls has been greatly inhibited by the lack of iCloud server to iOS9 device restoration logs. If you are able to assist in this non-trivial process then again, we would love to hear from you. Seriously, we would REALLY love to hear from you.
-
-**Update** 27 October 2015. [Solved](https://github.com/hackappcom/iloot/issues/62#issuecomment-151144868)!
 
 ### What about LiquidDonkey?
 Hopefully the remaining steps will be revealed in a timely fashion, at which point I'll once again cast my gaze over LiquidDonkey.
@@ -147,7 +127,7 @@ Hopefully the remaining steps will be revealed in a timely fashion, at which poi
 ### Credits
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions.
 
-Oleksii K - who continues to work tirelessy on the cryptographical side of the project, the most difficult aspect by far.
+Oleksii K - for cryptographical assistance, before he was mysteriously abducted by aliens.
 
 [devzero0](https://github.com/devzero0) for creating a [Python implementation](https://github.com/devzero0/iOS9_iCloud_POC) of InflatableDonkey.
 
