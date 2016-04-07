@@ -203,7 +203,7 @@ public class EscrowTest {
         logger.debug("-- decryptGetRecordsResponseMetadata() - key: 0x{}", Hex.toHexString(key));
 
         byte[] decrypted = GCMDataB.decrypt(key, backupEscrow.data());
-        logger.debug("-- decryptGetRecordsResponseMetadata() - descrypted escrow data: 0x{}",
+        logger.debug("-- decryptGetRecordsResponseMetadata() - decrypted escrow data: 0x{}",
                 Hex.toHexString(decrypted));
 
         return DERUtils.parse(decrypted, KeySet::new)
