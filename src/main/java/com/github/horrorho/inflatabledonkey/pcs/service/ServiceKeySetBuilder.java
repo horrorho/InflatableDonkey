@@ -41,10 +41,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.IntFunction;
 import net.jcip.annotations.NotThreadSafe;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Objects;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * ServiceKeySetBuilder.
@@ -117,7 +117,7 @@ public final class ServiceKeySetBuilder {
     }
 
     public ServiceKeySetBuilder setChecksum(byte[] checksum) {
-        setKsID(Hex.encodeHexString(checksum));
+        setKsID(Hex.toHexString(checksum));
         return this;
     }
 
@@ -206,7 +206,8 @@ public final class ServiceKeySetBuilder {
 
         serviceKeyIDs.forEach((service, keyID) -> logger.debug("-- build() - service: {} key id: {}", service, keyID));
 
-        privateKeys.forEach((keyId, key) -> logger.debug("-- build() - key id: {} trusted: {}", keyId, key.isTrusted()));
+        privateKeys.forEach((keyId, key) -> logger.debug("-- build() - key id: {} trusted: {} public export: 0x{}",
+                keyId, key.isTrusted(), Hex.toHexString(key.publicExportData())));
 
         // Build.
         ServiceKeySet serviceKeySet = new ServiceKeySet(serviceKeys, name, ksID, isCompact);
