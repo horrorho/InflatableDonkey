@@ -4,7 +4,7 @@ Ok! So I've had free time to work on InflatableDonkey. It's been painful, but th
 
 At present the escrow recovery is working so we have access to decryption keys. I do have the protection zone decryption figured and I'll be coding that in over the next few weeks. Keybag/ file protection mechanics seem to be unchanged so that code will follow.
 
-There's alot of cryptographical code from a non-cryptographer. So feel free to pull it apart and suggest any improvements. Some of the code is quite raw and will make your eyes bleed, but it should illustrate what's going on. I will tidy it up at some point.
+There's a lot of cryptographical code from a non-cryptographer. So feel free to pull it apart and suggest any improvements. Some of the code is quite raw and will make your eyes bleed, but it should illustrate what's going on. I will tidy it up at some point.
 
 Sooo... what's left? Chunk decryption is the big one. I'm hoping it's a simple solution, otherwise it's back to pulling apart binaries. :'(
 
