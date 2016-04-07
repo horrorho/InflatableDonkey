@@ -95,7 +95,7 @@ public final class XZones {
         return lastProtectionTag().map(zones::get);
     }
 
-    public Optional<XZones> put(byte[] protectionInfo, String protectionTag) {
+    public Optional<XZones> put(String protectionTag, byte[] protectionInfo) {
         return XZoneFactory.instance()
                 .create(protectionInfo, protectionTag, this::key)
                 .map(this::put);
