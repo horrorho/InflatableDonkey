@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.pcs.service;
 import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +74,10 @@ public final class ServiceKeySet {
 
     public Map<Integer, Key<ECPrivate>> services() {
         return new HashMap<>(serviceKeys);
+    }
+
+    public Collection<Key<ECPrivate>> keys() {
+        return serviceKeys.values();
     }
 
     public String name() {
