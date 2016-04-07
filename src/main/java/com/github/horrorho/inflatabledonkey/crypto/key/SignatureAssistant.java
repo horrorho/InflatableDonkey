@@ -92,7 +92,8 @@ public final class SignatureAssistant {
         boolean isVerified = masterKey.keyData()
                 .verifySignature(message, ecdsaSignature.r(), ecdsaSignature.s());
 
-        logger.debug("-- verify() - verified: {} key: {} master:{}", isVerified, key, masterKey);
+        logger.debug("-- verify() - verified: {} key id: {} master key id:{}",
+                isVerified, key.keyID(), masterKey.keyID());
 
         return isVerified;
     }
