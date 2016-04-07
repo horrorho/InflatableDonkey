@@ -23,41 +23,60 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xzone;
 
+import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
+import com.github.horrorho.inflatabledonkey.crypto.key.Key;
+import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Xzones.
  *
  * @author Ahseya
  */
-@Immutable
+@ThreadSafe
 public final class XZones {
 
-    public static XZones empty() {
-        return EMPTY;
+    public static XZones create() {
+        return new XZones();
     }
 
     private static final Logger logger = LoggerFactory.getLogger(XZones.class);
 
-    private static final XZones EMPTY = new XZones(XKeySet.empty(), new HashMap<>(), Optional.empty());
+    private final ConcurrentMap<KeyID, Key<ECPrivate>> keys;
+    private final ConcurrentMap<String, XZone> zones;
+    private AtomicReference<String> lastProtectionTag;
 
-    private final XKeySet keySet;
-    private final Map<String, XZone> zones;
-    private final Optional<String> protectionTag;
+    private XZones(
+            ConcurrentMap<KeyID, Key<ECPrivate>> keys,
+            ConcurrentMap<String, XZone> zones,
+            AtomicReference<String> lastProtectionTag) {
 
-    private XZones(XKeySet keySet, Map<String, XZone> zones, Optional<String> protectionTag) {
-        this.keySet = Objects.requireNonNull(keySet, "keySet");
+        this.keys = Objects.requireNonNull(keys, "keys");
         this.zones = Objects.requireNonNull(zones, "zones");
-        this.protectionTag = Objects.requireNonNull(protectionTag, "protectionTag");
+        this.lastProtectionTag = Objects.requireNonNull(lastProtectionTag, "lastProtectionTag");
     }
 
-    public XKeySet keySet() {
-        return keySet;
+    public XZones() {
+        this(new ConcurrentHashMap<>(), new ConcurrentHashMap<>(), new AtomicReference());
+    }
+
+    public Collection<Key<ECPrivate>> keys() {
+        return new ArrayList<>(keys.values());
+    }
+
+    public Optional<Key<ECPrivate>> key(KeyID keyID) {
+        return Optional.ofNullable(keys.get(keyID));
     }
 
     public Map<String, XZone> zones() {
@@ -68,43 +87,42 @@ public final class XZones {
         return Optional.ofNullable(zones.get(protectionTag));
     }
 
+    public Optional<String> lastProtectionTag() {
+        return Optional.ofNullable(lastProtectionTag.get());
+    }
+
     public Optional<XZone> zone() {
-        return protectionTag.map(zones::get);
+        return lastProtectionTag().map(zones::get);
     }
 
-    public Optional<XZones> with(byte[] protectionInfo, String protectionTag) {
-        Optional<XZone> optionalXZone = XZoneFactory.instance().create(protectionInfo, protectionTag, keySet());
-        if (!optionalXZone.isPresent()) {
-            logger.warn("-- with() - failed to create zone");
-            return Optional.empty();
+    public Optional<XZones> put(byte[] protectionInfo, String protectionTag) {
+        return XZoneFactory.instance()
+                .create(protectionInfo, protectionTag, this::key)
+                .map(this::put);
+    }
+
+    public XZones put(XZone zone) {
+        if (zones.containsKey(zone.protectionTag())) {
+            logger.debug("-- put() - overwritten zone: {}", zone.protectionTag());
         }
 
-        logger.debug("-- with() - zones key count: {}", keySet.keys().size());
-        keySet.keys().keySet().forEach(k -> logger.debug("-- with() - key id: {}", k));
-
-        return Optional.of(XZones.this.with(optionalXZone.get()));
+        put(zone.keys());
+        zones.put(zone.protectionTag(), zone);
+        lastProtectionTag.set(zone.protectionTag());
+        return this;
     }
 
-    public XZones with(XZone xZone) {
-        if (zones.containsKey(xZone.protectionTag())) {
-            logger.debug("-- with() - overwritten zone: {}", xZone.protectionTag());
-        }
+    public XZones put(Collection<Key<ECPrivate>> keys) {
+        keys.stream()
+                .filter(k -> !this.keys.containsKey(k.keyID()))
+                .peek(k -> logger.debug("-- put() - added key id: {}", k.keyID()))
+                .forEach(k -> this.keys.put(k.keyID(), k));
 
-        XKeySet xKeySetNew = keySet.withAll(xZone.keys());
-        HashMap<String, XZone> xZonesNew = new HashMap<>(zones);
-        xZonesNew.put(xZone.protectionTag(), xZone);
-
-        return new XZones(xKeySetNew, xZonesNew, Optional.of(xZone.protectionTag()));
-    }
-
-    public XZones with(XKeySet xKeySet) {
-        XKeySet newXKeySet = this.keySet.withAll(xKeySet);
-
-        return new XZones(newXKeySet, zones, protectionTag);
+        return this;
     }
 
     @Override
     public String toString() {
-        return "XZones{" + "keySet=" + keySet + ", zones=" + zones + ", protectionTag=" + protectionTag + '}';
+        return "XZones{" + "keys=" + keys + ", zones=" + zones + ", currentProtectionTag=" + lastProtectionTag + '}';
     }
 }
