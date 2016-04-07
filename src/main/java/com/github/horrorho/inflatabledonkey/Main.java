@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.dd.plist.NSData;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
@@ -49,10 +50,11 @@ import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.Record;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordFieldValue;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit.Zone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponse;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponseZoneSummary;
@@ -448,6 +450,7 @@ public class Main {
         List<CloudKit.ZoneRetrieveResponse> recordZoneDefaultResponse
                 = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "_defaultZone");
 
+        // protection info
         recordZoneDefaultResponse
                 .stream()
                 .map(ZoneRetrieveResponse::getZoneSummarysList)
@@ -475,6 +478,7 @@ public class Main {
         List<CloudKit.ZoneRetrieveResponse> zoneRetrieveRequest
                 = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "mbksync");
 
+        // protection info
         zoneRetrieveRequest
                 .stream()
                 .map(ZoneRetrieveResponse::getZoneSummarysList)
@@ -487,15 +491,26 @@ public class Main {
 
         /* 
          Backup list.
-        
-         Url/ headers as step 4.
+
          Message type 211 request, protobuf array encoded.
 
-         Returns device data/ backups.        
+         Returns device data/ backups and HMAC keys (which we are ignoring for now).      
          */
         logger.info("-- main() - *** Backup list ***");
         List<CloudKit.RecordRetrieveResponse> responseBackupList
                 = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "BackupAccount");
+
+        if (responseBackupList.size() != 1) {
+            // We only sent a single delimited protobuf, so we expect only a single reply.
+            logger.warn("-- main() - unexpected list size: {}", responseBackupList.size());
+        }
+
+        // protection info
+        responseBackupList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(x -> x.hasProtectionInfo())
+                .map(x -> x.getProtectionInfo())
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         List<String> devices = responseBackupList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
@@ -514,24 +529,24 @@ public class Main {
 
         if (devices.isEmpty()) {
             logger.info("-- main() - no devices");
-            System.exit(0);
+            System.exit(-1);
         }
 
         /* 
          Snapshot list (+ Keybag)
         
-         Url/ headers as step 5.
          Message type 211 with the required backup uuid, protobuf array encoded.
 
-         Returns device/ snapshots/ keybag information.
+         Returns device/ snapshots/ keybag information. 
+         'domainHMAC' ignored at present.
          Timestamps are hex encoded double offsets to 01 Jan 2001 00:00:00 GMT (Cocoa/ Webkit reference date).
         
          */
-        logger.info("-- main() - STEP 6. Snapshot list.");
+        logger.info("-- main() - *** Snapshot list ***");
 
         if (deviceIndex >= devices.size()) {
             logger.warn("-- main() - No such device: {}, available devices: {}", deviceIndex, devices);
-            System.exit(0);
+            System.exit(-1);
         }
 
         List<CloudKit.RecordRetrieveResponse> responseSnapshotList
@@ -576,12 +591,11 @@ public class Main {
 
         if (snapshots.isEmpty()) {
             logger.info("-- main() - no snapshots for device: {}", devices.get(deviceIndex));
-            System.exit(0);
+            System.exit(-1);
         }
         /* 
          Manifest list.
         
-         Url/ headers as step 6.
          Message type 211 with the required snapshot uuid, protobuf array encoded.
 
          Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
@@ -602,6 +616,44 @@ public class Main {
                         "mbksync",
                         snapshots.get(snapshotIndex));
 
+        // protection info
+        responseManifestList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(Record::hasProtectionInfo)
+                .map(Record::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+
+        Function<byte[], byte[]> decryptBackupProperties
+                = bs -> zones.zone()
+                .get()
+                .decrypt(bs, "backupProperties");
+
+        Function<byte[], NSDictionary> parseProperyList = bs -> {
+            try {
+                return (NSDictionary) PropertyListParser.parse(bs);
+
+            } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+                logger.debug("-- main() - failed to parse property list: {}", ex);
+                return null;
+            }
+        };
+
+        // Should only get one.
+        List<NSDictionary> backupPropertiesList = responseManifestList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("backupProperties"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getBytesValue)
+                .map(ByteString::toByteArray)
+                .map(decryptBackupProperties)
+                .map(parseProperyList)
+                .collect(Collectors.toList());
+
+        backupPropertiesList.forEach(
+                p -> logger.debug("-- main() - decrypted backup properties: {}", p.toXMLPropertyList()));
+
         List<String> manifests = responseManifestList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
@@ -616,13 +668,12 @@ public class Main {
 
         if (manifests.isEmpty()) {
             logger.info("-- main() - no manifests for snapshot: {}", snapshots.get(snapshotIndex));
-            System.exit(0);
+            System.exit(-1);
         }
 
         /* 
-         Retrieve list of files.
+         Retrieve list of assets.
     
-         Url/ headers as step 7.
          Message type 211 with the required manifest, protobuf array encoded.
 
          Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
@@ -633,7 +684,7 @@ public class Main {
 
         if (manifestIndex >= manifests.size()) {
             logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
-            System.exit(0);
+            System.exit(-1);
         }
 
         List<CloudKit.RecordRetrieveResponse> responseAssetList
@@ -643,6 +694,13 @@ public class Main {
                         bundle,
                         "_defaultZone",
                         (manifests.get(manifestIndex) + ":0"));
+
+        // protection info
+        responseAssetList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(Record::hasProtectionInfo)
+                .map(Record::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         List<String> files = responseAssetList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
@@ -692,7 +750,54 @@ public class Main {
                         "_defaultZone",
                         file);
 
+        // protection info
+        assetTokens.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(Record::hasProtectionInfo)
+                .map(Record::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
+        Function<byte[], byte[]> decryptEncrytedAttributes
+                = bs -> zones.zone()
+                .get()
+                .decrypt(bs, "encryptedAttributes");
+
+        // Should only get one.
+        List<NSDictionary> encryptedAttributesList = assetTokens.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("encryptedAttributes"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getBytesValue)
+                .map(ByteString::toByteArray)
+                .map(decryptEncrytedAttributes)
+                .map(parseProperyList)
+                .collect(Collectors.toList());
+
+        encryptedAttributesList.forEach(
+                p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
+
+        // TODO unsafe array access
+        byte[] fileEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
+        logger.debug("-- main() - file encryption key: {}", Hex.encodeHexString(fileEncryptionKey));
+
+        /* 
+         Keybag.
+         */
+        logger.info("-- main() - *** Keybag ***");
+
+        List<CloudKit.RecordRetrieveResponse> responseKeyBagList
+                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + keybagUUID);
+
+        // protection info
+        responseKeyBagList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(Record::hasProtectionInfo)
+                .map(Record::getProtectionInfo)
+                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+
+        // TODO port over LiquidDonkey keybag handlers.
         /* 
          AuthorizeGet.
         
@@ -716,35 +821,6 @@ public class Main {
         // TODO confusing, rename to file attributes or similar?
         CloudKit.Asset asset = contents.get(0);
         logger.debug("-- main() - file attributes: {}", asset);
-
-        /*
-         TODO -> SOLVED! :)
-        
-         encryptedAttributes need deciphering.
-         I suspect this contains the metadata required to manage/ decrypt our files c.f. ICloud.MBSFile.
-         https://www.apple.com/business/docs/iOS_Security_Guide.pdf refers to a Cloudkit Service key.
-         This is available after authentication but may well be wrapped. 
-         We need to track down the appropriate api call.
-         Hopefully this key will decrypt the zone data in step 4 to reveal zone-wide keys.
-         AES is the likely cipher. 
-        
-         So:
-        
-         cloudkit service key > zone wide key > file key
-                
-        
-         */
-        List<ByteString> encryptedAttributes = assetTokens.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(c -> c.getIdentifier().getName().equals("encryptedAttributes"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getBytesValue)
-                .collect(Collectors.toList());
-
-        encryptedAttributes.forEach(
-                x -> logger.debug("-- main() - encryptedAttributes: {}", Hex.encodeHex(x.toByteArray())));
 
         // FileTokens. Expanded from iOS8.
         CloudKit.FileTokens fileTokens = FileTokensFactory.instance().apply(Arrays.asList(asset));
@@ -775,9 +851,9 @@ public class Main {
 
         //chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
         /*
-         STEP 12. Assemble assets/ files.
+         Alternative keybag request.
          */
-        logger.info("-- main() - STEP 12. Assemble assets/ files.");
+        logger.info("-- main() - *** Alternative keybag request ***");
         List<CloudKit.QueryRetrieveRequestResponse> keybagResponse
                 = cloudKitty.queryRetrieveRequest(
                         httpClient,
