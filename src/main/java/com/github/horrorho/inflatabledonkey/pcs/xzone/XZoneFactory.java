@@ -137,7 +137,7 @@ public final class XZoneFactory {
 
         Optional<Set<NOS>> optionalMasterKeySet = protectionObject.getMasterKeySet();
         if (!optionalMasterKeySet.isPresent()) {
-            logger.debug("-- create() - no master key set;");
+            logger.debug("-- create() - no keys");
             return Optional.of(new XZone(protectionInfoTag, kdk, dk));
         }
 
