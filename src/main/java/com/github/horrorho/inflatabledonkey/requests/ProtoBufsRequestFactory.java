@@ -83,7 +83,8 @@ public final class ProtoBufsRequestFactory {
         post.setHeader(Headers.xCloudKitBundleId, bundle);
         post.setHeader(Headers.accept, "application/x-protobuf");
         post.setHeader(Headers.contentType, "application/x-protobuf; desc=\"https://p33-ckdatabase.icloud.com:443/static/protobuf/CloudDB/CloudDBClient.desc\"; messageType=RequestOperation; delimited=true");
-        post.setHeader(headers.get(Headers.userAgent));
+// TOFIX duplicating User-Agent
+//        post.setHeader(headers.get(Headers.userAgent));
         post.setHeader(headers.get(Headers.xCloudKitProtocolVersion));
         post.setHeader(headers.get(Headers.xMmeClientInfo));
         post.setEntity(byteArrayEntity);
