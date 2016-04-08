@@ -37,6 +37,9 @@ import org.bouncycastle.crypto.params.KeyParameter;
 @Immutable
 public final class AESWrap {
 
+    private AESWrap() {
+    }
+
     public static byte[] unwrap(byte[] keyEncryptionKey, byte[] key) throws InvalidCipherTextException {
         RFC3394WrapEngine engine = new RFC3394WrapEngine(new AESFastEngine());
         engine.init(false, new KeyParameter(keyEncryptionKey));
