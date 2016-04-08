@@ -778,7 +778,8 @@ public class Main {
                 p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
 
         // TODO unsafe array access
-        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "wrappedEncryptionKey").bytes();
+        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
+
         logger.debug("-- main() - wrapped encryption key: {}", Hex.encodeHexString(wrappedEncryptionKey));
 
         // Should only get one.
@@ -860,9 +861,8 @@ public class Main {
         }
         byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
 
-        logger.debug("-- main() - unwrapped file encryption key: 0x{} > 0x{}",
-                Hex.encodeHexString(wrappedEncryptionKey), Hex.encodeHexString(fileEncryptionKey));
-
+        logger.debug("-- main() - wrapped file encryption key: 0x{}", Hex.encodeHexString(wrappedEncryptionKey));
+        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
 
         /* 
          AuthorizeGet.

@@ -42,6 +42,11 @@
     </build> 
     <dependencies>
         <dependency>
+            <groupId>org.whispersystems</groupId>
+            <artifactId>curve25519-java</artifactId>
+            <version>0.2.4</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.1</version>
