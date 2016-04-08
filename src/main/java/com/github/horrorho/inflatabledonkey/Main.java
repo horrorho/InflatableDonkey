@@ -797,7 +797,22 @@ public class Main {
                 .map(Record::getProtectionInfo)
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
-        // TODO port over LiquidDonkey keybag handlers.
+        
+        
+       
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         /* 
          AuthorizeGet.
         
