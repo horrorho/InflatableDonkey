@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.crypto;
 
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -35,6 +36,10 @@ import org.bouncycastle.crypto.params.KeyParameter;
  */
 @Immutable
 public final class PBKDF2 {
+
+    public static byte[] generate(byte[] password, byte[] salt, int iterations, int lengthBits) {
+        return generate(new SHA1Digest(), password, salt, iterations, lengthBits);
+    }
 
     public static byte[] generate(Digest digest, byte[] password, byte[] salt, int iterations, int lengthBits) {
         PKCS5S2ParametersGenerator generator = new PKCS5S2ParametersGenerator(digest);
