@@ -37,6 +37,9 @@ import org.bouncycastle.crypto.params.KeyParameter;
 @Immutable
 public final class PBKDF2 {
 
+    private PBKDF2() {
+    }
+
     public static byte[] generate(byte[] password, byte[] salt, int iterations, int lengthBits) {
         return generate(new SHA1Digest(), password, salt, iterations, lengthBits);
     }

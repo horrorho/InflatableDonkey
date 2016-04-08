@@ -47,6 +47,9 @@ public final class NISTKDF {
 
     private static final int R = 32;            // counter length in bits 
 
+    private NISTKDF() {
+    }
+
     public static byte[]
             ctrHMac(byte[] keyDerivationKey, String label, Supplier<Digest> digestSupplier, int keyLengthBytes) {
 

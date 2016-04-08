@@ -25,11 +25,14 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 @Immutable
 public final class AESCBC {
 
+    private AESCBC() {
+    }
+
     public static byte[] decryptAESCBC(byte[] key, byte[] iv, byte[] data) {
         // AES CBC PKCS7 decrypt
         try {
             CipherParameters cipherParameters = new ParametersWithIV(new KeyParameter(key), iv);
-            PaddedBufferedBlockCipher cipher 
+            PaddedBufferedBlockCipher cipher
                     = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()), new PKCS7Padding());
             cipher.init(false, cipherParameters);
 

@@ -40,6 +40,9 @@ import org.bouncycastle.util.Arrays;
 @Immutable
 public final class AESGCM {
 
+    private AESGCM() {
+    }
+
     /**
      * Returns decrypted data.
      *
