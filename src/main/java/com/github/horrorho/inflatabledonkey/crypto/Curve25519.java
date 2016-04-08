@@ -34,6 +34,9 @@ import org.bouncycastle.util.Arrays;
 @Immutable
 public final class Curve25519 {
 
+    private Curve25519() {
+    }
+
     private static final org.whispersystems.curve25519.Curve25519 curve25519
             = org.whispersystems.curve25519.Curve25519.getInstance(org.whispersystems.curve25519.Curve25519.JAVA);
 
