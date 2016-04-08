@@ -49,6 +49,8 @@ import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
+import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
+import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
@@ -91,6 +93,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.ResponseHandler;
@@ -508,8 +511,8 @@ public class Main {
         // protection info
         responseBackupList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(x -> x.hasProtectionInfo())
-                .map(x -> x.getProtectionInfo())
+                .filter(Record::hasProtectionInfo)
+                .map(Record::getProtectionInfo)
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         List<String> devices = responseBackupList.stream()
@@ -624,9 +627,7 @@ public class Main {
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         Function<byte[], byte[]> decryptBackupProperties
-                = bs -> zones.zone()
-                .get()
-                .decrypt(bs, "backupProperties");
+                = bs -> zones.zone().get().decrypt(bs, "backupProperties");
 
         Function<byte[], NSDictionary> parseProperyList = bs -> {
             try {
@@ -758,9 +759,7 @@ public class Main {
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         Function<byte[], byte[]> decryptEncrytedAttributes
-                = bs -> zones.zone()
-                .get()
-                .decrypt(bs, "encryptedAttributes");
+                = bs -> zones.zone().get().decrypt(bs, "encryptedAttributes");
 
         // Should only get one.
         List<NSDictionary> encryptedAttributesList = assetTokens.stream()
@@ -797,20 +796,47 @@ public class Main {
                 .map(Record::getProtectionInfo)
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
+        Function<byte[], byte[]> decryptKeybagData
+                = bs -> zones.zone().get().decrypt(bs, "keybagData");
+
+        Optional<byte[]> optionalKeybagData = responseKeyBagList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("keybagData"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getBytesValue)
+                .map(ByteString::toByteArray)
+                .map(decryptKeybagData)
+                .findFirst();
         
+        if (!optionalKeybagData.isPresent()) {
+            logger.warn("-- main() - failed to acquire key bag");
+            System.exit(-1);
+        }
+        byte[] keybagData = optionalKeybagData.get();
+
+        Function<byte[], byte[]> decryptSecret
+                = bs -> zones.zone().get().decrypt(bs, "secret");
+
+        Optional<byte[]> optionalSecret = responseKeyBagList.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("secret"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getBytesValue)
+                .map(ByteString::toByteArray)
+                .map(decryptSecret)
+                .findFirst();
+
+        if (!optionalSecret.isPresent()) {
+            logger.warn("-- main() - failed to acquire key bag pass code");
+            System.exit(-1);
+        }
+        byte[] secret = optionalSecret.get();
         
-       
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        KeyBag keyBag = KeyBagFactory.create(keybagData, secret);
         
         
         /* 
@@ -868,18 +894,17 @@ public class Main {
         /*
          Alternative keybag request.
          */
-        logger.info("-- main() - *** Alternative keybag request ***");
-        List<CloudKit.QueryRetrieveRequestResponse> keybagResponse
-                = cloudKitty.queryRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "mbksync",
-                        "K:" + keybagUUID);
+//        logger.info("-- main() - *** Alternative keybag request ***");
+//        List<CloudKit.QueryRetrieveRequestResponse> keybagResponse
+//                = cloudKitty.queryRetrieveRequest(
+//                        httpClient,
+//                        container,
+//                        bundle,
+//                        "mbksync",
+//                        "K:" + keybagUUID);
 
         // TODO Possibility of multiple keybags. iOS8 backups could have multiple keybags.
         // TODO File attribute code/ encryptedAttributes.
-        // TODO For now just write out the 
     }
 
     static String token(String delimited, int index) {
