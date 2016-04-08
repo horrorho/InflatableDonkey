@@ -49,6 +49,7 @@ import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
+import com.github.horrorho.inflatabledonkey.keybag.FileKeyAssistant;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
@@ -93,7 +94,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.ResponseHandler;
@@ -778,8 +778,22 @@ public class Main {
                 p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
 
         // TODO unsafe array access
-        byte[] fileEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
-        logger.debug("-- main() - file encryption key: {}", Hex.encodeHexString(fileEncryptionKey));
+        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "wrappedEncryptionKey").bytes();
+        logger.debug("-- main() - wrapped encryption key: {}", Hex.encodeHexString(wrappedEncryptionKey));
+
+        // Should only get one.
+        List<Integer> protectionClassList = assetTokens.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getUint32)
+                .collect(Collectors.toList());
+
+        // TODO unsafe array access
+        int protectionClass = protectionClassList.get(0);
+        logger.debug("-- main() - protection class: {}", protectionClass);
 
         /* 
          Keybag.
@@ -809,7 +823,7 @@ public class Main {
                 .map(ByteString::toByteArray)
                 .map(decryptKeybagData)
                 .findFirst();
-        
+
         if (!optionalKeybagData.isPresent()) {
             logger.warn("-- main() - failed to acquire key bag");
             System.exit(-1);
@@ -835,10 +849,21 @@ public class Main {
             System.exit(-1);
         }
         byte[] secret = optionalSecret.get();
-        
+
         KeyBag keyBag = KeyBagFactory.create(keybagData, secret);
-        
-        
+        logger.debug("-- main() - key bag: {}", keyBag);
+
+        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, protectionClass, wrappedEncryptionKey);
+        if (!optionalFileEncryptionKey.isPresent()) {
+            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", Hex.encodeHex(wrappedEncryptionKey));
+            System.exit(-1);
+        }
+        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
+
+        logger.debug("-- main() - unwrapped file encryption key: 0x{} > 0x{}",
+                Hex.encodeHexString(wrappedEncryptionKey), Hex.encodeHexString(fileEncryptionKey));
+
+
         /* 
          AuthorizeGet.
         
@@ -902,7 +927,6 @@ public class Main {
 //                        bundle,
 //                        "mbksync",
 //                        "K:" + keybagUUID);
-
         // TODO Possibility of multiple keybags. iOS8 backups could have multiple keybags.
         // TODO File attribute code/ encryptedAttributes.
     }
