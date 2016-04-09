@@ -7,9 +7,10 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
@@ -25,46 +26,32 @@ public final class BackupAccountFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountFactory.class);
 
-    public static BackupAccount from(CloudKit.Record record) {
+    private static final String HMAC_KEY = "HMACKey";
+    private static final String DEVICES = "devices";
 
+    public static BackupAccount from(CloudKit.Record record, BiFunction<byte[], String, byte[]> decrypt) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
 
-        byte[] hmacKey = hmacKey(records);
+        Optional<byte[]> hmacKey = hmacKey(records)
+                .map(k -> decrypt.apply(k, HMAC_KEY));
+
         Collection<String> devices = devices(records);
 
-        Instant creation = WKTimestamp.toInstant(
-                record.getTimeStatistics().getCreation().getTime());
-        Instant modification = WKTimestamp.toInstant(
-                record.getTimeStatistics().getModification().getTime());
-
-        String protectionInfoTag = record.getProtectionInfo().getProtectionInfoTag();
-        byte[] protectionInfo = record.getProtectionInfo().getProtectionInfo().toByteArray();
-
-        return new BackupAccount(
-                creation,
-                modification,
-                hmacKey,
-                devices,
-                protectionInfoTag,
-                protectionInfo);
+        return new BackupAccount(hmacKey, devices);
     }
 
-    public static byte[] hmacKey(List<CloudKit.RecordField> records) {
+    public static Optional<byte[]> hmacKey(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("HMACKey"))
+                .filter(value -> value.getIdentifier().getName().equals(HMAC_KEY))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getBytesValue)
-                .findFirst()
-                .orElseGet(() -> {
-                    logger.warn("-- hmacKey() - not found");
-                    return ByteString.EMPTY;
-                })
-                .toByteArray();
+                .map(ByteString::toByteArray)
+                .findFirst();
     }
 
     public static Collection<String> devices(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("devices"))
+                .filter(value -> value.getIdentifier().getName().equals(DEVICES))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)

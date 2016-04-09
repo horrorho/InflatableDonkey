@@ -39,6 +39,7 @@ import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.crypto.srp.EscrowTest;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecords;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecordsMetadata;
@@ -100,6 +101,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
@@ -435,6 +438,24 @@ public class Main {
         final XZones zones = XZones.create();
         zones.put(escrowServiceKeySet.keys());
 
+        Consumer<CloudKit.Record> zonesAddRecord
+                = record -> {
+                    if (record.hasProtectionInfo()) {
+                        CloudKit.ProtectionInfo protectionInfo = record.getProtectionInfo();
+
+                        if (protectionInfo.hasProtectionInfoTag() && protectionInfo.hasProtectionInfo()) {
+                            zones.put(
+                                    protectionInfo.getProtectionInfoTag(),
+                                    protectionInfo.getProtectionInfo().toByteArray());
+                        }
+                    }
+                };
+
+        BiFunction<byte[], String, byte[]> zonesDecrypt
+                = (bs, s) -> zones.zone()
+                .orElseThrow(() -> new IllegalArgumentException("no zones present"))
+                .decrypt(bs, s);
+
         /*
          CloudKitty, simple client-server CloudKit calls. Meow.
          */
@@ -522,11 +543,14 @@ public class Main {
 
         CloudKit.RecordRetrieveResponse backupResponse = responseBackupList.get(0);
 
-        BackupAccount backupAccount = BackupAccountFactory.from(backupResponse.getRecord());
+        zonesAddRecord.accept(backupResponse.getRecord());
+
+        BackupAccount backupAccount
+                = BackupAccountFactory.from(backupResponse.getRecord(), zonesDecrypt);
         logger.debug("-- main() - backup account: {}", backupAccount);
 
-        zones.put(backupAccount);
-
+        System.exit(0);
+        
         List<String> devices = backupAccount.devices();
         logger.info("-- main() - devices: {}", devices);
 
@@ -663,15 +687,15 @@ public class Main {
             logger.info("-- main() - no manifests for snapshot: {}", snapshot);
             System.exit(-1);
         }
-        
+
         if (manifestIndex >= manifests.manifests().size()) {
             logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
             System.exit(-1);
         }
-        
+
         Manifest manifest = manifests.manifests().get(manifestIndex);
         logger.debug("-- main() - manifest: {}", manifest);
-        
+
         /* 
          Retrieve list of assets.
     
@@ -683,15 +707,13 @@ public class Main {
          */
         logger.info("-- main() - *** Retrieve list of assets ***");
 
-
-
         List<CloudKit.RecordRetrieveResponse> responseAssetList
                 = cloudKitty.recordRetrieveRequest(
                         httpClient,
                         container,
                         bundle,
                         "_defaultZone",
-                        manifest.id()+ ":0");
+                        manifest.id() + ":0");
 
         // protection info
         responseAssetList.stream()

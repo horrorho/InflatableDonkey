@@ -5,11 +5,10 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
@@ -20,53 +19,18 @@ import org.bouncycastle.util.encoders.Hex;
  * @author Ahseya
  */
 @Immutable
-public final class BackupAccount implements ProtectedRecord, TimeStatistics {
+public final class BackupAccount {
 
-    private final Instant creation;
-    private final Instant modification;
-    private final byte[] hmacKey;
-    private final String protectionInfoTag;
-    private final byte[] protectionInfo;
+    private final Optional<byte[]> hmacKey;
     private final Collection<String> devices;
 
-    public BackupAccount(
-            Instant creation,
-            Instant modification,
-            byte[] hmacKey,
-            Collection<String> devices,
-            String protectionInfoTag,
-            byte[] protectionInfo) {
-
-        this.creation = Objects.requireNonNull(creation, "creation");
-        this.modification = Objects.requireNonNull(modification, "modification");
-        this.hmacKey = Arrays.copyOf(hmacKey, hmacKey.length);
+    public BackupAccount(Optional<byte[]> hmacKey, Collection<String> devices) {
+        this.hmacKey = hmacKey.map(bs -> Arrays.copyOf(bs, bs.length));
         this.devices = new ArrayList<>(devices);
-        this.protectionInfoTag = Objects.requireNonNull(protectionInfoTag, "protectionInfoTag");
-        this.protectionInfo = Arrays.copyOf(protectionInfo, protectionInfo.length);
     }
 
-    @Override
-    public Instant creation() {
-        return creation;
-    }
-
-    @Override
-    public Instant modification() {
-        return modification;
-    }
-
-    public byte[] hmacKey() {
-        return Arrays.copyOf(hmacKey, hmacKey.length);
-    }
-
-    @Override
-    public String protectionInfoTag() {
-        return protectionInfoTag;
-    }
-
-    @Override
-    public byte[] protectionInfo() {
-        return Arrays.copyOf(protectionInfo, protectionInfo.length);
+    public Optional<byte[]> getHmacKey() {
+        return hmacKey.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
     public List<String> devices() {
@@ -76,11 +40,7 @@ public final class BackupAccount implements ProtectedRecord, TimeStatistics {
     @Override
     public String toString() {
         return "BackupAccount{"
-                + "creation=" + creation
-                + ", modification=" + modification
-                + ", hmacKey=0x" + Hex.toHexString(hmacKey)
-                + ", protectionInfoTag=" + protectionInfoTag
-                + ", protectionInfo=0x" + Hex.toHexString(protectionInfo)
+                + "hmacKey=" + hmacKey.map(Hex::toHexString)
                 + ", devices=" + devices
                 + '}';
     }
