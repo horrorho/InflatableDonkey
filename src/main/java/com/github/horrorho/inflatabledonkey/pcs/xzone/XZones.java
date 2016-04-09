@@ -36,10 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import net.jcip.annotations.ThreadSafe;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.github.horrorho.inflatabledonkey.data.backup.ProtectedRecord;
 
 /**
  * Xzones.
@@ -95,10 +93,6 @@ public final class XZones {
 
     public Optional<XZone> zone() {
         return lastProtectionTag().map(zones::get);
-    }
-
-    public Optional<XZones> put(ProtectedRecord record) {
-        return put(record.protectionInfoTag(), record.protectionInfo());
     }
 
     public Optional<XZones> put(String protectionTag, byte[] protectionInfo) {
