@@ -67,11 +67,13 @@ public final class XZone {
         return protectionTag;
     }
 
-    byte[] kdk() {
+    // Do we need this?
+    public byte[] kdk() {
         return Arrays.copyOf(kdk, kdk.length);
     }
 
-    byte[] dk() {
+    // Do we need this?
+    public byte[] dk() {
         return Arrays.copyOf(dk, dk.length);
     }
 
