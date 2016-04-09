@@ -812,8 +812,16 @@ public class Main {
          */
         logger.info("-- main() - *** Keybag ***");
 
+        Optional<String> optionalKeybagUUID = snapshots.currentKeybagUUID();
+        if (!optionalKeybagUUID.isPresent()) {
+            logger.debug("-- main() - no keybag UUID");
+            System.exit(-1);
+        }
+        String keybagUUID = optionalKeybagUUID.get();
+        logger.debug("-- main() - keybag UUID: {}", keybagUUID);
+
         List<CloudKit.RecordRetrieveResponse> responseKeyBagList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + snapshots.currentKeybagUUID());
+                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + keybagUUID);
 
         // protection info
         responseKeyBagList.stream()
