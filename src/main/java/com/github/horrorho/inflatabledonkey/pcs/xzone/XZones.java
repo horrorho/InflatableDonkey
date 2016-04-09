@@ -102,8 +102,6 @@ public final class XZones {
     }
 
     public Optional<XZones> put(String protectionTag, byte[] protectionInfo) {
-        logger.debug("-- put() - protectionTag: {} protectionInfo: {}", protectionTag, Hex.toHexString(protectionInfo));
-        
         return XZoneFactory.instance()
                 .create(protectionInfo, protectionTag, this::key)
                 .map(this::put);
