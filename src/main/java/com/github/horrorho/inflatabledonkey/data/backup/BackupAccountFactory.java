@@ -25,22 +25,20 @@ public final class BackupAccountFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountFactory.class);
 
-    public static BackupAccount from(CloudKit.Record response) {
+    public static BackupAccount from(CloudKit.Record record) {
 
-        List<CloudKit.RecordField> records = response.getRecordFieldList();
+        List<CloudKit.RecordField> records = record.getRecordFieldList();
 
         byte[] hmacKey = hmacKey(records);
-
         Collection<String> devices = devices(records);
 
         Instant creation = WKTimestamp.toInstant(
-                response.getTimeStatistics().getCreation().getTime());
-
+                record.getTimeStatistics().getCreation().getTime());
         Instant modification = WKTimestamp.toInstant(
-                response.getTimeStatistics().getModification().getTime());
+                record.getTimeStatistics().getModification().getTime());
 
-        String protectionInfoTag = response.getProtectionInfo().getProtectionInfoTag();
-        byte[] protectionInfo = response.getProtectionInfo().getProtectionInfo().toByteArray();
+        String protectionInfoTag = record.getProtectionInfo().getProtectionInfoTag();
+        byte[] protectionInfo = record.getProtectionInfo().getProtectionInfo().toByteArray();
 
         return new BackupAccount(
                 creation,
