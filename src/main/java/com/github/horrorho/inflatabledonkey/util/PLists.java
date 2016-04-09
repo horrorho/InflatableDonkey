@@ -25,8 +25,14 @@ package com.github.horrorho.inflatabledonkey.util;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
+import com.dd.plist.PropertyListFormatException;
+import com.dd.plist.PropertyListParser;
 import com.github.horrorho.inflatabledonkey.exception.BadDataException;
+import java.io.IOException;
+import java.text.ParseException;
+import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
+import org.xml.sax.SAXException;
 
 /**
  * PropertyLists helper.
@@ -48,7 +54,22 @@ public final class PLists {
     }
     }
     
-    */
+     */
+    public static <T> T parse(byte[] data) {
+        try {
+            return (T) PropertyListParser.parse(data);
+
+        } catch (ClassCastException |
+                IOException |
+                PropertyListFormatException |
+                ParseException |
+                ParserConfigurationException |
+                SAXException ex) {
+
+            throw new IllegalArgumentException("failed to parse property list", ex);
+        }
+    }
+
     public static <T extends NSObject> T get(NSDictionary dictionary, String key) throws BadDataException {
         if (dictionary.containsKey(key)) {
             return cast(key, dictionary);

@@ -54,6 +54,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
 import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotsFactory;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
@@ -549,8 +550,6 @@ public class Main {
                 = BackupAccountFactory.from(backupResponse.getRecord(), zonesDecrypt);
         logger.debug("-- main() - backup account: {}", backupAccount);
 
-        System.exit(0);
-        
         List<String> devices = backupAccount.devices();
         logger.info("-- main() - devices: {}", devices);
 
@@ -596,25 +595,20 @@ public class Main {
         Snapshots snapshots = SnapshotsFactory.from(snapshotResponse.getRecord());
         logger.debug("-- main() - snapshots: {}", snapshots);
 
-        Map<Instant, String> snapshotTimestamps = snapshots.snapshots();
-        if (snapshotTimestamps.isEmpty()) {
+        List<Snapshot> snapshotList = snapshots.snapshots();
+        if (snapshotList.isEmpty()) {
             logger.info("-- main() - no snapshots");
             System.exit(-1);
         }
 
-        if (snapshotIndex >= snapshotTimestamps.size()) {
+        if (snapshotIndex >= snapshotList.size()) {
             logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
             System.exit(-1);
         }
 
-        Instant snapshotTimestamp = snapshotTimestamps.keySet()
-                .stream()
-                .sorted()
-                .collect(Collectors.toList())
-                .get(snapshotIndex);
-
-        String snapshot = snapshotTimestamps.get(snapshotTimestamp);
-        logger.debug("-- main() - snapshot: {} timestamp: {}", snapshot, snapshotTimestamp);
+        String snapshot = snapshotList.get(snapshotIndex)
+                .id();
+        logger.debug("-- main() - snapshot: {}", snapshotList.get(snapshotIndex));
 
         // Device journal information. Output not used.
         logger.info("-- main() - device journal information");
@@ -656,13 +650,12 @@ public class Main {
         }
 
         CloudKit.RecordRetrieveResponse manifestResponse = responseManifestList.get(0);
-        Manifests manifests = ManifestsFactory.from(manifestResponse.getRecord());
+
+        zonesAddRecord.accept(manifestResponse.getRecord());
+
+        Manifests manifests = ManifestsFactory.from(manifestResponse.getRecord(), zonesDecrypt);
 
         logger.debug("-- main() - manifests: {}", manifests);
-        zones.put(manifests);
-
-        Function<byte[], byte[]> decryptBackupProperties
-                = bs -> zones.zone().get().decrypt(bs, "backupProperties");
 
         Function<byte[], NSDictionary> parseProperyList = bs -> {
             try {
@@ -674,9 +667,7 @@ public class Main {
             }
         };
 
-        Optional<NSDictionary> optionalBackupProperties = manifests.backupProperties()
-                .map(decryptBackupProperties)
-                .map(parseProperyList);
+        Optional<NSDictionary> optionalBackupProperties = manifests.backupProperties();
 
         if (optionalBackupProperties.isPresent()) {
             logger.debug("-- main() - decrypted backup properties: {}",
