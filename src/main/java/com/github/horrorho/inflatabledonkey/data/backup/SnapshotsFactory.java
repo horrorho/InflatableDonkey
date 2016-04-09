@@ -5,6 +5,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import static com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory.manifestCounts;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.time.Instant;
 import java.util.Collection;
@@ -12,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,60 +31,32 @@ public final class SnapshotsFactory {
 
     public static Snapshots from(CloudKit.Record record) {
 
-        Map<String, String> attributes = attributes(record);
-        Map<Instant, String> snapshots = snapshots(record.getRecordFieldList());
+        List<Snapshot> snapshots = snapshots(record.getRecordFieldList());
 
-        String domainHMAC = attributes.remove("domainHMAC");
-        String currentKeybagUUID = attributes.remove("currentKeybagUUID");
-
-        Instant creation = WKTimestamp.toInstant(
-                record.getTimeStatistics().getCreation().getTime());
-        Instant modification = WKTimestamp.toInstant(
-                record.getTimeStatistics().getModification().getTime());
-
-        return new Snapshots(
-                creation,
-                modification,
-                snapshots,
-                domainHMAC == null ? "" : domainHMAC,
-                currentKeybagUUID == null ? "" : currentKeybagUUID,
-                attributes);
-
+        return new Snapshots(snapshots, record.getRecordFieldList());
     }
 
-    static Map<String, String> attributes(CloudKit.Record record) {
-        return record.getRecordFieldList()
-                .stream()
-                .filter(f -> f.getValue().hasStringValue())
-                .collect(Collectors.toMap(
-                        f -> f.getIdentifier().getName(),
-                        f -> f.getValue().getStringValue(),
-                        (a, b) -> {
-                            logger.warn("-- attributes() - duplicate items: {} {}", a, b);
-                            return a;
-                        }));
-    }
-
-    static Map<Instant, String> snapshots(List<CloudKit.RecordField> records) {
+    static List<Snapshot> snapshots(List<CloudKit.RecordField> records) {
         List<String> snapshotRecords = snapshotRecords(records);
         List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
 
+        logger.debug("-- snapshots() - records: {}", snapshotRecords.size());
+        logger.debug("-- snapshots() - dates: {}", snapshotCommittedDates.size());
+
         if (snapshotRecords.size() != snapshotCommittedDates.size()) {
-            logger.warn("-- snapshots() - mismatched snapshot records/ committed dates sizes: {} {}",
-                    snapshotRecords, snapshotCommittedDates);
+            logger.warn("-- snapshots()() - mismatched snapshot data");
         }
 
-        Map<Instant, String> snapshots = new HashMap<>();
-        for (int i = 0; i < snapshotRecords.size(); i++) {
-            double committedDate = i < snapshotCommittedDates.size()
-                    ? snapshotCommittedDates.get(i)
-                    : 0;
+        int limit = Stream.<List<?>>of(snapshotRecords, snapshotCommittedDates)
+                .mapToInt(List::size)
+                .min()
+                .orElse(0);
 
-            Instant timestamp = WKTimestamp.toInstant(committedDate);
-            snapshots.put(timestamp, snapshotRecords.get(i));
-        }
-
-        return snapshots;
+        return IntStream.range(0, limit)
+                .mapToObj(i -> new Snapshot(
+                        WKTimestamp.toInstant(snapshotCommittedDates.get(i)),
+                        snapshotRecords.get(i)))
+                .collect(Collectors.toList());
     }
 
     static List<String> snapshotRecords(List<CloudKit.RecordField> records) {

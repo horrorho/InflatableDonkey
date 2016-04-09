@@ -5,10 +5,11 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.time.Instant;
-import java.util.HashMap;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
@@ -18,74 +19,40 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class Snapshots implements TimeStatistics {
+public final class Snapshots extends AbstractRecord {
 
-    private final Instant creation;
-    private final Instant modification;
-    private final Map<Instant, String> snapshots;
-    private final Map<String, String> attributes;
-    private final String domainHMAC;
-    private final String currentKeybagUUID;
+    public static final String DOMAIN_HMAC = "domainHMAC";
+    public static final String KEYBAG_UUID = "currentKeybagUUID";
 
-    public Snapshots(
-            Instant creation,
-            Instant modification,
-            Map<Instant, String> snapshots,
-            String domainHMAC,
-            String currentKeybagUUID,
-            Map<String, String> attributes) {
+    private final Collection<Snapshot> snapshots;
 
-        this.creation = Objects.requireNonNull(creation, "creation");
-        this.modification = Objects.requireNonNull(modification, "modification");
-        this.snapshots = new HashMap<>(snapshots);
-        this.attributes = new HashMap<>(attributes);
-        this.domainHMAC = Objects.requireNonNull(domainHMAC, "domainHMAC");
-        this.currentKeybagUUID = Objects.requireNonNull(currentKeybagUUID, "currentKeybagUUID");
+    public Snapshots(Collection<Snapshot> snapshots, Map<String, String> attributes) {
+        super(attributes);
+        this.snapshots = new ArrayList<>(snapshots);
     }
 
-    @Override
-    public Instant creation() {
-        return creation;
+    public Snapshots(Collection<Snapshot> snapshots, Collection<CloudKit.RecordField> recordFields) {
+        super(recordFields);
+        this.snapshots = new ArrayList<>(snapshots);
     }
 
-    @Override
-    public Instant modification() {
-        return modification;
+    public List<Snapshot> snapshots() {
+        return new ArrayList<>(snapshots);
     }
 
-    public Map<Instant, String> snapshots() {
-        return new HashMap<>(snapshots);
+    public Optional<String> domainHMAC() {
+        return attribute(DOMAIN_HMAC);
     }
 
-    public Map<String, String> attributes() {
-        return new HashMap<>(attributes);
-    }
-
-    public Optional<String> attribute(String key) {
-        return Optional.of(attributes.get(key));
-    }
-
-    public String attributeOrEmpty(String key) {
-        return attributes.getOrDefault(key, "");
-    }
-
-    public String domainHMAC() {
-        return domainHMAC;
-    }
-
-    public String currentKeybagUUID() {
-        return currentKeybagUUID;
+    public Optional<String> currentKeybagUUID() {
+        return attribute(KEYBAG_UUID);
     }
 
     @Override
     public String toString() {
         return "Snapshots{"
-                + "creation=" + creation
-                + ", modification=" + modification
+                + super.toString()
                 + ", snapshots=" + snapshots
-                + ", attributes=" + attributes
-                + ", domainHMAC=" + domainHMAC
-                + ", currentKeybagUUID=" + currentKeybagUUID
                 + '}';
     }
 }
