@@ -40,7 +40,8 @@ public final class BackupAccount {
     @Override
     public String toString() {
         return "BackupAccount{"
-                + "hmacKey=" + hmacKey.map(Hex::toHexString)
+                + super.toString()
+                + ", hmacKey=" + hmacKey.map(Hex::toHexString)
                 + ", devices=" + devices
                 + '}';
     }
