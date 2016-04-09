@@ -20,7 +20,7 @@ import org.bouncycastle.util.encoders.Hex;
  * @author Ahseya
  */
 @Immutable
-public final class BackupAccount implements ProtectedRecord {
+public final class BackupAccount implements ProtectedRecord, TimeStatistics {
 
     private final Instant creation;
     private final Instant modification;
@@ -45,10 +45,12 @@ public final class BackupAccount implements ProtectedRecord {
         this.protectionInfo = Arrays.copyOf(protectionInfo, protectionInfo.length);
     }
 
+    @Override
     public Instant creation() {
         return creation;
     }
 
+    @Override
     public Instant modification() {
         return modification;
     }
