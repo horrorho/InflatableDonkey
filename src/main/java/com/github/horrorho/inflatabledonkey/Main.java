@@ -50,6 +50,8 @@ import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotsFactory;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.keybag.FileKeyAssistant;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
@@ -83,6 +85,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -505,20 +508,20 @@ public class Main {
         List<CloudKit.RecordRetrieveResponse> responseBackupList
                 = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "BackupAccount");
 
+        if (responseBackupList.isEmpty()) {
+            logger.warn("-- main() - no response received");
+        }
+
         if (responseBackupList.size() != 1) {
             // We only sent a single delimited protobuf, so we expect only a single reply.
             logger.warn("-- main() - unexpected list size: {}", responseBackupList.size());
         }
 
-        if (responseBackupList.isEmpty()) {
-            logger.warn("-- main() - no response received");
-        }
+        CloudKit.RecordRetrieveResponse backupResponse = responseBackupList.get(0);
 
-        CloudKit.RecordRetrieveResponse responseBackup = responseBackupList.get(0);
-
-        BackupAccount backupAccount = BackupAccountFactory.from(responseBackup.getRecord());
-        
+        BackupAccount backupAccount = BackupAccountFactory.from(backupResponse.getRecord());
         logger.debug("-- main() - backup account: {}", backupAccount);
+
         zones.put(backupAccount);
 
         List<String> devices = backupAccount.devices();
@@ -528,6 +531,14 @@ public class Main {
             logger.info("-- main() - no devices");
             System.exit(-1);
         }
+
+        if (deviceIndex >= devices.size()) {
+            logger.warn("-- main() - No such device: {}, available devices: {}", deviceIndex, devices);
+            System.exit(-1);
+        }
+
+        String device = devices.get(deviceIndex);
+        logger.debug("-- main() - using device: {}", device);
 
         /* 
          Snapshot list (+ Keybag)
@@ -541,39 +552,42 @@ public class Main {
          */
         logger.info("-- main() - *** Snapshot list ***");
 
-        if (deviceIndex >= devices.size()) {
-            logger.warn("-- main() - No such device: {}, available devices: {}", deviceIndex, devices);
+        List<CloudKit.RecordRetrieveResponse> responseSnapshotList
+                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", device);
+
+        if (responseSnapshotList.isEmpty()) {
+            logger.warn("-- main() - no response received");
+        }
+
+        if (responseSnapshotList.size() != 1) {
+            // We only sent a single delimited protobuf, so we expect only a single reply.
+            logger.warn("-- main() - unexpected list size: {}", responseSnapshotList.size());
+        }
+
+        CloudKit.RecordRetrieveResponse snapshotResponse = responseSnapshotList.get(0);
+
+        Snapshots snapshots = SnapshotsFactory.from(snapshotResponse.getRecord());
+        logger.debug("-- main() - snapshots: {}", snapshots);
+
+        Map<Instant, String> snapshotTimestamps = snapshots.snapshots();
+        if (snapshotTimestamps.isEmpty()) {
+            logger.info("-- main() - no snapshots");
             System.exit(-1);
         }
 
-        List<CloudKit.RecordRetrieveResponse> responseSnapshotList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", devices.get(deviceIndex));
+        if (snapshotIndex >= snapshotTimestamps.size()) {
+            logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
+            System.exit(-1);
+        }
 
-        List<CloudKit.RecordField> recordFieldsC = responseSnapshotList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        Instant snapshotTimestamp = snapshotTimestamps.keySet()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList())
+                .get(snapshotIndex);
 
-        List<String> snapshots = recordFieldsC.stream()
-                .filter(value -> value.getIdentifier().getName().equals("snapshots"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
-                .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getReferenceValue)
-                .map(CloudKit.RecordReference::getRecordIdentifier)
-                .map(CloudKit.RecordIdentifier::getValue)
-                .map(CloudKit.Identifier::getName)
-                .collect(Collectors.toList());
-        logger.info("-- main() - snapshots: {}", snapshots);
-
-        String keybagUUID = recordFieldsC.stream()
-                .filter(value -> value.getIdentifier().getName().equals("currentKeybagUUID"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getStringValue)
-                .findFirst()
-                .orElse(null);
-        logger.info("-- main() - keybagUUID: {}", keybagUUID);
+        String snapshot = snapshotTimestamps.get(snapshotTimestamp);
+        logger.debug("-- main() - snapshot: {} timestamp: {}", snapshot, snapshotTimestamp);
 
         // Device journal information. Output not used.
         logger.info("-- main() - device journal information");
@@ -584,12 +598,9 @@ public class Main {
                         container,
                         bundle,
                         "mbksync",
-                        token(devices.get(deviceIndex), 1) + ":Journal");
+                        token(device, 1) + ":Journal");
 
-        if (snapshots.isEmpty()) {
-            logger.info("-- main() - no snapshots for device: {}", devices.get(deviceIndex));
-            System.exit(-1);
-        }
+
         /* 
          Manifest list.
         
@@ -600,18 +611,13 @@ public class Main {
          */
         logger.info("-- main() - *** Manifest list ***");
 
-        if (snapshotIndex >= snapshots.size()) {
-            logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
-            System.exit(0);
-        }
-
         List<CloudKit.RecordRetrieveResponse> responseManifestList
                 = cloudKitty.recordRetrieveRequest(
                         httpClient,
                         container,
                         bundle,
                         "mbksync",
-                        snapshots.get(snapshotIndex));
+                        snapshot);
 
         // protection info
         responseManifestList.stream()
@@ -662,7 +668,7 @@ public class Main {
         logger.info("-- main() - manifests: {}", manifests);
 
         if (manifests.isEmpty()) {
-            logger.info("-- main() - no manifests for snapshot: {}", snapshots.get(snapshotIndex));
+            logger.info("-- main() - no manifests for snapshot: {}", snapshot);
             System.exit(-1);
         }
 
@@ -797,7 +803,7 @@ public class Main {
         logger.info("-- main() - *** Keybag ***");
 
         List<CloudKit.RecordRetrieveResponse> responseKeyBagList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + keybagUUID);
+                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + snapshots.currentKeybagUUID());
 
         // protection info
         responseKeyBagList.stream()
