@@ -22,7 +22,7 @@ public final class Snapshots implements TimeStatistics {
 
     private final Instant creation;
     private final Instant modification;
-    private final Map<String, Instant> snapshots;
+    private final Map<Instant, String> snapshots;
     private final Map<String, String> attributes;
     private final String domainHMAC;
     private final String currentKeybagUUID;
@@ -30,7 +30,7 @@ public final class Snapshots implements TimeStatistics {
     public Snapshots(
             Instant creation,
             Instant modification,
-            Map<String, Instant> snapshots,
+            Map<Instant, String> snapshots,
             String domainHMAC,
             String currentKeybagUUID,
             Map<String, String> attributes) {
@@ -53,7 +53,7 @@ public final class Snapshots implements TimeStatistics {
         return modification;
     }
 
-    public Map<String, Instant> snapshots() {
+    public Map<Instant, String> snapshots() {
         return new HashMap<>(snapshots);
     }
 

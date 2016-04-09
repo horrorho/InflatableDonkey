@@ -29,7 +29,7 @@ public final class SnapshotsFactory {
     public static Snapshots from(CloudKit.Record record) {
 
         Map<String, String> attributes = attributes(record);
-        Map<String, Instant> snapshots = snapshots(record.getRecordFieldList());
+        Map<Instant, String> snapshots = snapshots(record.getRecordFieldList());
 
         String domainHMAC = attributes.remove("domainHMAC");
         String currentKeybagUUID = attributes.remove("currentKeybagUUID");
@@ -62,7 +62,7 @@ public final class SnapshotsFactory {
                         }));
     }
 
-    static Map< String, Instant> snapshots(List<CloudKit.RecordField> records) {
+    static Map<Instant, String> snapshots(List<CloudKit.RecordField> records) {
         List<String> snapshotRecords = snapshotRecords(records);
         List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
 
@@ -71,14 +71,14 @@ public final class SnapshotsFactory {
                     snapshotRecords, snapshotCommittedDates);
         }
 
-        Map<String, Instant> snapshots = new HashMap<>();
+        Map<Instant, String> snapshots = new HashMap<>();
         for (int i = 0; i < snapshotRecords.size(); i++) {
             double committedDate = i < snapshotCommittedDates.size()
                     ? snapshotCommittedDates.get(i)
                     : 0;
 
             Instant timestamp = WKTimestamp.toInstant(committedDate);
-            snapshots.put(snapshotRecords.get(i), timestamp);
+            snapshots.put(timestamp, snapshotRecords.get(i));
         }
 
         return snapshots;
