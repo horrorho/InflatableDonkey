@@ -50,6 +50,9 @@ import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
+import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
+import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotsFactory;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
@@ -619,12 +622,20 @@ public class Main {
                         "mbksync",
                         snapshot);
 
-        // protection info
-        responseManifestList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(Record::hasProtectionInfo)
-                .map(Record::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+        if (responseManifestList.isEmpty()) {
+            logger.warn("-- main() - no response received");
+        }
+
+        if (responseManifestList.size() != 1) {
+            // We only sent a single delimited protobuf, so we expect only a single reply.
+            logger.warn("-- main() - unexpected list size: {}", responseManifestList.size());
+        }
+
+        CloudKit.RecordRetrieveResponse manifestResponse = responseManifestList.get(0);
+        Manifests manifests = ManifestsFactory.from(manifestResponse.getRecord());
+
+        logger.debug("-- main() - manifests: {}", manifests);
+        zones.put(manifests);
 
         Function<byte[], byte[]> decryptBackupProperties
                 = bs -> zones.zone().get().decrypt(bs, "backupProperties");
@@ -639,39 +650,28 @@ public class Main {
             }
         };
 
-        // Should only get one.
-        List<NSDictionary> backupPropertiesList = responseManifestList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("backupProperties"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
+        Optional<NSDictionary> optionalBackupProperties = manifests.backupProperties()
                 .map(decryptBackupProperties)
-                .map(parseProperyList)
-                .collect(Collectors.toList());
+                .map(parseProperyList);
 
-        backupPropertiesList.forEach(
-                p -> logger.debug("-- main() - decrypted backup properties: {}", p.toXMLPropertyList()));
+        if (optionalBackupProperties.isPresent()) {
+            logger.debug("-- main() - decrypted backup properties: {}",
+                    optionalBackupProperties.get().toXMLPropertyList());
+        }
 
-        List<String> manifests = responseManifestList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("manifestIDs"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
-                .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getStringValue)
-                .collect(Collectors.toList());
-        logger.info("-- main() - manifests: {}", manifests);
-
-        if (manifests.isEmpty()) {
+        if (manifests.manifests().isEmpty()) {
             logger.info("-- main() - no manifests for snapshot: {}", snapshot);
             System.exit(-1);
         }
-
+        
+        if (manifestIndex >= manifests.manifests().size()) {
+            logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
+            System.exit(-1);
+        }
+        
+        Manifest manifest = manifests.manifests().get(manifestIndex);
+        logger.debug("-- main() - manifest: {}", manifest);
+        
         /* 
          Retrieve list of assets.
     
@@ -683,10 +683,7 @@ public class Main {
          */
         logger.info("-- main() - *** Retrieve list of assets ***");
 
-        if (manifestIndex >= manifests.size()) {
-            logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
-            System.exit(-1);
-        }
+
 
         List<CloudKit.RecordRetrieveResponse> responseAssetList
                 = cloudKitty.recordRetrieveRequest(
@@ -694,7 +691,7 @@ public class Main {
                         container,
                         bundle,
                         "_defaultZone",
-                        (manifests.get(manifestIndex) + ":0"));
+                        manifest.id()+ ":0");
 
         // protection info
         responseAssetList.stream()
@@ -739,7 +736,7 @@ public class Main {
                 .orElse(null);
 
         if (file == null) {
-            logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifests.get(manifestIndex));
+            logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifest);
             System.exit(0);
         }
 
