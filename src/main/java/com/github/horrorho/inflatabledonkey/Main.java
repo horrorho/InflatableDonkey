@@ -48,6 +48,8 @@ import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
+import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
+import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.keybag.FileKeyAssistant;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
@@ -508,26 +510,18 @@ public class Main {
             logger.warn("-- main() - unexpected list size: {}", responseBackupList.size());
         }
 
-        // protection info
-        responseBackupList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(Record::hasProtectionInfo)
-                .map(Record::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+        if (responseBackupList.isEmpty()) {
+            logger.warn("-- main() - no response received");
+        }
 
-        List<String> devices = responseBackupList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("devices"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
-                .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getReferenceValue)
-                .map(CloudKit.RecordReference::getRecordIdentifier)
-                .map(CloudKit.RecordIdentifier::getValue)
-                .map(CloudKit.Identifier::getName)
-                .collect(Collectors.toList());
+        CloudKit.RecordRetrieveResponse responseBackup = responseBackupList.get(0);
+
+        BackupAccount backupAccount = BackupAccountFactory.from(responseBackup.getRecord());
+        
+        logger.debug("-- main() - backup account: {}", backupAccount);
+        zones.put(backupAccount);
+
+        List<String> devices = backupAccount.devices();
         logger.info("-- main() - devices: {}", devices);
 
         if (devices.isEmpty()) {
@@ -761,7 +755,7 @@ public class Main {
         Function<byte[], byte[]> decryptEncrytedAttributes
                 = bs -> zones.zone().get().decrypt(bs, "encryptedAttributes");
 
-        // Should only get one.
+        // Should only get one or none.
         List<NSDictionary> encryptedAttributesList = assetTokens.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(CloudKit.Record::getRecordFieldList)
@@ -777,6 +771,7 @@ public class Main {
         encryptedAttributesList.forEach(
                 p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
 
+        // TODO no encrypted attributes
         // TODO unsafe array access
         byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
 
@@ -913,9 +908,20 @@ public class Main {
         ChunkClient chunkClient = new ChunkClient(coreHeaders);
 
         BiConsumer<ByteString, List<byte[]>> dataConsumer
-                = (fileChecksum, data) -> write(Hex.encodeHex(fileChecksum.toByteArray()) + ".bin", data);
+                = (fileChecksum, data) -> {
+                    String filename = Hex.encodeHexString(fileChecksum.toByteArray()) + ".bin";
 
-        //chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
+                    logger.debug("-- main() - data consumer file: {}", filename);
+                    write(filename, data);
+                };
+
+        chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
+
+        zones.keys().forEach(k -> {
+            logger.debug("-- main() - k: {}", Hex.encodeHexString(k.publicExportData()));
+
+        });
+
         /*
          Alternative keybag request.
          */
