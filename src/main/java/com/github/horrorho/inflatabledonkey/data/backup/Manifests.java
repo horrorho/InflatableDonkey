@@ -5,16 +5,17 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.time.Instant;
+import com.dd.plist.NSDictionary;
+import com.dd.plist.NSString;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,48 +25,31 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class Manifests implements ProtectedRecord, TimeStatistics {
+public final class Manifests extends AbstractRecord {
 
     private static final Logger logger = LoggerFactory.getLogger(Manifests.class);
 
-    private final Instant creation;
-    private final Instant modification;
     private final Optional<byte[]> backupProperties;
-    private final Map<String, String> attributes;
     private final List<Manifest> manifests;
-    private final String protectionInfoTag;
-    private final byte[] protectionInfo;
+
+    public Manifests(Optional<byte[]> backupProperties, List<Manifest> manifests, Map<String, String> attributes) {
+        super(attributes);
+        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
+        this.manifests = Objects.requireNonNull(manifests, "manifests");
+    }
 
     public Manifests(
-            Instant creation,
-            Instant modification,
             Optional<byte[]> backupProperties,
-            Map<String, String> attributes,
             List<Manifest> manifests,
-            String protectionInfoTag,
-            byte[] protectionInfo) {
+            Collection<CloudKit.RecordField> recordFields) {
 
-        this.creation = Objects.requireNonNull(creation, "creation");
-        this.modification = Objects.requireNonNull(modification, "modification");
-        this.backupProperties = backupProperties.map(bs -> Arrays.copyOf(bs, bs.length));
-        this.attributes = new HashMap<>(attributes);
-        this.manifests = new ArrayList<>(manifests);
-        this.protectionInfoTag = Objects.requireNonNull(protectionInfoTag, "protectionInfoTag");
-        this.protectionInfo = Arrays.copyOf(protectionInfo, protectionInfo.length);
+        super(recordFields);
+        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
+        this.manifests = Objects.requireNonNull(manifests, "manifests");
     }
 
-    @Override
-    public Instant creation() {
-        return creation;
-    }
-
-    @Override
-    public Instant modification() {
-        return modification;
-    }
-
-    public Map<String, String> attributes() {
-        return new HashMap<>(attributes);
+    public Optional<NSDictionary> backupProperties() {
+        return backupProperties.map(bs -> PLists.<NSDictionary>parse(bs));
     }
 
     public List<Manifest> manifests() {
@@ -73,29 +57,11 @@ public final class Manifests implements ProtectedRecord, TimeStatistics {
     }
 
     @Override
-    public String protectionInfoTag() {
-        return protectionInfoTag;
-    }
-
-    @Override
-    public byte[] protectionInfo() {
-        return Arrays.copyOf(protectionInfo, protectionInfo.length);
-    }
-
-    public Optional<byte[]> backupProperties() {
-        return backupProperties.map(bs -> Arrays.copyOf(bs, bs.length));
-    }
-
-    @Override
     public String toString() {
         return "Manifests{"
-                + "creation=" + creation
-                + ", modification=" + modification
-                + ", backupProperties=" + backupProperties.map(Hex::toHexString)
-                + ", attributes=" + attributes
+                + super.toString()
+                + ", backupProperties=" + backupProperties
                 + ", manifests=" + manifests
-                + ", protectionInfoTag=" + protectionInfoTag
-                + ", protectionInfo=" + Hex.toHexString(protectionInfo)
                 + '}';
     }
 }

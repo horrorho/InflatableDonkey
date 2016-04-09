@@ -7,11 +7,10 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -27,43 +26,17 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public class ManifestsFactory {
 
+    private static final String BACKUP_PROPERTIES = "backupProperties";
+
     private static final Logger logger = LoggerFactory.getLogger(ManifestsFactory.class);
 
-    public static Manifests from(CloudKit.Record record) {
-
-        Map<String, String> attributes = attributes(record);
+    public static Manifests from(CloudKit.Record record, BiFunction<byte[], String, byte[]> decrypt) {
         List<Manifest> manifests = manifests(record.getRecordFieldList());
-        Optional<byte[]> optionalBackupProperties = backupProperties(record.getRecordFieldList());
 
-        Instant creation = WKTimestamp.toInstant(
-                record.getTimeStatistics().getCreation().getTime());
-        Instant modification = WKTimestamp.toInstant(
-                record.getTimeStatistics().getModification().getTime());
+        Optional<byte[]> optionalBackupProperties = backupProperties(record.getRecordFieldList())
+                .map(k -> decrypt.apply(k, BACKUP_PROPERTIES));
 
-        String protectionInfoTag = record.getProtectionInfo().getProtectionInfoTag();
-        byte[] protectionInfo = record.getProtectionInfo().getProtectionInfo().toByteArray();
-
-        return new Manifests(
-                creation,
-                modification,
-                optionalBackupProperties,
-                attributes,
-                manifests,
-                protectionInfoTag,
-                protectionInfo);
-    }
-
-    static Map<String, String> attributes(CloudKit.Record record) {
-        return record.getRecordFieldList()
-                .stream()
-                .filter(f -> f.getValue().hasStringValue())
-                .collect(Collectors.toMap(
-                        f -> f.getIdentifier().getName(),
-                        f -> f.getValue().getStringValue(),
-                        (a, b) -> {
-                            logger.warn("-- attributes() - duplicate items: {} {}", a, b);
-                            return a;
-                        }));
+        return new Manifests(optionalBackupProperties, manifests, record.getRecordFieldList());
     }
 
     static List<Manifest> manifests(List<CloudKit.RecordField> records) {
@@ -124,7 +97,7 @@ public class ManifestsFactory {
 
     static Optional<byte[]> backupProperties(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("backupProperties"))
+                .filter(value -> value.getIdentifier().getName().equals(BACKUP_PROPERTIES))
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getBytesValue)
                 .map(ByteString::toByteArray)
