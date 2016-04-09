@@ -39,7 +39,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.github.horrorho.inflatabledonkey.data.ProtectedRecord;
+import com.github.horrorho.inflatabledonkey.data.backup.ProtectedRecord;
 
 /**
  * Xzones.

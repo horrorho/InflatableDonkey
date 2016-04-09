@@ -26,7 +26,11 @@ package com.github.horrorho.inflatabledonkey.chunkclient;
 import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -74,6 +78,7 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
 
     @Override
     public List<byte[]> apply(List<ChunkServer.ChunkInfo> chunkInfoList, byte[] data) throws UncheckedIOException {
+
         try {
             List<byte[]> decrypted = new ArrayList<>();
 
@@ -91,15 +96,39 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
         }
     }
 
+    // Experimental phase use only, remove when stable.
+    void write(String path, byte[] data, int offset, int length) {
+        // Dump out binary data to file.
+        try (OutputStream outputStream = Files.newOutputStream(Paths.get(path))) {
+            outputStream.write(data, offset, length);
+            logger.info("-- write() - file written: {}", path);
+
+        } catch (IOException ex) {
+            logger.warn("-- write() - exception: {}", ex);
+        }
+    }
+
     byte[] decryptChunk(ChunkServer.ChunkInfo chunkInfo, byte[] data, int offset) throws BadDataException {
+        logger.debug("-- decryptChunk() - chunk info: {}", chunkInfo, data.length);
+
+        logger.debug("-- decryptChunk() - chunk checksum: {}", 
+                Hex.encodeHexString(chunkInfo.getChunkChecksum().toByteArray()));
+        logger.debug("-- decryptChunk() - chunk encryption key: {}", 
+                Hex.encodeHexString(chunkInfo.getChunkEncryptionKey().toByteArray()));
+        logger.debug("-- decryptChunk() - chunk length: 0x{}", Integer.toHexString(chunkInfo.getChunkLength()));
+
+        String filename = Hex.encodeHexString(chunkInfo.getChunkChecksum().toByteArray()) + ".bin";
+        logger.debug("-- decryptChunk() - dumping data to: {}", filename);
+        write(filename, data, offset, chunkInfo.getChunkLength());
+
         try {
             if (!chunkInfo.hasChunkEncryptionKey()) {
                 throw new BadDataException("Missing key");
             }
 
-            if (keyType(chunkInfo) != 1) {
-                throw new BadDataException("Unknown key type: " + keyType(chunkInfo));
-            }
+//            if (keyType(chunkInfo) != 1) {
+//                throw new BadDataException("Unknown key type: " + keyType(chunkInfo));
+//            }
 
             byte[] decrypted = decryptData(key(chunkInfo), chunkInfo.getChunkLength(), data, offset);
 
@@ -133,8 +162,10 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
         return chunkInfo.getChunkChecksum().substring(1);
     }
 
-    KeyParameter key(ChunkServer.ChunkInfo chunkInfo) {
-        return new KeyParameter(chunkInfo.getChunkEncryptionKey().substring(9, 25).toByteArray());
+    KeyParameter key(ChunkServer.ChunkInfo chunkInfo) {               
+        byte[] key = chunkInfo.getChunkEncryptionKey().substring(9, 25).toByteArray();
+        logger.debug("-- key() - key: 0x{}", Hex.encodeHexString(key));
+        return new KeyParameter(key);
     }
 
     byte keyType(ChunkServer.ChunkInfo chunkInfo) {

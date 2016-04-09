@@ -13,7 +13,6 @@ import java.util.Objects;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
-import com.github.horrorho.inflatabledonkey.data.ProtectedRecord;
 
 /**
  * BackupAccount.
