@@ -15,6 +15,7 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -34,20 +35,24 @@ public final class ChunkClient {
 
     private final Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory;
     private final ResponseHandler<byte[]> byteArrayResponseHandler;
-    private final BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<byte[]>> chunkDecrypter;
+    private final BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<Optional<byte[]>>> chunkDecrypter;
 
     ChunkClient(
             Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory,
             ResponseHandler<byte[]> byteArrayResponseHandler,
-            BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<byte[]>> chunkDecrypter) {
+            BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<Optional<byte[]>>> chunkDecrypter) {
 
         this.chunkListRequestFactory = Objects.requireNonNull(chunkListRequestFactory);
         this.byteArrayResponseHandler = Objects.requireNonNull(byteArrayResponseHandler);
         this.chunkDecrypter = Objects.requireNonNull(chunkDecrypter);
     }
 
-    public ChunkClient(Headers headers) {
-        this(new ChunkListRequestFactory(headers), ByteArrayResponseHandler.instance(), ChunkDecrypter.instance());
+    // TODO just inject chunkdecryptor here
+    public ChunkClient(Headers headers, Function<byte[], Optional<byte[]>> immutableDecryptor) {
+        this(
+                new ChunkListRequestFactory(headers),
+                ByteArrayResponseHandler.instance(),
+                new ChunkDecrypter(immutableDecryptor));
     }
 
     public void fileGroups(
@@ -70,9 +75,9 @@ public final class ChunkClient {
                 .forEach(fileChecksumchunkReference -> {
 
                     List<byte[]> fileData = fileChecksumchunkReference.getChunkReferencesList()
-                    .stream()
-                    .map(data::get)
-                    .collect(Collectors.toList());
+                            .stream()
+                            .map(data::get)
+                            .collect(Collectors.toList());
 
                     dataConsumer.accept(fileChecksumchunkReference.getFileChecksum(), fileData);
                 });
@@ -89,7 +94,10 @@ public final class ChunkClient {
 
             ChunkServer.StorageHostChunkList storageHostChunkList = fileGroup.getStorageHostChunkList(container);
             byte[] chunkData = fetch(httpClient, storageHostChunkList);
-            List<byte[]> chunkList = chunkDecrypter.apply(storageHostChunkList.getChunkInfoList(), chunkData);
+            List<byte[]> chunkList = chunkDecrypter.apply(storageHostChunkList.getChunkInfoList(), chunkData)
+                    .stream()
+                    .map(Optional::get) // TOFIX unsafe get
+                    .collect(Collectors.toList());
 
             for (int index = 0; index < chunkList.size(); index++) {
                 builder.setChunkIndex(index);

@@ -23,27 +23,26 @@
  */
 package com.github.horrorho.inflatabledonkey.chunkclient;
 
-import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
-import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.StreamBlockCipher;
 import org.bouncycastle.crypto.digests.GeneralDigest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CFBBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.slf4j.Logger;
@@ -55,45 +54,41 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-@ThreadSafe
-public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<byte[]>> {
-
-    public static ChunkDecrypter instance() {
-        return instance;
-    }
-
-    private static final ChunkDecrypter instance = new ChunkDecrypter(
-            () -> new CFBBlockCipher(new AESEngine(), 128),
-            () -> new SHA256Digest());
+public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkInfo>, byte[], List<Optional<byte[]>>> {
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkDecrypter.class);
 
     private final Supplier<StreamBlockCipher> cipherSupplier;
     private final Supplier<GeneralDigest> digestSupplier;
+    private final Function<byte[], Optional<byte[]>> decryptor;
 
-    public ChunkDecrypter(Supplier<StreamBlockCipher> cipherSupplier, Supplier<GeneralDigest> digestSupplier) {
-        this.cipherSupplier = Objects.requireNonNull(cipherSupplier);
-        this.digestSupplier = Objects.requireNonNull(digestSupplier);
+    public ChunkDecrypter(
+            Supplier<StreamBlockCipher> cipherSupplier,
+            Supplier<GeneralDigest> digestSupplier,
+            Function<byte[], Optional<byte[]>> immutableDecryptor) {
+
+        this.cipherSupplier = Objects.requireNonNull(cipherSupplier, "cipherSupplier");
+        this.digestSupplier = Objects.requireNonNull(digestSupplier, "digestSupplier");
+        this.decryptor = Objects.requireNonNull(immutableDecryptor, "decryptor");
+    }
+
+    public ChunkDecrypter(Function<byte[], Optional<byte[]>> immutableDecryptor) {
+        this(() -> new CFBBlockCipher(new AESFastEngine(), 128), SHA256Digest::new, immutableDecryptor);
     }
 
     @Override
-    public List<byte[]> apply(List<ChunkServer.ChunkInfo> chunkInfoList, byte[] data) throws UncheckedIOException {
+    public List<Optional<byte[]>> apply(List<ChunkServer.ChunkInfo> chunkInfoList, byte[] data) {
 
-        try {
-            List<byte[]> decrypted = new ArrayList<>();
+        List<Optional<byte[]>> decrypted = new ArrayList<>();
 
-            int offset = 0;
-            for (ChunkServer.ChunkInfo chunkInfo : chunkInfoList) {
-                byte[] decryptedChunk = decryptChunk(chunkInfo, data, offset);
-                decrypted.add(decryptedChunk);
-                offset += chunkInfo.getChunkLength();
-            }
-
-            return decrypted;
-
-        } catch (BadDataException ex) {
-            throw new UncheckedIOException(ex);
+        int offset = 0;
+        for (ChunkServer.ChunkInfo chunkInfo : chunkInfoList) {
+            Optional<byte[]> decryptedChunk = decryptChunk(chunkInfo, data, offset);
+            decrypted.add(decryptedChunk);
+            offset += chunkInfo.getChunkLength();
         }
+
+        return decrypted;
     }
 
     // Experimental phase use only, remove when stable.
@@ -108,27 +103,18 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
         }
     }
 
-    byte[] decryptChunk(ChunkServer.ChunkInfo chunkInfo, byte[] data, int offset) throws BadDataException {
-        logger.debug("-- decryptChunk() - chunk info: {}", chunkInfo, data.length);
-
-        logger.debug("-- decryptChunk() - chunk checksum: {}", 
-                Hex.encodeHexString(chunkInfo.getChunkChecksum().toByteArray()));
-        logger.debug("-- decryptChunk() - chunk encryption key: {}", 
-                Hex.encodeHexString(chunkInfo.getChunkEncryptionKey().toByteArray()));
-        logger.debug("-- decryptChunk() - chunk length: 0x{}", Integer.toHexString(chunkInfo.getChunkLength()));
-
-        String filename = Hex.encodeHexString(chunkInfo.getChunkChecksum().toByteArray()) + ".bin";
-        logger.debug("-- decryptChunk() - dumping data to: {}", filename);
-        write(filename, data, offset, chunkInfo.getChunkLength());
-
+    Optional<byte[]> decryptChunk(ChunkServer.ChunkInfo chunkInfo, byte[] data, int offset) {
         try {
             if (!chunkInfo.hasChunkEncryptionKey()) {
-                throw new BadDataException("Missing key");
+                logger.warn("-- decryptChunk() - missing chunk encryption key: {}", chunkInfo);
+                return Optional.empty();
             }
 
-//            if (keyType(chunkInfo) != 1) {
-//                throw new BadDataException("Unknown key type: " + keyType(chunkInfo));
-//            }
+            if (keyType(chunkInfo) != 2) {
+                // TODO no idea if type 2 chunks still exist.
+                logger.warn("-- decryptChunk() - chunk 2 decryption not yet implemented: {}", chunkInfo);
+                return Optional.empty();
+            }
 
             byte[] decrypted = decryptData(key(chunkInfo), chunkInfo.getChunkLength(), data, offset);
 
@@ -137,20 +123,23 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
                 ByteString decryptedChecksum = checksum(decrypted);
 
                 if (!chunkInfoChecksum.equals(decryptedChecksum)) {
-                    logger.debug("-- decryptChunk() >  checksum failed: {} expected: {}",
+                    logger.warn("-- decryptChunk() -  checksum failed: {} expected: {}",
                             Hex.encodeHexString(decryptedChecksum.toByteArray()),
                             Hex.encodeHexString(chunkInfoChecksum.toByteArray()));
-                    throw new BadDataException("Decrypt bad checksum");
+                    // TODO empty Optional
+                } else {
+                    logger.debug("-- decryptChunk() - checksum passed");
                 }
             }
-            return decrypted;
+            return Optional.of(decrypted);
 
         } catch (DataLengthException | ArrayIndexOutOfBoundsException | NullPointerException ex) {
-            throw new BadDataException("Decrypt failed", ex);
+            logger.warn("-- decryptChunk() - error: {}", ex);
+            return Optional.empty();
         }
     }
 
-    byte[] decryptData(KeyParameter key, int length, byte[] data, int offset) throws BadDataException {
+    byte[] decryptData(KeyParameter key, int length, byte[] data, int offset) {
         StreamBlockCipher cipher = cipherSupplier.get();
         cipher.init(false, key);
         byte[] decrypted = new byte[length];
@@ -162,9 +151,14 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
         return chunkInfo.getChunkChecksum().substring(1);
     }
 
-    KeyParameter key(ChunkServer.ChunkInfo chunkInfo) {               
-        byte[] key = chunkInfo.getChunkEncryptionKey().substring(9, 25).toByteArray();
+    KeyParameter key(ChunkServer.ChunkInfo chunkInfo) {
+        // TODO bounds check/ Optional.
+        byte[] wrappedKey = chunkInfo.getChunkEncryptionKey().substring(0x01, 0x19).toByteArray();
+        logger.debug("-- key() - wrapped key: 0x{}", Hex.encodeHexString(wrappedKey));
+
+        byte[] key = decryptor.apply(wrappedKey).get(); // TODO unsafe get
         logger.debug("-- key() - key: 0x{}", Hex.encodeHexString(key));
+
         return new KeyParameter(key);
     }
 
