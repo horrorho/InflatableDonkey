@@ -23,11 +23,14 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto;
 
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.engines.RFC3394WrapEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AESWrap.
@@ -37,13 +40,21 @@ import org.bouncycastle.crypto.params.KeyParameter;
 @Immutable
 public final class AESWrap {
 
+    private static final Logger logger = LoggerFactory.getLogger(AESWrap.class);
+
     private AESWrap() {
     }
 
-    public static byte[] unwrap(byte[] keyEncryptionKey, byte[] key) throws InvalidCipherTextException {
-        RFC3394WrapEngine engine = new RFC3394WrapEngine(new AESFastEngine());
-        engine.init(false, new KeyParameter(keyEncryptionKey));
-        return engine.unwrap(key, 0, key.length);
+    public static Optional<byte[]> unwrap(byte[] keyEncryptionKey, byte[] key) {
+        try {
+            RFC3394WrapEngine engine = new RFC3394WrapEngine(new AESFastEngine());
+            engine.init(false, new KeyParameter(keyEncryptionKey));
+            return Optional.of(engine.unwrap(key, 0, key.length));
+
+        } catch (InvalidCipherTextException ex) {
+            logger.warn("-- unwrap() - InvalidCipherTextException: {}", ex);
+            return Optional.empty();
+        }
     }
 
     public static byte[] wrap(byte[] keyEncryptionKey, byte[] key) {

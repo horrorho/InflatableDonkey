@@ -167,17 +167,10 @@ public final class KeyBagFactory {
             return Optional.empty();
         }
 
-        try {
-            byte[] key = AESWrap.unwrap(kek, wpky);
-            logger.debug("-- unwrap() - unwrap kek: 0x{} wpky: 0x{} > key: 0x{}",
-                    Hex.toHexString(kek), Hex.toHexString(wpky), Hex.toHexString(key));
-            return Optional.of(key);
-
-        } catch (InvalidCipherTextException ex) {
-            logger.warn("-- unwrap() - failed unwrap kek: 0x{} wpky: 0x{}",
-                    Hex.toHexString(kek), Hex.toHexString(wpky));
-            return Optional.empty();
-        }
+        Optional<byte[]> key = AESWrap.unwrap(kek, wpky);
+        logger.debug("-- unwrap() - unwrap kek: 0x{} wpky: 0x{} > key: 0x{}",
+                Hex.toHexString(kek), Hex.toHexString(wpky), key.map(Hex::toHexString).orElse("NULL"));
+        return key;
     }
 
     static int integer(byte[] bytes) {

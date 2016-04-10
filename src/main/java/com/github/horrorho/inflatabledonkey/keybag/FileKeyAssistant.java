@@ -110,12 +110,6 @@ public final class FileKeyAssistant {
         sha256.update(myPublicKey, 0, myPublicKey.length);
         sha256.doFinal(hash, 0);
 
-        try {
-            return Optional.of(AESWrap.unwrap(hash, wrappedKey));
-
-        } catch (InvalidCipherTextException ex) {
-            logger.warn("-- curve25519Unwrap() - InvalidCipherTextException: {}", ex);
-            return Optional.empty();
-        }
+        return AESWrap.unwrap(hash, wrappedKey);
     }
 }
