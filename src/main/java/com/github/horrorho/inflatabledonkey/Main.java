@@ -39,6 +39,7 @@ import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
 import com.github.horrorho.inflatabledonkey.crypto.srp.EscrowTest;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecords;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecordsMetadata;
@@ -61,6 +62,7 @@ import com.github.horrorho.inflatabledonkey.keybag.FileKeyAssistant;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
+import com.github.horrorho.inflatabledonkey.pcs.xzone.XFPKeyUnwrap;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
@@ -104,7 +106,9 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -136,7 +140,7 @@ public class Main {
      * @param args the command line arguments
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
+    public static void main(String[] args) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, DecoderException {
         // Command line arguments.
         AuthenticationMapper authenticationMapper = AuthenticationMapper.instance();
         OptionsFactory optionsFactory = OptionsFactory.create();
@@ -760,7 +764,6 @@ public class Main {
                         container,
                         bundle,
                         "_defaultZone",
-                        fileList.get(1),
                         fileList.get(0)
                 );
 
@@ -822,6 +825,35 @@ public class Main {
         // TODO unsafe array access
         int protectionClass = protectionClassList.get(0);
         logger.debug("-- main() - protection class: {}", protectionClass);
+
+        Optional<CloudKit.Asset> optionalAsset = assetTokens.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(CloudKit.Record::getRecordFieldList)
+                .flatMap(Collection::stream)
+                .filter(value -> value.getIdentifier().getName().equals("contents"))
+                .map(CloudKit.RecordField::getValue)
+                .map(RecordFieldValue::getAssetValue)
+                .findFirst();
+
+        if (!optionalAsset.isPresent()) {
+            logger.warn("-- main() - asset not found");
+        }
+
+        CloudKit.Asset assetX = optionalAsset.get();
+        logger.debug("-- main() - asset data: 0x{}", Hex.encodeHexString(assetX.toByteArray()));
+
+        byte[] assetWrappedKey = assetX.getData()
+                .substring(assetX.getData().size() - 0x18) // TODO unsure of format here, possibly tag | key.
+                .toByteArray();
+        logger.debug("-- main() -asset wrapped key: {}", Hex.encodeHexString(assetWrappedKey));
+
+        Optional<byte[]> optionalAssetKey = zones.zone().flatMap(z -> z.fpDecrypt(assetWrappedKey));
+        logger.debug("-- main() - unwrapped: 0x:{}", optionalAssetKey.map(Hex::encodeHexString).orElse("NULL"));
+
+        if (!optionalAssetKey.isPresent()) {
+            logger.debug("-- main() - unable to unwrap asset key");
+        }
+        byte[] assetKey = optionalAssetKey.get();
 
         /* 
          Keybag.
@@ -945,7 +977,7 @@ public class Main {
          We can download data, but we are unable to decrypt the chunks.
          */
         logger.info("-- main() - *** ChunkServer.FileGroups ***");
-        ChunkClient chunkClient = new ChunkClient(coreHeaders);
+        ChunkClient chunkClient = new ChunkClient(coreHeaders, k -> AESWrap.unwrap(assetKey, k));
 
         BiConsumer<ByteString, List<byte[]>> dataConsumer
                 = (fileChecksum, data) -> {
@@ -955,12 +987,31 @@ public class Main {
                     write(filename, data);
                 };
 
+        Stream<byte[]> encryptedKeys = fileGroups.getFileGroupsList()
+                .stream()
+                .map(ChunkServer.FileChecksumStorageHostChunkLists::getStorageHostChunkListList)
+                .flatMap(Collection::stream)
+                .map(ChunkServer.StorageHostChunkList::getChunkInfoList)
+                .flatMap(Collection::stream)
+                .map(ChunkServer.ChunkInfo::getChunkEncryptionKey)
+                .map(bs -> bs.substring(1)) // TOFIX assuming type 02 for now.
+                .map(ByteString::toByteArray);
+
+//        encryptedKeys.forEach(k -> {
+//            logger.debug("-- main() - chunk key: 0x{}", Hex.encodeHexString(k));
+//
+//            Optional<byte[]> unwrap = AESWrap.unwrap(assetKey, k);
+//            logger.debug("-- main() - unwrapped: 0x{}", unwrap.map(Hex::encodeHexString).orElse("NULL"));
+//
+//// Assume type 02
+//        });
+
         chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
 
-        zones.keys().forEach(k -> {
-            logger.debug("-- main() - k: {}", Hex.encodeHexString(k.publicExportData()));
-
-        });
+//        zones.keys().forEach(k -> {
+//            logger.debug("-- main() - k: {}", Hex.encodeHexString(k.publicExportData()));
+//
+//        });
 
         /*
          Alternative keybag request.
