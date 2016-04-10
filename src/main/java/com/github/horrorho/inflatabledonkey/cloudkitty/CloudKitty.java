@@ -13,6 +13,7 @@ import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseH
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -159,6 +160,13 @@ public final class CloudKitty {
             recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String... recordNames)
             throws IOException {
 
+        return recordRetrieveRequest(httpClient, container, bundle, zone, Arrays.asList(recordNames));
+    }
+
+    public List<CloudKit.RecordRetrieveResponse>
+            recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, Collection<String> recordNames)
+            throws IOException {
+
         // M211
         List<CloudKit.RequestOperation> recordRetrieveRequestOperations
                 = recordRetrieveRequestOperations(container, bundle, zone, recordNames);
@@ -183,7 +191,7 @@ public final class CloudKitty {
     }
 
     List<CloudKit.RequestOperation>
-            recordRetrieveRequestOperations(String container, String bundle, String zone, String... recordNames) {
+            recordRetrieveRequestOperations(String container, String bundle, String zone, Collection<String> recordNames) {
         CloudKit.RequestOperationHeader requestOperationHeader
                 = requestOperationHeader(getRecordsURLRequest, container, bundle);
 
@@ -195,7 +203,7 @@ public final class CloudKitty {
     List<CloudKit.RequestOperation> recordRetrieveRequestOperations(
             CloudKit.RequestOperationHeader requestOperationHeader,
             CloudKit.RecordZoneIdentifier recordZoneID,
-            String... recordNames) {
+            Collection<String> recordNames) {
 
         List<CloudKit.RequestOperation> operations = new ArrayList<>();
 
