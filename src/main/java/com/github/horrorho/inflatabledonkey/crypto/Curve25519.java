@@ -46,6 +46,7 @@ public final class Curve25519 {
     }
 
     static byte[] clampPrivateKey(byte[] privateKey) {
+        // NB little endian!
         byte[] copy = Arrays.copyOf(privateKey, privateKey.length);
         copy[0] &= 0xF8;
         copy[31] &= 0x7F;
