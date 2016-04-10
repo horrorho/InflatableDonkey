@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.dd.plist.NSData;
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPInitResponse;
@@ -90,7 +89,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.text.ParseException;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -180,7 +178,7 @@ public class Main {
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
-            System.exit(0);
+            System.exit(-1);
         }
 
         // Constants        
@@ -748,9 +746,27 @@ public class Main {
                 .findFirst()
                 .orElse(null);
 
+        List<String> fileList = files.stream()
+                .filter(a -> {
+                    // TOFIX fragile
+                    String[] split = a.split(":");
+                    return !split[3].equals("0");
+                })
+                .collect(Collectors.toList());
+
+        List<CloudKit.RecordRetrieveResponse> assetTokenss
+                = cloudKitty.recordRetrieveRequest(
+                        httpClient,
+                        container,
+                        bundle,
+                        "_defaultZone",
+                        fileList.get(1),
+                        fileList.get(0)
+                );
+
         if (file == null) {
             logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifest);
-            System.exit(0);
+            System.exit(-1);
         }
 
         List<CloudKit.RecordRetrieveResponse> assetTokens

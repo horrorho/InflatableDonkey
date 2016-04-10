@@ -11,9 +11,11 @@ import com.github.horrorho.inflatabledonkey.requests.Headers;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -38,6 +40,7 @@ public final class CloudKitty {
 
     private static final String ckdFetchRecordZonesOperation = "CKDFetchRecordZonesOperation";
     private static final String ckdQueryOperation = "CKDQueryOperation";
+    private static final String getRecordsURLRequest = "GetRecordsURLRequest";
 
     private static final CloudKit.RecordType privilegedBatchRecordFetch = CloudKit.RecordType.newBuilder()
             .setName("PrivilegedBatchRecordFetch")
@@ -72,6 +75,7 @@ public final class CloudKitty {
         this.cloudKitToken = Objects.requireNonNull(cloudKitToken);
 
         this.requestOperationHeaderProto = CloudKit.RequestOperationHeader.newBuilder()
+                .setF4("4.0.0.0")
                 .setDeviceIdentifier(CloudKit.Identifier.newBuilder().setName(deviceIdentifier).setType(2))
                 .setDeviceSoftwareVersion("9.0.1")
                 .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
@@ -97,35 +101,8 @@ public final class CloudKitty {
             throws IOException {
 
         // M201
-        CloudKit.RequestOperationHeader requestOperationHeader
-                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
-                .setApplicationContainer(container)
-                .setApplicationBundle(bundle)
-                .setOperation(ckdFetchRecordZonesOperation)
-                .build();
-
-        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
-                .setUuid(UUID.randomUUID().toString())
-                .setType(201)
-                .setF4(1)
-                .build();
-
-        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
-                .setValue(
-                        CloudKit.Identifier.newBuilder().setName(zone).setType(6))
-                .setOwnerIdentifier(userId)
-                .build();
-
-        CloudKit.ZoneRetrieveRequest requestProto = CloudKit.ZoneRetrieveRequest.newBuilder()
-                .setZoneIdentifier(recordZoneID)
-                .build();
-
-        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
-                .setRequestOperationHeader(requestOperationHeader)
-                .setRequest(operation)
-                .setZoneRetrieveRequest(requestProto)
-                .build();
-        logger.debug("-- zoneRetrieveRequest() request: {}", requestOperation);
+        CloudKit.RequestOperation requestOperation = zoneRetrieveRequestOperation(container, bundle, zone);
+        logger.debug("-- zoneRetrieveRequest() request operation: {}", requestOperation);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 init.production().url() + "/zone/retrieve",
@@ -146,46 +123,46 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
+    CloudKit.RequestOperation zoneRetrieveRequestOperation(String container, String bundle, String zone) {
+        CloudKit.RequestOperationHeader requestOperationHeader
+                = requestOperationHeader(ckdFetchRecordZonesOperation, container, bundle);
+
+        return zoneRetrieveRequestOperation(requestOperationHeader, zone);
+    }
+
+    CloudKit.RequestOperation zoneRetrieveRequestOperation(
+            CloudKit.RequestOperationHeader requestOperationHeader,
+            String zone) {
+
+        CloudKit.Operation operation = operation(201);
+
+        CloudKit.ZoneRetrieveRequest zoneRetrieveRequest = zoneRetrieveRequest(zone);
+
+        CloudKit.RequestOperation build = CloudKit.RequestOperation.newBuilder()
+                .setRequestOperationHeader(requestOperationHeader)
+                .setOperation(operation)
+                .setZoneRetrieveRequest(zoneRetrieveRequest)
+                .build();
+
+        return build;
+    }
+
+    CloudKit.ZoneRetrieveRequest zoneRetrieveRequest(String zone) {
+        CloudKit.RecordZoneIdentifier recordZoneID = recordZoneIdentifier(zone);
+
+        return CloudKit.ZoneRetrieveRequest.newBuilder()
+                .setZoneIdentifier(recordZoneID)
+                .build();
+    }
+
     public List<CloudKit.RecordRetrieveResponse>
-            recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
+            recordRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String... recordNames)
             throws IOException {
 
         // M211
-        CloudKit.RequestOperationHeader requestOperationHeader
-                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
-                .setApplicationContainer(container)
-                .setApplicationBundle(bundle)
-                .setOperation(ckdFetchRecordZonesOperation)
-                .build();
-
-        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
-                .setUuid(UUID.randomUUID().toString())
-                .setType(211)
-                .setF4(1)
-                .build();
-
-        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
-                .setValue(
-                        CloudKit.Identifier.newBuilder().setName(zone).setType(6))
-                .setOwnerIdentifier(userId)
-                .build();
-
-        CloudKit.RecordIdentifier recordIdentifier = CloudKit.RecordIdentifier.newBuilder()
-                .setValue(CloudKit.Identifier.newBuilder().setName(recordName).setType(1))
-                .setZoneIdentifier(recordZoneID)
-                .build();
-
-        CloudKit.RecordRetrieveRequest recordRetrieveRequest = CloudKit.RecordRetrieveRequest.newBuilder()
-                .setRecordID(recordIdentifier)
-                .setF6(one)
-                .build();
-
-        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
-                .setRequestOperationHeader(requestOperationHeader)
-                .setRequest(operation)
-                .setRecordRetrieveRequest(recordRetrieveRequest)
-                .build();
-        logger.debug("-- recordRetrieveRequest() request: {}", requestOperation);
+        List<CloudKit.RequestOperation> recordRetrieveRequestOperations
+                = recordRetrieveRequestOperations(container, bundle, zone, recordNames);
+        logger.debug("-- recordRetrieveRequest() - request operation: {}", recordRetrieveRequestOperations);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
                 init.production().url() + "/record/retrieve",
@@ -194,7 +171,7 @@ public final class CloudKitty {
                 init.cloudKitUserId(),
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                Arrays.asList(requestOperation),
+                recordRetrieveRequestOperations,
                 coreHeaders);
 
         List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
@@ -205,84 +182,172 @@ public final class CloudKitty {
                 .collect(Collectors.toList());
     }
 
-    public List<CloudKit.QueryRetrieveRequestResponse>
-            queryRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
-            throws IOException {
-
-        // M220
+    List<CloudKit.RequestOperation>
+            recordRetrieveRequestOperations(String container, String bundle, String zone, String... recordNames) {
         CloudKit.RequestOperationHeader requestOperationHeader
-                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
-                .setApplicationContainer(container)
-                .setApplicationBundle(bundle)
-                .setOperation(ckdQueryOperation)
-                .build();
+                = requestOperationHeader(getRecordsURLRequest, container, bundle);
 
-        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
-                .setUuid(UUID.randomUUID().toString())
-                .setType(220)
-                .setF4(1)
-                .build();
+        CloudKit.RecordZoneIdentifier recordZoneIdentifier = recordZoneIdentifier(zone);
 
-        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
-                .setValue(
-                        CloudKit.Identifier.newBuilder().setName(zone).setType(6))
-                .setOwnerIdentifier(userId)
-                .build();
+        return recordRetrieveRequestOperations(requestOperationHeader, recordZoneIdentifier, recordNames);
+    }
+
+    List<CloudKit.RequestOperation> recordRetrieveRequestOperations(
+            CloudKit.RequestOperationHeader requestOperationHeader,
+            CloudKit.RecordZoneIdentifier recordZoneID,
+            String... recordNames) {
+
+        List<CloudKit.RequestOperation> operations = new ArrayList<>();
+
+        Optional<CloudKit.RequestOperationHeader> optionslRequestOperationheader = Optional.of(requestOperationHeader);
+        for (String recordName : recordNames) {
+            operations.add(
+                    recordRetrieveRequestOperation(optionslRequestOperationheader, recordZoneID, recordName));
+
+            if (optionslRequestOperationheader.isPresent()) {
+                optionslRequestOperationheader = Optional.empty();
+            }
+        }
+
+        return operations;
+    }
+
+    CloudKit.RequestOperation recordRetrieveRequestOperation(
+            Optional<CloudKit.RequestOperationHeader> requestOperationHeader,
+            CloudKit.RecordZoneIdentifier recordZoneID,
+            String recordName) {
+
+        CloudKit.Operation operation = operation(211);
+        CloudKit.RecordRetrieveRequest recordRetrieveRequest
+                = CloudKitty.this.recordRetrieveRequest(recordZoneID, recordName);
+
+        CloudKit.RequestOperation.Builder builder = CloudKit.RequestOperation.newBuilder()
+                .setOperation(operation)
+                .setRecordRetrieveRequest(recordRetrieveRequest);
+
+        requestOperationHeader.map(h -> builder.setRequestOperationHeader(h));
+
+        return builder.build();
+    }
+
+    CloudKit.RecordRetrieveRequest
+            recordRetrieveRequest(CloudKit.RecordZoneIdentifier recordZoneID, String recordName) {
 
         CloudKit.RecordIdentifier recordIdentifier = CloudKit.RecordIdentifier.newBuilder()
                 .setValue(CloudKit.Identifier.newBuilder().setName(recordName).setType(1))
                 .setZoneIdentifier(recordZoneID)
                 .build();
 
-        CloudKit.RecordReference recordReference = CloudKit.RecordReference.newBuilder()
-                .setRecordIdentifier(recordIdentifier)
+        return CloudKit.RecordRetrieveRequest.newBuilder()
+                .setRecordID(recordIdentifier)
+                //                .setF6(one)
                 .build();
-
-        CloudKit.RecordFieldValue recordFieldValue = CloudKit.RecordFieldValue.newBuilder()
-                .setType(5)
-                .setReferenceValue(recordReference)
-                .build();
-
-        CloudKit.QueryFilter queryFilter = CloudKit.QueryFilter.newBuilder()
-                .setFieldName(recordID)
-                .setFieldValue(recordFieldValue)
-                .setType(1)
-                .build();
-
-        CloudKit.Query keyBagQuery = CloudKit.Query.newBuilder()
-                .addType(privilegedBatchRecordFetch)
-                .addFilter(queryFilter)
-                .build();
-
-        CloudKit.QueryRetrieveRequest keybagQueryRetrieveQuest = CloudKit.QueryRetrieveRequest.newBuilder()
-                .setQuery(keyBagQuery)
-                .setZoneIdentifier(recordZoneID)
-                .setF6(CloudKit.UInt32.newBuilder().setValue(1))
-                .build();
-
-        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
-                .setQueryRetrieveRequest(keybagQueryRetrieveQuest)
-                .setRequestOperationHeader(requestOperationHeader)
-                .setRequest(operation)
-                .build();
-        logger.debug("-- queryRetrieveRequest() request: {}", requestOperation);
-
-        HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
-                init.production().url() + "/query/retrieve",
-                container,
-                bundle,
-                init.cloudKitUserId(),
-                cloudKitToken,
-                UUID.randomUUID().toString(),
-                Arrays.asList(requestOperation),
-                coreHeaders);
-
-        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
-        logger.debug("-- queryRetrieveRequest() response: {}", response);
-
-        return response.stream()
-                .map(CloudKit.ResponseOperation::getQueryRetrieveRequestResponse)
-                .collect(Collectors.toList());
     }
+
+    CloudKit.RequestOperationHeader requestOperationHeader(String operation, String container, String bundle) {
+        return CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
+                .setApplicationContainer(container)
+                .setApplicationBundle(bundle)
+                .setOperation(operation)
+                .build();
+    }
+
+    CloudKit.Operation operation(int type) {
+        return CloudKit.Operation.newBuilder()
+                .setUuid(UUID.randomUUID().toString())
+                .setType(type)
+                //                .setF4(0)
+                .build();
+    }
+
+    CloudKit.RecordZoneIdentifier recordZoneIdentifier(String zone) {
+        return CloudKit.RecordZoneIdentifier.newBuilder()
+                .setValue(
+                        CloudKit.Identifier.newBuilder().setName(zone).setType(6))
+                .setOwnerIdentifier(userId)
+                .build();
+    }
+
+//    public List<CloudKit.QueryRetrieveRequestResponse>
+//            queryRetrieveRequest(HttpClient httpClient, String container, String bundle, String zone, String recordName)
+//            throws IOException {
+//
+//        // M220
+//        CloudKit.RequestOperationHeader requestOperationHeader
+//                = CloudKit.RequestOperationHeader.newBuilder(requestOperationHeaderProto)
+//                .setApplicationContainer(container)
+//                .setApplicationBundle(bundle)
+//                .setOperation(ckdQueryOperation)
+//                .build();
+//
+//        CloudKit.Operation operation = CloudKit.Operation.newBuilder()
+//                .setUuid(UUID.randomUUID().toString())
+//                .setType(220)
+//                .setF4(1)
+//                .build();
+//
+//        CloudKit.RecordZoneIdentifier recordZoneID = CloudKit.RecordZoneIdentifier.newBuilder()
+//                .setValue(
+//                        CloudKit.Identifier.newBuilder().setName(zone).setType(6))
+//                .setOwnerIdentifier(userId)
+//                .build();
+//
+//        CloudKit.RecordIdentifier recordIdentifier = CloudKit.RecordIdentifier.newBuilder()
+//                .setValue(CloudKit.Identifier.newBuilder().setName(recordName).setType(1))
+//                .setZoneIdentifier(recordZoneID)
+//                .build();
+//
+//        CloudKit.RecordReference recordReference = CloudKit.RecordReference.newBuilder()
+//                .setRecordIdentifier(recordIdentifier)
+//                .build();
+//
+//        CloudKit.RecordFieldValue recordFieldValue = CloudKit.RecordFieldValue.newBuilder()
+//                .setType(5)
+//                .setReferenceValue(recordReference)
+//                .build();
+//
+//        CloudKit.QueryFilter queryFilter = CloudKit.QueryFilter.newBuilder()
+//                .setFieldName(recordID)
+//                .setFieldValue(recordFieldValue)
+//                .setType(1)
+//                .build();
+//
+//        CloudKit.Query keyBagQuery = CloudKit.Query.newBuilder()
+//                .addType(privilegedBatchRecordFetch)
+//                .addFilter(queryFilter)
+//                .build();
+//
+//        CloudKit.QueryRetrieveRequest keybagQueryRetrieveQuest = CloudKit.QueryRetrieveRequest.newBuilder()
+//                .setQuery(keyBagQuery)
+//                .setZoneIdentifier(recordZoneID)
+//                .setF6(CloudKit.UInt32.newBuilder().setValue(1))
+//                .build();
+//
+//        CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder()
+//                .setQueryRetrieveRequest(keybagQueryRetrieveQuest)
+//                .setRequestOperationHeader(requestOperationHeader)
+//                .setRequest(operation)
+//                .build();
+//        logger.debug("-- queryRetrieveRequest() request: {}", requestOperation);
+//
+//        HttpUriRequest uriRequest = ProtoBufsRequestFactory.defaultInstance().newRequest(
+//                init.production().url() + "/query/retrieve",
+//                container,
+//                bundle,
+//                init.cloudKitUserId(),
+//                cloudKitToken,
+//                UUID.randomUUID().toString(),
+//                Arrays.asList(requestOperation),
+//                coreHeaders);
+//
+//        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
+//        logger.debug("-- queryRetrieveRequest() response: {}", response);
+//
+//        return response.stream()
+//                .map(CloudKit.ResponseOperation::getQueryRetrieveRequestResponse)
+//                .collect(Collectors.toList());
+//    }
 }
 // Note: Protobufs, we could pass builders on to other builders, save us an objection creation.
+// TODO too much going on, break up class into smaller parts
+// TODO fix operation types
