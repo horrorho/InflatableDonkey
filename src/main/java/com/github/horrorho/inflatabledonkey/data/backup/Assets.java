@@ -9,13 +9,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Assets.
  *
  * @author Ahseya
  */
+@Immutable
 public final class Assets {
+
+    public static boolean isEmpty(String asset) {
+        // F:UUID:token:length:x
+        String[] split = asset.split(":");
+        if (split.length < 4) {
+            logger.warn("-- isEmpty() - no file size field: {}", asset);
+            return true;
+        }
+
+        return !split[3].equals("0");
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(Assets.class);
 
     private final Optional<String> domain;
     private final List<String> files;
@@ -25,12 +43,18 @@ public final class Assets {
         this.files = new ArrayList<>(files);
     }
 
-    public Optional<String> getDomain() {
+    public Optional<String> domain() {
         return domain;
     }
 
-    public List<String> getFiles() {
+    public List<String> files() {
         return new ArrayList<>(files);
+    }
+
+    public List<String> nonEmptyFiles() {
+        return files.stream()
+                .filter(Assets::isEmpty)
+                .collect(Collectors.toList());
     }
 
     @Override
