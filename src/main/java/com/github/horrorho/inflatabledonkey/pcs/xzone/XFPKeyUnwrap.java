@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public class XFPKeyUnwrap {
+public final class XFPKeyUnwrap {
 
     private static final Logger logger = LoggerFactory.getLogger(XFPKeyUnwrap.class);
 
