@@ -85,6 +85,10 @@ public final class XZone {
         return GCMDataA.decrypt(dk, data, Optional.of(identifier));
     }
 
+    public Optional<byte[]> fpDecrypt(byte[] wrappedKey) {
+        return XFPKeyUnwrap.unwrap(kdk, wrappedKey);
+    }
+
     public List<Key<ECPrivate>> keys() {
         return new ArrayList<>(keys);
     }
