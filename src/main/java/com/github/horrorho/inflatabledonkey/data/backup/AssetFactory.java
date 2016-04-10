@@ -27,9 +27,13 @@ import com.github.horrorho.inflatabledonkey.pcs.xzone.XZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AssetFactory.
@@ -38,6 +42,8 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public final class AssetFactory {
+
+    private static final Logger logger = LoggerFactory.getLogger(AssetFactory.class);
 
     private static final String CONTENTS = "contents";
     private static final String ENCRYPTED_ATTRIBUTES = "encryptedAttributes";
@@ -61,9 +67,9 @@ public final class AssetFactory {
         Optional<CloudKit.Asset> asset = asset(records);
 
         // TODO decrypt fp
-        Optional<byte[]> data
+        Optional<byte[]> key
                 = asset.flatMap(as -> as.hasData() ? Optional.of(as.getData().toByteArray()) : Optional.empty())
-                .flatMap(bs -> zone.flatMap(z -> z.fpDecrypt(bs)));
+                .flatMap(bs -> zone.flatMap(z -> decryptData(bs, z)));
 
         Optional<byte[]> keyEncryptionKey = Optional.empty();
 
@@ -102,6 +108,29 @@ public final class AssetFactory {
                 fileSignature,
                 keyEncryptionKey,
                 encryptedAttributes);
+    }
+
+    static Optional<byte[]> decryptData(byte[] data, XZone zone) {
+        // TODO unsure of format here:  tag? | wrapped key.
+        // TOFIX. Tag is always 0A18 so we are have a incomplete protobuf definition.
+        
+        if (data.length < 0x18) {
+            logger.warn("-- decryptData() - data too short: {}", data.length);
+            return Optional.empty();
+        }
+
+        // TOFIX bad protobuf definition.
+        int tagLength = data.length - 0x18;
+        byte[] tag = Arrays.copyOf(data, tagLength);
+        logger.debug("-- decryptData() - tag: {}", Hex.toHexString(tag));
+
+        byte[] wrappedKey = Arrays.copyOfRange(data, tagLength, data.length);
+        logger.debug("-- decryptData() - wrapped key: {}", Hex.toHexString(wrappedKey));
+
+        Optional<byte[]> key = zone.fpDecrypt(wrappedKey);
+        logger.debug("-- decryptData() - unwrapped: 0x:{}", key.map(Hex::toHexString).orElse("NULL"));
+
+        return key;
     }
 
     static Optional<byte[]> optional(byte[] bytes) {
