@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.util.PLists;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -42,8 +43,8 @@ public final class Asset {
     private final int protectionClass;
     private final int size;
     private final int fileType;
-    private final long downloadTokenExpiration;
-    private final String contentBaseURL;
+    private final Instant downloadTokenExpiration;
+    private final Optional<String> contentBaseURL;
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
     private final Optional<byte[]> keyEncryptionKey;
@@ -53,8 +54,8 @@ public final class Asset {
             int protectionClass,
             int size,
             int fileType,
-            long downloadTokenExpiration,
-            String contentBaseURL,
+            Instant downloadTokenExpiration,
+            Optional<String> contentBaseURL,
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
@@ -83,11 +84,11 @@ public final class Asset {
         return fileType;
     }
 
-    public long getDownloadTokenExpiration() {
+    public Instant getDownloadTokenExpiration() {
         return downloadTokenExpiration;
     }
 
-    public String getContentBaseURL() {
+    public Optional<String> getContentBaseURL() {
         return contentBaseURL;
     }
 
