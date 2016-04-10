@@ -25,7 +25,7 @@ public abstract class AbstractRecord {
     }
 
     public AbstractRecord(Collection<CloudKit.RecordField> recordFields) {
-        this.attributes = RecordAssistant.attributes(recordFields);
+        this.attributes = FactoryAssistant.attributes(recordFields);
     }
 
     public Map<String, String> attributes() {
