@@ -9,7 +9,7 @@ option java_outer_classname = "CloudKit";
 
 message RequestOperation { // CKDPRequestOperation
   optional RequestOperationHeader requestOperationHeader = 1;
-  optional Operation request = 2;
+  optional Operation operation = 2;
   optional ZoneRetrieveRequest zoneRetrieveRequest = 201;
   optional RecordRetrieveRequest recordRetrieveRequest = 211;
   optional QueryRetrieveRequest queryRetrieveRequest = 220;

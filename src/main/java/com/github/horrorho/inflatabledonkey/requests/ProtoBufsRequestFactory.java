@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
+import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
