@@ -8,682 +8,6 @@ public final class CloudKit {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface RequestOperationsOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:RequestOperations)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> 
-        getRequestOperationList();
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation getRequestOperation(int index);
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    int getRequestOperationCount();
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    java.util.List<? extends com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder> 
-        getRequestOperationOrBuilderList();
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder getRequestOperationOrBuilder(
-        int index);
-  }
-  /**
-   * Protobuf type {@code RequestOperations}
-   */
-  public static final class RequestOperations extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:RequestOperations)
-      RequestOperationsOrBuilder {
-    // Use RequestOperations.newBuilder() to construct.
-    private RequestOperations(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private RequestOperations(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final RequestOperations defaultInstance;
-    public static RequestOperations getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public RequestOperations getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private RequestOperations(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                requestOperation_ = new java.util.ArrayList<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              requestOperation_.add(input.readMessage(com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.PARSER, extensionRegistry));
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          requestOperation_ = java.util.Collections.unmodifiableList(requestOperation_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_RequestOperations_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_RequestOperations_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.class, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<RequestOperations> PARSER =
-        new com.google.protobuf.AbstractParser<RequestOperations>() {
-      public RequestOperations parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new RequestOperations(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<RequestOperations> getParserForType() {
-      return PARSER;
-    }
-
-    public static final int REQUESTOPERATION_FIELD_NUMBER = 1;
-    private java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> requestOperation_;
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    public java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> getRequestOperationList() {
-      return requestOperation_;
-    }
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    public java.util.List<? extends com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder> 
-        getRequestOperationOrBuilderList() {
-      return requestOperation_;
-    }
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    public int getRequestOperationCount() {
-      return requestOperation_.size();
-    }
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation getRequestOperation(int index) {
-      return requestOperation_.get(index);
-    }
-    /**
-     * <code>repeated .RequestOperation requestOperation = 1;</code>
-     */
-    public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder getRequestOperationOrBuilder(
-        int index) {
-      return requestOperation_.get(index);
-    }
-
-    private void initFields() {
-      requestOperation_ = java.util.Collections.emptyList();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      for (int i = 0; i < requestOperation_.size(); i++) {
-        output.writeMessage(1, requestOperation_.get(i));
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      for (int i = 0; i < requestOperation_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, requestOperation_.get(i));
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code RequestOperations}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:RequestOperations)
-        com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationsOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_RequestOperations_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_RequestOperations_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.class, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.Builder.class);
-      }
-
-      // Construct using com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getRequestOperationFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        if (requestOperationBuilder_ == null) {
-          requestOperation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        } else {
-          requestOperationBuilder_.clear();
-        }
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_RequestOperations_descriptor;
-      }
-
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations getDefaultInstanceForType() {
-        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.getDefaultInstance();
-      }
-
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations build() {
-        com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations buildPartial() {
-        com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations result = new com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations(this);
-        int from_bitField0_ = bitField0_;
-        if (requestOperationBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            requestOperation_ = java.util.Collections.unmodifiableList(requestOperation_);
-            bitField0_ = (bitField0_ & ~0x00000001);
-          }
-          result.requestOperation_ = requestOperation_;
-        } else {
-          result.requestOperation_ = requestOperationBuilder_.build();
-        }
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations) {
-          return mergeFrom((com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations other) {
-        if (other == com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations.getDefaultInstance()) return this;
-        if (requestOperationBuilder_ == null) {
-          if (!other.requestOperation_.isEmpty()) {
-            if (requestOperation_.isEmpty()) {
-              requestOperation_ = other.requestOperation_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-            } else {
-              ensureRequestOperationIsMutable();
-              requestOperation_.addAll(other.requestOperation_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.requestOperation_.isEmpty()) {
-            if (requestOperationBuilder_.isEmpty()) {
-              requestOperationBuilder_.dispose();
-              requestOperationBuilder_ = null;
-              requestOperation_ = other.requestOperation_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-              requestOperationBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getRequestOperationFieldBuilder() : null;
-            } else {
-              requestOperationBuilder_.addAllMessages(other.requestOperation_);
-            }
-          }
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperations) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> requestOperation_ =
-        java.util.Collections.emptyList();
-      private void ensureRequestOperationIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          requestOperation_ = new java.util.ArrayList<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation>(requestOperation_);
-          bitField0_ |= 0x00000001;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder> requestOperationBuilder_;
-
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> getRequestOperationList() {
-        if (requestOperationBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(requestOperation_);
-        } else {
-          return requestOperationBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public int getRequestOperationCount() {
-        if (requestOperationBuilder_ == null) {
-          return requestOperation_.size();
-        } else {
-          return requestOperationBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation getRequestOperation(int index) {
-        if (requestOperationBuilder_ == null) {
-          return requestOperation_.get(index);
-        } else {
-          return requestOperationBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder setRequestOperation(
-          int index, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation value) {
-        if (requestOperationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRequestOperationIsMutable();
-          requestOperation_.set(index, value);
-          onChanged();
-        } else {
-          requestOperationBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder setRequestOperation(
-          int index, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder builderForValue) {
-        if (requestOperationBuilder_ == null) {
-          ensureRequestOperationIsMutable();
-          requestOperation_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          requestOperationBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder addRequestOperation(com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation value) {
-        if (requestOperationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRequestOperationIsMutable();
-          requestOperation_.add(value);
-          onChanged();
-        } else {
-          requestOperationBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder addRequestOperation(
-          int index, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation value) {
-        if (requestOperationBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRequestOperationIsMutable();
-          requestOperation_.add(index, value);
-          onChanged();
-        } else {
-          requestOperationBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder addRequestOperation(
-          com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder builderForValue) {
-        if (requestOperationBuilder_ == null) {
-          ensureRequestOperationIsMutable();
-          requestOperation_.add(builderForValue.build());
-          onChanged();
-        } else {
-          requestOperationBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder addRequestOperation(
-          int index, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder builderForValue) {
-        if (requestOperationBuilder_ == null) {
-          ensureRequestOperationIsMutable();
-          requestOperation_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          requestOperationBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder addAllRequestOperation(
-          java.lang.Iterable<? extends com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation> values) {
-        if (requestOperationBuilder_ == null) {
-          ensureRequestOperationIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, requestOperation_);
-          onChanged();
-        } else {
-          requestOperationBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder clearRequestOperation() {
-        if (requestOperationBuilder_ == null) {
-          requestOperation_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-          onChanged();
-        } else {
-          requestOperationBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public Builder removeRequestOperation(int index) {
-        if (requestOperationBuilder_ == null) {
-          ensureRequestOperationIsMutable();
-          requestOperation_.remove(index);
-          onChanged();
-        } else {
-          requestOperationBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder getRequestOperationBuilder(
-          int index) {
-        return getRequestOperationFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder getRequestOperationOrBuilder(
-          int index) {
-        if (requestOperationBuilder_ == null) {
-          return requestOperation_.get(index);  } else {
-          return requestOperationBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public java.util.List<? extends com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder> 
-           getRequestOperationOrBuilderList() {
-        if (requestOperationBuilder_ != null) {
-          return requestOperationBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(requestOperation_);
-        }
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder addRequestOperationBuilder() {
-        return getRequestOperationFieldBuilder().addBuilder(
-            com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder addRequestOperationBuilder(
-          int index) {
-        return getRequestOperationFieldBuilder().addBuilder(
-            index, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .RequestOperation requestOperation = 1;</code>
-       */
-      public java.util.List<com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder> 
-           getRequestOperationBuilderList() {
-        return getRequestOperationFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder> 
-          getRequestOperationFieldBuilder() {
-        if (requestOperationBuilder_ == null) {
-          requestOperationBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperation.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.RequestOperationOrBuilder>(
-                  requestOperation_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
-          requestOperation_ = null;
-        }
-        return requestOperationBuilder_;
-      }
-
-      // @@protoc_insertion_point(builder_scope:RequestOperations)
-    }
-
-    static {
-      defaultInstance = new RequestOperations(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:RequestOperations)
-  }
-
   public interface RequestOperationOrBuilder extends
       // @@protoc_insertion_point(interface_extends:RequestOperation)
       com.google.protobuf.MessageOrBuilder {
@@ -28061,29 +27385,21 @@ public final class CloudKit {
     com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordIdentifierOrBuilder getRecordIdOrBuilder();
 
     /**
-     * <code>repeated bytes f15 = 15;</code>
+     * <code>optional bytes data = 15;</code>
      *
      * <pre>
-     * 192 bit something or other
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    java.util.List<com.google.protobuf.ByteString> getF15List();
+    boolean hasData();
     /**
-     * <code>repeated bytes f15 = 15;</code>
+     * <code>optional bytes data = 15;</code>
      *
      * <pre>
-     * 192 bit something or other
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    int getF15Count();
-    /**
-     * <code>repeated bytes f15 = 15;</code>
-     *
-     * <pre>
-     * 192 bit something or other
-     * </pre>
-     */
-    com.google.protobuf.ByteString getF15(int index);
+    com.google.protobuf.ByteString getData();
 
     /**
      * <code>optional bytes fileSignature = 17;</code>
@@ -28211,20 +27527,17 @@ public final class CloudKit {
               break;
             }
             case 122: {
-              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-                f15_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
-                mutable_bitField0_ |= 0x00000080;
-              }
-              f15_.add(input.readBytes());
+              bitField0_ |= 0x00000080;
+              data_ = input.readBytes();
               break;
             }
             case 138: {
-              bitField0_ |= 0x00000080;
+              bitField0_ |= 0x00000100;
               fileSignature_ = input.readBytes();
               break;
             }
             case 144: {
-              bitField0_ |= 0x00000100;
+              bitField0_ |= 0x00000200;
               downloadTokenExpiration_ = input.readUInt64();
               break;
             }
@@ -28236,9 +27549,6 @@ public final class CloudKit {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-          f15_ = java.util.Collections.unmodifiableList(f15_);
-        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -28498,38 +27808,27 @@ public final class CloudKit {
       return recordId_;
     }
 
-    public static final int F15_FIELD_NUMBER = 15;
-    private java.util.List<com.google.protobuf.ByteString> f15_;
+    public static final int DATA_FIELD_NUMBER = 15;
+    private com.google.protobuf.ByteString data_;
     /**
-     * <code>repeated bytes f15 = 15;</code>
+     * <code>optional bytes data = 15;</code>
      *
      * <pre>
-     * 192 bit something or other
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    public java.util.List<com.google.protobuf.ByteString>
-        getF15List() {
-      return f15_;
+    public boolean hasData() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
-     * <code>repeated bytes f15 = 15;</code>
+     * <code>optional bytes data = 15;</code>
      *
      * <pre>
-     * 192 bit something or other
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    public int getF15Count() {
-      return f15_.size();
-    }
-    /**
-     * <code>repeated bytes f15 = 15;</code>
-     *
-     * <pre>
-     * 192 bit something or other
-     * </pre>
-     */
-    public com.google.protobuf.ByteString getF15(int index) {
-      return f15_.get(index);
+    public com.google.protobuf.ByteString getData() {
+      return data_;
     }
 
     public static final int FILESIGNATURE_FIELD_NUMBER = 17;
@@ -28542,7 +27841,7 @@ public final class CloudKit {
      * </pre>
      */
     public boolean hasFileSignature() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
+      return ((bitField0_ & 0x00000100) == 0x00000100);
     }
     /**
      * <code>optional bytes fileSignature = 17;</code>
@@ -28561,7 +27860,7 @@ public final class CloudKit {
      * <code>optional uint64 downloadTokenExpiration = 18;</code>
      */
     public boolean hasDownloadTokenExpiration() {
-      return ((bitField0_ & 0x00000100) == 0x00000100);
+      return ((bitField0_ & 0x00000200) == 0x00000200);
     }
     /**
      * <code>optional uint64 downloadTokenExpiration = 18;</code>
@@ -28578,7 +27877,7 @@ public final class CloudKit {
       contentBaseURL_ = "";
       dsid_ = "";
       recordId_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordIdentifier.getDefaultInstance();
-      f15_ = java.util.Collections.emptyList();
+      data_ = com.google.protobuf.ByteString.EMPTY;
       fileSignature_ = com.google.protobuf.ByteString.EMPTY;
       downloadTokenExpiration_ = 0L;
     }
@@ -28616,13 +27915,13 @@ public final class CloudKit {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeMessage(10, recordId_);
       }
-      for (int i = 0; i < f15_.size(); i++) {
-        output.writeBytes(15, f15_.get(i));
-      }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeBytes(17, fileSignature_);
+        output.writeBytes(15, data_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        output.writeBytes(17, fileSignature_);
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
         output.writeUInt64(18, downloadTokenExpiration_);
       }
       getUnknownFields().writeTo(output);
@@ -28662,20 +27961,15 @@ public final class CloudKit {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(10, recordId_);
       }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < f15_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeBytesSizeNoTag(f15_.get(i));
-        }
-        size += dataSize;
-        size += 1 * getF15List().size();
-      }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(15, data_);
+      }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(17, fileSignature_);
       }
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt64Size(18, downloadTokenExpiration_);
       }
@@ -28815,7 +28109,7 @@ public final class CloudKit {
           recordIdBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000040);
-        f15_ = java.util.Collections.emptyList();
+        data_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000080);
         fileSignature_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000100);
@@ -28881,17 +28175,16 @@ public final class CloudKit {
         } else {
           result.recordId_ = recordIdBuilder_.build();
         }
-        if (((bitField0_ & 0x00000080) == 0x00000080)) {
-          f15_ = java.util.Collections.unmodifiableList(f15_);
-          bitField0_ = (bitField0_ & ~0x00000080);
-        }
-        result.f15_ = f15_;
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
           to_bitField0_ |= 0x00000080;
+        }
+        result.data_ = data_;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000100;
         }
         result.fileSignature_ = fileSignature_;
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
-          to_bitField0_ |= 0x00000100;
+          to_bitField0_ |= 0x00000200;
         }
         result.downloadTokenExpiration_ = downloadTokenExpiration_;
         result.bitField0_ = to_bitField0_;
@@ -28939,15 +28232,8 @@ public final class CloudKit {
         if (other.hasRecordId()) {
           mergeRecordId(other.getRecordId());
         }
-        if (!other.f15_.isEmpty()) {
-          if (f15_.isEmpty()) {
-            f15_ = other.f15_;
-            bitField0_ = (bitField0_ & ~0x00000080);
-          } else {
-            ensureF15IsMutable();
-            f15_.addAll(other.f15_);
-          }
-          onChanged();
+        if (other.hasData()) {
+          setData(other.getData());
         }
         if (other.hasFileSignature()) {
           setFileSignature(other.getFileSignature());
@@ -29485,102 +28771,53 @@ public final class CloudKit {
         return recordIdBuilder_;
       }
 
-      private java.util.List<com.google.protobuf.ByteString> f15_ = java.util.Collections.emptyList();
-      private void ensureF15IsMutable() {
-        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
-          f15_ = new java.util.ArrayList<com.google.protobuf.ByteString>(f15_);
-          bitField0_ |= 0x00000080;
-         }
-      }
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>repeated bytes f15 = 15;</code>
+       * <code>optional bytes data = 15;</code>
        *
        * <pre>
-       * 192 bit something or other
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public java.util.List<com.google.protobuf.ByteString>
-          getF15List() {
-        return java.util.Collections.unmodifiableList(f15_);
+      public boolean hasData() {
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
-       * <code>repeated bytes f15 = 15;</code>
+       * <code>optional bytes data = 15;</code>
        *
        * <pre>
-       * 192 bit something or other
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public int getF15Count() {
-        return f15_.size();
+      public com.google.protobuf.ByteString getData() {
+        return data_;
       }
       /**
-       * <code>repeated bytes f15 = 15;</code>
+       * <code>optional bytes data = 15;</code>
        *
        * <pre>
-       * 192 bit something or other
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public com.google.protobuf.ByteString getF15(int index) {
-        return f15_.get(index);
-      }
-      /**
-       * <code>repeated bytes f15 = 15;</code>
-       *
-       * <pre>
-       * 192 bit something or other
-       * </pre>
-       */
-      public Builder setF15(
-          int index, com.google.protobuf.ByteString value) {
+      public Builder setData(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  ensureF15IsMutable();
-        f15_.set(index, value);
+  bitField0_ |= 0x00000080;
+        data_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>repeated bytes f15 = 15;</code>
+       * <code>optional bytes data = 15;</code>
        *
        * <pre>
-       * 192 bit something or other
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public Builder addF15(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureF15IsMutable();
-        f15_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated bytes f15 = 15;</code>
-       *
-       * <pre>
-       * 192 bit something or other
-       * </pre>
-       */
-      public Builder addAllF15(
-          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
-        ensureF15IsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, f15_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated bytes f15 = 15;</code>
-       *
-       * <pre>
-       * 192 bit something or other
-       * </pre>
-       */
-      public Builder clearF15() {
-        f15_ = java.util.Collections.emptyList();
+      public Builder clearData() {
         bitField0_ = (bitField0_ & ~0x00000080);
+        data_ = getDefaultInstance().getData();
         onChanged();
         return this;
       }
@@ -32466,11 +31703,6 @@ public final class CloudKit {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_RequestOperations_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_RequestOperations_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_RequestOperation_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -32654,110 +31886,108 @@ public final class CloudKit {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\017cloud_kit.proto\"@\n\021RequestOperations\022+" +
-      "\n\020requestOperation\030\001 \003(\0132\021.RequestOperat" +
-      "ion\"\214\002\n\020RequestOperation\0227\n\026requestOpera" +
-      "tionHeader\030\001 \001(\0132\027.RequestOperationHeade" +
-      "r\022\035\n\toperation\030\002 \001(\0132\n.Operation\0222\n\023zone" +
-      "RetrieveRequest\030\311\001 \001(\0132\024.ZoneRetrieveReq" +
-      "uest\0226\n\025recordRetrieveRequest\030\323\001 \001(\0132\026.R" +
-      "ecordRetrieveRequest\0224\n\024queryRetrieveReq" +
-      "uest\030\334\001 \001(\0132\025.QueryRetrieveRequest\"\250\002\n\021R" +
-      "esponseOperation\022\025\n\roperationCost\030\001 \001(\r\022",
-      "\034\n\010response\030\002 \001(\0132\n.Operation\022(\n\006result\030" +
-      "\003 \001(\0132\030.ResponseOperationResult\0224\n\024zoneR" +
-      "etrieveResponse\030\311\001 \001(\0132\025.ZoneRetrieveRes" +
-      "ponse\0228\n\026recordRetrieveResponse\030\323\001 \001(\0132\027" +
-      ".RecordRetrieveResponse\022D\n\034queryRetrieve" +
-      "RequestResponse\030\334\001 \001(\0132\035.QueryRetrieveRe" +
-      "questResponse\"\345\003\n\026RequestOperationHeader" +
-      "\022\034\n\024applicationContainer\030\002 \001(\t\022\031\n\021applic" +
-      "ationBundle\030\003 \001(\t\022\n\n\002f4\030\004 \001(\t\022%\n\020deviceI" +
-      "dentifier\030\007 \001(\0132\013.Identifier\022\035\n\025deviceSo",
-      "ftwareVersion\030\010 \001(\t\022\n\n\002f9\030\t \001(\t\022\031\n\021devic" +
-      "eLibraryName\030\n \001(\t\022\034\n\024deviceLibraryVersi" +
-      "on\030\013 \001(\t\022\021\n\toperation\030\014 \001(\t\022\037\n\027deviceFlo" +
-      "wControlBudget\030\r \001(\004\022\"\n\032deviceFlowContro" +
-      "lBudgetCap\030\016 \001(\004\022\034\n\024deviceFlowControlKey" +
-      "\030\017 \001(\t\022\027\n\006locale\030\021 \001(\0132\007.Locale\022\017\n\007versi" +
-      "on\030\022 \001(\t\022\013\n\003f19\030\023 \001(\r\022\032\n\022deviceAssignedN" +
-      "ame\030\025 \001(\t\022\030\n\020deviceHardwareID\030\026 \001(\t\022\013\n\003f" +
-      "23\030\027 \001(\r\022\013\n\003f25\030\031 \001(\r\"3\n\tOperation\022\014\n\004uu" +
-      "id\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\022\n\n\002f4\030\004 \001(\r\"\234\001\n\024Q",
-      "ueryRetrieveRequest\022\025\n\005query\030\001 \001(\0132\006.Que" +
-      "ry\022-\n\016zoneIdentifier\030\004 \001(\0132\025.RecordZoneI" +
-      "dentifier\022)\n\017requestedFields\030\005 \001(\0132\020.Req" +
-      "uestedFields\022\023\n\002f6\030\006 \001(\0132\007.UInt32\"Y\n\034Que" +
-      "ryRetrieveRequestResponse\0229\n\007results\030\001 \001" +
-      "(\0132(.QueryRetrieveRequestResponseQueryRe" +
-      "sult\"w\n\'QueryRetrieveRequestResponseQuer" +
-      "yResult\022%\n\nidentifier\030\001 \001(\0132\021.RecordIden" +
-      "tifier\022\014\n\004type\030\003 \001(\r\022\027\n\006record\030\004 \001(\0132\007.R" +
-      "ecord\"Q\n\025RecordRetrieveRequest\022#\n\010record",
-      "ID\030\001 \001(\0132\021.RecordIdentifier\022\023\n\002f6\030\006 \001(\0132" +
-      "\007.UInt32\"Q\n\026RecordRetrieveResponse\022\027\n\006re" +
-      "cord\030\001 \001(\0132\007.Record\022\036\n\026clientVersionETag" +
-      "Match\030\002 \001(\010\" \n\017RequestedFields\022\r\n\005field\030" +
-      "\001 \003(\t\">\n\027ResponseOperationResult\022\014\n\004code" +
-      "\030\001 \001(\r\022\025\n\005error\030\002 \001(\0132\006.Error\";\n\005Error\022\025" +
-      "\n\004code\030\001 \001(\0132\007.UInt32\022\017\n\007message\030\004 \001(\t\022\n" +
-      "\n\002id\030\005 \001(\t\"F\n\016DateStatistics\022\027\n\010creation" +
-      "\030\001 \001(\0132\005.Date\022\033\n\014modification\030\002 \001(\0132\005.Da" +
-      "te\"\024\n\004Date\022\014\n\004time\030\001 \001(\001\"(\n\nIdentifier\022\014",
-      "\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\"c\n\006Locale\022\024\n\014" +
-      "languageCode\030\001 \001(\t\022\022\n\nregionCode\030\002 \001(\t\022\027" +
-      "\n\017enabledKeyboard\030\003 \003(\t\022\026\n\016activeKeyboar" +
-      "d\030\004 \001(\t\"C\n\016ProtectionInfo\022\026\n\016protectionI" +
-      "nfo\030\001 \001(\014\022\031\n\021protectionInfoTag\030\002 \001(\t\"W\n\005" +
-      "Query\022\031\n\004type\030\001 \003(\0132\013.RecordType\022\034\n\006filt" +
-      "er\030\002 \003(\0132\014.QueryFilter\022\025\n\rqueryOperator\030" +
-      "\004 \001(\r\"m\n\013QueryFilter\022)\n\tfieldName\030\001 \001(\0132" +
-      "\026.RecordFieldIdentifier\022%\n\nfieldValue\030\002 " +
-      "\001(\0132\021.RecordFieldValue\022\014\n\004type\030\004 \001(\r\"\302\002\n",
-      "\006Record\022\014\n\004etag\030\001 \001(\t\022+\n\020RecordIdentifie" +
-      "r\030\002 \001(\0132\021.RecordIdentifier\022\031\n\004type\030\003 \001(\013" +
-      "2\013.RecordType\022\036\n\tcreatedBy\030\004 \001(\0132\013.Ident" +
-      "ifier\022\'\n\016timeStatistics\030\005 \001(\0132\017.DateStat" +
-      "istics\022!\n\013recordField\030\007 \003(\0132\014.RecordFiel" +
-      "d\022\037\n\nmodifiedBy\030\t \001(\0132\013.Identifier\022\030\n\020mo" +
-      "difiedByDevice\030\013 \001(\t\022\'\n\016protectionInfo\030\r" +
-      " \001(\0132\017.ProtectionInfo\022\022\n\npermission\030\017 \001(" +
-      "\r\"[\n\013RecordField\022*\n\nidentifier\030\001 \001(\0132\026.R" +
-      "ecordFieldIdentifier\022 \n\005value\030\002 \001(\0132\021.Re",
-      "cordFieldValue\"L\n\017RecordReference\022\014\n\004typ" +
-      "e\030\001 \001(\r\022+\n\020recordIdentifier\030\002 \001(\0132\021.Reco" +
-      "rdIdentifier\"\346\001\n\020RecordFieldValue\022\014\n\004typ" +
-      "e\030\001 \001(\r\022\022\n\nbytesValue\030\002 \001(\014\022\016\n\006uint32\030\004 " +
-      "\001(\r\022\030\n\tdateValue\030\006 \001(\0132\005.Date\022\023\n\013stringV" +
-      "alue\030\007 \001(\t\022(\n\016referenceValue\030\t \001(\0132\020.Rec" +
-      "ordReference\022\032\n\nassetValue\030\n \001(\0132\006.Asset" +
-      "\022+\n\020recordFieldValue\030\013 \003(\0132\021.RecordField" +
-      "Value\"\032\n\nRecordType\022\014\n\004name\030\001 \001(\t\"]\n\020Rec" +
-      "ordIdentifier\022\032\n\005value\030\001 \001(\0132\013.Identifie",
-      "r\022-\n\016zoneIdentifier\030\002 \001(\0132\025.RecordZoneId" +
-      "entifier\"%\n\025RecordFieldIdentifier\022\014\n\004nam" +
-      "e\030\001 \001(\t\"X\n\024RecordZoneIdentifier\022\032\n\005value" +
-      "\030\001 \001(\0132\013.Identifier\022$\n\017ownerIdentifier\030\002" +
-      " \001(\0132\013.Identifier\",\n\nFileTokens\022\036\n\nfileT" +
-      "okens\030\001 \003(\0132\n.FileToken\"U\n\tFileToken\022\024\n\014" +
-      "fileChecksum\030\001 \001(\014\022\r\n\005token\030\002 \001(\t\022\014\n\004siz" +
-      "e\030\003 \001(\004\022\025\n\rfileSignature\030\004 \001(\014\"\343\001\n\005Asset" +
-      "\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileChecksum\030\002 \001(\014\022" +
-      "\014\n\004size\030\004 \001(\004\022\025\n\rdownloadToken\030\005 \001(\t\022\026\n\016",
-      "contentBaseURL\030\010 \001(\t\022\014\n\004dsid\030\t \001(\t\022#\n\010re" +
-      "cordId\030\n \001(\0132\021.RecordIdentifier\022\013\n\003f15\030\017" +
-      " \003(\014\022\025\n\rfileSignature\030\021 \001(\014\022\037\n\027downloadT" +
-      "okenExpiration\030\022 \001(\004\"\027\n\006UInt32\022\r\n\005value\030" +
-      "\001 \001(\r\"D\n\023ZoneRetrieveRequest\022-\n\016zoneIden" +
-      "tifier\030\001 \001(\0132\025.RecordZoneIdentifier\"N\n\024Z" +
-      "oneRetrieveResponse\0226\n\014zoneSummarys\030\001 \003(" +
-      "\0132 .ZoneRetrieveResponseZoneSummary\"<\n\037Z" +
-      "oneRetrieveResponseZoneSummary\022\031\n\ntarget" +
-      "Zone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016zoneIdentif",
-      "ier\030\001 \001(\0132\025.RecordZoneIdentifier\022\'\n\016prot" +
-      "ectionInfo\030\003 \001(\0132\017.ProtectionInfoB9\n-com" +
-      ".github.horrorho.inflatabledonkey.protoc" +
-      "olB\010CloudKit"
+      "\n\017cloud_kit.proto\"\214\002\n\020RequestOperation\0227" +
+      "\n\026requestOperationHeader\030\001 \001(\0132\027.Request" +
+      "OperationHeader\022\035\n\toperation\030\002 \001(\0132\n.Ope" +
+      "ration\0222\n\023zoneRetrieveRequest\030\311\001 \001(\0132\024.Z" +
+      "oneRetrieveRequest\0226\n\025recordRetrieveRequ" +
+      "est\030\323\001 \001(\0132\026.RecordRetrieveRequest\0224\n\024qu" +
+      "eryRetrieveRequest\030\334\001 \001(\0132\025.QueryRetriev" +
+      "eRequest\"\250\002\n\021ResponseOperation\022\025\n\roperat" +
+      "ionCost\030\001 \001(\r\022\034\n\010response\030\002 \001(\0132\n.Operat" +
+      "ion\022(\n\006result\030\003 \001(\0132\030.ResponseOperationR",
+      "esult\0224\n\024zoneRetrieveResponse\030\311\001 \001(\0132\025.Z" +
+      "oneRetrieveResponse\0228\n\026recordRetrieveRes" +
+      "ponse\030\323\001 \001(\0132\027.RecordRetrieveResponse\022D\n" +
+      "\034queryRetrieveRequestResponse\030\334\001 \001(\0132\035.Q" +
+      "ueryRetrieveRequestResponse\"\345\003\n\026RequestO" +
+      "perationHeader\022\034\n\024applicationContainer\030\002" +
+      " \001(\t\022\031\n\021applicationBundle\030\003 \001(\t\022\n\n\002f4\030\004 " +
+      "\001(\t\022%\n\020deviceIdentifier\030\007 \001(\0132\013.Identifi" +
+      "er\022\035\n\025deviceSoftwareVersion\030\010 \001(\t\022\n\n\002f9\030" +
+      "\t \001(\t\022\031\n\021deviceLibraryName\030\n \001(\t\022\034\n\024devi",
+      "ceLibraryVersion\030\013 \001(\t\022\021\n\toperation\030\014 \001(" +
+      "\t\022\037\n\027deviceFlowControlBudget\030\r \001(\004\022\"\n\032de" +
+      "viceFlowControlBudgetCap\030\016 \001(\004\022\034\n\024device" +
+      "FlowControlKey\030\017 \001(\t\022\027\n\006locale\030\021 \001(\0132\007.L" +
+      "ocale\022\017\n\007version\030\022 \001(\t\022\013\n\003f19\030\023 \001(\r\022\032\n\022d" +
+      "eviceAssignedName\030\025 \001(\t\022\030\n\020deviceHardwar" +
+      "eID\030\026 \001(\t\022\013\n\003f23\030\027 \001(\r\022\013\n\003f25\030\031 \001(\r\"3\n\tO" +
+      "peration\022\014\n\004uuid\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\022\n\n\002" +
+      "f4\030\004 \001(\r\"\234\001\n\024QueryRetrieveRequest\022\025\n\005que" +
+      "ry\030\001 \001(\0132\006.Query\022-\n\016zoneIdentifier\030\004 \001(\013",
+      "2\025.RecordZoneIdentifier\022)\n\017requestedFiel" +
+      "ds\030\005 \001(\0132\020.RequestedFields\022\023\n\002f6\030\006 \001(\0132\007" +
+      ".UInt32\"Y\n\034QueryRetrieveRequestResponse\022" +
+      "9\n\007results\030\001 \001(\0132(.QueryRetrieveRequestR" +
+      "esponseQueryResult\"w\n\'QueryRetrieveReque" +
+      "stResponseQueryResult\022%\n\nidentifier\030\001 \001(" +
+      "\0132\021.RecordIdentifier\022\014\n\004type\030\003 \001(\r\022\027\n\006re" +
+      "cord\030\004 \001(\0132\007.Record\"Q\n\025RecordRetrieveReq" +
+      "uest\022#\n\010recordID\030\001 \001(\0132\021.RecordIdentifie" +
+      "r\022\023\n\002f6\030\006 \001(\0132\007.UInt32\"Q\n\026RecordRetrieve",
+      "Response\022\027\n\006record\030\001 \001(\0132\007.Record\022\036\n\026cli" +
+      "entVersionETagMatch\030\002 \001(\010\" \n\017RequestedFi" +
+      "elds\022\r\n\005field\030\001 \003(\t\">\n\027ResponseOperation" +
+      "Result\022\014\n\004code\030\001 \001(\r\022\025\n\005error\030\002 \001(\0132\006.Er" +
+      "ror\";\n\005Error\022\025\n\004code\030\001 \001(\0132\007.UInt32\022\017\n\007m" +
+      "essage\030\004 \001(\t\022\n\n\002id\030\005 \001(\t\"F\n\016DateStatisti" +
+      "cs\022\027\n\010creation\030\001 \001(\0132\005.Date\022\033\n\014modificat" +
+      "ion\030\002 \001(\0132\005.Date\"\024\n\004Date\022\014\n\004time\030\001 \001(\001\"(" +
+      "\n\nIdentifier\022\014\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\r" +
+      "\"c\n\006Locale\022\024\n\014languageCode\030\001 \001(\t\022\022\n\nregi",
+      "onCode\030\002 \001(\t\022\027\n\017enabledKeyboard\030\003 \003(\t\022\026\n" +
+      "\016activeKeyboard\030\004 \001(\t\"C\n\016ProtectionInfo\022" +
+      "\026\n\016protectionInfo\030\001 \001(\014\022\031\n\021protectionInf" +
+      "oTag\030\002 \001(\t\"W\n\005Query\022\031\n\004type\030\001 \003(\0132\013.Reco" +
+      "rdType\022\034\n\006filter\030\002 \003(\0132\014.QueryFilter\022\025\n\r" +
+      "queryOperator\030\004 \001(\r\"m\n\013QueryFilter\022)\n\tfi" +
+      "eldName\030\001 \001(\0132\026.RecordFieldIdentifier\022%\n" +
+      "\nfieldValue\030\002 \001(\0132\021.RecordFieldValue\022\014\n\004" +
+      "type\030\004 \001(\r\"\302\002\n\006Record\022\014\n\004etag\030\001 \001(\t\022+\n\020R" +
+      "ecordIdentifier\030\002 \001(\0132\021.RecordIdentifier",
+      "\022\031\n\004type\030\003 \001(\0132\013.RecordType\022\036\n\tcreatedBy" +
+      "\030\004 \001(\0132\013.Identifier\022\'\n\016timeStatistics\030\005 " +
+      "\001(\0132\017.DateStatistics\022!\n\013recordField\030\007 \003(" +
+      "\0132\014.RecordField\022\037\n\nmodifiedBy\030\t \001(\0132\013.Id" +
+      "entifier\022\030\n\020modifiedByDevice\030\013 \001(\t\022\'\n\016pr" +
+      "otectionInfo\030\r \001(\0132\017.ProtectionInfo\022\022\n\np" +
+      "ermission\030\017 \001(\r\"[\n\013RecordField\022*\n\nidenti" +
+      "fier\030\001 \001(\0132\026.RecordFieldIdentifier\022 \n\005va" +
+      "lue\030\002 \001(\0132\021.RecordFieldValue\"L\n\017RecordRe" +
+      "ference\022\014\n\004type\030\001 \001(\r\022+\n\020recordIdentifie",
+      "r\030\002 \001(\0132\021.RecordIdentifier\"\346\001\n\020RecordFie" +
+      "ldValue\022\014\n\004type\030\001 \001(\r\022\022\n\nbytesValue\030\002 \001(" +
+      "\014\022\016\n\006uint32\030\004 \001(\r\022\030\n\tdateValue\030\006 \001(\0132\005.D" +
+      "ate\022\023\n\013stringValue\030\007 \001(\t\022(\n\016referenceVal" +
+      "ue\030\t \001(\0132\020.RecordReference\022\032\n\nassetValue" +
+      "\030\n \001(\0132\006.Asset\022+\n\020recordFieldValue\030\013 \003(\013" +
+      "2\021.RecordFieldValue\"\032\n\nRecordType\022\014\n\004nam" +
+      "e\030\001 \001(\t\"]\n\020RecordIdentifier\022\032\n\005value\030\001 \001" +
+      "(\0132\013.Identifier\022-\n\016zoneIdentifier\030\002 \001(\0132" +
+      "\025.RecordZoneIdentifier\"%\n\025RecordFieldIde",
+      "ntifier\022\014\n\004name\030\001 \001(\t\"X\n\024RecordZoneIdent" +
+      "ifier\022\032\n\005value\030\001 \001(\0132\013.Identifier\022$\n\017own" +
+      "erIdentifier\030\002 \001(\0132\013.Identifier\",\n\nFileT" +
+      "okens\022\036\n\nfileTokens\030\001 \003(\0132\n.FileToken\"U\n" +
+      "\tFileToken\022\024\n\014fileChecksum\030\001 \001(\014\022\r\n\005toke" +
+      "n\030\002 \001(\t\022\014\n\004size\030\003 \001(\004\022\025\n\rfileSignature\030\004" +
+      " \001(\014\"\344\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileC" +
+      "hecksum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\025\n\rdownloadT" +
+      "oken\030\005 \001(\t\022\026\n\016contentBaseURL\030\010 \001(\t\022\014\n\004ds" +
+      "id\030\t \001(\t\022#\n\010recordId\030\n \001(\0132\021.RecordIdent",
+      "ifier\022\014\n\004data\030\017 \001(\014\022\025\n\rfileSignature\030\021 \001" +
+      "(\014\022\037\n\027downloadTokenExpiration\030\022 \001(\004\"\027\n\006U" +
+      "Int32\022\r\n\005value\030\001 \001(\r\"D\n\023ZoneRetrieveRequ" +
+      "est\022-\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZone" +
+      "Identifier\"N\n\024ZoneRetrieveResponse\0226\n\014zo" +
+      "neSummarys\030\001 \003(\0132 .ZoneRetrieveResponseZ" +
+      "oneSummary\"<\n\037ZoneRetrieveResponseZoneSu" +
+      "mmary\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone" +
+      "\022-\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZoneIde" +
+      "ntifier\022\'\n\016protectionInfo\030\003 \001(\0132\017.Protec",
+      "tionInfoB9\n-com.github.horrorho.inflatab" +
+      "ledonkey.protocolB\010CloudKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -32771,218 +32001,212 @@ public final class CloudKit {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
-    internal_static_RequestOperations_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_RequestOperations_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_RequestOperations_descriptor,
-        new java.lang.String[] { "RequestOperation", });
     internal_static_RequestOperation_descriptor =
-      getDescriptor().getMessageTypes().get(1);
+      getDescriptor().getMessageTypes().get(0);
     internal_static_RequestOperation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RequestOperation_descriptor,
         new java.lang.String[] { "RequestOperationHeader", "Operation", "ZoneRetrieveRequest", "RecordRetrieveRequest", "QueryRetrieveRequest", });
     internal_static_ResponseOperation_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_ResponseOperation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ResponseOperation_descriptor,
         new java.lang.String[] { "OperationCost", "Response", "Result", "ZoneRetrieveResponse", "RecordRetrieveResponse", "QueryRetrieveRequestResponse", });
     internal_static_RequestOperationHeader_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_RequestOperationHeader_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RequestOperationHeader_descriptor,
         new java.lang.String[] { "ApplicationContainer", "ApplicationBundle", "F4", "DeviceIdentifier", "DeviceSoftwareVersion", "F9", "DeviceLibraryName", "DeviceLibraryVersion", "Operation", "DeviceFlowControlBudget", "DeviceFlowControlBudgetCap", "DeviceFlowControlKey", "Locale", "Version", "F19", "DeviceAssignedName", "DeviceHardwareID", "F23", "F25", });
     internal_static_Operation_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_Operation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Operation_descriptor,
         new java.lang.String[] { "Uuid", "Type", "F4", });
     internal_static_QueryRetrieveRequest_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_QueryRetrieveRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_QueryRetrieveRequest_descriptor,
         new java.lang.String[] { "Query", "ZoneIdentifier", "RequestedFields", "F6", });
     internal_static_QueryRetrieveRequestResponse_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_QueryRetrieveRequestResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_QueryRetrieveRequestResponse_descriptor,
         new java.lang.String[] { "Results", });
     internal_static_QueryRetrieveRequestResponseQueryResult_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_QueryRetrieveRequestResponseQueryResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_QueryRetrieveRequestResponseQueryResult_descriptor,
         new java.lang.String[] { "Identifier", "Type", "Record", });
     internal_static_RecordRetrieveRequest_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_RecordRetrieveRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordRetrieveRequest_descriptor,
         new java.lang.String[] { "RecordID", "F6", });
     internal_static_RecordRetrieveResponse_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_RecordRetrieveResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordRetrieveResponse_descriptor,
         new java.lang.String[] { "Record", "ClientVersionETagMatch", });
     internal_static_RequestedFields_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_RequestedFields_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RequestedFields_descriptor,
         new java.lang.String[] { "Field", });
     internal_static_ResponseOperationResult_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_ResponseOperationResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ResponseOperationResult_descriptor,
         new java.lang.String[] { "Code", "Error", });
     internal_static_Error_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_Error_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Error_descriptor,
         new java.lang.String[] { "Code", "Message", "Id", });
     internal_static_DateStatistics_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_DateStatistics_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_DateStatistics_descriptor,
         new java.lang.String[] { "Creation", "Modification", });
     internal_static_Date_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_Date_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Date_descriptor,
         new java.lang.String[] { "Time", });
     internal_static_Identifier_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_Identifier_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Identifier_descriptor,
         new java.lang.String[] { "Name", "Type", });
     internal_static_Locale_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_Locale_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Locale_descriptor,
         new java.lang.String[] { "LanguageCode", "RegionCode", "EnabledKeyboard", "ActiveKeyboard", });
     internal_static_ProtectionInfo_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_ProtectionInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ProtectionInfo_descriptor,
         new java.lang.String[] { "ProtectionInfo", "ProtectionInfoTag", });
     internal_static_Query_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_Query_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Query_descriptor,
         new java.lang.String[] { "Type", "Filter", "QueryOperator", });
     internal_static_QueryFilter_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_QueryFilter_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_QueryFilter_descriptor,
         new java.lang.String[] { "FieldName", "FieldValue", "Type", });
     internal_static_Record_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(19);
     internal_static_Record_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Record_descriptor,
         new java.lang.String[] { "Etag", "RecordIdentifier", "Type", "CreatedBy", "TimeStatistics", "RecordField", "ModifiedBy", "ModifiedByDevice", "ProtectionInfo", "Permission", });
     internal_static_RecordField_descriptor =
-      getDescriptor().getMessageTypes().get(21);
+      getDescriptor().getMessageTypes().get(20);
     internal_static_RecordField_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordField_descriptor,
         new java.lang.String[] { "Identifier", "Value", });
     internal_static_RecordReference_descriptor =
-      getDescriptor().getMessageTypes().get(22);
+      getDescriptor().getMessageTypes().get(21);
     internal_static_RecordReference_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordReference_descriptor,
         new java.lang.String[] { "Type", "RecordIdentifier", });
     internal_static_RecordFieldValue_descriptor =
-      getDescriptor().getMessageTypes().get(23);
+      getDescriptor().getMessageTypes().get(22);
     internal_static_RecordFieldValue_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordFieldValue_descriptor,
         new java.lang.String[] { "Type", "BytesValue", "Uint32", "DateValue", "StringValue", "ReferenceValue", "AssetValue", "RecordFieldValue", });
     internal_static_RecordType_descriptor =
-      getDescriptor().getMessageTypes().get(24);
+      getDescriptor().getMessageTypes().get(23);
     internal_static_RecordType_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordType_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_RecordIdentifier_descriptor =
-      getDescriptor().getMessageTypes().get(25);
+      getDescriptor().getMessageTypes().get(24);
     internal_static_RecordIdentifier_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordIdentifier_descriptor,
         new java.lang.String[] { "Value", "ZoneIdentifier", });
     internal_static_RecordFieldIdentifier_descriptor =
-      getDescriptor().getMessageTypes().get(26);
+      getDescriptor().getMessageTypes().get(25);
     internal_static_RecordFieldIdentifier_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordFieldIdentifier_descriptor,
         new java.lang.String[] { "Name", });
     internal_static_RecordZoneIdentifier_descriptor =
-      getDescriptor().getMessageTypes().get(27);
+      getDescriptor().getMessageTypes().get(26);
     internal_static_RecordZoneIdentifier_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordZoneIdentifier_descriptor,
         new java.lang.String[] { "Value", "OwnerIdentifier", });
     internal_static_FileTokens_descriptor =
-      getDescriptor().getMessageTypes().get(28);
+      getDescriptor().getMessageTypes().get(27);
     internal_static_FileTokens_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_FileTokens_descriptor,
         new java.lang.String[] { "FileTokens", });
     internal_static_FileToken_descriptor =
-      getDescriptor().getMessageTypes().get(29);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_FileToken_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_FileToken_descriptor,
         new java.lang.String[] { "FileChecksum", "Token", "Size", "FileSignature", });
     internal_static_Asset_descriptor =
-      getDescriptor().getMessageTypes().get(30);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_Asset_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Asset_descriptor,
-        new java.lang.String[] { "DsPrsID", "FileChecksum", "Size", "DownloadToken", "ContentBaseURL", "Dsid", "RecordId", "F15", "FileSignature", "DownloadTokenExpiration", });
+        new java.lang.String[] { "DsPrsID", "FileChecksum", "Size", "DownloadToken", "ContentBaseURL", "Dsid", "RecordId", "Data", "FileSignature", "DownloadTokenExpiration", });
     internal_static_UInt32_descriptor =
-      getDescriptor().getMessageTypes().get(31);
+      getDescriptor().getMessageTypes().get(30);
     internal_static_UInt32_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_UInt32_descriptor,
         new java.lang.String[] { "Value", });
     internal_static_ZoneRetrieveRequest_descriptor =
-      getDescriptor().getMessageTypes().get(32);
+      getDescriptor().getMessageTypes().get(31);
     internal_static_ZoneRetrieveRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveRequest_descriptor,
         new java.lang.String[] { "ZoneIdentifier", });
     internal_static_ZoneRetrieveResponse_descriptor =
-      getDescriptor().getMessageTypes().get(33);
+      getDescriptor().getMessageTypes().get(32);
     internal_static_ZoneRetrieveResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveResponse_descriptor,
         new java.lang.String[] { "ZoneSummarys", });
     internal_static_ZoneRetrieveResponseZoneSummary_descriptor =
-      getDescriptor().getMessageTypes().get(34);
+      getDescriptor().getMessageTypes().get(33);
     internal_static_ZoneRetrieveResponseZoneSummary_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveResponseZoneSummary_descriptor,
         new java.lang.String[] { "TargetZone", });
     internal_static_Zone_descriptor =
-      getDescriptor().getMessageTypes().get(35);
+      getDescriptor().getMessageTypes().get(34);
     internal_static_Zone_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Zone_descriptor,
