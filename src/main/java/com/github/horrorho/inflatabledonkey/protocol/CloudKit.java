@@ -27385,7 +27385,7 @@ public final class CloudKit {
     com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordIdentifierOrBuilder getRecordIdOrBuilder();
 
     /**
-     * <code>optional bytes data = 15;</code>
+     * <code>optional .Data data = 15;</code>
      *
      * <pre>
      * 192 bit something or other -&gt; wrapped key, is it really repeated?
@@ -27393,13 +27393,21 @@ public final class CloudKit {
      */
     boolean hasData();
     /**
-     * <code>optional bytes data = 15;</code>
+     * <code>optional .Data data = 15;</code>
      *
      * <pre>
      * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    com.google.protobuf.ByteString getData();
+    com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data getData();
+    /**
+     * <code>optional .Data data = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
+     * </pre>
+     */
+    com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder getDataOrBuilder();
 
     /**
      * <code>optional bytes fileSignature = 17;</code>
@@ -27527,8 +27535,16 @@ public final class CloudKit {
               break;
             }
             case 122: {
+              com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000080) == 0x00000080)) {
+                subBuilder = data_.toBuilder();
+              }
+              data_ = input.readMessage(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(data_);
+                data_ = subBuilder.buildPartial();
+              }
               bitField0_ |= 0x00000080;
-              data_ = input.readBytes();
               break;
             }
             case 138: {
@@ -27809,9 +27825,9 @@ public final class CloudKit {
     }
 
     public static final int DATA_FIELD_NUMBER = 15;
-    private com.google.protobuf.ByteString data_;
+    private com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data data_;
     /**
-     * <code>optional bytes data = 15;</code>
+     * <code>optional .Data data = 15;</code>
      *
      * <pre>
      * 192 bit something or other -&gt; wrapped key, is it really repeated?
@@ -27821,13 +27837,23 @@ public final class CloudKit {
       return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
-     * <code>optional bytes data = 15;</code>
+     * <code>optional .Data data = 15;</code>
      *
      * <pre>
      * 192 bit something or other -&gt; wrapped key, is it really repeated?
      * </pre>
      */
-    public com.google.protobuf.ByteString getData() {
+    public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data getData() {
+      return data_;
+    }
+    /**
+     * <code>optional .Data data = 15;</code>
+     *
+     * <pre>
+     * 192 bit something or other -&gt; wrapped key, is it really repeated?
+     * </pre>
+     */
+    public com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder getDataOrBuilder() {
       return data_;
     }
 
@@ -27877,7 +27903,7 @@ public final class CloudKit {
       contentBaseURL_ = "";
       dsid_ = "";
       recordId_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordIdentifier.getDefaultInstance();
-      data_ = com.google.protobuf.ByteString.EMPTY;
+      data_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance();
       fileSignature_ = com.google.protobuf.ByteString.EMPTY;
       downloadTokenExpiration_ = 0L;
     }
@@ -27916,7 +27942,7 @@ public final class CloudKit {
         output.writeMessage(10, recordId_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeBytes(15, data_);
+        output.writeMessage(15, data_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
         output.writeBytes(17, fileSignature_);
@@ -27963,7 +27989,7 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(15, data_);
+          .computeMessageSize(15, data_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
         size += com.google.protobuf.CodedOutputStream
@@ -28083,6 +28109,7 @@ public final class CloudKit {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getRecordIdFieldBuilder();
+          getDataFieldBuilder();
         }
       }
       private static Builder create() {
@@ -28109,7 +28136,11 @@ public final class CloudKit {
           recordIdBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000040);
-        data_ = com.google.protobuf.ByteString.EMPTY;
+        if (dataBuilder_ == null) {
+          data_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance();
+        } else {
+          dataBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000080);
         fileSignature_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000100);
@@ -28178,7 +28209,11 @@ public final class CloudKit {
         if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
           to_bitField0_ |= 0x00000080;
         }
-        result.data_ = data_;
+        if (dataBuilder_ == null) {
+          result.data_ = data_;
+        } else {
+          result.data_ = dataBuilder_.build();
+        }
         if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
           to_bitField0_ |= 0x00000100;
         }
@@ -28233,7 +28268,7 @@ public final class CloudKit {
           mergeRecordId(other.getRecordId());
         }
         if (other.hasData()) {
-          setData(other.getData());
+          mergeData(other.getData());
         }
         if (other.hasFileSignature()) {
           setFileSignature(other.getFileSignature());
@@ -28771,9 +28806,11 @@ public final class CloudKit {
         return recordIdBuilder_;
       }
 
-      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      private com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data data_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder> dataBuilder_;
       /**
-       * <code>optional bytes data = 15;</code>
+       * <code>optional .Data data = 15;</code>
        *
        * <pre>
        * 192 bit something or other -&gt; wrapped key, is it really repeated?
@@ -28783,43 +28820,142 @@ public final class CloudKit {
         return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
-       * <code>optional bytes data = 15;</code>
+       * <code>optional .Data data = 15;</code>
        *
        * <pre>
        * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public com.google.protobuf.ByteString getData() {
-        return data_;
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data getData() {
+        if (dataBuilder_ == null) {
+          return data_;
+        } else {
+          return dataBuilder_.getMessage();
+        }
       }
       /**
-       * <code>optional bytes data = 15;</code>
+       * <code>optional .Data data = 15;</code>
        *
        * <pre>
        * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
-      public Builder setData(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000080;
-        data_ = value;
-        onChanged();
+      public Builder setData(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data value) {
+        if (dataBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          data_ = value;
+          onChanged();
+        } else {
+          dataBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000080;
         return this;
       }
       /**
-       * <code>optional bytes data = 15;</code>
+       * <code>optional .Data data = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
+       * </pre>
+       */
+      public Builder setData(
+          com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder builderForValue) {
+        if (dataBuilder_ == null) {
+          data_ = builderForValue.build();
+          onChanged();
+        } else {
+          dataBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>optional .Data data = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
+       * </pre>
+       */
+      public Builder mergeData(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data value) {
+        if (dataBuilder_ == null) {
+          if (((bitField0_ & 0x00000080) == 0x00000080) &&
+              data_ != com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance()) {
+            data_ =
+              com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.newBuilder(data_).mergeFrom(value).buildPartial();
+          } else {
+            data_ = value;
+          }
+          onChanged();
+        } else {
+          dataBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>optional .Data data = 15;</code>
        *
        * <pre>
        * 192 bit something or other -&gt; wrapped key, is it really repeated?
        * </pre>
        */
       public Builder clearData() {
+        if (dataBuilder_ == null) {
+          data_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance();
+          onChanged();
+        } else {
+          dataBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000080);
-        data_ = getDefaultInstance().getData();
-        onChanged();
         return this;
+      }
+      /**
+       * <code>optional .Data data = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
+       * </pre>
+       */
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder getDataBuilder() {
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return getDataFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .Data data = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
+       * </pre>
+       */
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder getDataOrBuilder() {
+        if (dataBuilder_ != null) {
+          return dataBuilder_.getMessageOrBuilder();
+        } else {
+          return data_;
+        }
+      }
+      /**
+       * <code>optional .Data data = 15;</code>
+       *
+       * <pre>
+       * 192 bit something or other -&gt; wrapped key, is it really repeated?
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder> 
+          getDataFieldBuilder() {
+        if (dataBuilder_ == null) {
+          dataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder, com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder>(
+                  getData(),
+                  getParentForChildren(),
+                  isClean());
+          data_ = null;
+        }
+        return dataBuilder_;
       }
 
       private com.google.protobuf.ByteString fileSignature_ = com.google.protobuf.ByteString.EMPTY;
@@ -29311,6 +29447,406 @@ public final class CloudKit {
     }
 
     // @@protoc_insertion_point(class_scope:UInt32)
+  }
+
+  public interface DataOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:Data)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional bytes value = 1;</code>
+     */
+    boolean hasValue();
+    /**
+     * <code>optional bytes value = 1;</code>
+     */
+    com.google.protobuf.ByteString getValue();
+  }
+  /**
+   * Protobuf type {@code Data}
+   */
+  public static final class Data extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:Data)
+      DataOrBuilder {
+    // Use Data.newBuilder() to construct.
+    private Data(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private Data(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Data defaultInstance;
+    public static Data getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public Data getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Data(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              value_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_Data_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_Data_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.class, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<Data> PARSER =
+        new com.google.protobuf.AbstractParser<Data>() {
+      public Data parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Data(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Data> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int VALUE_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString value_;
+    /**
+     * <code>optional bytes value = 1;</code>
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional bytes value = 1;</code>
+     */
+    public com.google.protobuf.ByteString getValue() {
+      return value_;
+    }
+
+    private void initFields() {
+      value_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code Data}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:Data)
+        com.github.horrorho.inflatabledonkey.protocol.CloudKit.DataOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_Data_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_Data_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.class, com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.Builder.class);
+      }
+
+      // Construct using com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        value_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.internal_static_Data_descriptor;
+      }
+
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data getDefaultInstanceForType() {
+        return com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance();
+      }
+
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data build() {
+        com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data buildPartial() {
+        com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data result = new com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.value_ = value_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data) {
+          return mergeFrom((com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data other) {
+        if (other == com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data.getDefaultInstance()) return this;
+        if (other.hasValue()) {
+          setValue(other.getValue());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.github.horrorho.inflatabledonkey.protocol.CloudKit.Data) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes value = 1;</code>
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bytes value = 1;</code>
+       */
+      public com.google.protobuf.ByteString getValue() {
+        return value_;
+      }
+      /**
+       * <code>optional bytes value = 1;</code>
+       */
+      public Builder setValue(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes value = 1;</code>
+       */
+      public Builder clearValue() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        value_ = getDefaultInstance().getValue();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:Data)
+    }
+
+    static {
+      defaultInstance = new Data(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:Data)
   }
 
   public interface ZoneRetrieveRequestOrBuilder extends
@@ -31858,6 +32394,11 @@ public final class CloudKit {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_UInt32_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_Data_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_Data_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ZoneRetrieveRequest_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -31972,22 +32513,23 @@ public final class CloudKit {
       "okens\022\036\n\nfileTokens\030\001 \003(\0132\n.FileToken\"U\n" +
       "\tFileToken\022\024\n\014fileChecksum\030\001 \001(\014\022\r\n\005toke" +
       "n\030\002 \001(\t\022\014\n\004size\030\003 \001(\004\022\025\n\rfileSignature\030\004" +
-      " \001(\014\"\344\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileC" +
+      " \001(\014\"\353\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileC" +
       "hecksum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\025\n\rdownloadT" +
       "oken\030\005 \001(\t\022\026\n\016contentBaseURL\030\010 \001(\t\022\014\n\004ds" +
       "id\030\t \001(\t\022#\n\010recordId\030\n \001(\0132\021.RecordIdent",
-      "ifier\022\014\n\004data\030\017 \001(\014\022\025\n\rfileSignature\030\021 \001" +
-      "(\014\022\037\n\027downloadTokenExpiration\030\022 \001(\004\"\027\n\006U" +
-      "Int32\022\r\n\005value\030\001 \001(\r\"D\n\023ZoneRetrieveRequ" +
-      "est\022-\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZone" +
-      "Identifier\"N\n\024ZoneRetrieveResponse\0226\n\014zo" +
-      "neSummarys\030\001 \003(\0132 .ZoneRetrieveResponseZ" +
-      "oneSummary\"<\n\037ZoneRetrieveResponseZoneSu" +
-      "mmary\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone" +
-      "\022-\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZoneIde" +
-      "ntifier\022\'\n\016protectionInfo\030\003 \001(\0132\017.Protec",
-      "tionInfoB9\n-com.github.horrorho.inflatab" +
-      "ledonkey.protocolB\010CloudKit"
+      "ifier\022\023\n\004data\030\017 \001(\0132\005.Data\022\025\n\rfileSignat" +
+      "ure\030\021 \001(\014\022\037\n\027downloadTokenExpiration\030\022 \001" +
+      "(\004\"\027\n\006UInt32\022\r\n\005value\030\001 \001(\r\"\025\n\004Data\022\r\n\005v" +
+      "alue\030\001 \001(\014\"D\n\023ZoneRetrieveRequest\022-\n\016zon" +
+      "eIdentifier\030\001 \001(\0132\025.RecordZoneIdentifier" +
+      "\"N\n\024ZoneRetrieveResponse\0226\n\014zoneSummarys" +
+      "\030\001 \003(\0132 .ZoneRetrieveResponseZoneSummary" +
+      "\"<\n\037ZoneRetrieveResponseZoneSummary\022\031\n\nt" +
+      "argetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016zoneId" +
+      "entifier\030\001 \001(\0132\025.RecordZoneIdentifier\022\'\n",
+      "\016protectionInfo\030\003 \001(\0132\017.ProtectionInfoB9" +
+      "\n-com.github.horrorho.inflatabledonkey.p" +
+      "rotocolB\010CloudKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -32187,26 +32729,32 @@ public final class CloudKit {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_UInt32_descriptor,
         new java.lang.String[] { "Value", });
-    internal_static_ZoneRetrieveRequest_descriptor =
+    internal_static_Data_descriptor =
       getDescriptor().getMessageTypes().get(31);
+    internal_static_Data_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_Data_descriptor,
+        new java.lang.String[] { "Value", });
+    internal_static_ZoneRetrieveRequest_descriptor =
+      getDescriptor().getMessageTypes().get(32);
     internal_static_ZoneRetrieveRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveRequest_descriptor,
         new java.lang.String[] { "ZoneIdentifier", });
     internal_static_ZoneRetrieveResponse_descriptor =
-      getDescriptor().getMessageTypes().get(32);
+      getDescriptor().getMessageTypes().get(33);
     internal_static_ZoneRetrieveResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveResponse_descriptor,
         new java.lang.String[] { "ZoneSummarys", });
     internal_static_ZoneRetrieveResponseZoneSummary_descriptor =
-      getDescriptor().getMessageTypes().get(33);
+      getDescriptor().getMessageTypes().get(34);
     internal_static_ZoneRetrieveResponseZoneSummary_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ZoneRetrieveResponseZoneSummary_descriptor,
         new java.lang.String[] { "TargetZone", });
     internal_static_Zone_descriptor =
-      getDescriptor().getMessageTypes().get(34);
+      getDescriptor().getMessageTypes().get(35);
     internal_static_Zone_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Zone_descriptor,
