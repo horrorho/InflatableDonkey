@@ -24,8 +24,9 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -34,21 +35,15 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class FileTokensFactory implements Function<Collection<CloudKit.Asset>, CloudKit.FileTokens> {
+public final class FileTokensFactory {
 
-    public static FileTokensFactory instance() {
-        return instance;
+    public static CloudKit.FileTokens from(CloudKit.Asset... asset) {
+        return from(Arrays.asList(asset));
     }
 
-    private static final FileTokensFactory instance = new FileTokensFactory();
-
-    private FileTokensFactory() {
-    }
-
-    @Override
-    public CloudKit.FileTokens apply(Collection<CloudKit.Asset> assets) {
+    public static CloudKit.FileTokens from(Collection<CloudKit.Asset> assets) {
         return assets.stream()
-                .map(this::fileToken)
+                .map(FileTokensFactory::fileToken)
                 .collect(
                         CloudKit.FileTokens::newBuilder,
                         CloudKit.FileTokens.Builder::addFileTokens,
@@ -56,11 +51,17 @@ public final class FileTokensFactory implements Function<Collection<CloudKit.Ass
                 .build();
     }
 
-    CloudKit.FileToken fileToken(CloudKit.Asset asset) {
+    static CloudKit.FileToken fileToken(CloudKit.Asset asset) {
+        return fileToken(asset.getFileChecksum(), asset.getFileSignature(), asset.getDownloadToken());
+    }
+
+    static CloudKit.FileToken
+            fileToken(ByteString fileChecksum, ByteString fileSignature, String downloadToken) {
+
         return CloudKit.FileToken.newBuilder()
-                .setFileChecksum(asset.getFileChecksum())
-                .setFileSignature(asset.getFileSignature())
-                .setToken(asset.getDownloadToken())
+                .setFileChecksum(fileChecksum)
+                .setFileSignature(fileSignature)
+                .setToken(downloadToken)
                 .build();
     }
 }

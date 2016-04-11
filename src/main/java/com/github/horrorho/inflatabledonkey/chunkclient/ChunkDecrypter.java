@@ -112,7 +112,7 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
 
             if (keyType(chunkInfo) != 2) {
                 // TODO no idea if type 2 chunks still exist.
-                logger.warn("-- decryptChunk() - chunk 2 decryption not yet implemented: {}", chunkInfo);
+                logger.warn("-- decryptChunk() - chunk 1 decryption not yet implemented: {}", chunkInfo);
                 return Optional.empty();
             }
 

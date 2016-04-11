@@ -91,17 +91,17 @@ public final class XZones {
         return Optional.ofNullable(lastProtectionTag.get());
     }
 
-    public Optional<XZone> zone() {
+    public Optional<XZone> lastZone() {
         return lastProtectionTag().map(zones::get);
     }
 
-    public Optional<XZones> put(String protectionTag, byte[] protectionInfo) {
+    public Optional<XZone> put(String protectionTag, byte[] protectionInfo) {
         return XZoneFactory.instance()
                 .create(protectionInfo, protectionTag, this::key)
                 .map(this::put);
     }
 
-    public XZones put(XZone zone) {
+    public XZone put(XZone zone) {
         if (zones.containsKey(zone.protectionTag())) {
             logger.debug("-- put() - overwritten zone: {}", zone.protectionTag());
         }
@@ -109,7 +109,7 @@ public final class XZones {
         put(zone.keys());
         zones.put(zone.protectionTag(), zone);
         lastProtectionTag.set(zone.protectionTag());
-        return this;
+        return zone;
     }
 
     public XZones put(Collection<Key<ECPrivate>> keys) {

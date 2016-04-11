@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.dd.plist.NSData;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPInitResponse;
@@ -49,20 +48,25 @@ import com.github.horrorho.inflatabledonkey.data.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.CKInit;
 import com.github.horrorho.inflatabledonkey.data.MobileMe;
 import com.github.horrorho.inflatabledonkey.data.Tokens;
+import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.Assets;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
 import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.ZoneRecord;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotsFactory;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
-import com.github.horrorho.inflatabledonkey.keybag.FileKeyAssistant;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.FileDecrypter;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyAssistant;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XFPKeyUnwrap;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
@@ -88,10 +92,10 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -106,7 +110,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -455,7 +458,7 @@ public class Main {
                 };
 
         BiFunction<byte[], String, byte[]> zonesDecrypt
-                = (bs, s) -> zones.zone()
+                = (bs, s) -> zones.lastZone()
                 .orElseThrow(() -> new IllegalArgumentException("no zones present"))
                 .decrypt(bs, s);
 
@@ -656,7 +659,6 @@ public class Main {
         zonesAddRecord.accept(manifestResponse.getRecord());
 
         Manifests manifests = ManifestsFactory.from(manifestResponse.getRecord(), zonesDecrypt);
-
         logger.debug("-- main() - manifests: {}", manifests);
 
         Function<byte[], NSDictionary> parseProperyList = bs -> {
@@ -670,11 +672,8 @@ public class Main {
         };
 
         Optional<NSDictionary> optionalBackupProperties = manifests.backupProperties();
-
-        if (optionalBackupProperties.isPresent()) {
-            logger.debug("-- main() - decrypted backup properties: {}",
-                    optionalBackupProperties.get().toXMLPropertyList());
-        }
+        logger.debug("-- main() - decrypted backup properties: {}",
+                optionalBackupProperties.map(NSObject::toXMLPropertyList).orElse("NULL"));
 
         if (manifests.manifests().isEmpty()) {
             logger.info("-- main() - no manifests for snapshot: {}", snapshot);
@@ -700,36 +699,31 @@ public class Main {
          */
         logger.info("-- main() - *** Retrieve list of assets ***");
 
+        List<String> manifestRecords = manifests.manifests()
+                .stream()
+                .limit(25) //  TOFIX temporary limiter for testing
+                .map(Manifest::id)
+                .map(m -> m + ":0") // TODO manifest count
+                .collect(Collectors.toList());
+// TODO manifest count
+// TOFIX temporary code
+
         List<CloudKit.RecordRetrieveResponse> responseAssetList
                 = cloudKitty.recordRetrieveRequest(
                         httpClient,
                         container,
                         bundle,
                         "_defaultZone",
-                        manifest.id() + ":0");
+                        manifestRecords);
 
-        // protection info
-        responseAssetList.stream()
+        List<Assets> assetsList = responseAssetList.stream()
+                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(Record::hasProtectionInfo)
-                .map(Record::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
-
-        List<String> files = responseAssetList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(c -> c.getIdentifier().getName().equals("files"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
-                .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getReferenceValue)
-                .map(CloudKit.RecordReference::getRecordIdentifier)
-                .map(CloudKit.RecordIdentifier::getValue)
-                .map(CloudKit.Identifier::getName)
+                .map(r -> ZoneRecord.from(zones, r))
+                .map(AssetsFactory::from)
                 .collect(Collectors.toList());
-        logger.debug("-- main() - assets: {}", files);
 
+        // TODO name: "placeholderFiles"
         /* 
          Retrieve asset tokens.
     
@@ -738,39 +732,18 @@ public class Main {
          */
         logger.info("-- main() - *** Retrieve list of asset tokens ***");
 
-        // F:UUID:token:length:x
-        // Find first file that isn't 0 length.
-        // Not ideal, as all files might be zero length in this manifest, but allows us a flat sequence of steps.
-        String file = files.stream()
-                .filter(a -> {
-                    // TOFIX fragile
-                    String[] split = a.split(":");
-                    return !split[3].equals("0");
-                })
-                .findFirst()
-                .orElse(null);
-
-        List<String> fileList = files.stream()
-                .filter(a -> {
-                    // TOFIX fragile
-                    String[] split = a.split(":");
-                    return !split[3].equals("0");
-                })
+        List<String> fileList = assetsList.stream()
+                .map(Assets::nonEmptyFiles)
+                .flatMap(Collection::stream)
+                .limit(100) // TODO manage
                 .collect(Collectors.toList());
 
-        List<CloudKit.RecordRetrieveResponse> assetTokenss
-                = cloudKitty.recordRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "_defaultZone",
-                        fileList.get(0)
-                );
-
-        if (file == null) {
-            logger.warn("-- main() - Manifest only contains empty files: {}, try another one.", manifest);
+        if (fileList.isEmpty()) {
+            logger.warn("-- main() - empty file list.", manifest);
             System.exit(-1);
         }
+
+        logger.debug("-- main() - non-empty file list: {}", fileList);
 
         List<CloudKit.RecordRetrieveResponse> assetTokens
                 = cloudKitty.recordRetrieveRequest(
@@ -778,83 +751,94 @@ public class Main {
                         container,
                         bundle,
                         "_defaultZone",
-                        file);
+                        fileList);
 
-        // protection info
-        assetTokens.stream()
+        List<Asset> assetList = assetTokens.stream()
+                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(Record::hasProtectionInfo)
-                .map(Record::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
-
-        Function<byte[], byte[]> decryptEncrytedAttributes
-                = bs -> zones.zone().get().decrypt(bs, "encryptedAttributes");
-
-        // Should only get one or none.
-        List<NSDictionary> encryptedAttributesList = assetTokens.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("encryptedAttributes"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
-                .map(decryptEncrytedAttributes)
-                .map(parseProperyList)
+                .map(r -> ZoneRecord.from(zones, r))
+                .map(AssetFactory::from)
                 .collect(Collectors.toList());
 
-        encryptedAttributesList.forEach(
-                p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
+        assetList.forEach(a -> logger.debug("-- main() - asset: {}", a));
 
-        // TODO no encrypted attributes
-        // TODO unsafe array access
-        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
+        Map<Integer, List<Asset>> collect = assetList.stream()
+                .collect(Collectors.groupingBy(Asset::protectionClass));
+        collect.keySet()
+                .forEach(k -> logger.debug("-- main() - protection class: {} count: {}", k, collect.get(k).size()));
 
-        logger.debug("-- main() - wrapped encryption key: {}", Hex.encodeHexString(wrappedEncryptionKey));
-
-        // Should only get one.
-        List<Integer> protectionClassList = assetTokens.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getUint32)
-                .collect(Collectors.toList());
-
-        // TODO unsafe array access
-        int protectionClass = protectionClassList.get(0);
-        logger.debug("-- main() - protection class: {}", protectionClass);
-
-        Optional<CloudKit.Asset> optionalAsset = assetTokens.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("contents"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getAssetValue)
-                .findFirst();
-
-        if (!optionalAsset.isPresent()) {
-            logger.warn("-- main() - asset not found");
-        }
-
-        CloudKit.Asset assetX = optionalAsset.get();
-        logger.debug("-- main() - asset data: 0x{}", Hex.encodeHexString(assetX.toByteArray()));
-
-        byte[] assetWrappedKey = assetX.getData()
-                .substring(assetX.getData().size() - 0x18) // TODO unsure of format here, possibly tag | key.
-                .toByteArray();
-        logger.debug("-- main() -asset wrapped key: {}", Hex.encodeHexString(assetWrappedKey));
-
-        Optional<byte[]> optionalAssetKey = zones.zone().flatMap(z -> z.fpDecrypt(assetWrappedKey));
-        logger.debug("-- main() - unwrapped: 0x:{}", optionalAssetKey.map(Hex::encodeHexString).orElse("NULL"));
-
-        if (!optionalAssetKey.isPresent()) {
-            logger.debug("-- main() - unable to unwrap asset key");
-        }
-        byte[] assetKey = optionalAssetKey.get();
-
+        Asset asset = assetList.get(2);   // TODO unsafe access
+        logger.debug("-- main() - unencryptedAsset: {} {}",
+                asset);
+//
+//        Function<byte[], byte[]> decryptEncrytedAttributes
+//                = bs -> zones.lastZone().get().decrypt(bs, "encryptedAttributes");
+//
+//        // Should only get one or none.
+//        List<NSDictionary> encryptedAttributesList = assetTokens.stream()
+//                .map(CloudKit.RecordRetrieveResponse::getRecord)
+//                .map(CloudKit.Record::getRecordFieldList)
+//                .flatMap(Collection::stream)
+//                .filter(value -> value.getIdentifier().getName().equals("encryptedAttributes"))
+//                .map(CloudKit.RecordField::getValue)
+//                .map(RecordFieldValue::getBytesValue)
+//                .map(ByteString::toByteArray)
+//                .map(decryptEncrytedAttributes)
+//                .map(parseProperyList)
+//                .collect(Collectors.toList());
+//
+//        encryptedAttributesList.forEach(
+//                p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
+//
+//        // TODO no encrypted attributes
+//        // TODO unsafe array access
+//        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
+//
+//        logger.debug("-- main() - wrapped encryption key: {}", Hex.encodeHexString(wrappedEncryptionKey));
+//
+//        // Should only get one.
+//        List<Integer> protectionClassList = assetTokens.stream()
+//                .map(CloudKit.RecordRetrieveResponse::getRecord)
+//                .map(CloudKit.Record::getRecordFieldList)
+//                .flatMap(Collection::stream)
+//                .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
+//                .map(CloudKit.RecordField::getValue)
+//                .map(RecordFieldValue::getUint32)
+//                .collect(Collectors.toList());
+//
+//        // TODO unsafe array access
+//        int protectionClass = protectionClassList.get(0);
+//        logger.debug("-- main() - protection class: {}", protectionClass);
+//
+//        Optional<CloudKit.Asset> optionalAsset = assetTokens.stream()
+//                .map(CloudKit.RecordRetrieveResponse::getRecord)
+//                .map(CloudKit.Record::getRecordFieldList)
+//                .flatMap(Collection::stream)
+//                .filter(value -> value.getIdentifier().getName().equals("contents"))
+//                .map(CloudKit.RecordField::getValue)
+//                .map(RecordFieldValue::getAssetValue)
+//                .findFirst();
+//
+//        if (!optionalAsset.isPresent()) {
+//            logger.warn("-- main() - asset not found");
+//        }
+//
+//        CloudKit.Asset assetX = optionalAsset.get();
+//        logger.debug("-- main() - asset data: 0x{}", Hex.encodeHexString(assetX.toByteArray()));
+//
+//        byte[] assetWrappedKey = assetX.getData()
+//                .substring(assetX.getData().size() - 0x18) // TODO unsure of format here, possibly tag | key.
+//                .toByteArray();
+//        logger.debug("-- main() -asset wrapped key: {}", Hex.encodeHexString(assetWrappedKey));
+//
+//        Optional<byte[]> optionalAssetKey = zones.lastZone().flatMap(z -> z.fpDecrypt(assetWrappedKey));
+//        logger.debug("-- main() - unwrapped: 0x:{}", optionalAssetKey.map(Hex::encodeHexString).orElse("NULL"));
+//
+//        if (!optionalAssetKey.isPresent()) {
+//            logger.debug("-- main() - unable to unwrap asset key");
+//        }
+//        byte[] assetKey = optionalAssetKey.get();
+//        System.exit(0);
         /* 
          Keybag.
          */
@@ -879,7 +863,7 @@ public class Main {
                 .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
 
         Function<byte[], byte[]> decryptKeybagData
-                = bs -> zones.zone().get().decrypt(bs, "keybagData");
+                = bs -> zones.lastZone().get().decrypt(bs, "keybagData");
 
         Optional<byte[]> optionalKeybagData = responseKeyBagList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
@@ -899,7 +883,7 @@ public class Main {
         byte[] keybagData = optionalKeybagData.get();
 
         Function<byte[], byte[]> decryptSecret
-                = bs -> zones.zone().get().decrypt(bs, "secret");
+                = bs -> zones.lastZone().get().decrypt(bs, "secret");
 
         Optional<byte[]> optionalSecret = responseKeyBagList.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
@@ -921,15 +905,15 @@ public class Main {
         KeyBag keyBag = KeyBagFactory.create(keybagData, secret);
         logger.debug("-- main() - key bag: {}", keyBag);
 
-        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, protectionClass, wrappedEncryptionKey);
-        if (!optionalFileEncryptionKey.isPresent()) {
-            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", Hex.encodeHex(wrappedEncryptionKey));
-            System.exit(-1);
-        }
-        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
-
-        logger.debug("-- main() - wrapped file encryption key: 0x{}", Hex.encodeHexString(wrappedEncryptionKey));
-        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
+//        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, protectionClass, wrappedEncryptionKey);
+//        if (!optionalFileEncryptionKey.isPresent()) {
+//            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", Hex.encodeHex(wrappedEncryptionKey));
+//            System.exit(-1);
+//        }
+//        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
+//
+//        logger.debug("-- main() - wrapped file encryption key: 0x{}", Hex.encodeHexString(wrappedEncryptionKey));
+//        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
 
         /* 
          AuthorizeGet.
@@ -942,25 +926,23 @@ public class Main {
          */
         logger.info("-- main() - *** AuthorizeGet ***");
 
-        List<CloudKit.Asset> contents = assetTokens.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(c -> c.getIdentifier().getName().equals("contents"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getAssetValue)
-                .collect(Collectors.toList());
 
-        // TODO confusing, rename to file attributes or similar?
-        CloudKit.Asset asset = contents.get(0);
-        logger.debug("-- main() - file attributes: {}", asset);
-
+        
+        logger.debug("-- main() - asset: {}", asset);
+        
+        Optional<CloudKit.Asset> optionalCloudKitAsset = asset.asset();
+        if (!optionalCloudKitAsset.isPresent()) {
+            logger.warn("-- main() - no cloud kit asset");
+        }
+        CloudKit.Asset cloudKitAsset = optionalCloudKitAsset.get();
+        
+        
         // FileTokens. Expanded from iOS8.
-        CloudKit.FileTokens fileTokens = FileTokensFactory.instance().apply(Arrays.asList(asset));
+        CloudKit.FileTokens fileTokens = FileTokensFactory.from(cloudKitAsset);
 
         // TODO check mmcsurl and com.apple.Dataclass.Content url match. But is there a reason they shouldn't?
         HttpUriRequest authorizeGet = new AuthorizeGetRequestFactory(coreHeaders)
-                .newRequest(auth.dsPrsID(), asset.getContentBaseURL(), container, "_defaultZone", fileTokens);
+                .newRequest(auth.dsPrsID(), cloudKitAsset.getContentBaseURL(), container, "_defaultZone", fileTokens);
         logger.debug("-- main() - authorizeGet request: {}", authorizeGet);
 
         ResponseHandler<ChunkServer.FileGroups> fileGroupsResponseHandler
@@ -977,8 +959,18 @@ public class Main {
          We can download data, but we are unable to decrypt the chunks.
          */
         logger.info("-- main() - *** ChunkServer.FileGroups ***");
-        ChunkClient chunkClient = new ChunkClient(coreHeaders, k -> AESWrap.unwrap(assetKey, k));
 
+        logger.info("-- main() - asset: {}", asset);
+
+        ChunkClient chunkClient = new ChunkClient(coreHeaders, k
+                -> AESWrap.unwrap(asset.keyEncryptionKey().get(), k)); // TODO unsafe get
+
+//ChunkClient chunkClient = new ChunkClient(coreHeaders, k -> {
+//logger.debug("-- x() - key: {}", Hex.encodeHexString(k));
+//   return Optional.of(Arrays.copyOfRange(k, k.length - 16, k.length));
+//
+//
+//}); // TODO unsafe get
         BiConsumer<ByteString, List<byte[]>> dataConsumer
                 = (fileChecksum, data) -> {
                     String filename = Hex.encodeHexString(fileChecksum.toByteArray()) + ".bin";
@@ -987,16 +979,15 @@ public class Main {
                     write(filename, data);
                 };
 
-        Stream<byte[]> encryptedKeys = fileGroups.getFileGroupsList()
-                .stream()
-                .map(ChunkServer.FileChecksumStorageHostChunkLists::getStorageHostChunkListList)
-                .flatMap(Collection::stream)
-                .map(ChunkServer.StorageHostChunkList::getChunkInfoList)
-                .flatMap(Collection::stream)
-                .map(ChunkServer.ChunkInfo::getChunkEncryptionKey)
-                .map(bs -> bs.substring(1)) // TOFIX assuming type 02 for now.
-                .map(ByteString::toByteArray);
-
+//        Stream<byte[]> encryptedKeys = fileGroups.getFileGroupsList()
+//                .stream()
+//                .map(ChunkServer.FileChecksumStorageHostChunkLists::getStorageHostChunkListList)
+//                .flatMap(Collection::stream)
+//                .map(ChunkServer.StorageHostChunkList::getChunkInfoList)
+//                .flatMap(Collection::stream)
+//                .map(ChunkServer.ChunkInfo::getChunkEncryptionKey)
+//                .map(bs -> bs.substring(1)) // TOFIX assuming type 02 for now.
+//                .map(ByteString::toByteArray);
 //        encryptedKeys.forEach(k -> {
 //            logger.debug("-- main() - chunk key: 0x{}", Hex.encodeHexString(k));
 //
@@ -1005,8 +996,33 @@ public class Main {
 //
 //// Assume type 02
 //        });
-
         chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
+        
+        
+        
+        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, asset.protectionClass(), asset.encryptionKey().get());// TODO unsafe get
+        if (!optionalFileEncryptionKey.isPresent()) {
+            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", asset.encryptionKey());
+            System.exit(-1);
+        }
+        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
+
+        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
+        
+        
+        
+        String filename = Hex.encodeHexString(asset.fileChecksum().get()) + ".bin";
+        
+        
+ 
+        byte[] hash = FileDecrypter.decrypt(
+                Paths.get(filename), 
+                ByteString.copyFrom(fileEncryptionKey).toByteArray(),
+                asset.size(), 
+                Paths.get("."));
+ 
+        logger.debug("-- main() - hash: {}", Hex.encodeHexString(hash));
+  
 
 //        zones.keys().forEach(k -> {
 //            logger.debug("-- main() - k: {}", Hex.encodeHexString(k.publicExportData()));

@@ -21,8 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.keybag;
+package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.pcs.xfile.BlockStreamDecrypter;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.BlockDecrypter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

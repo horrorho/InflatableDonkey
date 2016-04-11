@@ -30,6 +30,8 @@ import com.dd.plist.PropertyListParser;
 import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Optional;
+import java.util.function.Function;
 import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
 import org.xml.sax.SAXException;
@@ -98,4 +100,28 @@ public final class PLists {
             throw new BadDataException("Bad type for key:" + key, ex);
         }
     }
+
+    static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
+        return (to.isAssignableFrom(object.getClass()))
+                ? Optional.of(to.cast(object))
+                : Optional.empty();
+    }
+
+    public static Optional<NSObject> optional(NSDictionary dictionary, String key) {
+        return dictionary.containsKey(key)
+                ? Optional.of(dictionary.get(key))
+                : Optional.empty();
+    }
+
+    public static <T extends NSObject> Optional<T> optional(NSDictionary dictionary, String key, Class<T> to) {
+        return optional(dictionary, key)
+                .flatMap(o -> cast(o, to));
+    }
+
+    public static <T extends NSObject, U>
+            Optional<U> optional(NSDictionary dictionary, String key, Class<T> to, Function<T, U> then) {
+        return optional(dictionary, key, to)
+                .map(then);
+    }
+
 }

@@ -21,14 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.keybag;
+package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
 import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
+import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
