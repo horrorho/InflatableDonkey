@@ -49,8 +49,6 @@ import org.slf4j.LoggerFactory;
 @NotThreadSafe
 public final class BlockDecrypter {
 
-    private static final Logger logger = LoggerFactory.getLogger(BlockDecrypter.class);
-
     public static BlockDecrypter create(byte[] key) {
         BufferedBlockCipher cipher = new BufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
         SHA1Digest digest = new SHA1Digest();
@@ -62,7 +60,7 @@ public final class BlockDecrypter {
         ParametersWithIV ivKey = ivKey(digest, cipher.getBlockSize(), key);
         KeyParameter keyParameter = key(key);
 
-        return new BlockDecrypter(cipher, digest, ivKey, keyParameter);
+        return new BlockDecrypter(cipher, ivKey, keyParameter);
     }
 
     public static ParametersWithIV ivKey(Digest digest, int length, byte[] key) {
@@ -83,63 +81,24 @@ public final class BlockDecrypter {
     }
 
     private final BufferedBlockCipher blockCipher;
-    private final Digest digest;
     private final ParametersWithIV ivKey;
     private final KeyParameter key;
 
     public BlockDecrypter(
             BufferedBlockCipher blockCipher,
-            Digest digest,
             ParametersWithIV ivKey,
             KeyParameter key) {
 
         this.blockCipher = Objects.requireNonNull(blockCipher, "blockCipher");
-        this.digest = Objects.requireNonNull(digest, "digest");
         this.ivKey = Objects.requireNonNull(ivKey, "ivKey");
         this.key = Objects.requireNonNull(key, "key");
     }
 
-    public byte[] decryptBlocks(InputStream input, OutputStream output, int blockLength) throws IOException {
-        byte[] in = new byte[blockLength];
-        byte[] out = new byte[blockLength];
-
-        byte[] hash = new byte[digest.getDigestSize()];
-        digest.reset();
-
-        int block = 0;
-        int length;
-        while ((length = read(input, in)) != -1) {
-            digest.update(in, 0, length);
-            decryptBlock(block, in, length, out);
-            output.write(out, 0, length);
-        }
-
-        digest.doFinal(hash, 0);
-        return hash;
+    public void decrypt(int block, byte[] in, int length, byte[] out) {
+        decrypt(block, in, 0, length, out, 0);
     }
 
-    int read(InputStream input, byte[] buffer) throws IOException {
-        // Read complete blocks where possible, as read on streams may return partial data which leads to incomplete 
-        // block filling and broken decryption.
-        int offset = 0;
-        do {
-            int read = input.read(buffer, offset, buffer.length - offset);
-
-            if (read == -1) {
-                return offset == 0 ? -1 : offset;
-            }
-
-            offset += read;
-
-        } while (offset < buffer.length);
-        return offset;
-    }
-
-    public void decryptBlock(int block, byte[] in, int length, byte[] out) {
-        decryptBlock(block, in, 0, length, out, 0);
-    }
-
-    public void decryptBlock(int block, byte[] in, int inOff, int length, byte[] out, int outOff) {
+    public void decrypt(int block, byte[] in, int inOff, int length, byte[] out, int outOff) {
         byte[] iv = blockIV(block);
 
         ParametersWithIV parameters = new ParametersWithIV(key, iv);
