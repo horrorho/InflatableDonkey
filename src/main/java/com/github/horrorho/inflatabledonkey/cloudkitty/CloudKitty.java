@@ -359,3 +359,4 @@ public final class CloudKitty {
 // Note: Protobufs, we could pass builders on to other builders, save us an objection creation.
 // TODO too much going on, break up class into smaller parts
 // TODO fix operation types
+// TODO check for empty requests
