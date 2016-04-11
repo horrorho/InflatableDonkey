@@ -25,9 +25,9 @@ package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import net.jcip.annotations.Immutable;
@@ -48,7 +48,7 @@ public final class RequestOperationFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestOperationFactory.class);
 
-    private static final CloudKit.RequestOperationHeader baseRequestOperationHeader
+    public static final CloudKit.RequestOperationHeader baseRequestOperationHeader
             = CloudKit.RequestOperationHeader.newBuilder()
             .setF4("4.0.0.0")
             .setDeviceSoftwareVersion("9.0.1")
@@ -68,12 +68,13 @@ public final class RequestOperationFactory {
     private static final String getRecordsURLRequest = "GetRecordsURLRequest";
 
     private final CloudKit.RequestOperationHeader requestOperationHeaderProto;
-    private final CloudKit.Identifier userID;
+    private final CloudKit.Identifier cloudKitUserId;
     private final String container;
     private final String bundle;
 
+    // TODO complete
     public RequestOperationFactory(
-            String ckUserID,
+            String cloudKitUserId,
             String container,
             String bundle,
             String deviceHardwareID,
@@ -86,9 +87,9 @@ public final class RequestOperationFactory {
                 .setDeviceHardwareID(deviceHardwareID)
                 .build();
 
-        this.userID = identifier(ckUserID, 7);
-        this.container = container;
-        this.bundle = bundle;
+        this.cloudKitUserId = identifier(cloudKitUserId, 7);
+        this.container = Objects.requireNonNull(container, "container");
+        this.bundle = Objects.requireNonNull(bundle, "bundle");
     }
 
     // TODO varargs/ collection
@@ -123,7 +124,7 @@ public final class RequestOperationFactory {
                 .setZoneIdentifier(recordZoneID)
                 .build();
     }
- 
+
     public List<CloudKit.RequestOperation>
             recordRetrieveRequestOperations(String zone, Collection<String> recordNames) {
         CloudKit.RequestOperationHeader requestOperationHeader
@@ -200,7 +201,7 @@ public final class RequestOperationFactory {
 
         return CloudKit.RecordZoneIdentifier.newBuilder()
                 .setValue(identifier)
-                .setOwnerIdentifier(userID)
+                .setOwnerIdentifier(cloudKitUserId)
                 .build();
     }
 
@@ -218,5 +219,15 @@ public final class RequestOperationFactory {
                 .setName(name)
                 .setType(type)
                 .build();
+    }
+
+    @Override
+    public String toString() {
+        return "RequestOperationFactory{"
+                + "requestOperationHeaderProto=" + requestOperationHeaderProto
+                + ", userID=" + cloudKitUserId
+                + ", container=" + container
+                + ", bundle=" + bundle
+                + '}';
     }
 }
