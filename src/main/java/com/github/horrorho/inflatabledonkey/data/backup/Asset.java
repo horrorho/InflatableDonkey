@@ -23,11 +23,17 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
+import com.dd.plist.NSNumber;
+import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
@@ -48,7 +54,7 @@ public final class Asset {
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
     private final Optional<byte[]> keyEncryptionKey;
-    private final Optional<byte[]> encryptedAttributes;
+    private final Optional<NSDictionary> encryptedAttributes;
 
     public Asset(
             int protectionClass,
@@ -59,7 +65,7 @@ public final class Asset {
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
-            Optional<byte[]> encryptedAttributes) {
+            Optional<NSDictionary> encryptedAttributes) {
 
         this.protectionClass = protectionClass;
         this.size = size;
@@ -68,44 +74,79 @@ public final class Asset {
         this.contentBaseURL = Objects.requireNonNull(contentBaseURL, "contentBaseURL");
         this.fileChecksum = Objects.requireNonNull(fileChecksum, "fileChecksum");
         this.fileSignature = Objects.requireNonNull(fileSignature, "fileSignature");
-        this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey);
+        this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey, "keyEncryptionKey");
         this.encryptedAttributes = Objects.requireNonNull(encryptedAttributes, "encryptedAttributes");
     }
 
-    public int getProtectionClass() {
+    public int protectionClass() {
         return protectionClass;
     }
 
-    public int getSize() {
+    public int size() {
         return size;
     }
 
-    public int getFileType() {
+    public int fileType() {
         return fileType;
     }
 
-    public Instant getDownloadTokenExpiration() {
+    public Instant downloadTokenExpiration() {
         return downloadTokenExpiration;
     }
 
-    public Optional<String> getContentBaseURL() {
+    public Optional<String> contentBaseURL() {
         return contentBaseURL;
     }
 
-    public Optional<byte[]> getFileChecksum() {
+    public Optional<byte[]> fileChecksum() {
         return fileChecksum.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    public Optional<byte[]> getFileSignature() {
+    public Optional<byte[]> fileSignature() {
         return fileSignature.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    public Optional<byte[]> getKeyEncryptionKey() {
+    public Optional<byte[]> keyEncryptionKey() {
         return keyEncryptionKey.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    public Optional<NSDictionary> getEncryptedAttributes() {
-        return encryptedAttributes.map(bs -> PLists.<NSDictionary>parse(bs));
+    <T extends NSObject, U> Optional<U> encryptedAttribute(String key, Class<T> to, Function<T, U> then) {
+        return encryptedAttributes.flatMap(e -> PLists.optional(e, key, to, then));
+    }
+
+    public Optional<String> domain() {
+        return encryptedAttribute("domain", NSString.class, NSString::getContent);
+    }
+
+    public Optional<String> relativePath() {
+        return encryptedAttribute("relativePath", NSString.class, NSString::getContent);
+    }
+
+    public Optional<Instant> modified() {
+        return encryptedAttribute("domain", NSDate.class, NSDate::getDate)
+                .map(Date::toInstant);
+    }
+
+    public Optional<Instant> birth() {
+        return encryptedAttribute("birth", NSDate.class, NSDate::getDate)
+                .map(Date::toInstant);
+    }
+
+    public Optional<Instant> statusChanged() {
+        return encryptedAttribute("statusChanged", NSDate.class, NSDate::getDate)
+                .map(Date::toInstant);
+    }
+
+    public Optional<Integer> userID() {
+        return encryptedAttribute("userID", NSNumber.class, NSNumber::intValue);
+    }
+
+    public Optional<Integer> groupID() {
+        return encryptedAttribute("groupID", NSNumber.class, NSNumber::intValue);
+    }
+
+    public Optional<Integer> mode() {
+        return encryptedAttribute("mode", NSNumber.class, NSNumber::intValue);
     }
 
     @Override
@@ -119,7 +160,7 @@ public final class Asset {
                 + ", fileChecksum=" + fileChecksum.map(Hex::toHexString)
                 + ", fileSignature=" + fileSignature.map(Hex::toHexString)
                 + ", keyEncryptionKey=" + keyEncryptionKey.map(Hex::toHexString)
-                + ", encryptedAttributes=" + encryptedAttributes.map(Hex::toHexString)
+                + ", encryptedAttributes=" + encryptedAttributes.map(NSObject::toXMLPropertyList)
                 + '}';
     }
 }
