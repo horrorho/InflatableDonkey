@@ -68,7 +68,7 @@ public final class AssetFactory {
 
         // TODO decrypt fp
         Optional<byte[]> key
-                = asset.flatMap(as -> as.hasData() ? Optional.of(as.getData().toByteArray()) : Optional.empty())
+                = asset.flatMap(as -> as.hasData() ? Optional.of(as.getData().getValue().toByteArray()) : Optional.empty())
                 .flatMap(bs -> zone.flatMap(z -> decryptData(bs, z)));
 
         Optional<byte[]> keyEncryptionKey = Optional.empty();
@@ -111,25 +111,9 @@ public final class AssetFactory {
     }
 
     static Optional<byte[]> decryptData(byte[] data, XZone zone) {
-        // TODO unsure of format here:  tag? | wrapped key.
-        // TOFIX. Tag is always 0A18 so we are have a incomplete protobuf definition.
-        
-        if (data.length < 0x18) {
-            logger.warn("-- decryptData() - data too short: {}", data.length);
-            return Optional.empty();
-        }
-
-        // TOFIX bad protobuf definition.
-        int tagLength = data.length - 0x18;
-        byte[] tag = Arrays.copyOf(data, tagLength);
-        logger.debug("-- decryptData() - tag: {}", Hex.toHexString(tag));
-
-        byte[] wrappedKey = Arrays.copyOfRange(data, tagLength, data.length);
-        logger.debug("-- decryptData() - wrapped key: {}", Hex.toHexString(wrappedKey));
-
-        Optional<byte[]> key = zone.fpDecrypt(wrappedKey);
-        logger.debug("-- decryptData() - unwrapped: 0x:{}", key.map(Hex::toHexString).orElse("NULL"));
-
+        Optional<byte[]> key = zone.fpDecrypt(data);
+        logger.debug("-- decryptData() - data 0x{} > key: 0x:{}",
+                Hex.toHexString(data), key.map(Hex::toHexString).orElse("NULL"));
         return key;
     }
 
