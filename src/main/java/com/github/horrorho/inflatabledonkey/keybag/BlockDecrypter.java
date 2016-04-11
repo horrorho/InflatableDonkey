@@ -23,9 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.keybag;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -38,8 +35,6 @@ import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * BlockDecrypter.

@@ -29,8 +29,6 @@ import java.io.OutputStream;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.bouncycastle.crypto.Digest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * BlockStreamDecrypter.
@@ -54,7 +52,7 @@ public final class BlockStreamDecrypter {
         this.blockLength = blockLength;
     }
 
-    public byte[] decryptStream(InputStream input, OutputStream output) throws IOException {
+    public byte[] decrypt(InputStream input, OutputStream output) throws IOException {
         byte[] in = new byte[blockLength];
         byte[] out = new byte[blockLength];
 
