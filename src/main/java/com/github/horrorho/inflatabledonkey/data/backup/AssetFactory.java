@@ -73,6 +73,9 @@ public final class AssetFactory {
                         ? Optional.of(as.getData().getValue().toByteArray())
                         : Optional.empty());
 
+        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
+
+        // TODO rework to getters in Asset.
         Optional<byte[]> fileChecksum
                 = asset.flatMap(as -> as.hasFileChecksum()
                         ? Optional.of(as.getFileChecksum().toByteArray())
@@ -93,8 +96,6 @@ public final class AssetFactory {
 
         long currentTimeSeconds = System.currentTimeMillis() / 1000;
 
-        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
-
         // Adjust for bad system clocks.
         Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
                 ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
@@ -109,7 +110,8 @@ public final class AssetFactory {
                 fileChecksum,
                 fileSignature,
                 keyEncryptionKey,
-                encryptedAttributes);
+                encryptedAttributes,
+                asset);
     }
 
     static Optional<byte[]> decryptData(Optional<byte[]> data, Optional<XZone> zone) {

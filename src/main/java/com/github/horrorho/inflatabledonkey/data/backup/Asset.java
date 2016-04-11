@@ -23,11 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.dd.plist.NSData;
 import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.time.Instant;
 import java.util.Date;
@@ -55,6 +57,7 @@ public final class Asset {
     private final Optional<byte[]> fileSignature;
     private final Optional<byte[]> keyEncryptionKey;
     private final Optional<NSDictionary> encryptedAttributes;
+    private final Optional<CloudKit.Asset> asset;
 
     public Asset(
             int protectionClass,
@@ -65,7 +68,8 @@ public final class Asset {
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
-            Optional<NSDictionary> encryptedAttributes) {
+            Optional<NSDictionary> encryptedAttributes,
+            Optional<CloudKit.Asset> asset) {
 
         this.protectionClass = protectionClass;
         this.size = size;
@@ -76,6 +80,7 @@ public final class Asset {
         this.fileSignature = Objects.requireNonNull(fileSignature, "fileSignature");
         this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey, "keyEncryptionKey");
         this.encryptedAttributes = Objects.requireNonNull(encryptedAttributes, "encryptedAttributes");
+        this.asset = Objects.requireNonNull(asset, "asset");
     }
 
     public int protectionClass() {
@@ -149,6 +154,14 @@ public final class Asset {
         return encryptedAttribute("mode", NSNumber.class, NSNumber::intValue);
     }
 
+    public Optional<byte[]> encryptionKey() {
+        return encryptedAttribute("encryptionKey", NSData.class, NSData::bytes);
+    }
+
+    public Optional<CloudKit.Asset> asset() {
+        return asset;
+    }
+
     @Override
     public String toString() {
         return "Asset{"
@@ -161,6 +174,7 @@ public final class Asset {
                 + ", fileSignature=" + fileSignature.map(Hex::toHexString)
                 + ", keyEncryptionKey=" + keyEncryptionKey.map(Hex::toHexString)
                 + ", encryptedAttributes=" + encryptedAttributes.map(NSObject::toXMLPropertyList)
+                + ", asset=" + asset
                 + '}';
     }
 }
