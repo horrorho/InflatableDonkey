@@ -23,11 +23,12 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -61,17 +62,16 @@ public final class AssetFactory {
         int protectionClass = protectionClass(records);
         int fileType = fileType(records);
 
-        Optional<byte[]> encryptedAttributes = encryptedAttributes(records)
-                .flatMap(bs -> zone.map(z -> z.decrypt(bs, ENCRYPTED_ATTRIBUTES)));
+        Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
+                .flatMap(bs -> zone.map(z -> z.decrypt(bs, ENCRYPTED_ATTRIBUTES)))
+                .map(bs -> PLists.<NSDictionary>parse(bs)); // TODO cover the illegal argument exception.
 
         Optional<CloudKit.Asset> asset = asset(records);
 
-        // TODO decrypt fp
-        Optional<byte[]> key
-                = asset.flatMap(as -> as.hasData() ? Optional.of(as.getData().getValue().toByteArray()) : Optional.empty())
-                .flatMap(bs -> zone.flatMap(z -> decryptData(bs, z)));
-
-        Optional<byte[]> keyEncryptionKey = Optional.empty();
+        Optional<byte[]> data
+                = asset.flatMap(as -> as.hasData()
+                        ? Optional.of(as.getData().getValue().toByteArray())
+                        : Optional.empty());
 
         Optional<byte[]> fileChecksum
                 = asset.flatMap(as -> as.hasFileChecksum()
@@ -93,6 +93,8 @@ public final class AssetFactory {
 
         long currentTimeSeconds = System.currentTimeMillis() / 1000;
 
+        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
+
         // Adjust for bad system clocks.
         Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
                 ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
@@ -110,10 +112,20 @@ public final class AssetFactory {
                 encryptedAttributes);
     }
 
-    static Optional<byte[]> decryptData(byte[] data, XZone zone) {
-        Optional<byte[]> key = zone.fpDecrypt(data);
-        logger.debug("-- decryptData() - data 0x{} > key: 0x:{}",
-                Hex.toHexString(data), key.map(Hex::toHexString).orElse("NULL"));
+    static Optional<byte[]> decryptData(Optional<byte[]> data, Optional<XZone> zone) {
+        if (!data.isPresent()) {
+            logger.debug("-- decryptData() - no data");
+            return Optional.empty();
+        }
+
+        if (!zone.isPresent()) {
+            logger.debug("-- decryptData() - no zone");
+            return Optional.empty();
+        }
+
+        Optional<byte[]> key = zone.get().fpDecrypt(data.get());
+        logger.debug("-- decryptData() - data 0x{} > key: 0x{}",
+                data.map(Hex::toHexString).orElse("NULL"), key.map(Hex::toHexString).orElse("NULL"));
         return key;
     }
 
