@@ -23,8 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.pcs.xfile.BlockStreamDecrypter;
-import com.github.horrorho.inflatabledonkey.pcs.xfile.BlockDecrypter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,8 +36,6 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import java.util.UUID;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,30 +54,27 @@ public final class FileDecrypter {
     private static final Function<byte[], BlockStreamDecrypter> BLOCKSTREAMDECRYPTERS
             = key -> {
                 BlockDecrypter blockDecrypter = BlockDecrypter.create(key);
-                Digest digest = new SHA1Digest();
-                return new BlockStreamDecrypter(blockDecrypter, digest, BLOCK_LENGTH);
+                return new BlockStreamDecrypter(blockDecrypter, BLOCK_LENGTH);
             };
 
-    public static byte[] decrypt(Path file, byte[] key, long decryptedSize, Path tempFolder) throws IOException {
+    public static void decrypt(Path file, byte[] key, long decryptedSize, Path tempFolder) throws IOException {
         BlockStreamDecrypter blockStreamDecrypter = BLOCKSTREAMDECRYPTERS.apply(key);
 
-        return decrypt(file, blockStreamDecrypter, decryptedSize, tempFolder);
+        decrypt(file, blockStreamDecrypter, decryptedSize, tempFolder);
     }
 
-    public static byte[]
+    public static void
             decrypt(Path file, BlockStreamDecrypter blockStreamDecrypter, long decryptedSize, Path tempFolder)
             throws IOException {
 
         Path tempFile = tempFile(file, tempFolder);
         try {
-            
+
             Files.move(file, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-            byte[] hash = doDecrypt(tempFile, file, blockStreamDecrypter);
+            doDecrypt(tempFile, file, blockStreamDecrypter);
 
             truncate(file, decryptedSize);
-
-            return hash;
 
         } finally {
             try {
@@ -93,13 +86,12 @@ public final class FileDecrypter {
         }
     }
 
-    static byte[]
-            doDecrypt(Path in, Path out, BlockStreamDecrypter blockStreamDecrypter) throws IOException {
+    static void doDecrypt(Path in, Path out, BlockStreamDecrypter blockStreamDecrypter) throws IOException {
 
         try (InputStream input = Files.newInputStream(in, READ);
                 OutputStream output = Files.newOutputStream(out, CREATE, WRITE, TRUNCATE_EXISTING)) {
 
-            return blockStreamDecrypter.decrypt(input, output);
+            blockStreamDecrypter.decrypt(input, output);
         }
     }
 

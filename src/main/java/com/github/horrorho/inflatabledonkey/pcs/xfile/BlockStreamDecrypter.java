@@ -23,13 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.pcs.xfile.BlockDecrypter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
-import org.bouncycastle.crypto.Digest;
 
 /**
  * BlockStreamDecrypter.
@@ -40,36 +38,26 @@ import org.bouncycastle.crypto.Digest;
 public final class BlockStreamDecrypter {
 
     private final BlockDecrypter blockDecrypter;
-    private final Digest digest;
     private final int blockLength;
 
     public BlockStreamDecrypter(
             BlockDecrypter blockDecrypter,
-            Digest digest,
             int blockLength) {
 
         this.blockDecrypter = Objects.requireNonNull(blockDecrypter, "blockDecrypter");
-        this.digest = Objects.requireNonNull(digest, "digest");
         this.blockLength = blockLength;
     }
 
-    public byte[] decrypt(InputStream input, OutputStream output) throws IOException {
+    public void decrypt(InputStream input, OutputStream output) throws IOException {
         byte[] in = new byte[blockLength];
         byte[] out = new byte[blockLength];
-
-        byte[] hash = new byte[digest.getDigestSize()];
-        digest.reset();
 
         int block = 0;
         int length;
         while ((length = read(input, in)) != -1) {
             blockDecrypter.decrypt(block, in, length, out);
-            digest.update(out, 0, length);
             output.write(out, 0, length);
         }
-
-        digest.doFinal(hash, 0);
-        return hash;
     }
 
     int read(InputStream input, byte[] buffer) throws IOException {
