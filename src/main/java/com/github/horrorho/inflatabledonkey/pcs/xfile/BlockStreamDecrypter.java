@@ -63,8 +63,8 @@ public final class BlockStreamDecrypter {
         int block = 0;
         int length;
         while ((length = read(input, in)) != -1) {
-            digest.update(in, 0, length);
             blockDecrypter.decrypt(block, in, length, out);
+            digest.update(out, 0, length);
             output.write(out, 0, length);
         }
 
