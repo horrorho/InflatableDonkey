@@ -39,6 +39,7 @@ import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.StreamBlockCipher;
 import org.bouncycastle.crypto.digests.GeneralDigest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -167,7 +168,7 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
     }
 
     ByteString checksum(byte[] data) {
-        GeneralDigest digest = digestSupplier.get();
+        Digest digest = digestSupplier.get();
 
         byte[] hash = new byte[digest.getDigestSize()];
         byte[] hashHash = new byte[digest.getDigestSize()];
