@@ -25,10 +25,6 @@ package com.github.horrorho.inflatabledonkey.chunkclient;
 
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -73,8 +69,8 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
         this.decryptor = Objects.requireNonNull(immutableDecryptor, "decryptor");
     }
 
-    public ChunkDecrypter(Function<byte[], Optional<byte[]>> immutableDecryptor) {
-        this(() -> new CFBBlockCipher(new AESFastEngine(), 128), SHA256Digest::new, immutableDecryptor);
+    public ChunkDecrypter(Function<byte[], Optional<byte[]>> immutableDecrypter) {
+        this(() -> new CFBBlockCipher(new AESFastEngine(), 128), SHA256Digest::new, immutableDecrypter);
     }
 
     @Override
@@ -91,19 +87,7 @@ public final class ChunkDecrypter implements BiFunction<List<ChunkServer.ChunkIn
 
         return decrypted;
     }
-
-    // Experimental phase use only, remove when stable.
-    void write(String path, byte[] data, int offset, int length) {
-        // Dump out binary data to file.
-        try (OutputStream outputStream = Files.newOutputStream(Paths.get(path))) {
-            outputStream.write(data, offset, length);
-            logger.info("-- write() - file written: {}", path);
-
-        } catch (IOException ex) {
-            logger.warn("-- write() - exception: {}", ex);
-        }
-    }
-
+ 
     Optional<byte[]> decryptChunk(ChunkServer.ChunkInfo chunkInfo, byte[] data, int offset) {
         try {
             if (!chunkInfo.hasChunkEncryptionKey()) {
