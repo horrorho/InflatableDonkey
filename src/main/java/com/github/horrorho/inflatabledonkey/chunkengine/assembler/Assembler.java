@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.chunkengine.assembler;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Assembler.
@@ -35,6 +36,7 @@ import java.util.function.BiFunction;
  * @param <T> value
  * @param <R> assembled
  */
+@ThreadSafe
 public interface Assembler<K, T, R> extends BiFunction<K, T, Optional<R>> {
 
     Set<K> required();
