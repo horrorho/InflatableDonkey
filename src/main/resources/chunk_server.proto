@@ -105,7 +105,8 @@ message ChunkReference {
 }
 message FileChecksumChunkReferences {
  required bytes file_checksum = 1;
- repeated ChunkReference chunk_references = 2; 
+ repeated ChunkReference chunk_references = 2;
+ optional bytes file_signature = 3;
 }
 message FileChecksumStorageHostChunkLists {
   repeated StorageHostChunkList storage_host_chunk_list = 1;
