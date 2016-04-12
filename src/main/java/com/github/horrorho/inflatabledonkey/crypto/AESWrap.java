@@ -45,11 +45,11 @@ public final class AESWrap {
     private AESWrap() {
     }
 
-    public static Optional<byte[]> unwrap(byte[] keyEncryptionKey, byte[] key) {
+    public static Optional<byte[]> unwrap(byte[] keyEncryptionKey, byte[] wrappedKey) {
         try {
             RFC3394WrapEngine engine = new RFC3394WrapEngine(new AESFastEngine());
             engine.init(false, new KeyParameter(keyEncryptionKey));
-            return Optional.of(engine.unwrap(key, 0, key.length));
+            return Optional.of(engine.unwrap(wrappedKey, 0, wrappedKey.length));
 
         } catch (InvalidCipherTextException ex) {
             logger.warn("-- unwrap() - InvalidCipherTextException: {}", ex);
@@ -57,9 +57,9 @@ public final class AESWrap {
         }
     }
 
-    public static byte[] wrap(byte[] keyEncryptionKey, byte[] key) {
+    public static byte[] wrap(byte[] keyEncryptionKey, byte[] unwrappedKey) {
         RFC3394WrapEngine engine = new RFC3394WrapEngine(new AESFastEngine());
         engine.init(true, new KeyParameter(keyEncryptionKey));
-        return engine.wrap(key, 0, key.length);
+        return engine.wrap(unwrappedKey, 0, unwrappedKey.length);
     }
 }
