@@ -67,6 +67,7 @@ public final class ListAssembler<K, T> implements Assembler<K, T, List<T>> {
     private final Map<K, Integer> keyIndexMap;
     private final List<T> list;
 
+    // TODO tidy
     private ListAssembler(Map<K, Integer> keyIndexMap, List<T> chunks) {
         this.keyIndexMap = Objects.requireNonNull(keyIndexMap, "keyIndexMap");
         this.list = Objects.requireNonNull(chunks, "list");
@@ -96,18 +97,17 @@ public final class ListAssembler<K, T> implements Assembler<K, T, List<T>> {
         }
         list.set(index, value);
 
-        if (keyIndexMap.isEmpty()) {
-            // We have a full list, copy and clear our own (or possible memory leak).
-            ArrayList<T> copy = new ArrayList<>(list);
-            list.clear();
-
-            // Sanity check.
-            if (copy.contains(null)) {
-                throw new IllegalStateException("null values");
-            }
-            return Optional.of(copy);
+        if (!keyIndexMap.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        if (list.contains(null)) {
+            throw new IllegalStateException("null values");
+        }
+
+        ArrayList<T> copy = new ArrayList<>(list);
+        list.clear();
+        return Optional.of(copy);
     }
 
     @Override
@@ -116,7 +116,7 @@ public final class ListAssembler<K, T> implements Assembler<K, T, List<T>> {
     }
 
     @Override
-    public synchronized String toString() {
-        return "ChunkCollector{" + "keyIndexMap=" + keyIndexMap + ", chunks=" + list + '}';
+    public String toString() {
+        return "ListAssembler{" + "keyIndexMap=" + keyIndexMap + ", list=" + list + '}';
     }
 }
