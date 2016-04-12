@@ -37,9 +37,13 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public final class BlockStreamDecrypter {
 
-    public static BlockStreamDecrypter createDefault(byte[] key) {
+    public static BlockStreamDecrypter create(byte[] key) {
+        return create(key, DEFAULT_BLOCK_LENGTH);
+    }
+
+    public static BlockStreamDecrypter create(byte[] key, int blockLength) {
         BlockDecrypter blockDecrypter = BlockDecrypter.create(key);
-        return new BlockStreamDecrypter(blockDecrypter, DEFAULT_BLOCK_LENGTH);
+        return new BlockStreamDecrypter(blockDecrypter, blockLength);
     }
 
     private static final int DEFAULT_BLOCK_LENGTH = 0x1000;
