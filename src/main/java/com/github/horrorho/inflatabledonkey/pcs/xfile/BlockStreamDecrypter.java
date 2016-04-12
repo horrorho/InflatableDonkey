@@ -37,12 +37,17 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public final class BlockStreamDecrypter {
 
+    public static BlockStreamDecrypter createDefault(byte[] key) {
+        BlockDecrypter blockDecrypter = BlockDecrypter.create(key);
+        return new BlockStreamDecrypter(blockDecrypter, DEFAULT_BLOCK_LENGTH);
+    }
+
+    private static final int DEFAULT_BLOCK_LENGTH = 0x1000;
+
     private final BlockDecrypter blockDecrypter;
     private final int blockLength;
 
-    public BlockStreamDecrypter(
-            BlockDecrypter blockDecrypter,
-            int blockLength) {
+    public BlockStreamDecrypter(BlockDecrypter blockDecrypter, int blockLength) {
 
         this.blockDecrypter = Objects.requireNonNull(blockDecrypter, "blockDecrypter");
         this.blockLength = blockLength;
