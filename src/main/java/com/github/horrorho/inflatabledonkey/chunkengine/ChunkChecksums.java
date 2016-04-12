@@ -29,7 +29,7 @@ import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /**
- * ChunkChecksum.
+ * ChunkChecksums.
  *
  * @author Ahseya
  */
