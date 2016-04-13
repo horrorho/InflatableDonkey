@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey.requests;
 
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
-import java.util.Objects;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -38,10 +37,13 @@ import org.apache.http.client.methods.RequestBuilder;
 @Immutable
 public final class ChunkListRequestFactory implements Function<ChunkServer.StorageHostChunkList, HttpUriRequest> {
 
-    private final Headers headers;
+    public static ChunkListRequestFactory instance() {
+        return INSTANCE;
+    }
 
-    public ChunkListRequestFactory(Headers headers) {
-        this.headers = Objects.requireNonNull(headers);
+    private static final ChunkListRequestFactory INSTANCE = new ChunkListRequestFactory();
+
+    private ChunkListRequestFactory() {
     }
 
     @Override
@@ -51,7 +53,6 @@ public final class ChunkListRequestFactory implements Function<ChunkServer.Stora
 
         HttpUriRequest request = RequestBuilder.create(hostInfo.getMethod())
                 .setUri(uri)
-                .addHeader(headers.get(Headers.userAgent))
                 .build();
 
         hostInfo.getHeadersList()
