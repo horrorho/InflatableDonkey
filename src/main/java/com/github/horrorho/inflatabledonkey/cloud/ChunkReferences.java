@@ -25,8 +25,6 @@ package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * ChunkReferences
