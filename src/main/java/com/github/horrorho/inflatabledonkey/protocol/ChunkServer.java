@@ -38,6 +38,15 @@ public final class ChunkServer {
      * <code>required uint32 chunk_length = 3;</code>
      */
     int getChunkLength();
+
+    /**
+     * <code>optional uint32 chunk_offset = 4;</code>
+     */
+    boolean hasChunkOffset();
+    /**
+     * <code>optional uint32 chunk_offset = 4;</code>
+     */
+    int getChunkOffset();
   }
   /**
    * Protobuf type {@code ChunkInfo}
@@ -104,6 +113,11 @@ public final class ChunkServer {
             case 24: {
               bitField0_ |= 0x00000004;
               chunkLength_ = input.readUInt32();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              chunkOffset_ = input.readUInt32();
               break;
             }
           }
@@ -191,10 +205,26 @@ public final class ChunkServer {
       return chunkLength_;
     }
 
+    public static final int CHUNK_OFFSET_FIELD_NUMBER = 4;
+    private int chunkOffset_;
+    /**
+     * <code>optional uint32 chunk_offset = 4;</code>
+     */
+    public boolean hasChunkOffset() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional uint32 chunk_offset = 4;</code>
+     */
+    public int getChunkOffset() {
+      return chunkOffset_;
+    }
+
     private void initFields() {
       chunkChecksum_ = com.google.protobuf.ByteString.EMPTY;
       chunkEncryptionKey_ = com.google.protobuf.ByteString.EMPTY;
       chunkLength_ = 0;
+      chunkOffset_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -226,6 +256,9 @@ public final class ChunkServer {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeUInt32(3, chunkLength_);
       }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeUInt32(4, chunkOffset_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -246,6 +279,10 @@ public final class ChunkServer {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(3, chunkLength_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, chunkOffset_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -370,6 +407,8 @@ public final class ChunkServer {
         bitField0_ = (bitField0_ & ~0x00000002);
         chunkLength_ = 0;
         bitField0_ = (bitField0_ & ~0x00000004);
+        chunkOffset_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -410,6 +449,10 @@ public final class ChunkServer {
           to_bitField0_ |= 0x00000004;
         }
         result.chunkLength_ = chunkLength_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.chunkOffset_ = chunkOffset_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -434,6 +477,9 @@ public final class ChunkServer {
         }
         if (other.hasChunkLength()) {
           setChunkLength(other.getChunkLength());
+        }
+        if (other.hasChunkOffset()) {
+          setChunkOffset(other.getChunkOffset());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -568,6 +614,38 @@ public final class ChunkServer {
       public Builder clearChunkLength() {
         bitField0_ = (bitField0_ & ~0x00000004);
         chunkLength_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int chunkOffset_ ;
+      /**
+       * <code>optional uint32 chunk_offset = 4;</code>
+       */
+      public boolean hasChunkOffset() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional uint32 chunk_offset = 4;</code>
+       */
+      public int getChunkOffset() {
+        return chunkOffset_;
+      }
+      /**
+       * <code>optional uint32 chunk_offset = 4;</code>
+       */
+      public Builder setChunkOffset(int value) {
+        bitField0_ |= 0x00000008;
+        chunkOffset_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 chunk_offset = 4;</code>
+       */
+      public Builder clearChunkOffset() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        chunkOffset_ = 0;
         onChanged();
         return this;
       }
@@ -23764,84 +23842,84 @@ public final class ChunkServer {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\022chunk_server.proto\"W\n\tChunkInfo\022\026\n\016chu" +
+      "\n\022chunk_server.proto\"m\n\tChunkInfo\022\026\n\016chu" +
       "nk_checksum\030\001 \002(\014\022\034\n\024chunk_encryption_ke" +
-      "y\030\002 \001(\014\022\024\n\014chunk_length\030\003 \002(\r\",\n\rNameVal" +
-      "uePair\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \002(\t\"\334\001\n\010" +
-      "HostInfo\022\020\n\010hostname\030\001 \002(\t\022\014\n\004port\030\002 \002(\r" +
-      "\022\016\n\006method\030\003 \002(\t\022\013\n\003uri\030\004 \002(\t\022\032\n\022transpo" +
-      "rt_protocol\030\005 \002(\t\022\"\n\032transport_protocol_" +
-      "version\030\006 \002(\t\022\016\n\006scheme\030\007 \002(\t\022\037\n\007headers" +
-      "\030\010 \003(\0132\016.NameValuePair\022\022\n\ndatacenter\030\t \001" +
-      "(\t\022\016\n\006expiry\030\013 \001(\004\"\242\001\n\rErrorResponse\022\016\n\006",
-      "domain\030\001 \002(\t\022\022\n\nerror_code\030\002 \002(\005\022\031\n\021erro" +
-      "r_description\030\003 \001(\t\022)\n\021underlying_errors" +
-      "\030\004 \003(\0132\016.ErrorResponse\022\'\n\017name_value_pai" +
-      "r\030\005 \003(\0132\016.NameValuePair\"J\n\tFileError\022\025\n\r" +
-      "file_checksum\030\001 \002(\014\022&\n\016error_response\030\002 " +
-      "\002(\0132\016.ErrorResponse\"L\n\nChunkError\022\026\n\016chu" +
-      "nk_checksum\030\001 \002(\014\022&\n\016error_response\030\002 \002(" +
-      "\0132\016.ErrorResponse\"f\n\017ChunkErrorIndex\022\026\n\016" +
-      "chunk_checksum\030\001 \002(\014\022&\n\016error_response\030\002" +
-      " \002(\0132\016.ErrorResponse\022\023\n\013chunk_index\030\003 \002(",
-      "\r\"N\n\016FileChunkError\022\025\n\rfile_checksum\030\001 \002" +
-      "(\014\022%\n\013chunk_error\030\002 \003(\0132\020.ChunkErrorInde" +
-      "x\"^\n\025StorageContainerError\022\035\n\025storage_co" +
-      "ntainer_key\030\001 \002(\t\022&\n\016error_response\030\002 \002(" +
-      "\0132\016.ErrorResponse\"\344\002\n\024MethodCompletionIn" +
-      "fo\022\013\n\003url\030\001 \002(\t\022\034\n\024response_status_code\030" +
-      "\002 \002(\r\022\034\n\024response_status_line\030\003 \001(\t\022/\n\027v" +
-      "endor_response_headers\030\004 \003(\0132\016.NameValue" +
-      "Pair\022\025\n\rresponse_body\030\005 \001(\014\022\035\n\005error\030\006 \001" +
-      "(\0132\016.ErrorResponse\022\033\n\023client_computed_md",
-      "5\030\007 \001(\014\022\'\n\017vendor_nv_pairs\030\010 \003(\0132\016.NameV" +
-      "aluePair\022\'\n\017client_nv_pairs\030\t \003(\0132\016.Name" +
-      "ValuePair\022-\n%storage_container_authoriza" +
-      "tion_token\030\n \002(\t\"Q\n\030MethodCompletionInfo" +
-      "List\0225\n\026method_completion_info\030\001 \003(\0132\025.M" +
-      "ethodCompletionInfo\"]\n\rFileChunkList\022\025\n\r" +
-      "file_checksum\030\001 \002(\014\022\025\n\rauthorization\030\002 \002" +
-      "(\t\022\036\n\nchunk_info\030\003 \003(\0132\n.ChunkInfo\"9\n\016Fi" +
-      "leChunkLists\022\'\n\017file_chunk_list\030\001 \003(\0132\016." +
-      "FileChunkList\"\237\001\n\031StorageContainerChunkL",
-      "ist\022\035\n\025storage_container_key\030\001 \002(\014\022\034\n\tho" +
-      "st_info\030\002 \002(\0132\t.HostInfo\022\026\n\016chunk_checks" +
-      "um\030\003 \003(\014\022-\n%storage_container_authorizat" +
-      "ion_token\030\004 \002(\t\"\227\001\n\032StorageContainerChun" +
-      "kLists\022@\n\034storage_container_chunk_list\030\001" +
-      " \003(\0132\032.StorageContainerChunkList\022\036\n\nfile" +
-      "_error\030\002 \003(\0132\n.FileError\022\027\n\017verbosity_le" +
-      "vel\030\003 \001(\r\"T\n\031StorageContainerErrorList\0227" +
-      "\n\027storage_container_error\030\001 \003(\0132\026.Storag" +
-      "eContainerError\"b\n\031FileChecksumAuthoriza",
-      "tion\022\025\n\rfile_checksum\030\001 \002(\014\022\025\n\rauthoriza" +
-      "tion\030\002 \002(\t\022\027\n\017chunk_checksums\030\003 \003(\014\"`\n\035F" +
-      "ileChecksumAuthorizationList\022?\n\033file_che" +
-      "cksum_authorization\030\001 \003(\0132\032.FileChecksum" +
-      "Authorization\">\n\016ChunkReference\022\027\n\017conta" +
-      "iner_index\030\001 \002(\004\022\023\n\013chunk_index\030\002 \002(\004\"w\n" +
-      "\033FileChecksumChunkReferences\022\025\n\rfile_che" +
-      "cksum\030\001 \002(\014\022)\n\020chunk_references\030\002 \003(\0132\017." +
-      "ChunkReference\022\026\n\016file_signature\030\003 \001(\014\"\241" +
-      "\001\n!FileChecksumStorageHostChunkLists\0226\n\027",
-      "storage_host_chunk_list\030\001 \003(\0132\025.StorageH" +
-      "ostChunkList\022D\n\036file_checksum_chunk_refe" +
-      "rences\030\002 \003(\0132\034.FileChecksumChunkReferenc" +
-      "es\"\251\001\n\nFileGroups\0227\n\013file_groups\030\001 \003(\0132\"" +
-      ".FileChecksumStorageHostChunkLists\022\036\n\nfi" +
-      "le_error\030\002 \003(\0132\n.FileError\022)\n\020file_chunk" +
-      "_error\030\003 \003(\0132\017.FileChunkError\022\027\n\017verbosi" +
-      "ty_level\030\004 \001(\r\"+\n\021ChunkChecksumList\022\026\n\016c" +
-      "hunk_checksum\030\001 \003(\014\"\242\001\n\024StorageHostChunk" +
-      "List\022\034\n\thost_info\030\001 \002(\0132\t.HostInfo\022\036\n\nch",
-      "unk_info\030\002 \003(\0132\n.ChunkInfo\022\035\n\025storage_co" +
-      "ntainer_key\030\003 \002(\t\022-\n%storage_container_a" +
-      "uthorization_token\030\004 \002(\t\"q\n\025StorageHostC" +
-      "hunkLists\0226\n\027storage_host_chunk_list\030\001 \003" +
-      "(\0132\025.StorageHostChunkList\022 \n\013chunk_error" +
-      "\030\002 \003(\0132\013.ChunkErrorB<\n-com.github.horror" +
-      "ho.inflatabledonkey.protocolB\013ChunkServe" +
-      "r"
+      "y\030\002 \001(\014\022\024\n\014chunk_length\030\003 \002(\r\022\024\n\014chunk_o" +
+      "ffset\030\004 \001(\r\",\n\rNameValuePair\022\014\n\004name\030\001 \002" +
+      "(\t\022\r\n\005value\030\002 \002(\t\"\334\001\n\010HostInfo\022\020\n\010hostna" +
+      "me\030\001 \002(\t\022\014\n\004port\030\002 \002(\r\022\016\n\006method\030\003 \002(\t\022\013" +
+      "\n\003uri\030\004 \002(\t\022\032\n\022transport_protocol\030\005 \002(\t\022" +
+      "\"\n\032transport_protocol_version\030\006 \002(\t\022\016\n\006s" +
+      "cheme\030\007 \002(\t\022\037\n\007headers\030\010 \003(\0132\016.NameValue" +
+      "Pair\022\022\n\ndatacenter\030\t \001(\t\022\016\n\006expiry\030\013 \001(\004",
+      "\"\242\001\n\rErrorResponse\022\016\n\006domain\030\001 \002(\t\022\022\n\ner" +
+      "ror_code\030\002 \002(\005\022\031\n\021error_description\030\003 \001(" +
+      "\t\022)\n\021underlying_errors\030\004 \003(\0132\016.ErrorResp" +
+      "onse\022\'\n\017name_value_pair\030\005 \003(\0132\016.NameValu" +
+      "ePair\"J\n\tFileError\022\025\n\rfile_checksum\030\001 \002(" +
+      "\014\022&\n\016error_response\030\002 \002(\0132\016.ErrorRespons" +
+      "e\"L\n\nChunkError\022\026\n\016chunk_checksum\030\001 \002(\014\022" +
+      "&\n\016error_response\030\002 \002(\0132\016.ErrorResponse\"" +
+      "f\n\017ChunkErrorIndex\022\026\n\016chunk_checksum\030\001 \002" +
+      "(\014\022&\n\016error_response\030\002 \002(\0132\016.ErrorRespon",
+      "se\022\023\n\013chunk_index\030\003 \002(\r\"N\n\016FileChunkErro" +
+      "r\022\025\n\rfile_checksum\030\001 \002(\014\022%\n\013chunk_error\030" +
+      "\002 \003(\0132\020.ChunkErrorIndex\"^\n\025StorageContai" +
+      "nerError\022\035\n\025storage_container_key\030\001 \002(\t\022" +
+      "&\n\016error_response\030\002 \002(\0132\016.ErrorResponse\"" +
+      "\344\002\n\024MethodCompletionInfo\022\013\n\003url\030\001 \002(\t\022\034\n" +
+      "\024response_status_code\030\002 \002(\r\022\034\n\024response_" +
+      "status_line\030\003 \001(\t\022/\n\027vendor_response_hea" +
+      "ders\030\004 \003(\0132\016.NameValuePair\022\025\n\rresponse_b" +
+      "ody\030\005 \001(\014\022\035\n\005error\030\006 \001(\0132\016.ErrorResponse",
+      "\022\033\n\023client_computed_md5\030\007 \001(\014\022\'\n\017vendor_" +
+      "nv_pairs\030\010 \003(\0132\016.NameValuePair\022\'\n\017client" +
+      "_nv_pairs\030\t \003(\0132\016.NameValuePair\022-\n%stora" +
+      "ge_container_authorization_token\030\n \002(\t\"Q" +
+      "\n\030MethodCompletionInfoList\0225\n\026method_com" +
+      "pletion_info\030\001 \003(\0132\025.MethodCompletionInf" +
+      "o\"]\n\rFileChunkList\022\025\n\rfile_checksum\030\001 \002(" +
+      "\014\022\025\n\rauthorization\030\002 \002(\t\022\036\n\nchunk_info\030\003" +
+      " \003(\0132\n.ChunkInfo\"9\n\016FileChunkLists\022\'\n\017fi" +
+      "le_chunk_list\030\001 \003(\0132\016.FileChunkList\"\237\001\n\031",
+      "StorageContainerChunkList\022\035\n\025storage_con" +
+      "tainer_key\030\001 \002(\014\022\034\n\thost_info\030\002 \002(\0132\t.Ho" +
+      "stInfo\022\026\n\016chunk_checksum\030\003 \003(\014\022-\n%storag" +
+      "e_container_authorization_token\030\004 \002(\t\"\227\001" +
+      "\n\032StorageContainerChunkLists\022@\n\034storage_" +
+      "container_chunk_list\030\001 \003(\0132\032.StorageCont" +
+      "ainerChunkList\022\036\n\nfile_error\030\002 \003(\0132\n.Fil" +
+      "eError\022\027\n\017verbosity_level\030\003 \001(\r\"T\n\031Stora" +
+      "geContainerErrorList\0227\n\027storage_containe" +
+      "r_error\030\001 \003(\0132\026.StorageContainerError\"b\n",
+      "\031FileChecksumAuthorization\022\025\n\rfile_check" +
+      "sum\030\001 \002(\014\022\025\n\rauthorization\030\002 \002(\t\022\027\n\017chun" +
+      "k_checksums\030\003 \003(\014\"`\n\035FileChecksumAuthori" +
+      "zationList\022?\n\033file_checksum_authorizatio" +
+      "n\030\001 \003(\0132\032.FileChecksumAuthorization\">\n\016C" +
+      "hunkReference\022\027\n\017container_index\030\001 \002(\004\022\023" +
+      "\n\013chunk_index\030\002 \002(\004\"w\n\033FileChecksumChunk" +
+      "References\022\025\n\rfile_checksum\030\001 \002(\014\022)\n\020chu" +
+      "nk_references\030\002 \003(\0132\017.ChunkReference\022\026\n\016" +
+      "file_signature\030\003 \001(\014\"\241\001\n!FileChecksumSto",
+      "rageHostChunkLists\0226\n\027storage_host_chunk" +
+      "_list\030\001 \003(\0132\025.StorageHostChunkList\022D\n\036fi" +
+      "le_checksum_chunk_references\030\002 \003(\0132\034.Fil" +
+      "eChecksumChunkReferences\"\251\001\n\nFileGroups\022" +
+      "7\n\013file_groups\030\001 \003(\0132\".FileChecksumStora" +
+      "geHostChunkLists\022\036\n\nfile_error\030\002 \003(\0132\n.F" +
+      "ileError\022)\n\020file_chunk_error\030\003 \003(\0132\017.Fil" +
+      "eChunkError\022\027\n\017verbosity_level\030\004 \001(\r\"+\n\021" +
+      "ChunkChecksumList\022\026\n\016chunk_checksum\030\001 \003(" +
+      "\014\"\242\001\n\024StorageHostChunkList\022\034\n\thost_info\030",
+      "\001 \002(\0132\t.HostInfo\022\036\n\nchunk_info\030\002 \003(\0132\n.C" +
+      "hunkInfo\022\035\n\025storage_container_key\030\003 \002(\t\022" +
+      "-\n%storage_container_authorization_token" +
+      "\030\004 \002(\t\"q\n\025StorageHostChunkLists\0226\n\027stora" +
+      "ge_host_chunk_list\030\001 \003(\0132\025.StorageHostCh" +
+      "unkList\022 \n\013chunk_error\030\002 \003(\0132\013.ChunkErro" +
+      "rB<\n-com.github.horrorho.inflatabledonke" +
+      "y.protocolB\013ChunkServer"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -23860,7 +23938,7 @@ public final class ChunkServer {
     internal_static_ChunkInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_ChunkInfo_descriptor,
-        new java.lang.String[] { "ChunkChecksum", "ChunkEncryptionKey", "ChunkLength", });
+        new java.lang.String[] { "ChunkChecksum", "ChunkEncryptionKey", "ChunkLength", "ChunkOffset", });
     internal_static_NameValuePair_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_NameValuePair_fieldAccessorTable = new
