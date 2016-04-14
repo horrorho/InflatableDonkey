@@ -12,6 +12,7 @@ message ChunkInfo {
   required bytes chunk_checksum = 1;
   optional bytes chunk_encryption_key = 2;
   required uint32 chunk_length = 3;
+  optional uint32 chunk_offset = 4;
 }
 message NameValuePair {
   required string name = 1;
