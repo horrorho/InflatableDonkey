@@ -27,6 +27,7 @@ import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -71,7 +72,7 @@ public final class FileGroups {
                         chunkReferenceToFileSignature::get));
     }
 
-    public static Map<ByteString, Set<ChunkServer.StorageHostChunkList>> fileSignatureToStorageHostChunkLists(
+    public static Map<ByteString, Map<ChunkServer.StorageHostChunkList, Integer>> fileSignatureToStorageHostChunks(
             Map<ByteString, List<ChunkServer.ChunkReference>> fileSignatureToChunkReferenceList,
             Map<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferenceToStorageHostChunkList) {
 
@@ -79,10 +80,10 @@ public final class FileGroups {
                 .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> storageHostChunkListSet(e.getValue(), chunkReferenceToStorageHostChunkList)));
+                        e -> storageHostChunks(e.getValue(), chunkReferenceToStorageHostChunkList)));
     }
 
-    static Set<ChunkServer.StorageHostChunkList> storageHostChunkListSet(
+    static Map<ChunkServer.StorageHostChunkList, Integer> storageHostChunks(
             List<ChunkServer.ChunkReference> chunkReferenceList,
             Map<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferenceToStorageHostChunkList) {
 
@@ -91,10 +92,17 @@ public final class FileGroups {
                     if (chunkReferenceToStorageHostChunkList.containsKey(chunkReference)) {
                         return true;
                     }
-                    logger.warn("-- storageHostChunkListSet() - unreferenced chunk: {}", chunkReference);
+                    logger.warn("-- storageHostChunks() - unreferenced chunk: {}", chunkReference);
                     return false;
                 })
-                .map(chunkReferenceToStorageHostChunkList::get)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toMap(
+                        chunkReferenceToStorageHostChunkList::get,
+                        chunkReference -> (int) chunkReference.getContainerIndex(),
+                        (a, b) -> {
+                            if (!Objects.equals(a, b)) {
+                                logger.warn("-- storageHostChunks() - mismatched containers: {} {}", a, b);
+                            }
+                            return a;
+                        }));
     }
 }
