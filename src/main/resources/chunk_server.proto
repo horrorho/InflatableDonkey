@@ -5,6 +5,9 @@
 // reversed by Lokkju <lokkju@lokkju.com>
 // modified Ahseya
 
+option java_package = "com.github.horrorho.inflatabledonkey.protocol";
+option java_outer_classname = "ChunkServer";
+
 message ChunkInfo {
   required bytes chunk_checksum = 1;
   optional bytes chunk_encryption_key = 2;
