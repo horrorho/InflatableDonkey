@@ -57,13 +57,6 @@ public final class DiskChunkStore implements ChunkStore {
     }
 
     @Override
-    public boolean hasChunk(byte[] checksum) {
-        boolean exists = Files.exists(file(checksum));
-        logger.debug("-- hasChunk() - hasChunk: {} exists: {}", Hex.toHexString(checksum), exists);
-        return exists;
-    }
-
-    @Override
     public Optional<Chunk> chunk(byte[] checksum) {
         Path file = file(checksum);
 

@@ -24,7 +24,10 @@
 package com.github.horrorho.inflatabledonkey.chunk.store;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -39,7 +42,9 @@ public interface ChunkStore {
 
     ChunkBuilder chunkBuilder(byte[] checksum);
 
-    default boolean hasChunk(byte[] checksum) {
-        return chunk(checksum).isPresent();
+    default List<Optional<Chunk>> chunks(Collection<byte[]> checksums) {
+        return checksums.stream()
+                .map(this::chunk)
+                .collect(Collectors.toList());
     }
 }
