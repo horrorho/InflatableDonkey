@@ -25,14 +25,9 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.bouncycastle.crypto.BufferedBlockCipher;
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA1Digest;
-import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.slf4j.Logger;
@@ -48,69 +43,38 @@ public final class BlockDecrypter {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockDecrypter.class);
 
-    public static BlockDecrypter create(byte[] key) {
-        BufferedBlockCipher cipher = new BufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
-        SHA1Digest digest = new SHA1Digest();
-
-        return create(cipher, digest, key);
-    }
-
-    public static BlockDecrypter create(BufferedBlockCipher cipher, Digest digest, byte[] key) {
-        ParametersWithIV ivKey = ivKey(digest, cipher.getBlockSize(), key);
-        KeyParameter keyParameter = key(key);
-
-        return new BlockDecrypter(cipher, ivKey, keyParameter);
-    }
-
-    public static ParametersWithIV ivKey(Digest digest, int length, byte[] key) {
-        byte[] hash = new byte[digest.getDigestSize()];
-
-        digest.reset();
-        digest.update(key, 0, key.length);
-        digest.doFinal(hash, 0);
-
-        KeyParameter keyParameter = new KeyParameter(Arrays.copyOfRange(hash, 0, length));
-        byte[] iv = new byte[length];
-
-        return new ParametersWithIV(keyParameter, iv);
-    }
-
-    public static KeyParameter key(byte[] key) {
-        return new KeyParameter(key);
-    }
-
     private final BufferedBlockCipher blockCipher;
-    private final ParametersWithIV ivKey;
+    private final ParametersWithIV blockIVKey;
     private final KeyParameter key;
 
     public BlockDecrypter(
             BufferedBlockCipher blockCipher,
-            ParametersWithIV ivKey,
+            ParametersWithIV blockIVKey,
             KeyParameter key) {
 
         this.blockCipher = Objects.requireNonNull(blockCipher, "blockCipher");
-        this.ivKey = Objects.requireNonNull(ivKey, "ivKey");
+        this.blockIVKey = Objects.requireNonNull(blockIVKey, "blockIVKey");
         this.key = Objects.requireNonNull(key, "key");
     }
 
-    public void decrypt(int block, byte[] in, int length, byte[] out) {
-        decrypt(block, in, 0, length, out, 0);
+    public int decrypt(int block, byte[] in, int length, byte[] out) {
+        return decrypt(block, in, 0, length, out, 0);
     }
 
-    public void decrypt(int block, byte[] in, int inOff, int length, byte[] out, int outOff) {
+    public int decrypt(int block, byte[] in, int inOff, int length, byte[] out, int outOff) {
         byte[] iv = blockIV(block);
 
         ParametersWithIV parameters = new ParametersWithIV(key, iv);
 
         blockCipher.init(false, parameters);
-        blockCipher.processBytes(in, inOff, length, out, outOff);
+        return blockCipher.processBytes(in, inOff, length, out, outOff);
     }
 
     byte[] blockIV(int block) {
         byte[] blockHash = blockHash(block);
         byte[] iv = new byte[blockCipher.getBlockSize()];
 
-        blockCipher.init(true, ivKey);
+        blockCipher.init(true, blockIVKey);
         blockCipher.processBytes(blockHash, 0, blockHash.length, iv, 0);
 
         return iv;
