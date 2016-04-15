@@ -66,6 +66,7 @@ public final class BlockStreamDecrypter {
         while ((length = read(input, in)) != -1) {
             blockDecrypter.decrypt(block, in, length, out);
             output.write(out, 0, length);
+            block++;
         }
     }
 

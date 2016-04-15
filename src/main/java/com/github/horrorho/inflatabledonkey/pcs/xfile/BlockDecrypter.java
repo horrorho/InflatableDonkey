@@ -35,6 +35,8 @@ import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * BlockDecrypter.
@@ -43,6 +45,8 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  */
 @NotThreadSafe
 public final class BlockDecrypter {
+
+    private static final Logger logger = LoggerFactory.getLogger(BlockDecrypter.class);
 
     public static BlockDecrypter create(byte[] key) {
         BufferedBlockCipher cipher = new BufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
