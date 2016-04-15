@@ -32,30 +32,32 @@ import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
 
 /**
- * StorageHostChunkLists.
+ * StorageHostChunkListsContainers.
  *
  * @author Ahseya
  */
 @Immutable
-public final class StorageHostChunkLists {
+public final class StorageHostChunkListContainers {
 
-    public static Map<ChunkServer.StorageHostChunkList, List<ChunkServer.ChunkReference>>
-            storageHostChunkListToChunkReferenceList(List<ChunkServer.StorageHostChunkList> storageHostChunkListList) {
+    public static Map<StorageHostChunkListContainer, List<ChunkServer.ChunkReference>>
+            storageHostChunkListContainerToChunkReferenceList(List<ChunkServer.StorageHostChunkList> storageHostChunkListList) {
 
         return IntStream.range(0, storageHostChunkListList.size())
-                .mapToObj(i -> storageHostChunkListChunkReferenceList(storageHostChunkListList.get(i), i))
+                .mapToObj(i -> storageHostChunkListContainerChunkReferenceList(storageHostChunkListList.get(i), i))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    static Map.Entry<ChunkServer.StorageHostChunkList, List<ChunkServer.ChunkReference>>
-            storageHostChunkListChunkReferenceList(ChunkServer.StorageHostChunkList storageHostChunkList, int container) {
+    static Map.Entry<StorageHostChunkListContainer, List<ChunkServer.ChunkReference>>
+            storageHostChunkListContainerChunkReferenceList(ChunkServer.StorageHostChunkList storageHostChunkList, int container) {
 
         int chunkCount = storageHostChunkList.getChunkInfoCount();
-
         List<ChunkServer.ChunkReference> chunkReferenceList = IntStream.range(0, chunkCount)
                 .mapToObj(i -> ChunkReferences.chunkReference(container, i))
                 .collect(Collectors.toList());
 
-        return new AbstractMap.SimpleImmutableEntry<>(storageHostChunkList, chunkReferenceList);
+        StorageHostChunkListContainer storageHostChunkListContainer
+                = new StorageHostChunkListContainer(storageHostChunkList, container);
+
+        return new AbstractMap.SimpleImmutableEntry<>(storageHostChunkListContainer, chunkReferenceList);
     }
 }

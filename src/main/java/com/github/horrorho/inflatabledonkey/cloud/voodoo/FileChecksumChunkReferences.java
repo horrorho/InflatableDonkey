@@ -59,7 +59,6 @@ public final class FileChecksumChunkReferences {
 
     static Map.Entry<ByteString, List<ChunkServer.ChunkReference>>
             fileSignatureToChunkReferenceList(ChunkServer.FileChecksumChunkReferences references) {
-
         return new SimpleImmutableEntry<>(references.getFileSignature(), references.getChunkReferencesList());
     }
 }
