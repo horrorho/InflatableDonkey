@@ -67,6 +67,16 @@ public final class DiskChunk implements Chunk {
     }
 
     @Override
+    public InputStream inputStream() throws UncheckedIOException {
+        try {
+            return Files.newInputStream(file, READ);
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    @Override
     public long copyTo(OutputStream output) throws UncheckedIOException {
         try (InputStream input = Files.newInputStream(file, READ)) {
             long bytes = IOUtils.copyLarge(input, output);
