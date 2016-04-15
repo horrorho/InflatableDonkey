@@ -28,12 +28,13 @@ import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ChunkChecksums.
+ * ChunkChecksums. Checksum = (byte) type | (bytes) hash
  *
  * @author Ahseya
  */
@@ -45,31 +46,69 @@ public final class ChunkChecksums {
     private ChunkChecksums() {
     }
 
-    public static Optional<Boolean> match(byte[] checksumData, byte[] chunkData) {
-        if (checksumData.length == 0) {
-            logger.warn("-- match() - no checksum data");
+    public static Optional<byte[]> checksum(int type, byte[] data) {
+        if (type != 1) {
+            logger.warn("-- checksum() - checksum type not supported: {}", type);
             return Optional.empty();
         }
 
-        int checksumType = checksumData[0] & 0x7F;
-        if (checksumType != 1) {
-            logger.warn("-- match() - checksum type not supported: {}", checksumType);
-            return Optional.empty();
-        }
-
-        byte[] checksum = Arrays.copyOfRange(checksumData, 1, checksumData.length);
-        byte[] chunkDataChecksum = checksumType1(chunkData);
-        
-        boolean matches = Arrays.equals(checksum, chunkDataChecksum);
-        if (!matches) {
-            logger.debug("-- match() - failed checksum match: {} to: {}",
-                    Hex.toHexString(chunkDataChecksum), Hex.toHexString(checksum));
-        }
-
-        return Optional.of(matches);
+        byte[] hashType1 = hashType1(data);
+        byte[] checksum = ByteUtils.concatenate(new byte[]{0x01}, hashType1);
+        return Optional.of(checksum);
     }
 
-    public static byte[] checksumType1(byte[] data) {
+    public static Optional<Boolean> matchToData(byte[] checksum, byte[] data) {
+        return checksumType(checksum)
+                .flatMap(type -> checksum(type, data))
+                .map(cs -> match(cs, checksum));
+    }
+
+    public static boolean match(byte[] one, byte[] two) {
+        if (!checksumType(one).equals(checksumType(two))) {
+            logger.warn("-- match() - type mismatch: {} {}", Hex.toHexString(one), Hex.toHexString(two));
+            return false;
+        }
+
+        Optional<byte[]> hashOne = checksumHash(one);
+        if (!hashOne.isPresent()) {
+            logger.warn("-- match() - no hash for checksum one: {}", Hex.toHexString(one));
+            return false;
+        }
+        
+        Optional<byte[]> hashTwo = checksumHash(two);
+        if (!hashTwo.isPresent()) {
+            logger.warn("-- match() - no hash for checksum two: {}", Hex.toHexString(one));
+            return false;
+        }
+
+        boolean matches = Arrays.equals(hashOne.get(), hashTwo.get());
+        if (!matches) {
+            logger.debug("-- match() - failed hash match, one {} two: {}",
+                    Hex.toHexString(one), Hex.toHexString(two));
+        }
+        return matches;
+    }
+
+    public static Optional<Integer> checksumType(byte[] checksum) {
+        if (checksum.length == 0) {
+            logger.warn("-- checksumType() - no checksum data");
+            return Optional.empty();
+        }
+
+        int type = checksum[0] & 0x7F;
+        return Optional.of(type);
+    }
+
+    public static Optional<byte[]> checksumHash(byte[] checksum) {
+        if (checksum.length == 0) {
+            logger.warn("-- checksumHash() - no checksum hash");
+            return Optional.empty();
+        }
+        byte[] hash = Arrays.copyOfRange(checksum, 1, checksum.length);
+        return Optional.of(hash);
+    }
+
+    public static byte[] hashType1(byte[] data) {
         Digest digest = new SHA256Digest();
         byte[] hash = new byte[digest.getDigestSize()];
 
@@ -80,7 +119,7 @@ public final class ChunkChecksums {
         digest.doFinal(hash, 0);
 
         byte[] checksum = Arrays.copyOf(hash, 20);
-        logger.debug("-- checksum() - checksum: 0x{}", Hex.toHexString(checksum));
+        logger.debug("-- hashType1() - hash: 0x{}", Hex.toHexString(checksum));
 
         return checksum;
     }
