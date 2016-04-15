@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -65,7 +66,7 @@ public final class FileDecrypter {
 
     public static void
             decrypt(Path file, BlockStreamDecrypter blockStreamDecrypter, long decryptedSize, Path tempFolder)
-            throws IOException {
+            throws UncheckedIOException {
 
         Path tempFile = tempFile(file, tempFolder);
         try {
@@ -75,6 +76,9 @@ public final class FileDecrypter {
             doDecrypt(tempFile, file, blockStreamDecrypter);
 
             truncate(file, decryptedSize);
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
 
         } finally {
             try {
@@ -87,11 +91,10 @@ public final class FileDecrypter {
     }
 
     static void doDecrypt(Path in, Path out, BlockStreamDecrypter blockStreamDecrypter) throws IOException {
-
         try (InputStream input = Files.newInputStream(in, READ);
                 OutputStream output = Files.newOutputStream(out, CREATE, WRITE, TRUNCATE_EXISTING)) {
 
-            blockStreamDecrypter.decrypt(input, output);
+            blockStreamDecrypter.accept(input, output);
         }
     }
 

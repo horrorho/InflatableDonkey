@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.args;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -40,8 +41,11 @@ public enum Property {
     ARGS_VERSION,
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
-    AUTHENTICATION_TOKEN, 
-    PROTOC_PATH("protoc"),
+    AUTHENTICATION_TOKEN,
+    DECRYPTION_BLOCK_LENGTH("4096"),
+    PATH_PROTOC("protoc"),
+    PATH_CHUNK_STORE("chunks"),
+    PATH_CHUNK_STORE_SUBSPLIT("3"),
     SELECT_DEVICE_INDEX("0"),
     SELECT_SNAPSHOT_INDEX("0"),
     SELECT_MANIFEST_INDEX("0"),
@@ -67,5 +71,14 @@ public enum Property {
 
     public String defaultValue() {
         return defaultValue;
+    }
+
+    public Optional<Integer> intValue() {
+        try {
+            return Optional.of(Integer.parseInt(defaultValue));
+
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
     }
 }

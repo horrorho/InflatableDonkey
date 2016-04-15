@@ -23,10 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.args.Property;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -35,38 +38,37 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Ahseya
  */
 @NotThreadSafe
-public final class BlockStreamDecrypter {
+public final class BlockStreamDecrypter implements BiConsumer<InputStream, OutputStream> {
 
-    public static BlockStreamDecrypter create(byte[] key) {
-        return create(key, DEFAULT_BLOCK_LENGTH);
-    }
-
-    public static BlockStreamDecrypter create(byte[] key, int blockLength) {
-        BlockDecrypter blockDecrypter = BlockDecrypter.create(key);
-        return new BlockStreamDecrypter(blockDecrypter, blockLength);
-    }
-
-    private static final int DEFAULT_BLOCK_LENGTH = 0x1000;
+    private static final int BLOCK_LENGTH = Property.DECRYPTION_BLOCK_LENGTH.intValue().orElse(0x1000);
 
     private final BlockDecrypter blockDecrypter;
     private final int blockLength;
 
     public BlockStreamDecrypter(BlockDecrypter blockDecrypter, int blockLength) {
-
         this.blockDecrypter = Objects.requireNonNull(blockDecrypter, "blockDecrypter");
         this.blockLength = blockLength;
     }
 
-    public void decrypt(InputStream input, OutputStream output) throws IOException {
-        byte[] in = new byte[blockLength];
-        byte[] out = new byte[blockLength];
+    public BlockStreamDecrypter(BlockDecrypter blockDecrypter) {
+        this(blockDecrypter, BLOCK_LENGTH);
+    }
 
-        int block = 0;
-        int length;
-        while ((length = read(input, in)) != -1) {
-            blockDecrypter.decrypt(block, in, length, out);
-            output.write(out, 0, length);
-            block++;
+    @Override
+    public void accept(InputStream input, OutputStream output) throws UncheckedIOException {
+        try {
+            byte[] in = new byte[blockLength];
+            byte[] out = new byte[blockLength];
+
+            int block = 0;
+            int length;
+            while ((length = read(input, in)) != -1) {
+                blockDecrypter.decrypt(block, in, length, out);
+                output.write(out, 0, length);
+                block++;
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -76,13 +78,10 @@ public final class BlockStreamDecrypter {
         int offset = 0;
         do {
             int read = input.read(buffer, offset, buffer.length - offset);
-
             if (read == -1) {
                 return offset == 0 ? -1 : offset;
             }
-
             offset += read;
-
         } while (offset < buffer.length);
         return offset;
     }
