@@ -23,11 +23,14 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
@@ -40,17 +43,22 @@ import org.apache.http.client.HttpClient;
 @ThreadSafe
 public interface ChunkEngine {
 
-    List<Optional<Chunk>> fetch(
+    Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Map<Integer, byte[]> keyEncryptionKeys);
+            StorageHostChunkListContainer storageHostChunkListContainer,
+            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey);
 
-    default Map<ChunkServer.StorageHostChunkList, List<Optional<Chunk>>> fetch(
+    default Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> storageHostChunkListKeyEncryptionKeys) {
+            Set<StorageHostChunkListContainer> storageHostChunkListContainerList,
+            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
-        return storageHostChunkListKeyEncryptionKeys.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> ChunkEngine.this.fetch(httpClient, e.getKey(), e.getValue())));
+        return storageHostChunkListContainerList.stream()
+                .map(storageHostChunkList -> fetch(httpClient, storageHostChunkList, getKeyEncryptionKey))
+                .map(Map::entrySet)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue));
     }
 }

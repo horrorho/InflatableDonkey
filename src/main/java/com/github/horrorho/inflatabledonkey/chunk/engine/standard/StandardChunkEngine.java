@@ -27,13 +27,16 @@ import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypters;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.ThreadSafe;
@@ -58,33 +61,39 @@ public class StandardChunkEngine implements ChunkEngine {
     }
 
     @Override
-    public List<Optional<Chunk>> fetch(
+    public Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Map<Integer, byte[]> keyEncryptionKeys) {
+            StorageHostChunkListContainer storageHostChunkListContainer,
+            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
-        List<Optional<Chunk>> chunkStoreChunks = chunkStoreChunks(chunkList.getChunkInfoList());
+        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
 
-        if (!chunkStoreChunks.contains(Optional.<Chunk>empty())) {
-            // ChunkStore has all our chunks, no need to fetch.
-            return chunkStoreChunks;
+        Optional<Map<ChunkServer.ChunkReference, Chunk>> chunkStoreChunks
+                = chunkStoreChunks(storageHostChunkListContainer);
+
+        if (chunkStoreChunks.isPresent()) {
+            return chunkStoreChunks.get();
         }
 
-        // Retrieve chunks from cloud servers.
-        List<Optional<Chunk>> fetchChunks = fetchChunks(httpClient, chunkList, keyEncryptionKeys);
-
-       
-        // If possible, fill in any missing chunks with those from the ChunkStore.
-        return substitute(fetchChunks, chunkStoreChunks);
+        return fetchChunks(httpClient, storageHostChunkListContainer, getKeyEncryptionKey);
     }
 
-    List<Optional<Chunk>> fetchChunks(
+    Map<ChunkServer.ChunkReference, Chunk> fetchChunks(
             HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Map<Integer, byte[]> keyEncryptionKeys) {
+            StorageHostChunkListContainer storageHostChunkListContainer,
+            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
-        byte[] chunkData = fetchChunkData(httpClient, chunkList);
-        return ChunkListDecrypters.decrypt(chunkList.getChunkInfoList(), chunkStore, chunkData, keyEncryptionKeys);
+        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
+        int container = storageHostChunkListContainer.container();
+
+        byte[] chunkData = fetchChunkData(httpClient, storageHostChunkList);
+
+        return ChunkListDecrypters.decrypt(
+                container,
+                storageHostChunkList.getChunkInfoList(),
+                chunkStore,
+                chunkData,
+                getKeyEncryptionKey);
     }
 
     byte[] fetchChunkData(HttpClient httpClient, ChunkServer.StorageHostChunkList chunkList) {
@@ -92,9 +101,31 @@ public class StandardChunkEngine implements ChunkEngine {
                 .orElse(new byte[]{});
     }
 
-    List<Optional<Chunk>> chunkStoreChunks(List<ChunkServer.ChunkInfo> list) {
-        List<byte[]> checksumList = checksumList(list);
-        return chunkStore.chunks(checksumList);
+    Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            chunkStoreChunks(StorageHostChunkListContainer storageHostChunkListContainer) {
+
+        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
+        int container = storageHostChunkListContainer.container();
+
+        List<byte[]> checksumList = checksumList(storageHostChunkList.getChunkInfoList());
+        List<Optional<Chunk>> chunkList = chunkStore.chunks(checksumList);
+
+        return chunks(container, chunkList);
+    }
+
+    Optional<Map<ChunkServer.ChunkReference, Chunk>> chunks(int container, List<Optional<Chunk>> chunkList) {
+        if (chunkList.contains(Optional.<Chunk>empty())) {
+            return Optional.empty();
+        }
+
+        Map<ChunkServer.ChunkReference, Chunk> chunks = IntStream.range(0, chunkList.size())
+                .filter(i -> chunkList.get(i).isPresent())
+                .mapToObj(Integer::valueOf)
+                .collect(Collectors.toMap(
+                        i -> ChunkReferences.chunkReference(container, i),
+                        i -> chunkList.get(i).get()));
+
+        return Optional.of(chunks);
     }
 
     List<byte[]> checksumList(List<ChunkServer.ChunkInfo> list) {
@@ -111,18 +142,4 @@ public class StandardChunkEngine implements ChunkEngine {
                 .collect(Collectors.toList());
     }
 
-    <T> List<Optional<T>> substitute(List<Optional<T>> list, List<Optional<T>> substitutes) {
-        return IntStream.range(0, list.size())
-                .mapToObj(i -> {
-                    Optional<T> optional = list.get(i);
-                    if (optional.isPresent()) {
-                        return optional;
-                    }
-                    if (i < substitutes.size()) {
-                        return substitutes.get(i);
-                    }
-                    return Optional.<T>empty();
-                })
-                .collect(Collectors.toList());
-    }
 }

@@ -25,9 +25,10 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,36 +47,27 @@ public final class ChunkListDecrypters {
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkListDecrypters.class);
 
-    public static List<Optional<Chunk>> decrypt(
+    public static Map<ChunkServer.ChunkReference, Chunk> decrypt(
+            int container,
             List<ChunkServer.ChunkInfo> chunkInfoList,
             ChunkStore chunkStore,
             byte[] data,
-            Map<Integer, byte[]> keyEncryptionKeys) {
+            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
-        logger.debug("-- decrypt() - chunkInfoList: {} keyEncryptionKeys: {}", chunkInfoList, keyEncryptionKeys);
-
-        Function<Integer, Optional<byte[]>> chunkKeyEncryptionKey = chunkIndex
-                -> keyEncryptionKeys.containsKey(chunkIndex)
-                ? Optional.of(keyEncryptionKeys.get(chunkIndex))
-                : Optional.empty();
-
-        return ChunkListDecrypters.decrypt(chunkInfoList, chunkStore, data, chunkKeyEncryptionKey);
-    }
-
-    public static List<Optional<Chunk>> decrypt(
-            List<ChunkServer.ChunkInfo> chunkInfoList,
-            ChunkStore chunkStore,
-            byte[] data,
-            Function<Integer, Optional<byte[]>> chunkKeyEncryptionKey) {
-
-        List<Optional<Chunk>> chunkDataList = new ArrayList<>();
+        Map<ChunkServer.ChunkReference, Chunk> chunks = new HashMap<>();
 
         for (int i = 0; i < chunkInfoList.size(); i++) {
+            ChunkServer.ChunkReference chunkReference = ChunkReferences.chunkReference(container, i);
             ChunkServer.ChunkInfo chunkInfo = chunkInfoList.get(i);
-            Optional<Chunk> chunk = ChunkListDecrypters.decrypt(chunkInfo, chunkStore, data, chunkKeyEncryptionKey.apply(i));
-            chunkDataList.add(chunk);
+
+            Optional<byte[]> keyEncryptionKey = getKeyEncryptionKey.apply(chunkReference);
+            Optional<Chunk> chunk = decrypt(chunkInfo, chunkStore, data, keyEncryptionKey);
+
+            if (chunk.isPresent()) {
+                chunks.put(chunkReference, chunk.get());
+            }
         }
-        return chunkDataList;
+        return chunks;
     }
 
     static Optional<Chunk> decrypt(
@@ -85,7 +77,7 @@ public final class ChunkListDecrypters {
             Optional<byte[]> kek) {
 
         return ChunkEncryptionKeys.unwrapKey(kek, chunkInfo.getChunkEncryptionKey().toByteArray())
-                .flatMap(k -> ChunkListDecrypters.decrypt(chunkInfo, chunkStore, data, k));
+                .flatMap(k -> decrypt(chunkInfo, chunkStore, data, k));
     }
 
     static Optional<Chunk> decrypt(ChunkServer.ChunkInfo chunkInfo, ChunkStore chunkStore, byte[] data, byte[] key) {
@@ -104,7 +96,7 @@ public final class ChunkListDecrypters {
         byte[] chunkData = ChunkDecrypters.decrypt(key, data, offset, length);
 
         return validate(chunkInfo, chunkData)
-                .flatMap(checksum -> ChunkListDecrypters.chunk(chunkStore, checksum, chunkData));
+                .flatMap(checksum -> chunk(chunkStore, checksum, chunkData));
     }
 
     static Optional<Chunk> chunk(ChunkStore chunkStore, byte[] checksum, byte[] data) {
