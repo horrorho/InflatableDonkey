@@ -25,7 +25,6 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,13 +45,12 @@ public interface ChunkEngine {
             ChunkServer.StorageHostChunkList chunkList,
             Map<Integer, byte[]> keyEncryptionKeys);
 
-    default List<List<Optional<Chunk>>> fetch(
+    default Map<ChunkServer.StorageHostChunkList, List<Optional<Chunk>>> fetch(
             HttpClient httpClient,
-            LinkedHashMap<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> storageHostChunkListKeyEncryptionKeys) {
+            Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> storageHostChunkListKeyEncryptionKeys) {
 
         return storageHostChunkListKeyEncryptionKeys.entrySet()
                 .stream()
-                .map(e -> fetch(httpClient, e.getKey(), e.getValue()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> ChunkEngine.this.fetch(httpClient, e.getKey(), e.getValue())));
     }
 }
