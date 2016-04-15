@@ -39,4 +39,4 @@ public interface Chunk {
 
     long copyTo(OutputStream output) throws UncheckedIOException;
 }
-// TODO Closeable.
+// TODO Consider closeable, at present undestructable.
