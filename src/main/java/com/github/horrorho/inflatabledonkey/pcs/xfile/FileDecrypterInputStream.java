@@ -126,5 +126,10 @@ public class FileDecrypterInputStream extends InputStream {
         } while (offset < in.length);
         return offset;
     }
+
+    @Override
+    public void close() throws IOException {
+        input.close();
+    }
 }
 // TODO test
