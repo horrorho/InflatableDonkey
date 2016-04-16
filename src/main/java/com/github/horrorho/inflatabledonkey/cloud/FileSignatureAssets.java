@@ -62,9 +62,7 @@ public final class FileSignatureAssets {
     }
 
     public Optional<Asset> asset(ByteString fileSignature) {
-        return assets.containsKey(fileSignature)
-                ? Optional.of(assets.get(fileSignature))
-                : Optional.empty();
+        return Optional.ofNullable(assets.get(fileSignature));
     }
 
     public Collection<Asset> assets() {
