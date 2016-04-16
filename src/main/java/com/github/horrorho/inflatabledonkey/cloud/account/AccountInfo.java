@@ -25,7 +25,6 @@ package com.github.horrorho.inflatabledonkey.cloud.account;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
-import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
