@@ -30,7 +30,6 @@ import com.github.horrorho.inflatabledonkey.cloud.voodoo.Voodoo;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.google.protobuf.ByteString;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,53 +61,58 @@ public final class AssetDownloader {
 
     public void get(
             HttpClient httpClient,
-            Collection<Asset> assets,
-            ChunkServer.FileGroups fileGroups,
+            AuthorizedAssets assets,
             BiConsumer<Asset, List<Chunk>> consumer) {
 
-        fileGroups.getFileGroupsList()
+        assets.fileGroups().getFileGroupsList()
                 .forEach(fileGroup -> get(httpClient, assets, fileGroup, consumer));
-    }
-
-    public void get(
-            HttpClient httpClient,
-            Collection<Asset> assets,
-            ChunkServer.FileChecksumStorageHostChunkLists fileGroup,
-            BiConsumer<Asset, List<Chunk>> consumer) {
-
-        FileSignatureAssets fileSignatureAssets = FileSignatureAssets.create(assets);
-        Voodoo voodoo = new Voodoo(fileGroup);
-
-        get(httpClient, fileSignatureAssets, voodoo, consumer);
     }
 
     void get(
             HttpClient httpClient,
-            FileSignatureAssets fileSignatureAssets,
+            AuthorizedAssets assets,
+            ChunkServer.FileChecksumStorageHostChunkLists fileGroup,
+            BiConsumer<Asset, List<Chunk>> consumer) {
+
+        Voodoo voodoo = new Voodoo(fileGroup);
+
+        get(httpClient, assets, voodoo, consumer);
+    }
+
+    void get(
+            HttpClient httpClient,
+            AuthorizedAssets assets,
             Voodoo voodoo,
             BiConsumer<Asset, List<Chunk>> consumer) {
 
         Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey
                 = chunkReference -> voodoo.fileSignature(chunkReference)
-                .flatMap(fileSignatureAssets::asset)
+                .flatMap(assets::asset)
                 .flatMap(Asset::keyEncryptionKey);
 
-        fileSignatureAssets.assets()
-                .forEach(asset -> get(httpClient, getKeyEncryptionKey, asset, voodoo, consumer));
+        assets.assets()
+                .forEach(assetList -> get(httpClient, getKeyEncryptionKey, assetList, voodoo, consumer));
     }
 
     void get(
             HttpClient httpClient,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey,
-            Asset asset,
+            List<Asset> assetList,
             Voodoo voodoo,
             BiConsumer<Asset, List<Chunk>> consumer) {
 
-        Map<ChunkServer.ChunkReference, Chunk> chunkData
-                = fetchChunkData(httpClient, getKeyEncryptionKey, asset, voodoo);
+        if (assetList.isEmpty()) {
+            logger.error("-- get() - empty asset list");
+            return;
+        }
 
-        assembleAssetChunkList(chunkData, asset, voodoo)
-                .ifPresent(fileChunkList -> consumer.accept(asset, fileChunkList));
+        Asset primaryAsset = assetList.get(0);
+
+        Map<ChunkServer.ChunkReference, Chunk> chunkData
+                = fetchChunkData(httpClient, getKeyEncryptionKey, primaryAsset, voodoo);
+
+        assembleAssetChunkList(chunkData, primaryAsset, voodoo)
+                .ifPresent(fileChunkList -> assetList.forEach(a -> consumer.accept(a, fileChunkList)));
     }
 
     Map<ChunkServer.ChunkReference, Chunk> fetchChunkData(
