@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -41,7 +40,7 @@ public class FileDecrypterInputStream extends InputStream {
 
     private static final Logger logger = LoggerFactory.getLogger(FileDecrypterInputStream.class);
 
-    private static final int BLOCK_LENGTH = Property.DECRYPTION_BLOCK_LENGTH.intValue().orElse(0x1000);
+    private static final int BLOCK_LENGTH = 0x1000;
 
     private final InputStream input;
     private final BlockDecrypter decrypter;
@@ -88,7 +87,7 @@ public class FileDecrypterInputStream extends InputStream {
             int length = len > remaining ? remaining : len;
 
             System.arraycopy(out, pos, b, off + read, length);
-            
+
             pos += length;
             read += length;
         }
