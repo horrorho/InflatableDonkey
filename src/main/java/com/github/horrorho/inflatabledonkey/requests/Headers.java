@@ -40,6 +40,7 @@ import org.apache.http.message.BasicHeader;
 @Immutable
 public enum Headers {
     ACCEPT("Accept"),
+    AUTHORIZATION("Authorization"),
     CONTENTTYPE("Content-Type"),
     USERAGENT("User-Agent"),
     XAPPLEMMCSDATACLASS("x-apple-mmcs-dataclass"),
@@ -51,6 +52,8 @@ public enum Headers {
     XCLOUDKITBUNDLEID("X-CloudKit-BundleId"),
     XCLOUDKITCONTAINERID("X-CloudKit-ContainerId"),
     XCLOUDKITCONTAINER("X-CloudKit-Container"),
+    XCLOUDKITENVIRONMENT("X-CloudKit-Environment"),
+    XCLOUDKITPARTITION("X-CloudKit-Partition"),
     XCLOUDKITPROTOCOLVERSION("X-CloudKit-ProtocolVersion"),
     XCLOUDKITUSERID("X-CloudKit-UserId"),
     XCLOUDKITZONES("X-CloudKit-Zone"),
