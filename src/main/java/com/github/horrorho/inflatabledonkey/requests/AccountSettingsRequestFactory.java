@@ -23,9 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -37,26 +41,29 @@ import org.apache.http.client.methods.HttpUriRequest;
 @Immutable
 public final class AccountSettingsRequestFactory implements BiFunction<String, String, HttpUriRequest> {
 
-    private final String url;
-    private final Headers headers;
-
-    public AccountSettingsRequestFactory(String url, Headers headers) {
-        this.url = Objects.requireNonNull(url);
-        this.headers = Objects.requireNonNull(headers);
+    public static final AccountSettingsRequestFactory instance() {
+        return INSTANCE;
     }
 
-    public AccountSettingsRequestFactory(Headers headers) {
-        this("https://setup.icloud.com/setup/get_account_settings", headers);
+    private static final AccountSettingsRequestFactory INSTANCE = new AccountSettingsRequestFactory(
+            "https://setup.icloud.com/setup/get_account_settings", CoreHeaders.headers());
+
+    private final String url;
+    private final Map<Headers, Header> headers;
+
+    AccountSettingsRequestFactory(String url, Map<Headers, Header> headers) {
+        this.url = Objects.requireNonNull(url);
+        this.headers = new HashMap<>(headers);
     }
 
     @Override
     public HttpUriRequest apply(String dsPrsID, String mmeAuthToken) {
-        String authorization = Headers.basicToken(dsPrsID, mmeAuthToken);
+        String authorization = AccessTokens.BASIC.token(dsPrsID, mmeAuthToken);
 
         HttpPost request = new HttpPost(url);
-        request.setHeader(headers.get(Headers.userAgent));
-        request.setHeader(headers.get(Headers.xMmeClientInfo));
-        request.setHeader("Authorization", authorization);
+        request.setHeader(headers.get(Headers.USERAGENT));
+        request.setHeader(headers.get(Headers.XMMECLIENTINFO));
+        request.setHeader(HttpHeaders.AUTHORIZATION, authorization);
 
         return request;
     }
