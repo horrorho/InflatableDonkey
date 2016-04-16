@@ -23,9 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -37,26 +41,30 @@ import org.apache.http.client.methods.HttpUriRequest;
 @Immutable
 public final class AuthenticationRequestFactory implements BiFunction<String, String, HttpUriRequest> {
 
-    private final String url;
-    private final Headers headers;
-
-    public AuthenticationRequestFactory(String url, Headers headers) {
-        this.url = Objects.requireNonNull(url);
-        this.headers = Objects.requireNonNull(headers);
+    public static final AuthenticationRequestFactory instance() {
+        return INSTANCE;
     }
 
-    public AuthenticationRequestFactory(Headers headers) {
-        this("https://setup.icloud.com/setup/authenticate/$APPLE_ID$", headers);
+    private static final AuthenticationRequestFactory INSTANCE = new AuthenticationRequestFactory(
+            "https://setup.icloud.com/setup/authenticate/$APPLE_ID$", CoreHeaders.headers());
+
+    private final String url;
+    private final Map<Headers, Header> headers;
+
+    AuthenticationRequestFactory(String url, Map<Headers, Header> headers) {
+        this.url = Objects.requireNonNull(url);
+        this.headers = new HashMap<>(headers);
     }
 
     @Override
     public HttpUriRequest apply(String id, String password) {
-        String authorization = Headers.basicToken(id, password);
+
+        String authorization = AccessTokens.BASIC.token(id, password);
 
         HttpGet request = new HttpGet(url);
-        request.setHeader(headers.get(Headers.userAgent));
-        request.setHeader(headers.get(Headers.xMmeClientInfo));
-        request.addHeader("Authorization", authorization);
+        request.setHeader(headers.get(Headers.USERAGENT));
+        request.setHeader(headers.get(Headers.XMMECLIENTINFO));
+        request.setHeader(HttpHeaders.AUTHORIZATION, authorization);
 
         return request;
     }
