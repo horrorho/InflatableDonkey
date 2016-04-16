@@ -23,56 +23,57 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.exception.BadDataException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 
 /**
- * iOS backup ckAppInit HttpUriRequest factory.
+ * CkAppInitBackupRequestFactory.
  *
  * @author Ahseya
  */
 @Immutable
 public final class CkAppInitBackupRequestFactory {
 
-    public static final CkAppInitBackupRequestFactory create() {
-        return instance;
+    public static final CkAppInitBackupRequestFactory instance() {
+        return INSTANCE;
     }
 
-    private static final CkAppInitBackupRequestFactory instance = new CkAppInitBackupRequestFactory();
+    private static final CkAppInitBackupRequestFactory INSTANCE = new CkAppInitBackupRequestFactory(
+            "https://setup.icloud.com/setup/ck/v1/ckAppInit", CoreHeaders.headers());
 
-    public CkAppInitBackupRequestFactory() {
+    private final String url;
+    private final Map<Headers, Header> headers;
+
+    CkAppInitBackupRequestFactory(String url, Map<Headers, Header> headers) {
+        this.url = Objects.requireNonNull(url);
+        this.headers = new HashMap<>(headers);
     }
 
-    /**
-     * Returns a new iOS backup ckAppInit HttpUriRequest.
-     *
-     * @param dsPrsID not null
-     * @param mmeAuthToken not null
-     * @param cloudKitAuthToken not null
-     * @return HttpUriRequest, not null
-     * @throws BadDataException
-     */
     public HttpUriRequest newRequest(
             String dsPrsID,
             String mmeAuthToken,
-            String cloudKitAuthToken
-    ) throws BadDataException {
+            String cloudKitAuthToken,
+            String bundle,
+            String container) {
 
-        String authorization = Headers.basicToken(dsPrsID, mmeAuthToken);
+        String authorization = AccessTokens.BASIC.token(dsPrsID, mmeAuthToken);
 
-        HttpPost request = new HttpPost("https://setup.icloud.com/setup/ck/v1/ckAppInit?container=com.apple.backup.ios");
-
-        request.setHeader("Accept", "application/json");
-        request.setHeader("User-Agent", "CloudKitWin/1.3.17.0 (Windows/6.1.1.0)");
-        request.setHeader("Authorization", authorization);
-        request.setHeader("X-CloudKit-AuthToken", cloudKitAuthToken);
-        request.setHeader("X-CloudKit-BundleId", "com.apple.backupd");
-        request.setHeader("X-CloudKit-ContainerId", "com.apple.backup.ios");
-        request.setHeader("X-CloudKit-Environment", "production");
-        request.setHeader("X-CloudKit-Partition", "production");
-        request.setHeader("X-Mme-Client-Info", "<PC> <Windows; 6.1.7601/SP1.0.7601; Win7 Ultimate; x64> <CloudKitWin/1.3.17.0 (iCloudDrive/4.1.0.0)");
+        HttpPost request = new HttpPost(url + "?container=" + container);
+        request.setHeader(headers.get(Headers.USERAGENT));
+        request.setHeader(headers.get(Headers.XMMECLIENTINFO));
+        request.setHeader(headers.get(Headers.XCLOUDKITENVIRONMENT));
+        request.setHeader(headers.get(Headers.XCLOUDKITPARTITION));
+        request.setHeader(HttpHeaders.ACCEPT, "application/json");
+        request.setHeader(HttpHeaders.AUTHORIZATION, authorization);
+        request.setHeader(Headers.XCLOUDKITAUTHTOKEN.header(cloudKitAuthToken));
+        request.setHeader(Headers.XCLOUDKITBUNDLEID.header(bundle));
+        request.setHeader(Headers.XCLOUDKITCONTAINERID.header(container));
         return request;
     }
 }
