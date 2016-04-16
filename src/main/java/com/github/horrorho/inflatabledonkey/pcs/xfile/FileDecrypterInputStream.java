@@ -76,21 +76,21 @@ public class FileDecrypterInputStream extends InputStream {
     @Override
     public int read(byte b[], int off, int len) throws IOException {
         int read = 0;
-        while (len > 0) {
+        while (read < len) {
             if (pos >= limit) {
                 fill();
             }
             if (limit == -1) {
-                return -1;
+                return read == 0 ? -1 : read;
             }
 
             int remaining = limit - pos;
-            int write = len > remaining ? remaining : len;
+            int length = len > remaining ? remaining : len;
 
-            System.arraycopy(out, pos, b, off + read, write);
-
-            len -= write;
-            read += write;
+            System.arraycopy(out, pos, b, off + read, length);
+            
+            pos += length;
+            read += length;
         }
         return read;
     }
@@ -104,7 +104,6 @@ public class FileDecrypterInputStream extends InputStream {
         pos = 0;
         int processed = decrypter.decrypt(block, in, 0, limit, out, pos);
         if (processed != limit) {
-            logger.warn("-- fill() - non block-length aligned input");
         }
 
         block++;
