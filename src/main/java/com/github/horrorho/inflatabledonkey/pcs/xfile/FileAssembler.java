@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,6 +54,8 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class FileAssembler {
 
+    private static final int BUFFER_SIZE = 16384;   // TODO inject
+
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     public static void
@@ -65,21 +68,32 @@ public final class FileAssembler {
             return;
         }
 
+        logger.debug("-- assemble() - file: {} copy data", file);
         copy(file, chunkData, key);
+
+        logger.debug("-- assemble() - file: {} truncate", file);
         truncate(file, length);
+
+        logger.debug("-- assemble() - file: {} done", file);
     }
 
     static void copy(Path file, List<Chunk> chunkData, Optional<byte[]> key) throws UncheckedIOException {
         try (OutputStream output = Files.newOutputStream(file, CREATE, WRITE, TRUNCATE_EXISTING);
-                InputStream input = key.isPresent()
-                        ? inputStream(chunkData, key.get())
-                        : inputStream(chunkData)) {
+                InputStream input = inputStream(chunkData, key)) {
 
-            IOUtils.copy(input, output);
+            logger.debug("-- copy() - file: {} copy large", file);
+            IOUtils.copyLarge(input, output);
+            logger.debug("-- copy() - file: {} copy large done", file);
 
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
+    }
+
+    static InputStream inputStream(List<Chunk> chunkData, Optional<byte[]> key) {
+        return key.isPresent()
+                ? inputStream(chunkData, key.get())
+                : inputStream(chunkData);
     }
 
     static InputStream inputStream(List<Chunk> chunkData, byte[] key) throws UncheckedIOException {
@@ -93,13 +107,16 @@ public final class FileAssembler {
                 .collect(Collectors.toList());
 
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
-
-        return new SequenceInputStream(enumeration);
+        return new BufferedInputStream(new SequenceInputStream(enumeration), BUFFER_SIZE);  // TODO reduce if small file size
     }
 
     static boolean createDirectories(Path file) {
         Path parent = file.getParent();
         if (parent != null) {
+            if (Files.exists(parent) && Files.isDirectory(parent)) {
+                return true;
+            }
+
             try {
                 logger.debug("-- createDirectories() - create directory: {}", parent);
                 Files.createDirectories(parent);
