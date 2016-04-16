@@ -46,28 +46,34 @@ public final class FileKeyAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(FileKeyAssistant.class);
 
-    public static Optional<byte[]> unwrap(KeyBag keyBag, int protectionClass, byte[] fileKey) {
+    public static Optional<byte[]> uuid(byte[] fileKey) {
         try {
-            Optional<byte[]> optionalPublicKey = keyBag.publicKey(protectionClass);
-            Optional<byte[]> optionalPrivateKey = keyBag.privateKey(protectionClass);
-
             ByteBuffer buffer = ByteBuffer.wrap(fileKey);
             byte[] uuid = new byte[0x10];
             buffer.get(uuid);
-
-            if (!Arrays.areEqual(keyBag.uuid(), uuid)) {
-                logger.warn("-- unwrap() - fileKey/ keybag uuid mismatch: 0x{} 0x{}",
-                        Hex.toHexString(uuid), Hex.toHexString(keyBag.uuid()));
-            }
-
-            return optionalPublicKey.isPresent() && optionalPrivateKey.isPresent()
-                    ? unwrap(optionalPublicKey.get(), optionalPrivateKey.get(), protectionClass, fileKey)
-                    : Optional.empty();
+            return Optional.of(uuid);
 
         } catch (BufferUnderflowException ex) {
-            logger.warn("-- unwrap() - BufferUnderflowException: {}", ex);
+            logger.warn("-- uuid() - BufferUnderflowException: {}", ex);
             return Optional.empty();
         }
+    }
+
+    public static Optional<byte[]> unwrap(KeyBag keyBag, int protectionClass, byte[] fileKey) {
+        Optional<byte[]> optionalPublicKey = keyBag.publicKey(protectionClass);
+        Optional<byte[]> optionalPrivateKey = keyBag.privateKey(protectionClass);
+        Optional<byte[]> uuid = uuid(fileKey);
+
+        boolean uuidMatch = uuid.map(u -> Arrays.areEqual(keyBag.uuid(), u))
+                .orElse(false);
+        if (!uuidMatch) {
+            logger.warn("-- unwrap() - fileKey/ keybag uuid mismatch: 0x{} 0x{}",
+                    uuid.map(Hex::toHexString), Hex.toHexString(keyBag.uuid()));
+        }
+
+        return optionalPublicKey.isPresent() && optionalPrivateKey.isPresent()
+                ? unwrap(optionalPublicKey.get(), optionalPrivateKey.get(), protectionClass, fileKey)
+                : Optional.empty();
     }
 
     public static Optional<byte[]>
