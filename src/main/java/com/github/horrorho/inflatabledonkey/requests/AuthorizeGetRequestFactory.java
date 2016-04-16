@@ -24,11 +24,14 @@
 package com.github.horrorho.inflatabledonkey.requests;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ByteArrayEntity;
@@ -41,21 +44,27 @@ import org.apache.http.entity.ByteArrayEntity;
 @Immutable
 public final class AuthorizeGetRequestFactory {
 
-    private final Headers headers;
-
-    public AuthorizeGetRequestFactory(Headers headers) {
-        this.headers = Objects.requireNonNull(headers);
+    public static final AuthorizeGetRequestFactory instance() {
+        return INSTANCE;
     }
 
-    public HttpUriRequest newRequest(
+    private static final AuthorizeGetRequestFactory INSTANCE = new AuthorizeGetRequestFactory(CoreHeaders.headers());
+
+    private final Map<Headers, Header> headers;
+
+    AuthorizeGetRequestFactory(Map<Headers, Header> headers) {
+        this.headers = new HashMap<>(headers);
+    }
+
+    public Optional<HttpUriRequest> newRequest(
             String dsPrsID,
-            String contentUrl,
+            String contentBaseUrl,
             String container,
             String zone,
             CloudKit.FileTokens fileTokens) {
 
         if (fileTokens.getFileTokensCount() == 0) {
-            return null;
+            return Optional.empty();
         }
 
         CloudKit.FileToken base = fileTokens.getFileTokens(0);
@@ -68,22 +77,23 @@ public final class AuthorizeGetRequestFactory {
 
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(fileTokens.toByteArray());
 
-        String uri = contentUrl + "/" + dsPrsID + "/authorizeGet";
+        String uri = contentBaseUrl + "/" + dsPrsID + "/authorizeGet";
 
         HttpUriRequest request = RequestBuilder.post(uri)
-                .addHeader(Headers.accept, "application/vnd.com.apple.me.ubchunk+protobuf")
-                .addHeader(Headers.contentType, "application/vnd.com.apple.me.ubchunk+protobuf")
-                .addHeader(Headers.xAppleMmcsDataclass, "com.apple.Dataclass.CloudKit")
-                .addHeader(Headers.xCloudKitContainer, container)
-                .addHeader(Headers.xCloudKitZones, zone)
-                .addHeader(Headers.xAppleMmcsAuth, mmcsAuthToken)
-                .addHeader(Headers.xAppleMmeDsid, dsPrsID)
-                .addHeader(headers.get(Headers.userAgent))
-                .addHeader(headers.get(Headers.xAppleMmcsProtoVersion))
-                .addHeader(headers.get(Headers.xMmeClientInfo))
+                .addHeader(Headers.ACCEPT.header("application/vnd.com.apple.me.ubchunk+protobuf"))
+                .addHeader(Headers.CONTENTTYPE.header("application/vnd.com.apple.me.ubchunk+protobuf"))
+                .addHeader(Headers.XAPPLEMMCSDATACLASS.header("com.apple.Dataclass.CloudKit"))
+                .addHeader(Headers.XAPPLEMMCSAUTH.header(mmcsAuthToken))
+                .addHeader(Headers.XAPPLEMMEDSID.header(dsPrsID))
+                .addHeader(Headers.XCLOUDKITCONTAINER.header(container))
+                .addHeader(Headers.XCLOUDKITZONES.header(zone))
+                .addHeader(headers.get(Headers.USERAGENT))
+                .addHeader(headers.get(Headers.XAPPLEMMCSPROTOVERSION))
+                .addHeader(headers.get(Headers.XMMECLIENTINFO))
                 .setEntity(byteArrayEntity)
                 .build();
 
-        return request;
+        return Optional.of(request);
     }
 }
+// TODO gzip option
