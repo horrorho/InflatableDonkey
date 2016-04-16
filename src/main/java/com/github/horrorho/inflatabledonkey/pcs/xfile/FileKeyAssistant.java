@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
+import com.github.horrorho.inflatabledonkey.keybag.KeyBags;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -57,6 +58,12 @@ public final class FileKeyAssistant {
             logger.warn("-- uuid() - BufferUnderflowException: {}", ex);
             return Optional.empty();
         }
+    }
+
+    public static Optional<byte[]> unwrap(KeyBags keyBags, int protectionClass, byte[] fileKey) {
+        return uuid(fileKey)
+                .flatMap(keyBags::uuid)
+                .flatMap(keyBag -> unwrap(keyBag, protectionClass, fileKey));
     }
 
     public static Optional<byte[]> unwrap(KeyBag keyBag, int protectionClass, byte[] fileKey) {
