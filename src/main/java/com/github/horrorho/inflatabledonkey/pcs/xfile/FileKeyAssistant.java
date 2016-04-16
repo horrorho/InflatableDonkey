@@ -26,10 +26,13 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,40 +47,62 @@ public final class FileKeyAssistant {
     private static final Logger logger = LoggerFactory.getLogger(FileKeyAssistant.class);
 
     public static Optional<byte[]> unwrap(KeyBag keyBag, int protectionClass, byte[] fileKey) {
-        Optional<byte[]> optionalPublicKey = keyBag.publicKey(protectionClass);
-        Optional<byte[]> optionalPrivateKey = keyBag.privateKey(protectionClass);
+        try {
+            Optional<byte[]> optionalPublicKey = keyBag.publicKey(protectionClass);
+            Optional<byte[]> optionalPrivateKey = keyBag.privateKey(protectionClass);
 
-        return optionalPublicKey.isPresent() && optionalPrivateKey.isPresent()
-                ? unwrap(optionalPublicKey.get(), optionalPrivateKey.get(), protectionClass, fileKey)
-                : Optional.empty();
+            ByteBuffer buffer = ByteBuffer.wrap(fileKey);
+            byte[] uuid = new byte[0x10];
+            buffer.get(uuid);
+
+            if (!Arrays.areEqual(keyBag.uuid(), uuid)) {
+                logger.warn("-- unwrap() - fileKey/ keybag uuid mismatch: 0x{} 0x{}",
+                        Hex.toHexString(uuid), Hex.toHexString(keyBag.uuid()));
+            }
+
+            return optionalPublicKey.isPresent() && optionalPrivateKey.isPresent()
+                    ? unwrap(optionalPublicKey.get(), optionalPrivateKey.get(), protectionClass, fileKey)
+                    : Optional.empty();
+
+        } catch (BufferUnderflowException ex) {
+            logger.warn("-- unwrap() - BufferUnderflowException: {}", ex);
+            return Optional.empty();
+        }
     }
 
     public static Optional<byte[]>
             unwrap(byte[] myPublicKey, byte[] myPrivateKey, int protectionClass, byte[] fileKey) {
-        // Version 2.
-        ByteBuffer buffer = ByteBuffer.wrap(fileKey);
 
-        byte[] uid = new byte[0x10];
-        buffer.get(uid);
+        try {
+            // Version 2 support only.
+            ByteBuffer buffer = ByteBuffer.wrap(fileKey);
 
-        buffer.getInt(); // ignored
-        buffer.getInt(); // ignored
-        int pc = buffer.getInt();
-        buffer.getInt(); // ignored
-        int length = buffer.getInt();
+            byte[] uuid = new byte[0x10];
+            buffer.get(uuid);
 
-        byte[] longKey = new byte[buffer.limit() - buffer.position()];
-        buffer.get(longKey);
+            buffer.getInt(); // ignored
+            buffer.getInt(); // ignored
+            int pc = buffer.getInt();
+            buffer.getInt(); // ignored
+            int length = buffer.getInt();
 
-        if (longKey.length != length) {
-            logger.warn("-- unwrap() - incongruent key length");
+            byte[] longKey = new byte[buffer.limit() - buffer.position()];
+            buffer.get(longKey);
+
+            if (longKey.length != length) {
+                logger.warn("-- unwrap() - incongruent key length");
+            }
+
+            if (pc != protectionClass) {
+                logger.warn("-- unwrap() - incongruent protection class");
+            }
+
+            return FileKeyAssistant.unwrap(myPublicKey, myPrivateKey, longKey);
+
+        } catch (BufferUnderflowException ex) {
+            logger.warn("-- unwrap() - BufferUnderflowException: {}", ex);
+            return Optional.empty();
         }
-
-        if (pc != protectionClass) {
-            logger.warn("-- unwrap() - incongruent protection class");
-        }
-
-        return FileKeyAssistant.unwrap(myPublicKey, myPrivateKey, longKey);
     }
 
     public static Optional<byte[]> unwrap(byte[] myPublicKey, byte[] myPrivateKey, byte[] longKey) {
@@ -113,3 +138,4 @@ public final class FileKeyAssistant {
         return AESWrap.unwrap(hash, wrappedKey);
     }
 }
+// TODO buffer underflow exceptions
