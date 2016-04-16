@@ -91,6 +91,12 @@ public final class AssetFactory {
                         ? Optional.of(as.getContentBaseURL())
                         : Optional.empty());
 
+        String dsPrsID
+                = asset.flatMap(as -> as.hasDsPrsID()
+                        ? Optional.of(as.getDsPrsID())
+                        : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("asset missing dsPrsID")); // TODO test, can always inject dsPrsID
+
         int fileSize = asset.map(as -> as.getSize()).orElse(0L).intValue();
         long tokenExpiration = asset.map(as -> as.getDownloadTokenExpiration()).orElse(0L);
 
@@ -106,6 +112,7 @@ public final class AssetFactory {
                 fileSize,
                 fileType,
                 downloadTokenExpiration,
+                dsPrsID,
                 contentBaseURL,
                 fileChecksum,
                 fileSignature,
@@ -172,3 +179,4 @@ public final class AssetFactory {
                 .findFirst();
     }
 }
+// TODO simplify

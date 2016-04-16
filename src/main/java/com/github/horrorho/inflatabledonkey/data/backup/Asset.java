@@ -52,6 +52,7 @@ public final class Asset {
     private final int size;
     private final int fileType;
     private final Instant downloadTokenExpiration;
+    private final String dsPrsID;
     private final Optional<String> contentBaseURL;
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
@@ -64,6 +65,7 @@ public final class Asset {
             int size,
             int fileType,
             Instant downloadTokenExpiration,
+            String dsPrsID,
             Optional<String> contentBaseURL,
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
@@ -75,6 +77,7 @@ public final class Asset {
         this.size = size;
         this.fileType = fileType;
         this.downloadTokenExpiration = downloadTokenExpiration;
+        this.dsPrsID = Objects.requireNonNull(dsPrsID, "dsPrsID");
         this.contentBaseURL = Objects.requireNonNull(contentBaseURL, "contentBaseURL");
         this.fileChecksum = Objects.requireNonNull(fileChecksum, "fileChecksum");
         this.fileSignature = Objects.requireNonNull(fileSignature, "fileSignature");
@@ -97,6 +100,10 @@ public final class Asset {
 
     public Instant downloadTokenExpiration() {
         return downloadTokenExpiration;
+    }
+
+    public String dsPrsID() {
+        return dsPrsID;
     }
 
     public Optional<String> contentBaseURL() {
@@ -178,3 +185,4 @@ public final class Asset {
                 + '}';
     }
 }
+// TODO simplify
