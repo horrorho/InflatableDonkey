@@ -1,7 +1,7 @@
-/* 
+/*
  * The MIT License
  *
- * Copyright 2015 Ahseya.
+ * Copyright 2016 Ahseya.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.Header;
@@ -35,55 +35,51 @@ import org.apache.http.message.BasicHeader;
 /**
  * Headers.
  *
- * @author ahseya
+ * @author Ahseya
  */
 @Immutable
-public interface Headers {
+public enum Headers {
+    ACCEPT("Accept"),
+    CONTENTTYPE("Content-Type"),
+    USERAGENT("User-Agent"),
+    XAPPLEMMCSDATACLASS("x-apple-mmcs-dataclass"),
+    XAPPLEMMCSAUTH("x-apple-mmcs-auth"),
+    XAPPLEMMCSPROTOVERSION("x-apple-mmcs-proto-version"),
+    XAPPLEMMEDSID("x-apple-mme-dsid"),
+    XAPPLEREQUESTUUID("X-Apple-Request-UUID"),
+    XCLOUDKITAUTHTOKEN("X-CloudKit-AuthToken"),
+    XCLOUDKITBUNDLEID("X-CloudKit-BundleId"),
+    XCLOUDKITCONTAINERID("X-CloudKit-ContainerId"),
+    XCLOUDKITCONTAINER("X-CloudKit-Container"),
+    XCLOUDKITPROTOCOLVERSION("X-CloudKit-ProtocolVersion"),
+    XCLOUDKITUSERID("X-CloudKit-UserId"),
+    XCLOUDKITZONES("X-CloudKit-Zone"),
+    XMMECLIENTINFO("X-Mme-Client-Info");
 
-    static final String accept = "Accept";
-    static final String contentType = "Content-Type";
-    static final String userAgent = "User-Agent";
-    static final String xAppleMmcsDataclass = "x-apple-mmcs-dataclass";
-    static final String xAppleMmcsAuth = "x-apple-mmcs-auth";
-    static final String xAppleMmcsProtoVersion = "x-apple-mmcs-proto-version";
-    static final String xAppleMmeDsid = "x-apple-mme-dsid";
-    static final String xAppleRequestUUID = "X-Apple-Request-UUID";
-    static final String xCloudKitAuthToken = "X-CloudKit-AuthToken";
-    static final String xCloudKitBundleId = "X-CloudKit-BundleId";
-    static final String xCloudKitContainerId = "X-CloudKit-ContainerId";
-    static final String xCloudKitContainer = "X-CloudKit-Container";
-    static final String xCloudKitProtocolVersion = "X-CloudKit-ProtocolVersion";
-    static final String xCloudKitUserId = "X-CloudKit-UserId";
-    static final String xCloudKitZones = "X-CloudKit-Zone";
-    static final String xMmeClientInfo = "X-Mme-Client-Info";
+    private final String name;
 
-    Header get(String header) throws NullPointerException;
-
-    List<Header> getAll();
-
-    default List<Header> getAll(List<String> headers) {
-        return headers.stream()
-                .map(this::get)
-                .collect(Collectors.toList());
+    private Headers(String name) {
+        this.name = Objects.requireNonNull(name, "name");
     }
 
-    static Header header(String name, String value) {
-        return new BasicHeader(name, value);
+    public Header header(String value) {
+        return new BasicHeader(this.name, value);
     }
 
-    static Header header(ChunkServer.NameValuePair header) {
-        return header(header.getName(), header.getValue());
+    public Map.Entry<Headers, String> mapEntry(String value) {
+        return new AbstractMap.SimpleImmutableEntry<>(this, value);
     }
 
-    static String basicToken(String left, String right) {
-        return token("Basic", left, right);
+    @Override
+    public String toString() {
+        return name;
     }
 
-    static String mobilemeAuthToken(String left, String right) {
-        return token("X-MobileMe-AuthToken", left, right);
-    }
-
-    static String token(String type, String left, String right) {
-        return type + " " + Base64.getEncoder().encodeToString((left + ":" + right).getBytes(StandardCharsets.UTF_8));
+    public static Map<Headers, Header> headers(Map.Entry<Headers, String>... headers) {
+        return Arrays.asList(headers)
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getKey().header(e.getValue())));
     }
 }
