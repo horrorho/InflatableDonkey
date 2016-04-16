@@ -38,7 +38,7 @@ import org.apache.http.client.methods.HttpUriRequest;
  * @author Ahseya
  */
 @Immutable
-public class CKInits {
+public final class CKInits {
 
     public static CKInit ckInitBackupd(HttpClient httpClient, Account account) throws IOException {
         return ckInit(httpClient, account, "com.apple.backupd", "com.apple.backup.ios");
