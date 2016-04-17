@@ -39,6 +39,7 @@ import net.jcip.annotations.Immutable;
  *
  * @author Ahseya
  */
+@Deprecated
 @Immutable
 public final class SRPInitResponse {
 
@@ -66,12 +67,12 @@ public final class SRPInitResponse {
     }
 
     public SRPInitResponse(NSDictionary response) throws BadDataException {
-        version = PLists.<NSNumber>getOrDefault(response, "version", zero).intValue();
-        status = PLists.<NSString>getOrDefault(response, "status", empty).getContent();
-        message = PLists.<NSString>getOrDefault(response, "message", empty).getContent();
-        dsid = PLists.<NSString>get(response, "dsid").toString();
+        version = PLists.<NSNumber>fetchOrDefault(response, "version", zero).intValue();
+        status = PLists.<NSString>fetchOrDefault(response, "status", empty).getContent();
+        message = PLists.<NSString>fetchOrDefault(response, "message", empty).getContent();
+        dsid = PLists.<NSString>fetch(response, "dsid").toString();
 
-        String respBlob = PLists.<NSString>get(response, "respBlob").getContent();
+        String respBlob = PLists.<NSString>fetch(response, "respBlob").getContent();
 
         byte[] data = Base64.getDecoder().decode(respBlob);
 
