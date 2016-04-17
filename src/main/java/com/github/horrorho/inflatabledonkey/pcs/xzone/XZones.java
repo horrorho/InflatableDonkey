@@ -88,6 +88,7 @@ public final class XZones {
     }
 
     public Optional<String> lastProtectionTag() {
+        // NB use with care in a multithreaded environment.
         return Optional.ofNullable(lastProtectionTag.get());
     }
 
@@ -117,7 +118,6 @@ public final class XZones {
                 .filter(k -> !this.keys.containsKey(k.keyID()))
                 .peek(k -> logger.debug("-- put() - added key id: {}", k.keyID()))
                 .forEach(k -> this.keys.put(k.keyID(), k));
-
         return this;
     }
 
