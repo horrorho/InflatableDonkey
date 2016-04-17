@@ -43,6 +43,7 @@ import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestAPI;
 import com.github.horrorho.inflatabledonkey.requests.HeadersLegacy;
+import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,6 +55,7 @@ import java.util.Optional;
 import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,22 +82,24 @@ public final class SRPx {
     }
 
     static ServiceKeySet srp(HttpClient httpClient, EscrowProxyRequestAPI escrowProxy) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
+        /*
+        EscrowService SRP-6a exchange.
+        Coding critical as repeated errors will lock the account.
+        https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
+        escrow user id = dsid
+        escrow password = dsid
+         */
+
+        PropertyListResponseHandler<NSDictionary> nsDictionaryResponseHandler
+                = PropertyListResponseHandler.nsDictionaryResponseHandler();
         /* 
-         EscrowService SRP-6a exchange.
+        EscrowService SRP-6a exchanges: GETRECORDS
         
-         Coding critical as repeated errors will lock the account.                 
-         https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
-        
-         escrow user id = dsid
-         escrow password = dsid                
+        We'll do the last step first, so we can abort if only a few attempts remain rather than risk further depleting
+        them with experimental code. 
          */
- /* 
-         EscrowService SRP-6a exchanges: GETRECORDS
-        
-         We'll do the last step first, so we can abort if only a few attempts remain rather than risk further depleting
-         them with experimental code. 
-         */
-        NSDictionary records = escrowProxy.getRecords(httpClient);
+        HttpUriRequest recordsRequest = escrowProxy.getRecords();
+        NSDictionary records = httpClient.execute(recordsRequest, nsDictionaryResponseHandler);
         logger.debug("-- srp() - getRecords response: {}", records.toASCIIPropertyList());
 
         SRPGetRecords srpGetRecords = new SRPGetRecords(records);
@@ -113,7 +117,10 @@ public final class SRPx {
          */
         SRPClient srp = SRPFactory.rfc5054(new SecureRandom());
         byte[] ephemeralKeyA = srp.generateClientCredentials();
-        NSDictionary srpInit = escrowProxy.srpInit(httpClient, ephemeralKeyA);
+
+        HttpUriRequest srpInitRequest = escrowProxy.srpInit(ephemeralKeyA);
+        NSDictionary srpInit = httpClient.execute(srpInitRequest, nsDictionaryResponseHandler);
+
         logger.debug("-- srp() - SRP_INIT dictionary: {}", srpInit.toASCIIPropertyList());
 
         SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);
@@ -137,8 +144,8 @@ public final class SRPx {
         byte[] m1 = optionalM1.get();
         logger.debug("-- srp() - m1: 0x{}", Hex.toHexString(m1));
 
-        NSDictionary recover
-                = escrowProxy.recover(httpClient, m1, srpInitResponse.uid(), srpInitResponse.tag());
+        HttpUriRequest recoverRequest = escrowProxy.recover(m1, srpInitResponse.uid(), srpInitResponse.tag());
+        NSDictionary recover = httpClient.execute(recoverRequest, nsDictionaryResponseHandler);
         logger.debug("-- srp() - srpInit response: {}", recover.toASCIIPropertyList());
 
         // Verify the server M2 message (or not). Either way we have a session key and an encrypted key set.
