@@ -23,14 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.srp;
 
-import com.dd.plist.NSData;
 import com.dd.plist.NSDictionary;
-import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
-import com.dd.plist.PropertyListParser;
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.crypto.srp.EscrowTest;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecords;
 import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecordsMetadata;
@@ -39,46 +35,26 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.AccountInfo;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.MobileMe;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Tokens;
-import com.github.horrorho.inflatabledonkey.crypto.AESCBC;
-import com.github.horrorho.inflatabledonkey.crypto.GCMDataB;
-import com.github.horrorho.inflatabledonkey.crypto.PBKDF2;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECAssistant;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPublic;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECurves;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
-import com.github.horrorho.inflatabledonkey.data.blob.BlobA0;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
-import com.github.horrorho.inflatabledonkey.data.der.BackupEscrow;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
-import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.KeyImport;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XUnwrapData;
 import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.bouncycastle.crypto.digests.SHA1Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,10 +81,10 @@ public final class SRPx {
                 = new EscrowProxyRequestFactory(accountInfo.dsPrsID(), tokens.get(Token.MMEAUTHTOKEN), escrowProxyUrl);
 
 //        return srp(httpClient, escrowProxy);
-        return test(httpClient, escrowProxy);
+        return srp(httpClient, escrowProxy);
     }
 
-    static ServiceKeySet test(HttpClient httpClient, EscrowProxyRequestFactory escrowProxy) throws IOException {
+    static ServiceKeySet srp(HttpClient httpClient, EscrowProxyRequestFactory escrowProxy) throws IOException {
         SRPGetRecords records = getRecords(httpClient, escrowProxy);
         // We'll do the last step first, so we can abort if only a few attempts remain rather than risk further 
         // depleting them.
@@ -128,7 +104,7 @@ public final class SRPx {
 
         ServiceKeySet decryptM2 = decryptM2(blob, key);
 
-        ServiceKeySet b = b(records, decryptM2);
+        ServiceKeySet b = escrowedRecord(records, decryptM2);
 
         return b;
     }
@@ -205,7 +181,7 @@ public final class SRPx {
             
             BlobA6 contains amongst other things, salt, iv and encrypted key set data.
          */
-        byte[] backupBagPassword = decryptRecoveryResponseBlob(blob, key);
+        byte[] backupBagPassword = EscrowedData.decryptLegacy(blob, key);
 
         Optional<ServiceKeySet> optionalServiceKeySet = DERUtils.parse(backupBagPassword, KeySet::new)
                 .flatMap(ServiceKeySetBuilder::build);
@@ -217,7 +193,7 @@ public final class SRPx {
         return keySet;
     }
 
-    static ServiceKeySet b(SRPGetRecords records, ServiceKeySet keySet) {
+    static ServiceKeySet escrowedRecord(SRPGetRecords records, ServiceKeySet keySet) {
         /* 
          EscrowService SRP-6a exchanges: decrypt escrowed keys
         
@@ -233,7 +209,7 @@ public final class SRPx {
         }
 
         Optional<ServiceKeySet> optionalEscrowServiceKeySet
-                = decryptGetRecordsResponseMetadata(pcsRecordMetadata.get(), keySet::key);
+                = EscrowedRecords.decrypt(pcsRecordMetadata.get(), keySet::key);
         if (!optionalEscrowServiceKeySet.isPresent()) {
             logger.warn("-- main() - failed to retrieve escrow key set");
             System.exit(-1);
@@ -242,120 +218,5 @@ public final class SRPx {
         return escrowServiceKeySet;
     }
 
-    public static byte[] decryptRecoveryResponseBlob(BlobA6 blob, byte[] key) {
-        logger.debug("-- decryptRecoverResponseBlob() - response blob: {}", blob);
-
-        byte[] pcsData = AESCBC.decryptAESCBC(key, blob.iv(), blob.data());
-        logger.debug("-- decryptRecoverResponseBlob() - pcs data: 0x{}", Hex.toHexString(pcsData));
-
-        BlobA0 pcsBlob = new BlobA0(ByteBuffer.wrap(pcsData));
-        logger.debug("-- decryptRecoverResponseBlob() - pcs blob: {}", pcsBlob);
-
-        byte[] derivedKey
-                = PBKDF2.generate(new SHA256Digest(), pcsBlob.dsid(), pcsBlob.salt(), pcsBlob.iterations(), 16 * 8);
-        logger.debug("-- decryptRecoverResponseBlob() - derived key: 0x{}", Hex.toHexString(derivedKey));
-
-        byte[] saltIV = Arrays.copyOf(pcsBlob.salt(), 16);
-        logger.debug("-- decryptRecoverResponseBlob() - salt/ iv: 0x{}", Hex.toHexString(saltIV));
-
-        byte[] dictionaryData = AESCBC.decryptAESCBC(derivedKey, saltIV, pcsBlob.data());
-        logger.debug("-- decryptRecoverResponseBlob() - dictionary data: 0x{}", Hex.toHexString(dictionaryData));
-
-        NSDictionary dictionary = PLists.parseDictionary(dictionaryData);
-        logger.debug("-- decryptRecoverResponseBlob() - dictionary: {}", dictionary.toXMLPropertyList());
-
-        byte[] backupBagPassword = PLists.getAs(dictionary, "BackupBagPassword", NSData.class).bytes();
-        logger.debug("-- decryptRecoverResponseBlob() - BackupBagPassword: 0x{}", Hex.toHexString(backupBagPassword));
-
-        Optional<NSData> backupKeybagDigest = PLists.optionalAs(dictionary, "BackupKeybagDigest", NSData.class);
-        if (!backupKeybagDigest.isPresent()) {
-            logger.debug("-- decryptRecoverResponseBlob() - no backup keybag digest");
-            return backupBagPassword;
-        }
-        byte[] checksum = backupKeybagDigest.get().bytes();
-        logger.debug("-- decryptRecoverResponseBlob() - BackupKeybagDigest: 0x{}", Hex.toHexString(checksum));
-
-        SHA1Digest digest = new SHA1Digest();
-        byte[] out = new byte[digest.getDigestSize()];
-        digest.update(backupBagPassword, 0, backupBagPassword.length);
-        digest.doFinal(out, 0);
-        logger.debug("-- decryptRecoverResponseBlob() - calculated digest: 0x{}", Hex.toHexString(out));
-        logger.debug("-- decryptRecoverResponseBlob() - digests match: {}", Arrays.equals(checksum, out));
-        return backupBagPassword;
-    }
-
-    // getRecords response > metadatalist > 'com.apple.protectedcloudstorage.record' > metadata    
-    public static Optional<ServiceKeySet> decryptGetRecordsResponseMetadata(
-            byte[] metadata, Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
-
-        NSDictionary dictionary = PLists.parseDictionary(metadata);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - dictionary: {}", dictionary.toXMLPropertyList());
-
-        byte[] backupKeybagDigest = PLists.getAs(dictionary, "BackupKeybagDigest", NSData.class).bytes();
-        logger.debug("-- decryptGetRecordsResponseMetadata() - BackupKeybagDigest: 0x{}", Hex.toHexString(backupKeybagDigest));
-
-        Optional<NSString> timestamp = PLists.optionalAs(dictionary, "com.apple.securebackup.timestamp", NSString.class);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - com.apple.securebackup.timestamp: {}",
-                timestamp.map(NSString::getContent));
-
-        NSDictionary clientMetadata = PLists.getAs(dictionary, "ClientMetadata", NSDictionary.class);
-
-        NSDictionary secureBackupiCloudDataProtection
-                = PLists.getAs(clientMetadata, "SecureBackupiCloudDataProtection", NSDictionary.class);
-
-        byte[] secureBackupiCloudIdentityPublicData
-                = PLists.getAs(clientMetadata, "SecureBackupiCloudIdentityPublicData", NSData.class).bytes();
-
-        Optional<PublicKeyInfo> optionalPublicKeyInfo
-                = DERUtils.parse(secureBackupiCloudIdentityPublicData, PublicKeyInfo::new);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - publicKeyInfo: {}", optionalPublicKeyInfo);
-
-        byte[] kPCSMetadataEscrowedKeys
-                = PLists.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
-
-        Optional<BackupEscrow> optionalBackupEscrow = DERUtils.parse(kPCSMetadataEscrowedKeys, BackupEscrow::new);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - backupEscrow: {}", optionalBackupEscrow);
-
-        // Defaults = SECPR1/ NIST curves.
-        // Import keys based on length.
-        IntFunction<Optional<String>> fieldLengthToCurveName = ECAssistant.fieldLengthToCurveName(ECurves.defaults());
-        Function<byte[], Optional<Key<ECPublic>>> importPublicKey
-                = KeyImport.importPublicKey(fieldLengthToCurveName, true);
-
-        Optional<KeyID> masterKeyID = optionalBackupEscrow
-                .map(BackupEscrow::masterKeyPublic)
-                .flatMap(importPublicKey)
-                .map(Key::keyID);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - master key id: {}", masterKeyID);
-
-        // Take master key d value if we have it in the key set.
-        Optional<BigInteger> optionalMasterKeyD = masterKeyID.flatMap(getMasterKey::apply)
-                .map(Key::keyData)
-                .map(ECPrivate::d);
-        if (!optionalMasterKeyD.isPresent()) {
-            logger.warn("-- decryptGetRecordsResponseMetadata() - unable to locate master key");
-            return Optional.empty();
-        }
-        BigInteger masterKeyD = optionalMasterKeyD.get();
-
-        logger.debug("-- decryptGetRecordsResponseMetadata() - master key d: 0x{}", masterKeyD.toString(16));
-
-        if (!optionalBackupEscrow.isPresent()) {
-            logger.warn("-- decryptGetRecordsResponseMetadata() - unable to locate backup escrow");
-            return Optional.empty();
-        }
-        BackupEscrow backupEscrow = optionalBackupEscrow.get();
-
-        byte[] key = XUnwrapData.instance().apply(backupEscrow.wrappedKey(), masterKeyD);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - key: 0x{}", Hex.toHexString(key));
-
-        byte[] decrypted = GCMDataB.decrypt(key, backupEscrow.data());
-        logger.debug("-- decryptGetRecordsResponseMetadata() - decrypted escrow data: 0x{}",
-                Hex.toHexString(decrypted));
-
-        return DERUtils.parse(decrypted, KeySet::new)
-                .flatMap(ServiceKeySetBuilder::build);
-    }
-
 }
-// TODO srp records
+// TODO tidy
