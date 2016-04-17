@@ -41,7 +41,7 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.Tokens;
 import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.requests.EscrowProxyApi;
+import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestAPI;
 import com.github.horrorho.inflatabledonkey.requests.HeadersLegacy;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.io.IOException;
@@ -71,7 +71,15 @@ public final class SRPx {
 
     private static final int MIN_REMAINING_ATTEMPTS = Property.SRP_MIN_REMAINING_ATTEMPTS.intValue().orElse(3);
 
-    public static ServiceKeySet srp(HttpClient httpClient, MobileMe mobileMe, Tokens tokens, AccountInfo accountInfo, HeadersLegacy coreHeaders) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
+    public static ServiceKeySet srp(HttpClient httpClient, MobileMe mobileMe, Tokens tokens, AccountInfo accountInfo) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
+        String escrowProxyUrl = mobileMe.get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl");
+        EscrowProxyRequestAPI escrowProxy
+                = new EscrowProxyRequestAPI(accountInfo.dsPrsID(), tokens.get(Token.MMEAUTHTOKEN), escrowProxyUrl);
+
+        return srp(httpClient, escrowProxy);
+    }
+
+    static ServiceKeySet srp(HttpClient httpClient, EscrowProxyRequestAPI escrowProxy) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
         /* 
          EscrowService SRP-6a exchange.
         
@@ -81,17 +89,7 @@ public final class SRPx {
          escrow user id = dsid
          escrow password = dsid                
          */
-        Optional<String> optionalEscrowProxyUrl
-                = mobileMe.optional("com.apple.Dataclass.KeychainSync", "escrowProxyUrl");
-        if (!optionalEscrowProxyUrl.isPresent()) {
-            throw new IllegalArgumentException("missing escrow proxy url");
-        }
-        String escrowProxyUrl = optionalEscrowProxyUrl.get();
-
-        EscrowProxyApi escrowProxy
-                = new EscrowProxyApi(accountInfo.dsPrsID(), tokens.get(Token.MMEAUTHTOKEN), escrowProxyUrl);
-
-        /* 
+ /* 
          EscrowService SRP-6a exchanges: GETRECORDS
         
          We'll do the last step first, so we can abort if only a few attempts remain rather than risk further depleting
@@ -101,22 +99,6 @@ public final class SRPx {
         logger.debug("-- srp() - getRecords response: {}", records.toASCIIPropertyList());
 
         SRPGetRecords srpGetRecords = new SRPGetRecords(records);
-        srpGetRecords.metadata()
-                .values()
-                .stream()
-                .forEach(v -> {
-                    byte[] metadata = Base64.getDecoder().decode(v.metadata());
-                    try {
-                        NSObject nsObject = PropertyListParser.parse(metadata);
-                        if (nsObject instanceof NSDictionary) {
-                            logger.debug("-- main() - label: {} dictionary: {}",
-                                    v.label(), ((NSDictionary) nsObject).toXMLPropertyList());
-                        }
-                    } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
-                        logger.warn("-- main() - failed to parse property list: {}", v.metadata());
-                    }
-                });
-
         int remainingAttempts = srpGetRecords.remainingAttempts();
         logger.debug("-- srp() - remaining attempts: {}", remainingAttempts);
         if (remainingAttempts < MIN_REMAINING_ATTEMPTS) {
