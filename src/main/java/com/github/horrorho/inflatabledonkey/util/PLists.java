@@ -31,9 +31,11 @@ import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Optional;
-import java.util.function.Function;
 import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 /**
@@ -44,20 +46,27 @@ import org.xml.sax.SAXException;
 @Immutable
 public final class PLists {
 
-    /*
-    TODO
-    static <T> T cast(ASN1Primitive primitive, Class<T> to) {
-        try {
-            return to.cast(primitive);
+    private static final Logger logger = LoggerFactory.getLogger(PLists.class);
 
-        } catch (ClassCastException ex) {
-            throw new IllegalArgumentException("Unexpected ASN1Primitive type", ex);
+    static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
+        return (to.isAssignableFrom(object.getClass()))
+                ? Optional.of(to.cast(object))
+                : Optional.empty();
+    }
+
+    public static Optional<NSObject> parse(byte[] data) {
+        try {
+            NSObject nsObject = PropertyListParser.parse(data);
+            return Optional.of(nsObject);
+
+        } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+            logger.warn("-- parse() - failed to parse NSObject data: 0x{}", Hex.toHexString(data));
+            return Optional.empty();
         }
     }
-    }
-    
-     */
-    public static <T> T parse(byte[] data) {
+
+    @Deprecated
+    public static <T> T parseLegacy(byte[] data) {
         try {
             return (T) PropertyListParser.parse(data);
 
@@ -72,7 +81,8 @@ public final class PLists {
         }
     }
 
-    public static <T extends NSObject> T get(NSDictionary dictionary, String key) throws BadDataException {
+    @Deprecated
+    public static <T extends NSObject> T fetch(NSDictionary dictionary, String key) throws BadDataException {
         if (dictionary.containsKey(key)) {
             return cast(key, dictionary);
         }
@@ -80,7 +90,8 @@ public final class PLists {
         throw new BadDataException("Missing key: " + key);
     }
 
-    public static <T extends NSObject> T getOrDefault(NSDictionary dictionary, String key, T defaultValue)
+    @Deprecated
+    public static <T extends NSObject> T fetchOrDefault(NSDictionary dictionary, String key, T defaultValue)
             throws BadDataException {
 
         return dictionary.containsKey(key)
@@ -88,8 +99,9 @@ public final class PLists {
                 : defaultValue;
     }
 
-    public static <T extends NSObject> T getOrNull(NSDictionary dictionary, String key) throws BadDataException {
-        return getOrDefault(dictionary, key, null);
+    @Deprecated
+    public static <T extends NSObject> T fetchOrNull(NSDictionary dictionary, String key) throws BadDataException {
+        return fetchOrDefault(dictionary, key, null);
     }
 
     static <T extends NSObject> T cast(String key, NSDictionary dictionary) throws BadDataException {
@@ -101,27 +113,32 @@ public final class PLists {
         }
     }
 
-    static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
-        return (to.isAssignableFrom(object.getClass()))
-                ? Optional.of(to.cast(object))
-                : Optional.empty();
-    }
-
     public static Optional<NSObject> optional(NSDictionary dictionary, String key) {
         return dictionary.containsKey(key)
                 ? Optional.of(dictionary.get(key))
                 : Optional.empty();
     }
 
-    public static <T extends NSObject> Optional<T> optional(NSDictionary dictionary, String key, Class<T> to) {
+    public static <T extends NSObject> Optional<T> optionalAs(NSDictionary dictionary, String key, Class<T> to) {
         return optional(dictionary, key)
                 .flatMap(o -> cast(o, to));
     }
 
-    public static <T extends NSObject, U>
-            Optional<U> optional(NSDictionary dictionary, String key, Class<T> to, Function<T, U> then) {
-        return optional(dictionary, key, to)
-                .map(then);
+    public static NSObject get(NSDictionary dictionary, String key) {
+        return optional(dictionary, key)
+                .orElseThrow(() -> new IllegalArgumentException("missing key: " + key));
     }
 
+    public static <T extends NSObject> T getAs(NSDictionary dictionary, String key, Class<T> to) {
+        NSObject nsObject = get(dictionary, key);
+        return cast(nsObject, to)
+                .orElseThrow(() -> new IllegalArgumentException("failed cast: " + key + " to " + to));
+    }
+
+//    public static <T extends NSObject, U>
+//            Optional<U> optional(NSDictionary dictionary, String key, Class<T> to, Function<T, U> then) {
+//        return optional(dictionary, key, to)
+//                .map(then);
+//    }
+//            
 }
