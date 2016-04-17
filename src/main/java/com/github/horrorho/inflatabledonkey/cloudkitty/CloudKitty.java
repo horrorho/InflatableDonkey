@@ -113,12 +113,18 @@ public final class CloudKitty {
     }
 
     public List<CloudKit.ZoneRetrieveResponse>
-            zoneRetrieveRequest(HttpClient httpClient, String zone)
+            zoneRetrieveRequest(HttpClient httpClient, String... zones)
+            throws IOException {
+        return zoneRetrieveRequest(httpClient, Arrays.asList(zones));
+    }
+
+    public List<CloudKit.ZoneRetrieveResponse>
+            zoneRetrieveRequest(HttpClient httpClient, Collection<String> zones)
             throws IOException {
 
         // M201
-        CloudKit.RequestOperation requestOperation = factory.zoneRetrieveRequestOperation(zone);
-        logger.debug("-- zoneRetrieveRequest() request operation: {}", requestOperation);
+        List<CloudKit.RequestOperation> requestOperations = factory.zoneRetrieveRequestOperation(zones);
+        logger.debug("-- zoneRetrieveRequest() request operation: {}", requestOperations);
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.instance().newRequest(
                 baseUrl + "/zone/retrieve",
@@ -127,7 +133,7 @@ public final class CloudKitty {
                 cloudKitUserId,
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                Arrays.asList(requestOperation));
+                requestOperations);
 
         List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
 

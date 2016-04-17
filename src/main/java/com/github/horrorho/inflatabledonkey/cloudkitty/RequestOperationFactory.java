@@ -92,29 +92,45 @@ public final class RequestOperationFactory {
         this.bundle = Objects.requireNonNull(bundle, "bundle");
     }
 
-    // TODO varargs/ collection
-    public CloudKit.RequestOperation zoneRetrieveRequestOperation(String zone) {
+    public List<CloudKit.RequestOperation> zoneRetrieveRequestOperation(Collection<String> zones) {
         CloudKit.RequestOperationHeader requestOperationHeader
                 = requestOperationHeader(ckdFetchRecordZonesOperation);
 
-        return zoneRetrieveRequestOperation(requestOperationHeader, zone);
+        return zoneRetrieveRequestOperation(requestOperationHeader, zones);
+    }
+
+    public List<CloudKit.RequestOperation> zoneRetrieveRequestOperation(
+            CloudKit.RequestOperationHeader requestOperationHeader,
+            Collection<String> zones) {
+
+        List<CloudKit.RequestOperation> operations = new ArrayList<>();
+
+        Optional<CloudKit.RequestOperationHeader> optionalRequestOperationheader = Optional.of(requestOperationHeader);
+        for (String zone : zones) {
+            operations.add(
+                    zoneRetrieveRequestOperation(optionalRequestOperationheader, zone));
+
+            if (optionalRequestOperationheader.isPresent()) {
+                optionalRequestOperationheader = Optional.empty();
+            }
+        }
+
+        return operations;
     }
 
     CloudKit.RequestOperation zoneRetrieveRequestOperation(
-            CloudKit.RequestOperationHeader requestOperationHeader,
+            Optional<CloudKit.RequestOperationHeader> requestOperationHeader,
             String zone) {
 
         CloudKit.Operation operation = operation(201);
-
         CloudKit.ZoneRetrieveRequest zoneRetrieveRequest = zoneRetrieveRequest(zone);
 
-        CloudKit.RequestOperation build = CloudKit.RequestOperation.newBuilder()
-                .setRequestOperationHeader(requestOperationHeader)
+        CloudKit.RequestOperation.Builder builder = CloudKit.RequestOperation.newBuilder()
                 .setOperation(operation)
-                .setZoneRetrieveRequest(zoneRetrieveRequest)
-                .build();
+                .setZoneRetrieveRequest(zoneRetrieveRequest);
+        requestOperationHeader.map(header -> builder.setRequestOperationHeader(header));
 
-        return build;
+        return builder.build();
     }
 
     CloudKit.ZoneRetrieveRequest zoneRetrieveRequest(String zone) {
@@ -165,7 +181,6 @@ public final class RequestOperationFactory {
         CloudKit.RequestOperation.Builder builder = CloudKit.RequestOperation.newBuilder()
                 .setOperation(operation)
                 .setRecordRetrieveRequest(recordRetrieveRequest);
-
         requestOperationHeader.map(header -> builder.setRequestOperationHeader(header));
 
         return builder.build();
