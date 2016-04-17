@@ -128,11 +128,11 @@ public final class EscrowProxyRequestFactory {
         return request;
     }
 
-    public HttpUriRequest recover(byte[] m1, byte[] uuid, byte[] tag) throws IOException {
+    public HttpUriRequest recover(byte[] m1, byte[] uid, byte[] tag) throws IOException {
         String uri = escrowProxyUrl + "/escrowproxy/api/recover";
         String authorization = AccessTokens.MOBILEMEAUTHTOKEN.token(dsPrsID, mmeAuthToken);
 
-        BlobA5 blob = new BlobA5(tag, uuid, m1);
+        BlobA5 blob = new BlobA5(tag, uid, m1);
         byte[] data = blob.export().array();
         String encodedMessage = Base64.getEncoder().encodeToString(data);
 
