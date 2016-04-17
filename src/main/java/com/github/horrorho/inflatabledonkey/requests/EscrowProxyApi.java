@@ -27,12 +27,13 @@ import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA5;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -53,17 +54,23 @@ public final class EscrowProxyApi {
 
     private final String dsPrsID;
     private final String escrowProxyUrl;
-    private final Headers headers;
+    private final String mmeAuthToken;
+    private final Map<Headers, Header> headers;
 
-    public EscrowProxyApi(String dsPrsID, String escrowProxyUrl, Headers headers) {
+    EscrowProxyApi(String dsPrsID, String mmeAuthToken, String escrowProxyUrl, Map<Headers, Header> headers) {
         this.dsPrsID = Objects.requireNonNull(dsPrsID, "dsPrsID");
+        this.mmeAuthToken = Objects.requireNonNull(mmeAuthToken, "mmeAuthToken");
         this.escrowProxyUrl = Objects.requireNonNull(escrowProxyUrl, "escrowProxyUrl");
-        this.headers = Objects.requireNonNull(headers, "headers");
+        this.headers = new HashMap<>(headers);
     }
 
-    public NSDictionary getRecords(HttpClient httpClient, String mmeAuthToken) throws IOException {
+    public EscrowProxyApi(String dsPrsID, String mmeAuthToken, String escrowProxyUrl) {
+        this(dsPrsID, mmeAuthToken, escrowProxyUrl, CoreHeaders.headers());
+    }
+
+    public NSDictionary getRecords(HttpClient httpClient) throws IOException {
         String uri = escrowProxyUrl + "/escrowproxy/api/get_records";
-        String mobilemeAuthToken = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
+        String authorization = AccessTokens.MOBILEMEAUTHTOKEN.token(dsPrsID, mmeAuthToken);
 
         String post = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
@@ -80,11 +87,11 @@ public final class EscrowProxyApi {
         logger.trace("-- getRecords() - post: {}", post);
 
         HttpUriRequest request = RequestBuilder.post(uri)
-                .addHeader(headers.get(Headers.userAgent))
-                .addHeader(HttpHeaders.AUTHORIZATION, mobilemeAuthToken)
-                .addHeader(headers.get(Headers.xMmeClientInfo))
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-apple-plist")
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .addHeader(HttpHeaders.AUTHORIZATION, authorization)
+                .addHeader(headers.get(Headers.USERAGENT))
+                .addHeader(headers.get(Headers.XMMECLIENTINFO))
                 .setEntity(new StringEntity(post, StandardCharsets.UTF_8))
                 .build();
 
@@ -92,10 +99,9 @@ public final class EscrowProxyApi {
         return dictionary;
     }
 
-    public NSDictionary srpInit(HttpClient httpClient, String mmeAuthToken, byte[] key) throws IOException {
+    public NSDictionary srpInit(HttpClient httpClient, byte[] key) throws IOException {
         String uri = escrowProxyUrl + "/escrowproxy/api/srp_init";
-        String mobilemeAuthToken = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
-
+        String authorization = AccessTokens.MOBILEMEAUTHTOKEN.token(dsPrsID, mmeAuthToken);
         String encodedKey = Base64.getEncoder().encodeToString(key);
 
         String post = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -115,11 +121,11 @@ public final class EscrowProxyApi {
         logger.trace("-- srpInit() - post: {}", post);
 
         HttpUriRequest request = RequestBuilder.post(uri)
-                .addHeader(headers.get(Headers.userAgent))
-                .addHeader(HttpHeaders.AUTHORIZATION, mobilemeAuthToken)
-                .addHeader(headers.get(Headers.xMmeClientInfo))
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-apple-plist")
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .addHeader(HttpHeaders.AUTHORIZATION, authorization)
+                .addHeader(headers.get(Headers.USERAGENT))
+                .addHeader(headers.get(Headers.XMMECLIENTINFO))
                 .setEntity(new StringEntity(post, StandardCharsets.UTF_8))
                 .build();
 
@@ -128,10 +134,10 @@ public final class EscrowProxyApi {
     }
 
     public NSDictionary
-            recover(HttpClient httpClient, String mmeAuthToken, byte[] m1, byte[] uuid, byte[] tag) throws IOException {
+            recover(HttpClient httpClient, byte[] m1, byte[] uuid, byte[] tag) throws IOException {
 
         String uri = escrowProxyUrl + "/escrowproxy/api/recover";
-        String mobilemeAuthToken = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
+        String authorization = AccessTokens.MOBILEMEAUTHTOKEN.token(dsPrsID, mmeAuthToken);
 
         BlobA5 blob = new BlobA5(tag, uuid, m1);
         byte[] data = blob.export().array();
@@ -154,11 +160,11 @@ public final class EscrowProxyApi {
         logger.trace("-- recover() - post: {}", post);
 
         HttpUriRequest request = RequestBuilder.post(uri)
-                .addHeader(headers.get(Headers.userAgent))
-                .addHeader(HttpHeaders.AUTHORIZATION, mobilemeAuthToken)
-                .addHeader(headers.get(Headers.xMmeClientInfo))
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-apple-plist")
                 .addHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .addHeader(HttpHeaders.AUTHORIZATION, authorization)
+                .addHeader(headers.get(Headers.USERAGENT))
+                .addHeader(headers.get(Headers.XMMECLIENTINFO))
                 .setEntity(new StringEntity(post, StandardCharsets.UTF_8))
                 .build();
 
