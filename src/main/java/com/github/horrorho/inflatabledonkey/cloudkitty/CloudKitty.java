@@ -30,6 +30,7 @@ import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -86,6 +87,10 @@ public final class CloudKitty {
 
     private static final Logger logger = LoggerFactory.getLogger(CloudKitty.class);
 
+    // TODO test limit
+    // TODO inject via Property
+    private static final int REQUEST_LIMIT = 400;
+
     private final RequestOperationFactory factory;
     private final String container;
     private final String bundle;
@@ -126,17 +131,7 @@ public final class CloudKitty {
         List<CloudKit.RequestOperation> requestOperations = factory.zoneRetrieveRequestOperation(zones);
         logger.debug("-- zoneRetrieveRequest() request operation: {}", requestOperations);
 
-        HttpUriRequest uriRequest = ProtoBufsRequestFactory.instance().newRequest(
-                baseUrl + "/zone/retrieve",
-                container,
-                bundle,
-                cloudKitUserId,
-                cloudKitToken,
-                UUID.randomUUID().toString(),
-                requestOperations);
-
-        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
-
+        List<CloudKit.ResponseOperation> response = doRequest(httpClient, requestOperations);
         logger.debug("-- zoneRetrieveRequest() response: {}", response);
 
         return response.stream()
@@ -147,7 +142,6 @@ public final class CloudKitty {
     public List<CloudKit.RecordRetrieveResponse>
             recordRetrieveRequest(HttpClient httpClient, String zone, String... recordNames)
             throws IOException {
-
         return recordRetrieveRequest(httpClient, zone, Arrays.asList(recordNames));
     }
 
@@ -156,10 +150,39 @@ public final class CloudKitty {
             throws IOException {
 
         // M211
-        List<CloudKit.RequestOperation> recordRetrieveRequestOperations
-                = factory.recordRetrieveRequestOperations(zone, recordNames);
+        List<CloudKit.RequestOperation> requestOperations = factory.recordRetrieveRequestOperations(zone, recordNames);
+        List<CloudKit.ResponseOperation> response = doRequest(httpClient, requestOperations);
 
-        logger.debug("-- recordRetrieveRequest() - record name count: {}", recordNames.size());
+        return response.stream()
+                .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
+                .collect(Collectors.toList());
+    }
+
+    List<CloudKit.ResponseOperation>
+            doRequest(HttpClient httpClient, List<CloudKit.RequestOperation> operations) throws IOException {
+
+        ArrayList<CloudKit.ResponseOperation> responses = new ArrayList<>();
+        for (int i = 0; i < operations.size(); i += REQUEST_LIMIT) {
+            int fromIndex = i * REQUEST_LIMIT;
+            int toIndex = fromIndex + REQUEST_LIMIT;
+            toIndex = toIndex > operations.size()
+                    ? operations.size()
+                    : toIndex;
+
+            List<CloudKit.RequestOperation> subList = operations.subList(fromIndex, toIndex);
+            List<CloudKit.ResponseOperation> subListResponses = doSubListRequest(httpClient, subList);
+            responses.addAll(subListResponses);
+        }
+        return responses;
+    }
+
+    List<CloudKit.ResponseOperation>
+            doSubListRequest(HttpClient httpClient, List<CloudKit.RequestOperation> operationsSubList)
+            throws IOException {
+
+        if (operationsSubList.size() > REQUEST_LIMIT) {
+            throw new IllegalArgumentException("sub list size over request limit: " + operationsSubList.size());
+        }
 
         HttpUriRequest uriRequest = ProtoBufsRequestFactory.instance().newRequest(
                 baseUrl + "/record/retrieve",
@@ -168,12 +191,8 @@ public final class CloudKitty {
                 cloudKitUserId,
                 cloudKitToken,
                 UUID.randomUUID().toString(),
-                recordRetrieveRequestOperations);
+                operationsSubList);
 
-        List<CloudKit.ResponseOperation> response = httpClient.execute(uriRequest, responseHandler);
-
-        return response.stream()
-                .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
-                .collect(Collectors.toList());
+        return httpClient.execute(uriRequest, responseHandler);
     }
 }
