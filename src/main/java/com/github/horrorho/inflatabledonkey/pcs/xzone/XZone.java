@@ -41,6 +41,7 @@ import org.bouncycastle.util.encoders.Hex;
  *
  * @author Ahseya
  */
+@Deprecated
 @Immutable
 public final class XZone {
 

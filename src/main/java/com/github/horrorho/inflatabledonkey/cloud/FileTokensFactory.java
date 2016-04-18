@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;

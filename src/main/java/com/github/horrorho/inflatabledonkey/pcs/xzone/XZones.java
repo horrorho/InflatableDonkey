@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
+@Deprecated
 @ThreadSafe
 public final class XZones {
 

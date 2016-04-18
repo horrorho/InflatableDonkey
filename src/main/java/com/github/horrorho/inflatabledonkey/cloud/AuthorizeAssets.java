@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.FileTokensFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
