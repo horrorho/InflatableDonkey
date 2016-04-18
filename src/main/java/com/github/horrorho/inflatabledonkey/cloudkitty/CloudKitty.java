@@ -161,6 +161,10 @@ public final class CloudKitty {
     List<CloudKit.ResponseOperation>
             doRequest(HttpClient httpClient, List<CloudKit.RequestOperation> operations) throws IOException {
 
+        if (operations.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         ArrayList<CloudKit.ResponseOperation> responses = new ArrayList<>();
         for (int i = 0; i < operations.size(); i += REQUEST_LIMIT) {
             int fromIndex = i * REQUEST_LIMIT;
