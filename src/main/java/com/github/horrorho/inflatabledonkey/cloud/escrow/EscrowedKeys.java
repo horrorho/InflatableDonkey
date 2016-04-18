@@ -64,15 +64,24 @@ public final class EscrowedKeys {
                 account.mobileMe().get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl"));
     }
 
+    public static ServiceKeySet keys(HttpClient httpClient, Account account) throws IOException {
+        EscrowProxyRequestFactory escrowProxyRequestFactory = new EscrowProxyRequestFactory(
+                account.accountInfo().dsPrsID(),
+                account.tokens().get(Token.MMEAUTHTOKEN),
+                account.mobileMe().get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl"));
+
+        return keys(httpClient, escrowProxyRequestFactory);
+    }
+
     public static ServiceKeySet keys(HttpClient httpClient, EscrowProxyRequestFactory requests) throws IOException {
         return keys(httpClient, requests, REMAINING_ATTEMPTS_THRESHOLD);
     }
 
-    public static ServiceKeySet
+    static ServiceKeySet
             keys(HttpClient httpClient, EscrowProxyRequestFactory requests, int remainingAttemptsThreshold)
             throws IOException {
 
-        // TODO match BackupKeybagDigest, just assuming they will match
+        // TODO match BackupKeybagDigest, we are just assuming they will match.
         NSDictionary records = EscrowOperationsRecords.records(httpClient, requests);
         NSDictionary record = pcsRecord(records);
 

@@ -77,13 +77,13 @@ public final class ProtectionZoneAssistant {
     static public Map<KeyID, Key<ECPrivate>> masterKeys(ProtectionInfo protectionInfo, Map<KeyID, Key<ECPrivate>> keys) {
         return derivedKey(protectionInfo, keys)
                 .map(dk -> masterKeys(protectionInfo, dk))
-                .orElse(Collections.emptyMap());
+                .orElse(new HashMap<>());
     }
 
     static public Map<KeyID, Key<ECPrivate>> masterKeys(ProtectionInfo protectionInfo, byte[] dk) {
         return protectionInfo.data()
                 .map(bs -> masterKeys(bs, dk))
-                .orElse(Collections.emptyMap());
+                .orElse(new HashMap<>());
     }
 
     static public Map<KeyID, Key<ECPrivate>> masterKeys(byte[] protectionInfoData, byte[] dk) {

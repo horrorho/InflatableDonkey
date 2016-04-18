@@ -57,7 +57,7 @@ public final class ChunkListRequestFactory implements Function<ChunkServer.Stora
 
         hostInfo.getHeadersList()
                 .stream()
-                .map(Headers::header)
+                .map(HeadersLegacy::header)
                 .forEach(request::addHeader);
 
         return request;

@@ -48,7 +48,7 @@ public final class PLists {
 
     private static final Logger logger = LoggerFactory.getLogger(PLists.class);
 
-    static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
+    public static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
         return (to.isAssignableFrom(object.getClass()))
                 ? Optional.of(to.cast(object))
                 : Optional.empty();
@@ -63,6 +63,14 @@ public final class PLists {
             logger.warn("-- parse() - failed to parse NSObject data: 0x{}", Hex.toHexString(data));
             return Optional.empty();
         }
+    }
+
+    public static NSDictionary parseDictionary(byte[] data) {
+        NSObject nsObject = parse(data)
+                .orElseThrow(() -> new IllegalArgumentException("failed to parse NSObject data"));
+
+        return cast(nsObject, NSDictionary.class)
+                .orElseThrow(() -> new IllegalArgumentException("failed to cast to NSDictionary"));
     }
 
     @Deprecated

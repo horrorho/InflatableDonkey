@@ -41,7 +41,7 @@ import org.apache.http.Header;
  * @author ahseya
  */
 @Immutable
-public final class MappedHeaders implements Headers {
+public final class MappedHeaders implements HeadersLegacy {
 
     private final Map<String, Header> headers;
 

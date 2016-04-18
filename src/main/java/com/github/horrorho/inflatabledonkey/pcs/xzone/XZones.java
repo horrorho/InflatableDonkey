@@ -51,6 +51,14 @@ public final class XZones {
         return new XZones();
     }
 
+    public static XZones create(XZone... zone) {
+        XZones zones = create();
+        for (XZone z : zone) {
+            zones.put(z);
+        }
+        return zones;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(XZones.class);
 
     private final ConcurrentMap<KeyID, Key<ECPrivate>> keys;

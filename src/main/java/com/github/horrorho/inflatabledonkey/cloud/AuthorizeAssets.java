@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -48,12 +49,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
+@Immutable
 public final class AuthorizeAssets {
+
+    public static AuthorizeAssets backupd() {
+        return BACKUPD;
+    }
+
+    private static final AuthorizeAssets BACKUPD = new AuthorizeAssets("com.apple.backup.ios");
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssets.class);
 
     private static final ResponseHandler<ChunkServer.FileGroups> RESPONSE_HANDLER
             = new InputStreamResponseHandler<>(ChunkServer.FileGroups.PARSER::parseFrom);
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssets.class);
 
     private final String container;
     private final String zone;

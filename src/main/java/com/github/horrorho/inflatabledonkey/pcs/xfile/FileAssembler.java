@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -54,43 +55,36 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class FileAssembler {
 
-    private static final int BUFFER_SIZE = 16384;   // TODO inject
+    private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.intValue().orElse(8192);
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     public static void
             assemble(Path file, List<Chunk> chunkData, int length, Optional<byte[]> key) throws UncheckedIOException {
 
-        logger.debug("-- assemble() - file: {} chunk data: {} length: {} key: 0x{}",
-                file, chunkData, length, key.map(Hex::toHexString).orElse("NULL"));
+        logger.debug("-- assemble() - file: {} chunks: {} length: {} key: 0x{}",
+                file, chunkData.size(), length, key.map(Hex::toHexString).orElse("NULL"));
 
         if (!createDirectories(file)) {
             return;
         }
-
-        logger.debug("-- assemble() - file: {} copy data", file);
-        copy(file, chunkData, key);
-
-        logger.debug("-- assemble() - file: {} truncate", file);
+        copy(file, chunkData, key
+        );
         truncate(file, length);
-
-        logger.debug("-- assemble() - file: {} done", file);
     }
 
     static void copy(Path file, List<Chunk> chunkData, Optional<byte[]> key) throws UncheckedIOException {
         try (OutputStream output = Files.newOutputStream(file, CREATE, WRITE, TRUNCATE_EXISTING);
                 InputStream input = inputStream(chunkData, key)) {
 
-            logger.debug("-- copy() - file: {} copy large", file);
             IOUtils.copyLarge(input, output);
-            logger.debug("-- copy() - file: {} copy large done", file);
 
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
     }
 
-    static InputStream inputStream(List<Chunk> chunkData, Optional<byte[]> key) {
+    static InputStream inputStream(List<Chunk> chunkData, Optional<byte[]> key) throws UncheckedIOException {
         return key.isPresent()
                 ? inputStream(chunkData, key.get())
                 : inputStream(chunkData);
@@ -107,18 +101,23 @@ public final class FileAssembler {
                 .collect(Collectors.toList());
 
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
-        return new BufferedInputStream(new SequenceInputStream(enumeration), BUFFER_SIZE);  // TODO reduce if small file size
+        return new BufferedInputStream(new SequenceInputStream(enumeration), BUFFER_SIZE);
     }
 
     static boolean createDirectories(Path file) {
         Path parent = file.getParent();
         if (parent != null) {
-            if (Files.exists(parent) && Files.isDirectory(parent)) {
-                return true;
+            if (Files.exists(parent)) {
+                if (Files.isDirectory(parent)) {
+                    return true;
+
+                } else {
+                    logger.warn("-- createDirectories() - path exists but is not a directory: {}", file);
+                    return false;
+                }
             }
 
             try {
-                logger.debug("-- createDirectories() - create directory: {}", parent);
                 Files.createDirectories(parent);
                 return true;
 

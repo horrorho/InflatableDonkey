@@ -5,12 +5,15 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import static com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory.devices;
+import static com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory.hmacKey;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.XZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 
@@ -26,10 +29,21 @@ public final class AssetsFactory {
     private static final String FILES = "files";
 
     public static Assets from(ZoneRecord recordDecryptor) {
-        return from(recordDecryptor.record(), recordDecryptor.zone());
+        return fromLegacy(recordDecryptor.record(), recordDecryptor.zone());
     }
 
-    public static Assets from(CloudKit.Record record, Optional<XZone> zone) {
+    public static Assets from(CloudKit.Record record, BiFunction<byte[], String, Optional<byte[]>> decrypt) {
+        List<CloudKit.RecordField> records = record.getRecordFieldList();
+        List<String> files = files(records);
+
+        Optional<String> domain = domain(records)
+                .flatMap(bs -> decrypt.apply(bs, DOMAIN))
+                .map(String::new);
+
+        return new Assets(domain, files);
+    }
+
+    public static Assets fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
 
         List<String> files = files(records);

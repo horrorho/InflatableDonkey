@@ -49,7 +49,7 @@ public final class Manifests extends AbstractRecord {
     }
 
     public Optional<NSDictionary> backupProperties() {
-        return backupProperties.map(bs -> PLists.<NSDictionary>parse(bs));
+        return backupProperties.map(bs -> PLists.<NSDictionary>parseLegacy(bs));
     }
 
     public List<Manifest> manifests() {

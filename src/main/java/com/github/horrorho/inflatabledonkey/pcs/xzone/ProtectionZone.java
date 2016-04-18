@@ -53,7 +53,7 @@ public final class ProtectionZone {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtectionZone.class);
 
-    public static ProtectionZone base(Collection<Key<ECPrivate>> keys) {
+    public static ProtectionZone createBaseZone(Collection<Key<ECPrivate>> keys) {
         Map<KeyID, Key<ECPrivate>> map = keys.stream()
                 .collect(Collectors.toMap(
                         Key::keyID,
@@ -111,13 +111,15 @@ public final class ProtectionZone {
         return new HashMap<>(keys);
     }
 
-    public Optional<ProtectionZone> newZoneKeys(CloudKit.ProtectionInfo protectionInfo) {
+    public Optional<ProtectionZone> newProtectionZone(CloudKit.ProtectionInfo protectionInfo) {
         return protectionInfo.hasProtectionInfo() && protectionInfo.hasProtectionInfoTag()
-                ? newZoneKeys(protectionInfo.getProtectionInfoTag(), protectionInfo.getProtectionInfo().toByteArray())
+                ? newProtectionZone(
+                        protectionInfo.getProtectionInfoTag(),
+                        protectionInfo.getProtectionInfo().toByteArray())
                 : Optional.empty();
     }
 
-    Optional<ProtectionZone> newZoneKeys(String protectionInfoTag, byte[] protectionInfo) {
+    Optional<ProtectionZone> newProtectionZone(String protectionInfoTag, byte[] protectionInfo) {
         return ProtectionZoneAssistant.importProtectionInfo(protectionInfo)
                 .map(pi -> newZoneKeys(protectionInfoTag, pi));
     }

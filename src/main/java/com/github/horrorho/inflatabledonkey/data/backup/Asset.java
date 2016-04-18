@@ -123,7 +123,7 @@ public final class Asset {
     }
 
     <T extends NSObject, U> Optional<U> encryptedAttribute(String key, Class<T> to, Function<T, U> then) {
-        return encryptedAttributes.flatMap(e -> PLists.optional(e, key, to, then));
+        return encryptedAttributes.flatMap(e -> PLists.optionalAs(e, key, to)).map(then);
     }
 
     public Optional<String> domain() {

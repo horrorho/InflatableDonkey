@@ -31,6 +31,8 @@ import com.google.protobuf.ByteString;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
@@ -52,19 +54,18 @@ public final class AssetFactory {
     private static final long DEFAULT_EXPIRATION_SECONDS = 60 * 60; // 1 hour.
     private static final long GRACE_TIME_SECONDS = 15 * 60; // 15 minutes.
 
-    public static Asset from(ZoneRecord zoneRecord) {
-        return from(zoneRecord.record(), zoneRecord.zone());
-    }
-
-    public static Asset from(CloudKit.Record record, Optional<XZone> zone) {
+    public static Asset from(
+            CloudKit.Record record,
+            BiFunction<byte[], String, Optional<byte[]>> decrypt,
+            Function<byte[], Optional<byte[]>> unwrapKey) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
 
         int protectionClass = protectionClass(records);
         int fileType = fileType(records);
 
         Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
-                .flatMap(bs -> zone.map(z -> z.decrypt(bs, ENCRYPTED_ATTRIBUTES)))
-                .map(bs -> PLists.<NSDictionary>parse(bs)); // TODO cover the illegal argument exception.
+                .flatMap(bs -> decrypt.apply(bs, ENCRYPTED_ATTRIBUTES))
+                .map(PLists::parseDictionary); // TODO cover the illegal argument exception.
 
         Optional<CloudKit.Asset> asset = asset(records);
 
@@ -73,7 +74,7 @@ public final class AssetFactory {
                         ? Optional.of(as.getData().getValue().toByteArray())
                         : Optional.empty());
 
-        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
+        Optional<byte[]> keyEncryptionKey = data.flatMap(unwrapKey::apply);
 
         // TODO rework to getters in Asset.
         Optional<byte[]> fileChecksum
@@ -178,5 +179,78 @@ public final class AssetFactory {
                 .map(ByteString::toByteArray)
                 .findFirst();
     }
+
+    
+    @Deprecated
+    public static Asset fromLegacy(ZoneRecord zoneRecord) {
+        return fromLegacy(zoneRecord.record(), zoneRecord.zone());
+    }
+    
+    @Deprecated
+    public static Asset fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
+        List<CloudKit.RecordField> records = record.getRecordFieldList();
+
+        int protectionClass = protectionClass(records);
+        int fileType = fileType(records);
+
+        Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
+                .flatMap(bs -> zone.map(z -> z.decrypt(bs, ENCRYPTED_ATTRIBUTES)))
+                .map(bs -> PLists.<NSDictionary>parseLegacy(bs)); // TODO cover the illegal argument exception.
+
+        Optional<CloudKit.Asset> asset = asset(records);
+
+        Optional<byte[]> data
+                = asset.flatMap(as -> as.hasData()
+                        ? Optional.of(as.getData().getValue().toByteArray())
+                        : Optional.empty());
+
+        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
+
+        // TODO rework to getters in Asset.
+        Optional<byte[]> fileChecksum
+                = asset.flatMap(as -> as.hasFileChecksum()
+                        ? Optional.of(as.getFileChecksum().toByteArray())
+                        : Optional.empty());
+
+        Optional<byte[]> fileSignature
+                = asset.flatMap(as -> as.hasFileSignature()
+                        ? Optional.of(as.getFileSignature().toByteArray())
+                        : Optional.empty());
+
+        Optional<String> contentBaseURL
+                = asset.flatMap(as -> as.hasContentBaseURL()
+                        ? Optional.of(as.getContentBaseURL())
+                        : Optional.empty());
+
+        String dsPrsID
+                = asset.flatMap(as -> as.hasDsPrsID()
+                        ? Optional.of(as.getDsPrsID())
+                        : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("asset missing dsPrsID")); // TODO test, can always inject dsPrsID
+
+        int fileSize = asset.map(as -> as.getSize()).orElse(0L).intValue();
+        long tokenExpiration = asset.map(as -> as.getDownloadTokenExpiration()).orElse(0L);
+
+        long currentTimeSeconds = System.currentTimeMillis() / 1000;
+
+        // Adjust for bad system clocks.
+        Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
+                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
+                : Instant.ofEpochSecond(tokenExpiration);
+
+        return new Asset(
+                protectionClass,
+                fileSize,
+                fileType,
+                downloadTokenExpiration,
+                dsPrsID,
+                contentBaseURL,
+                fileChecksum,
+                fileSignature,
+                keyEncryptionKey,
+                encryptedAttributes,
+                asset);
+    }
+
 }
 // TODO simplify

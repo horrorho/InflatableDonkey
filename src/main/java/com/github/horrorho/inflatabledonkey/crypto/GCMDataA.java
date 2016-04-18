@@ -142,3 +142,4 @@ public final class GCMDataA {
         return decrypted;
     }
 }
+// TODO optional.

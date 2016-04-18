@@ -80,7 +80,7 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
                 .numberOfArgs(1)
                 .optionalArg(true) 
                 .build(),
-                Property.PROTOC_PATH);
+                Property.PATH_PROTOC);
 
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),

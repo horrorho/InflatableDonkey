@@ -23,101 +23,57 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.github.horrorho.inflatabledonkey.crypto.srp.SRPFactory;
-import com.github.horrorho.inflatabledonkey.crypto.srp.SRPClient;
-import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPInitResponse;
-import com.dd.plist.NSDictionary;
-import com.dd.plist.NSObject;
-import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
-import com.dd.plist.PropertyListParser;
 import com.github.horrorho.inflatabledonkey.args.ArgsParser;
 import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
 import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.chunkclient.ChunkClient;
+import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
+import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
+import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
+import com.github.horrorho.inflatabledonkey.cloud.AssetWriter;
+import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
+import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
-import com.github.horrorho.inflatabledonkey.crypto.srp.EscrowTest;
-import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecords;
-import com.github.horrorho.inflatabledonkey.crypto.srp.data.SRPGetRecordsMetadata;
-import com.github.horrorho.inflatabledonkey.data.AccountInfo;
-import com.github.horrorho.inflatabledonkey.data.Auth;
-import com.github.horrorho.inflatabledonkey.data.Authenticator;
-import com.github.horrorho.inflatabledonkey.data.CKInit;
-import com.github.horrorho.inflatabledonkey.data.MobileMe;
-import com.github.horrorho.inflatabledonkey.data.Tokens;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
+import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
+import com.github.horrorho.inflatabledonkey.cloud.auth.Authenticator;
+import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Tokens;
+import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
+import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
+import com.github.horrorho.inflatabledonkey.cloud.zone.AssetTokenClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.BackupAccountClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.BaseZonesClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.DeviceClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.ManifestsClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.KeyBagZone;
+import com.github.horrorho.inflatabledonkey.cloud.zone.AssetsClient;
+import com.github.horrorho.inflatabledonkey.cloud.zone.ProtectedItem;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
-import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
-import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
-import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
-import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
-import com.github.horrorho.inflatabledonkey.data.backup.ZoneRecord;
-import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotsFactory;
-import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
-import com.github.horrorho.inflatabledonkey.pcs.xfile.FileDecrypter;
-import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyAssistant;
+import com.github.horrorho.inflatabledonkey.data.backup.Device;
+import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XZones;
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.Record;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordFieldValue;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.Zone;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponse;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ZoneRetrieveResponseZoneSummary;
-import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
-import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
-import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
-import com.github.horrorho.inflatabledonkey.requests.EscrowProxyApi;
-import com.github.horrorho.inflatabledonkey.requests.Headers;
-import com.github.horrorho.inflatabledonkey.requests.MappedHeaders;
-import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
-import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
-import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
-import com.github.horrorho.inflatabledonkey.util.PLists;
-import com.google.protobuf.ByteString;
+import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.SecureRandom;
 import java.text.ParseException;
-import java.util.Base64;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -177,10 +133,10 @@ public class Main {
             snapshotIndex = intArgument.apply(Property.SELECT_SNAPSHOT_INDEX);
             manifestIndex = intArgument.apply(Property.SELECT_MANIFEST_INDEX);
 
-            protocPath = arguments.containsKey(Property.PROTOC_PATH)
-                    ? arguments.get(Property.PROTOC_PATH) == null
-                    ? Property.PROTOC_PATH.defaultValue()
-                    : arguments.get(Property.PROTOC_PATH)
+            protocPath = arguments.containsKey(Property.PATH_PROTOC)
+                    ? arguments.get(Property.PATH_PROTOC) == null
+                    ? Property.PATH_PROTOC.defaultValue()
+                    : arguments.get(Property.PATH_PROTOC)
                     : null;
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
@@ -188,43 +144,17 @@ public class Main {
             System.exit(-1);
         }
 
-        // Constants        
-        // TODO can we retrieve this value?
-        String deviceIdentifier = UUID.randomUUID().toString();
-        String deviceHardwareID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
-
-        String container = "com.apple.backup.ios";
-        String bundle = "com.apple.backupd";
-
-        Headers coreHeaders = new MappedHeaders(
-                new BasicHeader(Headers.userAgent, "CloudKit/479 (13A404)"),
-                new BasicHeader(Headers.xMmeClientInfo, "<iPhone5,3> <iPhone OS;9.0.1;13A404> <com.apple.cloudkit.CloudKitDaemon/479 (com.apple.cloudd/479)>"),
-                new BasicHeader(Headers.xCloudKitProtocolVersion, "client=1;comments=1;device=1;presence=1;records=1;sharing=1;subscriptions=1;users=1;mescal=1;"),
-                new BasicHeader(Headers.xAppleMmcsProtoVersion, "4.0")
-        );
-
-        // Raw protoc decode
-        RawProtoDecoder rawProtoDecoder = protocPath == null
-                ? null
-                : new RawProtoDecoder(protocPath);
-
-        InputStreamResponseHandler<List<CloudKit.ResponseOperation>> ckResponseHandler
-                = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(rawProtoDecoder));
-
         // SystemDefault HttpClient.
+        // TODO concurrent
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setUserAgent("CloudKit/479 (13A404)")
                 .useSystemProperties()
                 .build();
-        /*        
-         Authenticate via appleId/ password or dsPrsID:mmeAuthToken.
-        
-         No different to iOS8.
-         */
+
         logger.info("-- main() - *** Authenticate via appleId/ password or dsPrsID:mmeAuthToken ***");
         Auth auth = arguments.containsKey(Property.AUTHENTICATION_TOKEN)
                 ? new Auth(arguments.get(Property.AUTHENTICATION_TOKEN))
-                : new Authenticator(coreHeaders).authenticate(
+                : Authenticator.authenticate(
                         httpClient,
                         arguments.get(Property.AUTHENTICATION_APPLEID),
                         arguments.get(Property.AUTHENTICATION_PASSWORD));
@@ -236,830 +166,61 @@ public class Main {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
             System.exit(0);
         }
+        Account account = Accounts.account(httpClient, auth);
+        Tokens tokens = account.tokens();
 
-        /*
-         Account settings.
-                
-         New url/ headers otherwise comparable to iOS8.     
-         https://setup.icloud.com/setup/get_account_settings
+        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
+        CloudKitty kitty = CloudKitty.backupd(ckInit, tokens.get(Token.CLOUDKITTOKEN));
 
-         Returns an account settings plist, that along with numerous other items includes a cloudKitToken.        
-         */
-        logger.info("-- main() - *** Account settings ***");
-        HttpUriRequest accountSettingsRequest = new AccountSettingsRequestFactory(coreHeaders)
-                .apply(auth.dsPrsID(), auth.mmeAuthToken());
+        ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
 
-        NSDictionary settings
-                = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.nsDictionaryResponseHandler());
-        logger.debug("-- main() - account settings: {}", settings.toASCIIPropertyList());
-
-        AccountInfo accountInfo = new AccountInfo(PLists.<NSDictionary>get(settings, "appleAccountInfo"));
-        Tokens tokens = new Tokens(PLists.get(settings, "tokens"));
-        MobileMe mobileMe = new MobileMe(PLists.<NSDictionary>get(settings, "com.apple.mobileme"));
-
-
-        /* 
-         CloudKit Application Initialization.
-         
-         Url/ headers are specific to the particular bundle/ container required 
-         (in our case bundle = com.apple.backupd  container = com.apple.backup.ios)
-         cloudKitToken also required
-         https://setup.icloud.com/setup/ck/v1/ckAppInit?container=$CONTAINER
-        
-         Returns a JSON response outlining various urls and a cloudKitUserId.        
-         */
-        logger.info("-- main() - *** CloudKit Application Initialization ***");
-        HttpUriRequest ckAppInitRequest
-                = CkAppInitBackupRequestFactory.create()
-                .newRequest(accountInfo.dsPrsID(), tokens.mmeAuthToken(), tokens.cloudKitToken());
-
-        JsonResponseHandler<CKInit> jsonResponseHandler = new JsonResponseHandler<>(CKInit.class);
-
-        CKInit ckInit = httpClient.execute(ckAppInitRequest, jsonResponseHandler);
-        logger.debug("-- main() - ckInit: {}", ckInit);
-
-        /* 
-         EscrowService SRP-6a exchange.
-        
-         Coding critical as repeated errors will lock the account.                 
-         https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
-        
-         escrow user id = dsid
-         escrow password = dsid                
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange ***");
-
-        Optional<String> optionalEscrowProxyUrl = mobileMe.get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl");
-        if (!optionalEscrowProxyUrl.isPresent()) {
-            logger.error("-- main() - no escrowProxyUrl");
-            System.exit(-1);
-        }
-
-        String escrowProxyUrl = optionalEscrowProxyUrl.get();
-        EscrowProxyApi escrowProxy = new EscrowProxyApi(accountInfo.dsPrsID(), escrowProxyUrl, coreHeaders);
-
-        /* 
-         EscrowService SRP-6a exchanges: GETRECORDS
-        
-         We'll do the last step first, so we can abort if only a few attempts remain rather than risk further depleting
-         them with experimental code. 
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange: GETRECORDS ***");
-
-        NSDictionary records = escrowProxy.getRecords(httpClient, tokens.mmeAuthToken());
-        logger.debug("-- main() - getRecords response: {}", records.toASCIIPropertyList());
-
-        SRPGetRecords srpGetRecords = new SRPGetRecords(records);
-
-        srpGetRecords.metadata()
-                .values()
-                .stream()
-                .forEach(v -> {
-                    byte[] metadata = Base64.getDecoder().decode(v.metadata());
-                    try {
-                        NSObject nsObject = PropertyListParser.parse(metadata);
-                        if (nsObject instanceof NSDictionary) {
-                            logger.debug("-- main() - label: {} dictionary: {}",
-                                    v.label(), ((NSDictionary) nsObject).toXMLPropertyList());
-                        }
-                    } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
-                        logger.warn("-- main() - failed to parse property list: {}", v.metadata());
-                    }
-                });
-
-        int remainingAttempts = srpGetRecords.remainingAttempts();
-        logger.debug("-- main() - remaining attempts: {}", remainingAttempts);
-        if (remainingAttempts < 5) {
-            logger.warn("-- main() - remaining attempt threshold, aborting");
-            System.exit(-1);
-        }
-
-        /* 
-         EscrowService SRP-6a exchanges: SRP_INIT
-        
-         Randomly generated ephemeral key A presented to escrow server along with id (mmeAuthToken).
-         Server returns amongst other things a salt and an ephemeral key B.
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange: SRP_INIT ***");
-
-        SRPClient srp = SRPFactory.rfc5054(new SecureRandom());
-        byte[] ephemeralKeyA = srp.generateClientCredentials();
-        NSDictionary srpInit = escrowProxy.srpInit(httpClient, tokens.mmeAuthToken(), ephemeralKeyA);
-
-        SRPInitResponse srpInitResponse = new SRPInitResponse(srpInit);
-
-        logger.debug("-- main() - SRP_INIT dictionary: {}", srpInit.toASCIIPropertyList());
-        logger.debug("-- main() - SRP_INIT data: {}", srpInitResponse);
-
-        /* 
-         EscrowService SRP-6a exchanges: RECOVER
-        
-         CRITICAL step. Generate M1 verification message. Failure here will deplete attempts (we have 10 attempts max).
-         Server will abort on an invalid M1 or present us with, amongst other things, M2 which we can verify (or not).
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange: RECOVER ***");
-
-        byte[] dsid = srpInitResponse.dsid().getBytes(StandardCharsets.UTF_8);
-        logger.debug("-- main() - escrow service id: {}", Hex.encodeHexString(dsid));
-        logger.debug("-- main() - escrow service password: {}", Hex.encodeHexString(dsid));
-
-        Optional<byte[]> optionalM1
-                = srp.calculateClientEvidenceMessage(srpInitResponse.salt(), dsid, dsid, srpInitResponse.ephemeralKeyB());
-
-        if (!optionalM1.isPresent()) {
-            logger.error("-- main() - bad ephemeral key from server: 0x{}",
-                    Hex.encodeHex(srpInitResponse.ephemeralKeyB()));
-            System.exit(-1);
-        }
-        byte[] m1 = optionalM1.get();
-        logger.debug("-- main() - m1: 0x{}", Hex.encodeHexString(m1));
-
-        NSDictionary recover
-                = escrowProxy.recover(httpClient, tokens.mmeAuthToken(), m1, srpInitResponse.uid(), srpInitResponse.tag());
-        logger.debug("-- main() - srpInit response: {}", recover.toASCIIPropertyList());
-
-        /* 
-         EscrowService SRP-6a exchanges: session key
-        
-         Verify the server M2 message (or not). Either way we have a session key and an encrypted key set.
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange: session key ***");
-
-        byte[] recoverRespBlob = Base64.getDecoder().decode(PLists.<NSString>get(recover, "respBlob").getContent());
-        BlobA6 blobA6 = new BlobA6(ByteBuffer.wrap(recoverRespBlob));
-
-        Optional<byte[]> optionalKey = srp.verifyServerEvidenceMessage(blobA6.m2());
-        if (!optionalKey.isPresent()) {
-            logger.debug("-- main() - failed to verify m2");
-        }
-
-        byte[] key = optionalKey.get();
-        logger.debug("-- main() - session key: {}", Hex.encodeHexString(key));
-
-        /*
-         EscrowService decrypt M2 key set.
-         
-         BlobA6 contains amongst other things, salt, iv and encrypted key set data.
-         */
-        Optional<ServiceKeySet> optionalServiceKeySet = EscrowTest.decryptRecoveryResponseBlob(blobA6, key);
-
-        if (!optionalServiceKeySet.isPresent()) {
-            logger.warn("-- main() - failed to recover key set");
-            System.exit(-1);
-        }
-        ServiceKeySet keySet = optionalServiceKeySet.get();
-
-
-        /* 
-         EscrowService SRP-6a exchanges: decrypt escrowed keys
-        
-         Verify the server M2 message (or not). Either way we have a session key and an encrypted key set.
-         */
-        logger.info("-- main() - *** EscrowService SRP exchange: decrypt escrowed keys ***");
-
-        Optional<byte[]> pcsRecordMetadata = srpGetRecords.metadata("com.apple.protectedcloudstorage.record")
-                .map(SRPGetRecordsMetadata::metadata)
-                .map(s -> Base64.getDecoder().decode(s));
-
-        if (!pcsRecordMetadata.isPresent()) {
-            logger.warn("-- main() - unable to locate 'com.apple.protectedcloudstorage.record' metadata");
-            System.exit(-1);
-        }
-
-        Optional<ServiceKeySet> optionalEscrowServiceKeySet
-                = EscrowTest.decryptGetRecordsResponseMetadata(pcsRecordMetadata.get(), keySet::key);
-        if (!optionalEscrowServiceKeySet.isPresent()) {
-            logger.warn("-- main() - failed to retrieve escrow key set");
-            System.exit(-1);
-        }
-        ServiceKeySet escrowServiceKeySet = optionalEscrowServiceKeySet.get();
-
-        /* 
-         Protection zone setup.
-
-         XZones is our simplified and experimental protection zones handler.
-         */
         logger.info("-- main() - *** Protection zone setup ***");
 
-        final XZones zones = XZones.create();
-        zones.put(escrowServiceKeySet.keys());
+        logger.debug("-- main() - DefaultZone");
+        ProtectionZone zoneKeys = BaseZonesClient.baseZones(httpClient, kitty, escrowServiceKeySet.keys()).get();
+        logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
-        Consumer<CloudKit.Record> zonesAddRecord
-                = record -> {
-                    if (record.hasProtectionInfo()) {
-                        CloudKit.ProtectionInfo protectionInfo = record.getProtectionInfo();
+        logger.debug("-- main() - BackupZone");
+        ProtectedItem<BackupAccount> protectedBackupAccount = BackupAccountClient.backupAccount(httpClient, kitty, zoneKeys).get();
+        zoneKeys = protectedBackupAccount.zoneKeys();
+        logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
-                        if (protectionInfo.hasProtectionInfoTag() && protectionInfo.hasProtectionInfo()) {
-                            zones.put(
-                                    protectionInfo.getProtectionInfoTag(),
-                                    protectionInfo.getProtectionInfo().toByteArray());
-                        }
-                    }
-                };
+        logger.debug("-- main() - BackupAccountZone");
+        Device devicez = DeviceClient.device(httpClient, kitty, protectedBackupAccount.item().devices().get(0)).get();
+        logger.debug("-- main() - device: {}", devicez);
 
-        BiFunction<byte[], String, byte[]> zonesDecrypt
-                = (bs, s) -> zones.lastZone()
-                .orElseThrow(() -> new IllegalArgumentException("no zones present"))
-                .decrypt(bs, s);
+        logger.debug("-- main() - DeviceZone");
+        ProtectedItem<Manifests> protectedDeviceZone = ManifestsClient.manifests(httpClient, kitty, zoneKeys, devicez.snapshots().get(0).id()).get();
+        zoneKeys = protectedDeviceZone.zoneKeys();
 
-        /*
-         CloudKitty, simple client-server CloudKit calls. Meow.
-         */
-        CloudKitty cloudKitty
-                = new CloudKitty(
-                        ckInit,
-                        tokens.cloudKitToken(),
-                        deviceHardwareID,
-                        deviceIdentifier,
-                        coreHeaders,
-                        ckResponseHandler);
-
-        /* 
-         Record zones: _defaultZone
-        
-         Url ckDatabase from ckInit + /record/retrieve
-         ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
-        
-         Message type 201 request (cloud_kit.proto)    
-        
-         Return us an encrypted key which we pass to XZones.
-         */
-        logger.info("-- main() - *** Record zones: _defaultZone ***");
-        List<CloudKit.ZoneRetrieveResponse> recordZoneDefaultResponse
-                = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "_defaultZone");
-
-        // protection info
-        recordZoneDefaultResponse
+        Manifest manifest = protectedDeviceZone.item().manifests()
                 .stream()
-                .map(ZoneRetrieveResponse::getZoneSummarysList)
-                .flatMap(Collection::stream)
-                .filter(ZoneRetrieveResponseZoneSummary::hasTargetZone)
-                .map(ZoneRetrieveResponseZoneSummary::getTargetZone)
-                .filter(Zone::hasProtectionInfo)
-                .map(Zone::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+                .filter(x -> x.count() != 0)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("no non-empty manifests"));
 
-        /* 
-         Record zones: mbksync
-        
-         Url ckDatabase from ckInit + /record/retrieve
-         ~ pXX-ckdatabase.icloud.com:443//api/client/record/retrieve
-        
-         Message type 201 request (cloud_kit.proto)      
+        List<Assets> assetsList = AssetsClient.assets(httpClient, kitty, zoneKeys, Arrays.asList(manifest));
+        logger.debug("-- main() - assets: {}", assetsList);
 
-         Return us an encrypted key which we pass to XZones.
-        
-         We should really combine _defaultZone and mbksync requests into a single request using delimited protobuf
-         requests.         
-         */
-        logger.info("-- main() - *** Record zones: mbksync ***");
-        List<CloudKit.ZoneRetrieveResponse> zoneRetrieveRequest
-                = cloudKitty.zoneRetrieveRequest(httpClient, container, bundle, "mbksync");
+        List<Asset> assets = AssetTokenClient.assets(httpClient, kitty,zoneKeys, assetsList);
+        logger.debug("-- main() - assets: {}", assets);
 
-        // protection info
-        zoneRetrieveRequest
-                .stream()
-                .map(ZoneRetrieveResponse::getZoneSummarysList)
-                .flatMap(Collection::stream)
-                .filter(ZoneRetrieveResponseZoneSummary::hasTargetZone)
-                .map(ZoneRetrieveResponseZoneSummary::getTargetZone)
-                .filter(Zone::hasProtectionInfo)
-                .map(Zone::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
+        String keybagUUID = devicez.currentKeybagUUID().get();
+        ProtectedItem<KeyBag> protectedKeyBag = KeyBagZone.keyBag(httpClient, kitty, zoneKeys, keybagUUID).get();
+        logger.debug("-- main() - key bag: {}", protectedKeyBag.item());
+        zoneKeys = protectedKeyBag.zoneKeys();
 
-        /* 
-         Backup list.
+        AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
 
-         Message type 211 request, protobuf array encoded.
+        AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 
-         Returns device data/ backups and HMAC keys (which we are ignoring for now).      
-         */
-        logger.info("-- main() - *** Backup list ***");
-        List<CloudKit.RecordRetrieveResponse> responseBackupList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "BackupAccount");
+        DiskChunkStore chunkStore = new DiskChunkStore(Paths.get("chunks"));
+        StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
 
-        if (responseBackupList.isEmpty()) {
-            logger.warn("-- main() - no response received");
-        }
+        AssetWriter cloudWriter = new AssetWriter(Paths.get("testfolder"), protectedKeyBag.item());
 
-        if (responseBackupList.size() != 1) {
-            // We only sent a single delimited protobuf, so we expect only a single reply.
-            logger.warn("-- main() - unexpected list size: {}", responseBackupList.size());
-        }
-
-        CloudKit.RecordRetrieveResponse backupResponse = responseBackupList.get(0);
-
-        zonesAddRecord.accept(backupResponse.getRecord());
-
-        BackupAccount backupAccount
-                = BackupAccountFactory.from(backupResponse.getRecord(), zonesDecrypt);
-        logger.debug("-- main() - backup account: {}", backupAccount);
-
-        List<String> devices = backupAccount.devices();
-        logger.info("-- main() - devices: {}", devices);
-
-        if (devices.isEmpty()) {
-            logger.info("-- main() - no devices");
-            System.exit(-1);
-        }
-
-        if (deviceIndex >= devices.size()) {
-            logger.warn("-- main() - No such device: {}, available devices: {}", deviceIndex, devices);
-            System.exit(-1);
-        }
-
-        String device = devices.get(deviceIndex);
-        logger.debug("-- main() - using device: {}", device);
-
-        /* 
-         Snapshot list (+ Keybag)
-        
-         Message type 211 with the required backup uuid, protobuf array encoded.
-
-         Returns device/ snapshots/ keybag information. 
-         'domainHMAC' ignored at present.
-         Timestamps are hex encoded double offsets to 01 Jan 2001 00:00:00 GMT (Cocoa/ Webkit reference date).
-        
-         */
-        logger.info("-- main() - *** Snapshot list ***");
-
-        List<CloudKit.RecordRetrieveResponse> responseSnapshotList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", device);
-
-        if (responseSnapshotList.isEmpty()) {
-            logger.warn("-- main() - no response received");
-        }
-
-        if (responseSnapshotList.size() != 1) {
-            // We only sent a single delimited protobuf, so we expect only a single reply.
-            logger.warn("-- main() - unexpected list size: {}", responseSnapshotList.size());
-        }
-
-        CloudKit.RecordRetrieveResponse snapshotResponse = responseSnapshotList.get(0);
-
-        Snapshots snapshots = SnapshotsFactory.from(snapshotResponse.getRecord());
-        logger.debug("-- main() - snapshots: {}", snapshots);
-
-        List<Snapshot> snapshotList = snapshots.snapshots();
-        if (snapshotList.isEmpty()) {
-            logger.info("-- main() - no snapshots");
-            System.exit(-1);
-        }
-
-        if (snapshotIndex >= snapshotList.size()) {
-            logger.warn("-- main() - No such snapshot: {}, available snapshots: {}", snapshotIndex, snapshots);
-            System.exit(-1);
-        }
-
-        String snapshot = snapshotList.get(snapshotIndex)
-                .id();
-        logger.debug("-- main() - snapshot: {}", snapshotList.get(snapshotIndex));
-
-        // Device journal information. Output not used.
-        logger.info("-- main() - device journal information");
-
-        List<CloudKit.RecordRetrieveResponse> deviceJournal
-                = cloudKitty.recordRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "mbksync",
-                        token(device, 1) + ":Journal");
-
-
-        /* 
-         Manifest list.
-        
-         Message type 211 with the required snapshot uuid, protobuf array encoded.
-
-         Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
-        
-         */
-        logger.info("-- main() - *** Manifest list ***");
-
-        List<CloudKit.RecordRetrieveResponse> responseManifestList
-                = cloudKitty.recordRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "mbksync",
-                        snapshot);
-
-        if (responseManifestList.isEmpty()) {
-            logger.warn("-- main() - no response received");
-        }
-
-        if (responseManifestList.size() != 1) {
-            // We only sent a single delimited protobuf, so we expect only a single reply.
-            logger.warn("-- main() - unexpected list size: {}", responseManifestList.size());
-        }
-
-        CloudKit.RecordRetrieveResponse manifestResponse = responseManifestList.get(0);
-
-        zonesAddRecord.accept(manifestResponse.getRecord());
-
-        Manifests manifests = ManifestsFactory.from(manifestResponse.getRecord(), zonesDecrypt);
-        logger.debug("-- main() - manifests: {}", manifests);
-
-        Function<byte[], NSDictionary> parseProperyList = bs -> {
-            try {
-                return (NSDictionary) PropertyListParser.parse(bs);
-
-            } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
-                logger.debug("-- main() - failed to parse property list: {}", ex);
-                return null;
-            }
-        };
-
-        Optional<NSDictionary> optionalBackupProperties = manifests.backupProperties();
-        logger.debug("-- main() - decrypted backup properties: {}",
-                optionalBackupProperties.map(NSObject::toXMLPropertyList).orElse("NULL"));
-
-        if (manifests.manifests().isEmpty()) {
-            logger.info("-- main() - no manifests for snapshot: {}", snapshot);
-            System.exit(-1);
-        }
-
-        if (manifestIndex >= manifests.manifests().size()) {
-            logger.warn("-- main() - No such manifest: {}, available manifests: {}", manifestIndex, manifests);
-            System.exit(-1);
-        }
-
-        Manifest manifest = manifests.manifests().get(manifestIndex);
-        logger.debug("-- main() - manifest: {}", manifest);
-
-        /* 
-         Retrieve list of assets.
-    
-         Message type 211 with the required manifest, protobuf array encoded.
-
-         Returns system/ backup properties (bytes ? format ?? proto), quota information and manifest details.
-        
-         Returns a rather somewhat familiar looking set of results but with encoded bytes.
-         */
-        logger.info("-- main() - *** Retrieve list of assets ***");
-
-        List<String> manifestRecords = manifests.manifests()
-                .stream()
-                .limit(25) //  TOFIX temporary limiter for testing
-                .map(Manifest::id)
-                .map(m -> m + ":0") // TODO manifest count
-                .collect(Collectors.toList());
-// TODO manifest count
-// TOFIX temporary code
-
-        List<CloudKit.RecordRetrieveResponse> responseAssetList
-                = cloudKitty.recordRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "_defaultZone",
-                        manifestRecords);
-
-        List<Assets> assetsList = responseAssetList.stream()
-                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> ZoneRecord.from(zones, r))
-                .map(AssetsFactory::from)
-                .collect(Collectors.toList());
-
-        // TODO name: "placeholderFiles"
-        /* 
-         Retrieve asset tokens.
-    
-         Url/ headers as step 8.
-         Message type 211 with the required file, protobuf array encoded.
-         */
-        logger.info("-- main() - *** Retrieve list of asset tokens ***");
-
-        List<String> fileList = assetsList.stream()
-                .map(Assets::nonEmptyFiles)
-                .flatMap(Collection::stream)
-                .limit(100) // TODO manage
-                .collect(Collectors.toList());
-
-        if (fileList.isEmpty()) {
-            logger.warn("-- main() - empty file list.", manifest);
-            System.exit(-1);
-        }
-
-        logger.debug("-- main() - non-empty file list: {}", fileList);
-
-        List<CloudKit.RecordRetrieveResponse> assetTokens
-                = cloudKitty.recordRetrieveRequest(
-                        httpClient,
-                        container,
-                        bundle,
-                        "_defaultZone",
-                        fileList);
-
-        List<Asset> assetList = assetTokens.stream()
-                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> ZoneRecord.from(zones, r))
-                .map(AssetFactory::from)
-                .collect(Collectors.toList());
-
-        assetList.forEach(a -> logger.debug("-- main() - asset: {}", a));
-
-        Map<Integer, List<Asset>> collect = assetList.stream()
-                .collect(Collectors.groupingBy(Asset::protectionClass));
-        collect.keySet()
-                .forEach(k -> logger.debug("-- main() - protection class: {} count: {}", k, collect.get(k).size()));
-
-        Asset asset = assetList.get(2);   // TODO unsafe access
-        logger.debug("-- main() - unencryptedAsset: {} {}",
-                asset);
-//
-//        Function<byte[], byte[]> decryptEncrytedAttributes
-//                = bs -> zones.lastZone().get().decrypt(bs, "encryptedAttributes");
-//
-//        // Should only get one or none.
-//        List<NSDictionary> encryptedAttributesList = assetTokens.stream()
-//                .map(CloudKit.RecordRetrieveResponse::getRecord)
-//                .map(CloudKit.Record::getRecordFieldList)
-//                .flatMap(Collection::stream)
-//                .filter(value -> value.getIdentifier().getName().equals("encryptedAttributes"))
-//                .map(CloudKit.RecordField::getValue)
-//                .map(RecordFieldValue::getBytesValue)
-//                .map(ByteString::toByteArray)
-//                .map(decryptEncrytedAttributes)
-//                .map(parseProperyList)
-//                .collect(Collectors.toList());
-//
-//        encryptedAttributesList.forEach(
-//                p -> logger.debug("-- main() - decrypted encrypted attributes: {}", p.toXMLPropertyList()));
-//
-//        // TODO no encrypted attributes
-//        // TODO unsafe array access
-//        byte[] wrappedEncryptionKey = PLists.<NSData>get(encryptedAttributesList.get(0), "encryptionKey").bytes();
-//
-//        logger.debug("-- main() - wrapped encryption key: {}", Hex.encodeHexString(wrappedEncryptionKey));
-//
-//        // Should only get one.
-//        List<Integer> protectionClassList = assetTokens.stream()
-//                .map(CloudKit.RecordRetrieveResponse::getRecord)
-//                .map(CloudKit.Record::getRecordFieldList)
-//                .flatMap(Collection::stream)
-//                .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
-//                .map(CloudKit.RecordField::getValue)
-//                .map(RecordFieldValue::getUint32)
-//                .collect(Collectors.toList());
-//
-//        // TODO unsafe array access
-//        int protectionClass = protectionClassList.get(0);
-//        logger.debug("-- main() - protection class: {}", protectionClass);
-//
-//        Optional<CloudKit.Asset> optionalAsset = assetTokens.stream()
-//                .map(CloudKit.RecordRetrieveResponse::getRecord)
-//                .map(CloudKit.Record::getRecordFieldList)
-//                .flatMap(Collection::stream)
-//                .filter(value -> value.getIdentifier().getName().equals("contents"))
-//                .map(CloudKit.RecordField::getValue)
-//                .map(RecordFieldValue::getAssetValue)
-//                .findFirst();
-//
-//        if (!optionalAsset.isPresent()) {
-//            logger.warn("-- main() - asset not found");
-//        }
-//
-//        CloudKit.Asset assetX = optionalAsset.get();
-//        logger.debug("-- main() - asset data: 0x{}", Hex.encodeHexString(assetX.toByteArray()));
-//
-//        byte[] assetWrappedKey = assetX.getData()
-//                .substring(assetX.getData().size() - 0x18) // TODO unsure of format here, possibly tag | key.
-//                .toByteArray();
-//        logger.debug("-- main() -asset wrapped key: {}", Hex.encodeHexString(assetWrappedKey));
-//
-//        Optional<byte[]> optionalAssetKey = zones.lastZone().flatMap(z -> z.fpDecrypt(assetWrappedKey));
-//        logger.debug("-- main() - unwrapped: 0x:{}", optionalAssetKey.map(Hex::encodeHexString).orElse("NULL"));
-//
-//        if (!optionalAssetKey.isPresent()) {
-//            logger.debug("-- main() - unable to unwrap asset key");
-//        }
-//        byte[] assetKey = optionalAssetKey.get();
-//        System.exit(0);
-        /* 
-         Keybag.
-         */
-        logger.info("-- main() - *** Keybag ***");
-
-        Optional<String> optionalKeybagUUID = snapshots.currentKeybagUUID();
-        if (!optionalKeybagUUID.isPresent()) {
-            logger.debug("-- main() - no keybag UUID");
-            System.exit(-1);
-        }
-        String keybagUUID = optionalKeybagUUID.get();
-        logger.debug("-- main() - keybag UUID: {}", keybagUUID);
-
-        List<CloudKit.RecordRetrieveResponse> responseKeyBagList
-                = cloudKitty.recordRetrieveRequest(httpClient, container, bundle, "mbksync", "K:" + keybagUUID);
-
-        // protection info
-        responseKeyBagList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .filter(Record::hasProtectionInfo)
-                .map(Record::getProtectionInfo)
-                .forEach(p -> zones.put(p.getProtectionInfoTag(), p.getProtectionInfo().toByteArray()));
-
-        Function<byte[], byte[]> decryptKeybagData
-                = bs -> zones.lastZone().get().decrypt(bs, "keybagData");
-
-        Optional<byte[]> optionalKeybagData = responseKeyBagList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("keybagData"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
-                .map(decryptKeybagData)
-                .findFirst();
-
-        if (!optionalKeybagData.isPresent()) {
-            logger.warn("-- main() - failed to acquire key bag");
-            System.exit(-1);
-        }
-        byte[] keybagData = optionalKeybagData.get();
-
-        Function<byte[], byte[]> decryptSecret
-                = bs -> zones.lastZone().get().decrypt(bs, "secret");
-
-        Optional<byte[]> optionalSecret = responseKeyBagList.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(CloudKit.Record::getRecordFieldList)
-                .flatMap(Collection::stream)
-                .filter(value -> value.getIdentifier().getName().equals("secret"))
-                .map(CloudKit.RecordField::getValue)
-                .map(RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
-                .map(decryptSecret)
-                .findFirst();
-
-        if (!optionalSecret.isPresent()) {
-            logger.warn("-- main() - failed to acquire key bag pass code");
-            System.exit(-1);
-        }
-        byte[] secret = optionalSecret.get();
-
-        KeyBag keyBag = KeyBagFactory.create(keybagData, secret);
-        logger.debug("-- main() - key bag: {}", keyBag);
-
-//        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, protectionClass, wrappedEncryptionKey);
-//        if (!optionalFileEncryptionKey.isPresent()) {
-//            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", Hex.encodeHex(wrappedEncryptionKey));
-//            System.exit(-1);
-//        }
-//        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
-//
-//        logger.debug("-- main() - wrapped file encryption key: 0x{}", Hex.encodeHexString(wrappedEncryptionKey));
-//        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
-
-        /* 
-         AuthorizeGet.
-        
-         Process somewhat different to iOS8.
-        
-         New headers/ mmcs auth token. See AuthorizeGetRequestFactory for details.
-
-         Returns a ChunkServer.FileGroup protobuf which is largely identical to iOS8.        
-         */
-        logger.info("-- main() - *** AuthorizeGet ***");
-
-
-        
-        logger.debug("-- main() - asset: {}", asset);
-        
-        Optional<CloudKit.Asset> optionalCloudKitAsset = asset.asset();
-        if (!optionalCloudKitAsset.isPresent()) {
-            logger.warn("-- main() - no cloud kit asset");
-        }
-        CloudKit.Asset cloudKitAsset = optionalCloudKitAsset.get();
-        
-        
-        // FileTokens. Expanded from iOS8.
-        CloudKit.FileTokens fileTokens = FileTokensFactory.from(cloudKitAsset);
-
-        // TODO check mmcsurl and com.apple.Dataclass.Content url match. But is there a reason they shouldn't?
-        HttpUriRequest authorizeGet = new AuthorizeGetRequestFactory(coreHeaders)
-                .newRequest(auth.dsPrsID(), cloudKitAsset.getContentBaseURL(), container, "_defaultZone", fileTokens);
-        logger.debug("-- main() - authorizeGet request: {}", authorizeGet);
-
-        ResponseHandler<ChunkServer.FileGroups> fileGroupsResponseHandler
-                = new InputStreamResponseHandler<>(ChunkServer.FileGroups.PARSER::parseFrom);
-
-        ChunkServer.FileGroups fileGroups = httpClient.execute(authorizeGet, fileGroupsResponseHandler);
-        logger.debug("-- main() - fileGroups: {}", fileGroups);
-
-        /* 
-         ChunkServer.FileGroups.
-
-         At present, we are missing file attributes. 
-         The chunk decryption key mechanic has also changed.
-         We can download data, but we are unable to decrypt the chunks.
-         */
-        logger.info("-- main() - *** ChunkServer.FileGroups ***");
-
-        logger.info("-- main() - asset: {}", asset);
-
-        ChunkClient chunkClient = new ChunkClient(coreHeaders, k
-                -> AESWrap.unwrap(asset.keyEncryptionKey().get(), k)); // TODO unsafe get
-
-//ChunkClient chunkClient = new ChunkClient(coreHeaders, k -> {
-//logger.debug("-- x() - key: {}", Hex.encodeHexString(k));
-//   return Optional.of(Arrays.copyOfRange(k, k.length - 16, k.length));
-//
-//
-//}); // TODO unsafe get
-        BiConsumer<ByteString, List<byte[]>> dataConsumer
-                = (fileChecksum, data) -> {
-                    String filename = Hex.encodeHexString(fileChecksum.toByteArray()) + ".bin";
-
-                    logger.debug("-- main() - data consumer file: {}", filename);
-                    write(filename, data);
-                };
-
-//        Stream<byte[]> encryptedKeys = fileGroups.getFileGroupsList()
-//                .stream()
-//                .map(ChunkServer.FileChecksumStorageHostChunkLists::getStorageHostChunkListList)
-//                .flatMap(Collection::stream)
-//                .map(ChunkServer.StorageHostChunkList::getChunkInfoList)
-//                .flatMap(Collection::stream)
-//                .map(ChunkServer.ChunkInfo::getChunkEncryptionKey)
-//                .map(bs -> bs.substring(1)) // TOFIX assuming type 02 for now.
-//                .map(ByteString::toByteArray);
-//        encryptedKeys.forEach(k -> {
-//            logger.debug("-- main() - chunk key: 0x{}", Hex.encodeHexString(k));
-//
-//            Optional<byte[]> unwrap = AESWrap.unwrap(assetKey, k);
-//            logger.debug("-- main() - unwrapped: 0x{}", unwrap.map(Hex::encodeHexString).orElse("NULL"));
-//
-//// Assume type 02
-//        });
-        chunkClient.fileGroups(httpClient, fileGroups, dataConsumer);
-        
-        
-        
-        Optional<byte[]> optionalFileEncryptionKey = FileKeyAssistant.unwrap(keyBag, asset.protectionClass(), asset.encryptionKey().get());// TODO unsafe get
-        if (!optionalFileEncryptionKey.isPresent()) {
-            logger.warn("-- main() - unable to unwrap file encryption key: 0x{}", asset.encryptionKey());
-            System.exit(-1);
-        }
-        byte[] fileEncryptionKey = optionalFileEncryptionKey.get();
-
-        logger.debug("-- main() - unwrapped file encryption key: 0x{}", Hex.encodeHexString(fileEncryptionKey));
-        
-        
-        
-        String filename = Hex.encodeHexString(asset.fileChecksum().get()) + ".bin";
-        
-        
- 
-        byte[] hash = FileDecrypter.decrypt(
-                Paths.get(filename), 
-                ByteString.copyFrom(fileEncryptionKey).toByteArray(),
-                asset.size(), 
-                Paths.get("."));
- 
-        logger.debug("-- main() - hash: {}", Hex.encodeHexString(hash));
-  
-
-//        zones.keys().forEach(k -> {
-//            logger.debug("-- main() - k: {}", Hex.encodeHexString(k.publicExportData()));
-//
-//        });
-
-        /*
-         Alternative keybag request.
-         */
-//        logger.info("-- main() - *** Alternative keybag request ***");
-//        List<CloudKit.QueryRetrieveRequestResponse> keybagResponse
-//                = cloudKitty.queryRetrieveRequest(
-//                        httpClient,
-//                        container,
-//                        bundle,
-//                        "mbksync",
-//                        "K:" + keybagUUID);
-        // TODO Possibility of multiple keybags. iOS8 backups could have multiple keybags.
-        // TODO File attribute code/ encryptedAttributes.
+        AssetDownloader moo = new AssetDownloader(chunkEngine);
+        moo.get(httpClient, authorizedAssets, cloudWriter);
     }
-
-    static String token(String delimited, int index) {
-        String[] split = delimited.split(":");
-        return (index < split.length) ? split[index] : "";
-    }
-
-    static void write(String path, List<byte[]> data) {
-        // Dump out binary data to file.
-        try (OutputStream outputStream = Files.newOutputStream(Paths.get(path))) {
-            for (byte[] d : data) {
-                outputStream.write(d);
-            }
-            logger.info("-- write() - file written: {}", path);
-
-        } catch (IOException ex) {
-            logger.warn("-- write() - exception: {}", ex);
-        }
-    }
-
 }
+// TODO time expired tokens

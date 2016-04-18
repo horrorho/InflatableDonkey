@@ -58,7 +58,7 @@ public final class GetRequestMetaData {
     public HttpUriRequest from(String dsPrsID, String mmeAuthToken, String mediaStreamUrl) {
 
         String url = mediaStreamUrl + "/" + dsPrsID + "/streams/getmetadata";
-        String authorization = Headers.mobilemeAuthToken(dsPrsID, mmeAuthToken);
+        String authorization = HeadersLegacy.mobilemeAuthToken(dsPrsID, mmeAuthToken);
 
         HttpPost request = new HttpPost(url);
         request.setHeader(HttpHeaders.USER_AGENT, "iCloud.exe (unknown version) CFNetwork/520.20.9");

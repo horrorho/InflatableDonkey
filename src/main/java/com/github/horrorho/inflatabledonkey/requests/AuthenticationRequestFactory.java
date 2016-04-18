@@ -58,7 +58,6 @@ public final class AuthenticationRequestFactory implements BiFunction<String, St
 
     @Override
     public HttpUriRequest apply(String id, String password) {
-
         String authorization = AccessTokens.BASIC.token(id, password);
 
         HttpGet request = new HttpGet(url);

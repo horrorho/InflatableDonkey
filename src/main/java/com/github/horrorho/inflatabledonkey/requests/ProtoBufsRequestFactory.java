@@ -23,13 +23,16 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.jcip.annotations.Immutable;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
@@ -44,13 +47,16 @@ import org.apache.http.entity.ByteArrayEntity;
 @Immutable
 public final class ProtoBufsRequestFactory {
 
-    public static ProtoBufsRequestFactory defaultInstance() {
+    public static ProtoBufsRequestFactory instance() {
         return instance;
     }
 
-    private static final ProtoBufsRequestFactory instance = new ProtoBufsRequestFactory();
+    private static final ProtoBufsRequestFactory instance = new ProtoBufsRequestFactory(CoreHeaders.headers());
 
-    private ProtoBufsRequestFactory() {
+    private final Map<Headers, Header> headers;
+
+    public ProtoBufsRequestFactory(Map<Headers, Header> headers) {
+        this.headers = new HashMap<>(headers);
     }
 
     public <T extends GeneratedMessage> HttpUriRequest newRequest(
@@ -60,8 +66,7 @@ public final class ProtoBufsRequestFactory {
             String cloudKitUserId,
             String cloudKitToken,
             String uuid,
-            List<T> protobufs,
-            Headers headers
+            List<T> protobufs
     ) throws IOException {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -77,19 +82,19 @@ public final class ProtoBufsRequestFactory {
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(baos.toByteArray());
 
         HttpPost post = new HttpPost(url);
-        post.setHeader(Headers.xAppleRequestUUID, uuid);
-        post.setHeader(Headers.xCloudKitUserId, cloudKitUserId);
-        post.setHeader(Headers.xCloudKitAuthToken, cloudKitToken);
-        post.setHeader(Headers.xCloudKitContainerId, container);
-        post.setHeader(Headers.xCloudKitBundleId, bundle);
-        post.setHeader(Headers.accept, "application/x-protobuf");
-        post.setHeader(Headers.contentType, "application/x-protobuf; desc=\"https://p33-ckdatabase.icloud.com:443/static/protobuf/CloudDB/CloudDBClient.desc\"; messageType=RequestOperation; delimited=true");
-// TOFIX duplicating User-Agent
-//        post.setHeader(headers.get(Headers.userAgent));
-        post.setHeader(headers.get(Headers.xCloudKitProtocolVersion));
-        post.setHeader(headers.get(Headers.xMmeClientInfo));
+        post.setHeader(Headers.XAPPLEREQUESTUUID.header(uuid));
+        post.setHeader(Headers.XCLOUDKITUSERID.header(cloudKitUserId));
+        post.setHeader(Headers.XCLOUDKITAUTHTOKEN.header(cloudKitToken));
+        post.setHeader(Headers.XCLOUDKITCONTAINERID.header(container));
+        post.setHeader(Headers.XCLOUDKITBUNDLEID.header(bundle));
+        post.setHeader(HttpHeaders.ACCEPT, "application/x-protobuf");
+        post.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-protobuf; desc=\"https://p33-ckdatabase.icloud.com:443/static/protobuf/CloudDB/CloudDBClient.desc\"; messageType=RequestOperation; delimited=true");
+        post.addHeader(headers.get(Headers.USERAGENT));
+        post.addHeader(headers.get(Headers.XCLOUDKITPROTOCOLVERSION));
+        post.addHeader(headers.get(Headers.XMMECLIENTINFO));
         post.setEntity(byteArrayEntity);
 
         return post;
     }
+
 }

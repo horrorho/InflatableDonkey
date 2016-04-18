@@ -29,6 +29,7 @@ public final class BackupAccountFactory {
     private static final String HMAC_KEY = "HMACKey";
     private static final String DEVICES = "devices";
 
+    // TODO BiFunction<byte[], String, Optional<byte[]>> decrypt
     public static BackupAccount from(CloudKit.Record record, BiFunction<byte[], String, byte[]> decrypt) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
 

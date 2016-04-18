@@ -42,12 +42,14 @@ public enum Property {
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
     AUTHENTICATION_TOKEN,
+    FILE_ASSEMBLER_BUFFER_LENGTH("16384"),
     PATH_PROTOC("protoc"),
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
     SELECT_DEVICE_INDEX("0"),
     SELECT_SNAPSHOT_INDEX("0"),
     SELECT_MANIFEST_INDEX("0"),
+    SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {

@@ -72,6 +72,11 @@ public final class MobileMe {
                 .map(map -> map.get(key));
     }
 
+    public String get(String domain, String key) {
+        return optional(domain, key)
+                .orElseThrow(() -> new IllegalArgumentException("missing value: " + domain + "/ " + key));
+    }
+
     @Override
     public String toString() {
         return "MobileMe{" + "domains=" + dictionaries + ", values=" + dictionaries + '}';
