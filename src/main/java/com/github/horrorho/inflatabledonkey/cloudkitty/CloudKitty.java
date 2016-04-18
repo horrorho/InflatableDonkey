@@ -153,9 +153,12 @@ public final class CloudKitty {
         List<CloudKit.RequestOperation> requestOperations = factory.recordRetrieveRequestOperations(zone, recordNames);
         List<CloudKit.ResponseOperation> response = doRequest(httpClient, requestOperations);
 
-        return response.stream()
+        List<CloudKit.RecordRetrieveResponse> responses = response.stream()
                 .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
                 .collect(Collectors.toList());
+
+        logger.info("-- recordRetrieveRequest() - responses: {}", responses.size());
+        return responses;
     }
 
     List<CloudKit.ResponseOperation>
@@ -165,15 +168,29 @@ public final class CloudKitty {
             return new ArrayList<>();
         }
 
+        if (!operations.get(0).hasRequestOperationHeader()) {
+            throw new IllegalArgumentException("missing request operation header");
+        }
+        CloudKit.RequestOperationHeader requestOperationHeader = operations.get(0).getRequestOperationHeader();
+
         ArrayList<CloudKit.ResponseOperation> responses = new ArrayList<>();
+
         for (int i = 0; i < operations.size(); i += REQUEST_LIMIT) {
-            int fromIndex = i * REQUEST_LIMIT;
+            int fromIndex = i;
             int toIndex = fromIndex + REQUEST_LIMIT;
             toIndex = toIndex > operations.size()
                     ? operations.size()
                     : toIndex;
 
             List<CloudKit.RequestOperation> subList = operations.subList(fromIndex, toIndex);
+            // Ensure we have a operations header.
+            if (!subList.get(0).hasRequestOperationHeader()) {
+                CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder(subList.get(0))
+                        .setRequestOperationHeader(requestOperationHeader)
+                        .build();
+                subList.set(0, requestOperation);
+            }
+
             List<CloudKit.ResponseOperation> subListResponses = doSubListRequest(httpClient, subList);
             responses.addAll(subListResponses);
         }
