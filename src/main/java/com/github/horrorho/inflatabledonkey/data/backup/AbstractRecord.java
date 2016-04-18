@@ -27,7 +27,12 @@ import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AbstractRecord.
@@ -36,27 +41,42 @@ import java.util.Optional;
  */
 public abstract class AbstractRecord {
 
-    private final Map<String, String> attributes;
+    private static final Logger logger = LoggerFactory.getLogger(AbstractRecord.class);
 
-    public AbstractRecord(Map<String, String> attributes) {
-        this.attributes = new HashMap<>(attributes);
+    static Map<String, CloudKit.RecordField> map(Collection<CloudKit.RecordField> recordFields) {
+        return recordFields.stream()
+                .collect(Collectors.toMap(
+                        x -> x.getIdentifier().getName(), Function.identity(),
+                        (a, b) -> {
+                            logger.warn("-- map() - collision: {} {}", a, b);
+                            return a;
+                        }));
+    }
+
+    private final Map<String, CloudKit.RecordField> recordFields;
+
+    private AbstractRecord(Map<String, CloudKit.RecordField> recordFields) {
+        this.recordFields = Objects.requireNonNull(recordFields, "recordFields");
     }
 
     public AbstractRecord(Collection<CloudKit.RecordField> recordFields) {
-        this.attributes = FactoryAssistant.attributes(recordFields);
+        this(map(recordFields));
     }
 
-    public Map<String, String> attributes() {
-        return new HashMap<>(attributes);
+    public Map<String, CloudKit.RecordField> recordFields() {
+        return new HashMap<>(recordFields);
     }
 
-    public Optional<String> attribute(String name) {
-        return Optional.ofNullable(attributes.get(name));
+    public Optional<CloudKit.RecordField> recordField(String name) {
+        return Optional.ofNullable(recordFields.get(name));
+    }
 
+    public Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
+        return Optional.ofNullable(recordFields.get(name).getValue());
     }
 
     @Override
     public String toString() {
-        return "AbstractRecord{" + "attributes=" + attributes + '}';
+        return "AbstractRecord{" + "recordFields=" + recordFields + '}';
     }
 }

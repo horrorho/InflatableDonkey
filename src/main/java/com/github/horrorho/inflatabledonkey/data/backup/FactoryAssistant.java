@@ -23,31 +23,23 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
+@Deprecated
 @Immutable
 public final class FactoryAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(FactoryAssistant.class);
 
-    public static Map<String, String> attributes(Collection<CloudKit.RecordField> recordFields) {
-        return recordFields.stream()
-                .filter(f -> f.getValue().hasStringValue())
-                .collect(Collectors.toMap(
-                        f -> f.getIdentifier().getName(),
-                        f -> f.getValue().getStringValue(),
-                        (a, b) -> {
-                            logger.warn("-- attributes() - duplicate items: {} {}", a, b);
-                            return a;
-                        }));
-    }
-
+    @Deprecated
     public static BiFunction<byte[], String, Optional<byte[]>> decryptor(Optional<XZone> zone) {
         return (bs, label) -> zone.map(z -> z.decrypt(bs, label));
     }
 
+    @Deprecated
     public static BiFunction<byte[], String, Optional<byte[]>> decryptor(XZones zones, CloudKit.Record record) {
         return decryptor(addToZones(zones, record));
     }
 
+    @Deprecated
     public static Optional<XZone> addToZones(XZones zones, CloudKit.Record record) {
         if (record.hasProtectionInfo()) {
             CloudKit.ProtectionInfo protectionInfo = record.getProtectionInfo();

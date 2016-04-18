@@ -6,13 +6,11 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
-import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -31,12 +29,6 @@ public final class Manifests extends AbstractRecord {
 
     private final Optional<byte[]> backupProperties;
     private final List<Manifest> manifests;
-
-    public Manifests(Optional<byte[]> backupProperties, List<Manifest> manifests, Map<String, String> attributes) {
-        super(attributes);
-        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
-        this.manifests = Objects.requireNonNull(manifests, "manifests");
-    }
 
     public Manifests(
             Optional<byte[]> backupProperties,

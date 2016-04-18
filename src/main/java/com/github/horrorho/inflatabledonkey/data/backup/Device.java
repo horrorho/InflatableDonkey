@@ -9,7 +9,6 @@ import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
@@ -26,11 +25,6 @@ public final class Device extends AbstractRecord {
 
     private final Collection<Snapshot> snapshots;
 
-    public Device(Collection<Snapshot> snapshots, Map<String, String> attributes) {
-        super(attributes);
-        this.snapshots = new ArrayList<>(snapshots);
-    }
-
     public Device(Collection<Snapshot> snapshots, Collection<CloudKit.RecordField> recordFields) {
         super(recordFields);
         this.snapshots = new ArrayList<>(snapshots);
@@ -41,11 +35,13 @@ public final class Device extends AbstractRecord {
     }
 
     public Optional<String> domainHMAC() {
-        return attribute(DOMAIN_HMAC);
+        return recordFieldValue(DOMAIN_HMAC)
+                .map(CloudKit.RecordFieldValue::getStringValue);
     }
 
     public Optional<String> currentKeybagUUID() {
-        return attribute(KEYBAG_UUID);
+        return recordFieldValue(KEYBAG_UUID)
+                .map(CloudKit.RecordFieldValue::getStringValue);
     }
 
     @Override
