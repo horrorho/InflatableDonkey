@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.zone;
+package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
@@ -30,6 +30,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,10 @@ public final class AssetsClient {
             assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
             throws IOException {
 
+        if (manifests.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<String> manifestIDs = manifests.stream()
                 .map(AssetsClient::manifestIDs)
                 .flatMap(Collection::stream)
@@ -65,16 +70,13 @@ public final class AssetsClient {
                         "_defaultZone",
                         manifestIDs);
         logger.debug("-- assets() - responses: {}", responses);
-        logger.debug("-- assets() - responses: {}", responses.size());
-
-        List<CloudKit.ProtectionInfo> protectionInfoList
-                = ZoneAssistant.recordRetrieveResponseProtectionInfo(responses, zone);
-        ProtectionZone newZone = ZoneAssistant.roll(zone, protectionInfoList);
 
         return responses.stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(record -> AssetsFactory.from(record, newZone::decrypt))
+                .map(r -> assets(r, zone))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
@@ -84,7 +86,7 @@ public final class AssetsClient {
                 .collect(Collectors.toList());
     }
 
-    static Optional<Assets> asset(CloudKit.Record record, ProtectionZone zone) {
+    static Optional<Assets> assets(CloudKit.Record record, ProtectionZone zone) {
         return zone.newProtectionZone(record.getProtectionInfo())
                 .map(z -> AssetsFactory.from(record, z::decrypt));
     }

@@ -45,20 +45,19 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Tokens;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
 import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
-import com.github.horrorho.inflatabledonkey.cloud.zone.AssetTokenClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.BackupAccountClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.BaseZonesClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.DeviceClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.ManifestsClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.KeyBagZone;
-import com.github.horrorho.inflatabledonkey.cloud.zone.AssetsClient;
-import com.github.horrorho.inflatabledonkey.cloud.zone.ProtectedItem;
+import com.github.horrorho.inflatabledonkey.cloud.clients.AssetTokenClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.BackupAccountClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.BaseZonesClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.DeviceClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.ManifestsClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.KeyBagClient;
+import com.github.horrorho.inflatabledonkey.cloud.clients.AssetsClient;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
-import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
+import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
@@ -66,6 +65,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,20 +181,21 @@ public class Main {
         logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
         logger.debug("-- main() - BackupZone");
-        ProtectedItem<BackupAccount> protectedBackupAccount = BackupAccountClient.backupAccount(httpClient, kitty, zoneKeys).get();
-        zoneKeys = protectedBackupAccount.zoneKeys();
+        BackupAccount backupAccount = BackupAccountClient.backupAccount(httpClient, kitty, zoneKeys).get();
         logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
         logger.debug("-- main() - BackupAccountZone");
-        Device devicez = DeviceClient.device(httpClient, kitty, protectedBackupAccount.item().devices().get(0)).get();
-        logger.debug("-- main() - device: {}", devicez);
+        List<Device> devices = DeviceClient.device(httpClient, kitty, backupAccount.devices());
+        logger.debug("-- main() - device: {}", devices);
 
         logger.debug("-- main() - DeviceZone");
-        ProtectedItem<Manifests> protectedDeviceZone = ManifestsClient.manifests(httpClient, kitty, zoneKeys, devicez.snapshots().get(0).id()).get();
-        zoneKeys = protectedDeviceZone.zoneKeys();
+//        ProtectedItem<Manifests> protectedDeviceZone = ManifestsClient.manifests(httpClient, kitty, zoneKeys, devicez.snapshots().get(0).id()).get();
+        List<Manifests> manifestsList = ManifestsClient.manifests(httpClient, kitty, zoneKeys, Arrays.asList(devices.get(0).snapshots().get(0).id()));
 
-        Manifest manifest = protectedDeviceZone.item().manifests()
+        Manifest manifest = manifestsList
                 .stream()
+                .map(Manifests::manifests)
+                .flatMap(Collection::stream)
                 .filter(x -> x.count() != 0)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("no non-empty manifests"));
@@ -202,13 +203,12 @@ public class Main {
         List<Assets> assetsList = AssetsClient.assets(httpClient, kitty, zoneKeys, Arrays.asList(manifest));
         logger.debug("-- main() - assets: {}", assetsList);
 
-        List<Asset> assets = AssetTokenClient.assets(httpClient, kitty,zoneKeys, assetsList);
+        List<Asset> assets = AssetTokenClient.assets(httpClient, kitty, zoneKeys, assetsList);
         logger.debug("-- main() - assets: {}", assets);
 
-        String keybagUUID = devicez.currentKeybagUUID().get();
-        ProtectedItem<KeyBag> protectedKeyBag = KeyBagZone.keyBag(httpClient, kitty, zoneKeys, keybagUUID).get();
-        logger.debug("-- main() - key bag: {}", protectedKeyBag.item());
-        zoneKeys = protectedKeyBag.zoneKeys();
+        String keybagUUID = devices.get(0).currentKeybagUUID().get();
+        KeyBag keyBag = KeyBagClient.keyBag(httpClient, kitty, zoneKeys, keybagUUID).get();
+        logger.debug("-- main() - key bag: {}", keyBag);
 
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
 
@@ -217,7 +217,7 @@ public class Main {
         DiskChunkStore chunkStore = new DiskChunkStore(Paths.get("chunks"));
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
 
-        AssetWriter cloudWriter = new AssetWriter(Paths.get("testfolder"), protectedKeyBag.item());
+        AssetWriter cloudWriter = new AssetWriter(Paths.get("testfolder"), keyBag);
 
         AssetDownloader moo = new AssetDownloader(chunkEngine);
         moo.get(httpClient, authorizedAssets, cloudWriter);

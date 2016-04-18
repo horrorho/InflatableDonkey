@@ -21,15 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.zone;
+package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Devices;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -45,21 +46,17 @@ public final class DeviceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
 
-    // TODO varargs
-    public static Optional<Device> device(HttpClient httpClient, CloudKitty kitty, String deviceID) throws IOException {
+    public static List<Device>
+            device(HttpClient httpClient, CloudKitty kitty, Collection<String> deviceID)
+            throws IOException {
 
         List<CloudKit.RecordRetrieveResponse> responses
                 = kitty.recordRetrieveRequest(httpClient, "mbksync", deviceID);
         logger.debug("-- device() - responses: {}", responses);
 
-        if (responses.size() != 1) {
-            logger.warn("-- device() - bad response list size: {}", responses);
-            return Optional.empty();
-        }
-
-        CloudKit.RecordRetrieveResponse response = responses.get(0);
-        Device device = Devices.from(response.getRecord());
-
-        return Optional.of(device);
+        return responses.stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(Devices::from)
+                .collect(Collectors.toList());
     }
 }

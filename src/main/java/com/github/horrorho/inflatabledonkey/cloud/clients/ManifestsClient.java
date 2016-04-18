@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.zone;
+package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
@@ -29,8 +29,11 @@ import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -46,35 +49,29 @@ public final class ManifestsClient {
 
     private static final Logger logger = LoggerFactory.getLogger(ManifestsClient.class);
 
-    public static Optional<ProtectedItem<Manifests>>
-            manifests(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String snapshotID)
+    public static List<Manifests>
+            manifests(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> snapshotIDs)
             throws IOException {
 
+        if (snapshotIDs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshotID);
+                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshotIDs);
         logger.debug("-- manifests() - responses: {}", responses);
 
-        if (responses.size() != 1) {
-            logger.warn("-- manifests() - bad response list size: {}", responses);
-            return Optional.empty();
-        }
+        return responses.stream()
+                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(r -> manifests(r, zone))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
 
-        CloudKit.ProtectionInfo protectionInfo = responses.get(0)
-                .getRecord()
-                .getProtectionInfo();
-
-        Optional<ProtectionZone> optionalNewZone = zone.newProtectionZone(protectionInfo);
-        if (!optionalNewZone.isPresent()) {
-            logger.warn("-- manifests() - failed to retrieve protection info");
-            return Optional.empty();
-        }
-        ProtectionZone newZone = optionalNewZone.get();
-
-        Manifests manifests
-                = ManifestsFactory.from(responses.get(0).getRecord(), (bs, id) -> newZone.decrypt(bs, id).get()); // TODO rework Manifests
-        logger.debug("-- manifests() - manifests: {}", manifests);
-
-        ProtectedItem<Manifests> protectedItem = new ProtectedItem<>(newZone, manifests);
-        return Optional.of(protectedItem);
+    static Optional<Manifests> manifests(CloudKit.Record record, ProtectionZone zone) {
+        return zone.newProtectionZone(record.getProtectionInfo())
+                .map(z -> ManifestsFactory.from(record, (bs, id) -> z.decrypt(bs, id).get())); // TODO rework Manifests
     }
 }

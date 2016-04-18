@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.zone;
+package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
@@ -39,17 +39,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * KeyBagZone.
+ * KeyBagClient.
  *
  * @author Ahseya
  */
 @Immutable
-// TODO move to the appropriate ProtectionZone.
-public final class KeyBagZone {
+public final class KeyBagClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(KeyBagZone.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
-    public static Optional<ProtectedItem<KeyBag>>
+    public static Optional<KeyBag>
             keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String keyBagUUID) throws IOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagUUID);
 
@@ -57,17 +56,22 @@ public final class KeyBagZone {
                 = kitty.recordRetrieveRequest(httpClient, "mbksync", "K:" + keyBagUUID);
 
         if (responses.size() != 1) {
-            logger.warn("-- create() - bad response list size: {}", responses);
+            logger.warn("-- keyBag() - bad response list size: {}", responses);
             return Optional.empty();
         }
-        CloudKit.RecordRetrieveResponse response = responses.get(0);
 
-        List<CloudKit.ProtectionInfo> protectionInfoList
-                = ZoneAssistant.recordRetrieveResponseProtectionInfo(responses, zone);
-        ProtectionZone localZone = ZoneAssistant.roll(zone, protectionInfoList);
+        CloudKit.ProtectionInfo protectionInfo = responses.get(0)
+                .getRecord()
+                .getProtectionInfo();
 
-        return keyBag(response, localZone)
-                .map(kb -> new ProtectedItem<>(localZone, kb));
+        Optional<ProtectionZone> optionalNewZone = zone.newProtectionZone(protectionInfo);
+        if (!optionalNewZone.isPresent()) {
+            logger.warn("-- keyBag() - failed to retrieve protection info");
+            return Optional.empty();
+        }
+        ProtectionZone newZone = optionalNewZone.get();
+
+        return keyBag(responses.get(0), newZone);
     }
 
     static Optional<KeyBag> keyBag(CloudKit.RecordRetrieveResponse response, ProtectionZone zone) {

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.zone;
+package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
@@ -46,7 +46,7 @@ public final class BackupAccountClient {
 
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountClient.class);
 
-    public static Optional<ProtectedItem<BackupAccount>>
+    public static Optional<BackupAccount>
             backupAccount(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws IOException {
 
         List<CloudKit.RecordRetrieveResponse> responses
@@ -73,7 +73,6 @@ public final class BackupAccountClient {
                 = BackupAccountFactory.from(responses.get(0).getRecord(), (bs, id) -> newZone.decrypt(bs, id).get());    // TODO rework BackupAccount
         logger.debug("-- backupAccount() - backup account: {}", backupAccount);
 
-        ProtectedItem<BackupAccount> protectedItem = new ProtectedItem<>(newZone, backupAccount);
-        return Optional.of(protectedItem);
+        return Optional.of(backupAccount);
     }
 }
