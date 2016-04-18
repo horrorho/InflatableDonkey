@@ -24,8 +24,10 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
 import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
@@ -48,6 +50,33 @@ import org.slf4j.LoggerFactory;
 public final class ManifestsClient {
 
     private static final Logger logger = LoggerFactory.getLogger(ManifestsClient.class);
+
+    public static List<Manifests> manifestsForDevices(
+            HttpClient httpClient,
+            CloudKitty kitty,
+            ProtectionZone zone,
+            Collection<Device> devices) throws IOException {
+
+        List<Snapshot> snapshots = devices.stream()
+                .map(Device::snapshots)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        return manifestsForSnapshots(httpClient, kitty, zone, snapshots);
+    }
+
+    public static List<Manifests> manifestsForSnapshots(
+            HttpClient httpClient,
+            CloudKitty kitty,
+            ProtectionZone zone,
+            Collection<Snapshot> snapshots) throws IOException {
+
+        List<String> snapshotIDs = snapshots.stream()
+                .map(Snapshot::id)
+                .collect(Collectors.toList());
+
+        return manifests(httpClient, kitty, zone, snapshotIDs);
+    }
 
     public static List<Manifests>
             manifests(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> snapshotIDs)

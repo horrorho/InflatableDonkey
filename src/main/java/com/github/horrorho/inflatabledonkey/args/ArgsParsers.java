@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2015 Ahseya.
@@ -23,46 +23,26 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 
 /**
- * Authentication mapper.
+ * ArgsParsers.
  *
  * @author Ahseya
  */
 @Immutable
-public final class AuthenticationMapper {
+public final class ArgsParsers {
 
-    private static final AuthenticationMapper instance = new AuthenticationMapper();
-
-    private AuthenticationMapper() {
+    public static Function<String[], Map<Property, String>> instance() {
+        return PARSER;
     }
 
-    public static Map<Property, String> map(List<String> operands) {
-        Map<Property, String> keyValueMap = new HashMap<>();
+    private static final Function<String[], Map<Property, String>> PARSER = new ArgsParser<>(
+            OptionsFactory::options,
+            AuthenticationMapper::map);
 
-        switch (operands.size()) {
-            case 0:
-                // No setAuthenticationProperties credentials
-                throw new IllegalArgumentException(
-                        "Missing appleid/ password or authentication token");
-            case 1:
-                // Authentication token
-                keyValueMap.put(Property.AUTHENTICATION_TOKEN, operands.get(0));
-                break;
-            case 2:
-                // AppleId/ password pair
-                keyValueMap.put(Property.AUTHENTICATION_APPLEID, operands.get(0));
-                keyValueMap.put(Property.AUTHENTICATION_PASSWORD, operands.get(1));
-                break;
-            default:
-                throw new IllegalArgumentException(
-                        "Too many non-optional arguments, expected appleid/ password or authentication token only");
-        }
-        return keyValueMap;
+    private ArgsParsers() {
     }
 }

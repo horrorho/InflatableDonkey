@@ -23,9 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.dd.plist.PropertyListFormatException;
-import com.github.horrorho.inflatabledonkey.args.ArgsParser;
-import com.github.horrorho.inflatabledonkey.args.AuthenticationMapper;
+import com.github.horrorho.inflatabledonkey.args.ArgsParsers;
 import com.github.horrorho.inflatabledonkey.args.Help;
 import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
@@ -63,31 +61,19 @@ import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.codec.DecoderException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
- * iOS9 backup retrieval proof of concept - work in progress. Development tool intended to demonstrate a functional
- * chain of client/ server responses required for backup retrieval, as opposed to being a fully functional backup tool
- * in itself.
- *
- * Thank you to:
- * <p>
- * <a href="https://github.com/ItsASmallWorld">ItsASmallWorld</a> for deciphering key client/ server interactions and
- * assisting with Protobuf definitions.
- *
+ * InflatableDonkey.
  *
  * @author Ahseya
  */
@@ -99,49 +85,22 @@ public class Main {
      * @param args the command line arguments
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, DecoderException {
-        // Command line arguments.
-        AuthenticationMapper authenticationMapper = AuthenticationMapper.instance();
-        OptionsFactory optionsFactory = OptionsFactory.create();
-        ArgsParser<Property> argsParser = new ArgsParser<>(optionsFactory);
+    public static void main(String[] args) throws IOException {
+        Function<String[], Map<Property, String>> argsParser = ArgsParsers.instance();
         Map<Property, String> arguments = new HashMap<>();
 
-        int deviceIndex = 0;
-        int snapshotIndex = 0;
-        int manifestIndex = 0;
-        String protocPath = null;
-
         try {
-            List<String> operands = argsParser.apply(args, arguments);
+            arguments = argsParser.apply(args);
 
-            if (arguments.containsKey(Property.ARGS_HELP)) {
-                Help.instance().accept(optionsFactory.get().keySet());
-                System.exit(0);
-            }
-
-            arguments.putAll(authenticationMapper.apply(operands));
-
-            Function<Property, String> getProperty = property
-                    -> arguments.containsKey(property)
-                    ? arguments.get(property)
-                    : property.defaultValue();
-
-            Function<Property, Integer> intArgument = property
-                    -> Integer.parseInt(getProperty.apply(property));
-
-            deviceIndex = intArgument.apply(Property.SELECT_DEVICE_INDEX);
-            snapshotIndex = intArgument.apply(Property.SELECT_SNAPSHOT_INDEX);
-            manifestIndex = intArgument.apply(Property.SELECT_MANIFEST_INDEX);
-
-            protocPath = arguments.containsKey(Property.PATH_PROTOC)
-                    ? arguments.get(Property.PATH_PROTOC) == null
-                    ? Property.PATH_PROTOC.defaultValue()
-                    : arguments.get(Property.PATH_PROTOC)
-                    : null;
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
             System.exit(-1);
+        }
+
+        if (arguments.containsKey(Property.ARGS_HELP)) {
+            Help.instance().accept(OptionsFactory.options().keySet());
+            System.exit(0);
         }
 
         // SystemDefault HttpClient.
@@ -151,7 +110,6 @@ public class Main {
                 .useSystemProperties()
                 .build();
 
-        logger.info("-- main() - *** Authenticate via appleId/ password or dsPrsID:mmeAuthToken ***");
         Auth auth = arguments.containsKey(Property.AUTHENTICATION_TOKEN)
                 ? new Auth(arguments.get(Property.AUTHENTICATION_TOKEN))
                 : Authenticator.authenticate(
@@ -174,23 +132,15 @@ public class Main {
 
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
 
-        logger.info("-- main() - *** Protection zone setup ***");
-
-        logger.debug("-- main() - DefaultZone");
         ProtectionZone zoneKeys = BaseZonesClient.baseZones(httpClient, kitty, escrowServiceKeySet.keys()).get();
-        logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
-        logger.debug("-- main() - BackupZone");
         BackupAccount backupAccount = BackupAccountClient.backupAccount(httpClient, kitty, zoneKeys).get();
-        logger.debug("-- main() - zoneKeys: {}", zoneKeys);
 
-        logger.debug("-- main() - BackupAccountZone");
         List<Device> devices = DeviceClient.device(httpClient, kitty, backupAccount.devices());
-        logger.debug("-- main() - device: {}", devices);
+        logger.info("-- main() - devices: {}", devices);
+        List<Manifests> manifestsList = ManifestsClient.manifestsForDevices(httpClient, kitty, zoneKeys, devices);
 
-        logger.debug("-- main() - DeviceZone");
-//        ProtectedItem<Manifests> protectedDeviceZone = ManifestsClient.manifests(httpClient, kitty, zoneKeys, devicez.snapshots().get(0).id()).get();
-        List<Manifests> manifestsList = ManifestsClient.manifests(httpClient, kitty, zoneKeys, Arrays.asList(devices.get(0).snapshots().get(0).id()));
+        logger.info("-- main() - manifests downloaded: {}", manifestsList);
 
         Manifest manifest = manifestsList
                 .stream()

@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.args;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,16 +45,20 @@ import org.apache.commons.cli.ParseException;
  * @param <K> key type
  */
 @Immutable
-public final class ArgsParser<K extends Enum<K>> implements BiFunction<String[], Map<K, String>, List<String>> {
+public final class ArgsParser<K extends Enum<K>> implements Function<String[], Map<K, String>> {
 
     private final Supplier<Map<Option, K>> optionKeyMapSupplier;
+    private final Function<List<String>, Map<K, String>> operandMapper;
 
-    public ArgsParser(Supplier<Map<Option, K>> optionKeyMapSupplier) {
+    public ArgsParser(
+            Supplier<Map<Option, K>> optionKeyMapSupplier,
+            Function<List<String>, Map<K, String>> operandMapper) {
         this.optionKeyMapSupplier = Objects.requireNonNull(optionKeyMapSupplier);
+        this.operandMapper = Objects.requireNonNull(operandMapper);
     }
 
     @Override
-    public List<String> apply(String[] args, Map<K, String> map) throws IllegalArgumentException {
+    public Map<K, String> apply(String[] args) throws IllegalArgumentException {
         try {
             Map<Option, K> optionKeyMap = optionKeyMapSupplier.get();
 
@@ -64,10 +68,12 @@ public final class ArgsParser<K extends Enum<K>> implements BiFunction<String[],
             CommandLineParser parser = new DefaultParser();
             CommandLine commandLine = parser.parse(options, args);
 
-            Stream.of(commandLine.getOptions())
-                    .forEach(option -> map.put(optionKeyMap.get(option), parse(option)));
+            Map<K, String> keyValueMap = Stream.of(commandLine.getOptions())
+                    .collect(Collectors.toMap(optionKeyMap::get, this::parse));
 
-            return commandLine.getArgList();
+            keyValueMap.putAll(operandMapper.apply(commandLine.getArgList()));
+
+            return keyValueMap;
 
         } catch (ParseException ex) {
             throw new IllegalArgumentException(ex.getLocalizedMessage());
@@ -81,12 +87,10 @@ public final class ArgsParser<K extends Enum<K>> implements BiFunction<String[],
                     .stream()
                     .collect(Collectors.joining(" "));
         }
-
         if (option.hasArg()) {
             // Value
             return option.getValue();
         }
-
         // Boolean
         return Boolean.TRUE.toString();
     }

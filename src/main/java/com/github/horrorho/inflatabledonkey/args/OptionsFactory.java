@@ -25,7 +25,6 @@ package com.github.horrorho.inflatabledonkey.args;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.cli.Option;
 
@@ -35,19 +34,12 @@ import org.apache.commons.cli.Option;
  * @author Ahseya
  */
 @Immutable
-public final class OptionsFactory implements Supplier<Map<Option, Property>> {
+public final class OptionsFactory {
 
-    public static OptionsFactory create() {
-        return instance;
+    private OptionsFactory() {
     }
 
-    private static final OptionsFactory instance = new OptionsFactory();
-
-    OptionsFactory() {
-    }
-
-    @Override
-    public Map<Option, Property> get() {
+    public static Map<Option, Property> options() {
         LinkedHashMap<Option, Property> options = new LinkedHashMap<>();
 
         options.put(Option.builder("d").longOpt("device")
@@ -73,12 +65,12 @@ public final class OptionsFactory implements Supplier<Map<Option, Property>> {
                 .hasArgs()
                 .build(),
                 Property.SELECT_MANIFEST_INDEX);
-        
+
         options.put(Option.builder().longOpt("protoc")
                 .desc("Protoc --decode_raw logging, null path defaults to 'protoc'")
                 .argName("protoc executable path")
                 .numberOfArgs(1)
-                .optionalArg(true) 
+                .optionalArg(true)
                 .build(),
                 Property.PATH_PROTOC);
 
