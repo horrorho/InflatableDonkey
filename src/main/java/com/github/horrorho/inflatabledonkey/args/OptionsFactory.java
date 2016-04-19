@@ -45,34 +45,40 @@ public final class OptionsFactory {
         options.put(Option.builder("d").longOpt("device")
                 .desc("Device, default: 0 = first device.")
                 .argName("int")
-                .numberOfArgs(1)
-                .hasArgs()
+                .hasArg()
                 .build(),
                 Property.SELECT_DEVICE_INDEX);
 
         options.put(Option.builder("s").longOpt("snapshot")
                 .desc("Snapshot, default: 0 = first snapshot.")
                 .argName("int")
-                .numberOfArgs(1)
-                .hasArgs()
+                .hasArg()
                 .build(),
                 Property.SELECT_SNAPSHOT_INDEX);
 
-        options.put(Option.builder("m").longOpt("manifest")
-                .desc("Manifest, default: 0 = first manifest.")
-                .argName("int")
-                .numberOfArgs(1)
-                .hasArgs()
+        options.put(Option.builder().longOpt("extension")
+                .desc("File extension filter, case insensitive")
+                .argName("string")
+                .hasArg()
                 .build(),
-                Property.SELECT_MANIFEST_INDEX);
+                Property.FILTER_EXTENSION);
 
-        options.put(Option.builder().longOpt("protoc")
-                .desc("Protoc --decode_raw logging, null path defaults to 'protoc'")
-                .argName("protoc executable path")
-                .numberOfArgs(1)
-                .optionalArg(true)
+        options.put(Option.builder().longOpt("domain")
+                .desc("Domain filter, case insensitive")
+                .argName("string")
+                .hasArg()
                 .build(),
-                Property.PATH_PROTOC);
+                Property.FILTER_DOMAIN);
+
+        options.put(Option.builder("o").longOpt("folder")
+                .desc("Output folder")
+                .argName("string")
+                .hasArg()
+                .build(),
+                Property.OUTPUT_FOLDER);
+
+        options.put(new Option(null, "domains", false, "List domains/ file count for the selected snapshot and exit."),
+                Property.PRINT_DOMAIN_LIST);
 
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),

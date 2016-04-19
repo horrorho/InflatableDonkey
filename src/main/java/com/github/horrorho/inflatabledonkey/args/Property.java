@@ -24,15 +24,16 @@
 package com.github.horrorho.inflatabledonkey.args;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Configuration properties.
  *
  * @author Ahseya
  */
-@Immutable
 public enum Property {
 
     APP_NAME("InflatableDonkey"),
@@ -42,7 +43,11 @@ public enum Property {
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
     AUTHENTICATION_TOKEN,
+    FILTER_DOMAIN(""),
+    FILTER_EXTENSION(""),
     FILE_ASSEMBLER_BUFFER_LENGTH("16384"),
+    OUTPUT_FOLDER("testoutput"),
+    PRINT_DOMAIN_LIST("false"),
     PATH_PROTOC("protoc"),
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
@@ -52,6 +57,22 @@ public enum Property {
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
+    static void setProperties(Map<Property, String> properties) {
+        if (touched) {
+            throw new IllegalStateException("Property already in use");
+        }
+        properties.forEach((p, v) -> p.setValue(v));
+
+        if (touched) {
+            throw new IllegalStateException("Property already in use");
+        }
+        touched = true;
+
+        if (logger.isDebugEnabled()) {
+            properties.forEach((p, v) -> logger.debug("-- setProperties() - property: {} value: {}", p, v));
+        }
+    }
+
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {
         return DateTimeFormatter.ISO_DATE;
     }
@@ -60,26 +81,40 @@ public enum Property {
         return DateTimeFormatter.RFC_1123_DATE_TIME;
     }
 
-    private final String defaultValue;
+    private static final Logger logger = LoggerFactory.getLogger(Property.class);
+
+    private static volatile boolean touched = false;
+
+    private String value;
 
     private Property() {
         this(null);
     }
 
-    private Property(String defaultValue) {
-        this.defaultValue = defaultValue;
+    private Property(String value) {
+        this.value = value;
     }
 
-    public String defaultValue() {
-        return defaultValue;
+    private void setValue(String value) {
+        this.value = value;
+    }
+
+    public Optional<String> value() {
+        touched = true;
+        return Optional.ofNullable(value);
     }
 
     public Optional<Integer> intValue() {
         try {
-            return Optional.of(Integer.parseInt(defaultValue));
+            return value().map(Integer::parseInt);
 
         } catch (NumberFormatException ex) {
-            return Optional.empty();
+            throw ex;
         }
+    }
+
+    public Optional<Boolean> booleanValue() {
+        return value()
+                .map(v -> Boolean.TRUE.toString().equals(v));
     }
 }
