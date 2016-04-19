@@ -19,24 +19,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ManifestsFactory.
+ * Snapshots.
  *
  * @author Ahseya
  */
 @Immutable
-public class ManifestsFactory {
+public class Snapshots {
 
     private static final String BACKUP_PROPERTIES = "backupProperties";
 
-    private static final Logger logger = LoggerFactory.getLogger(ManifestsFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(Snapshots.class);
 
-    public static Manifests from(CloudKit.Record record, BiFunction<byte[], String, byte[]> decrypt) {
+    public static Snapshot from(CloudKit.Record record, BiFunction<byte[], String, byte[]> decrypt) {
         List<Manifest> manifests = manifests(record.getRecordFieldList());
 
         Optional<byte[]> optionalBackupProperties = backupProperties(record.getRecordFieldList())
                 .map(k -> decrypt.apply(k, BACKUP_PROPERTIES));
 
-        return new Manifests(optionalBackupProperties, manifests, record.getRecordFieldList());
+        return new Snapshot(optionalBackupProperties, manifests, record);
     }
 
     static List<Manifest> manifests(List<CloudKit.RecordField> records) {

@@ -92,11 +92,15 @@ public final class AssetFactory {
                         ? Optional.of(as.getContentBaseURL())
                         : Optional.empty());
 
+        //TOFIX return to Optional, or use empty?
         String dsPrsID
                 = asset.flatMap(as -> as.hasDsPrsID()
                         ? Optional.of(as.getDsPrsID())
                         : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("asset missing dsPrsID")); // TODO test, can always inject dsPrsID
+                .orElseGet(() -> {
+                    logger.warn("-- from() - no dsPrsID");
+                    return "";
+                }); // TODO test, can always inject dsPrsID
 
         int fileSize = asset.map(as -> as.getSize()).orElse(0L).intValue();
         long tokenExpiration = asset.map(as -> as.getDownloadTokenExpiration()).orElse(0L);
@@ -180,12 +184,11 @@ public final class AssetFactory {
                 .findFirst();
     }
 
-    
     @Deprecated
     public static Asset fromLegacy(ZoneRecord zoneRecord) {
         return fromLegacy(zoneRecord.record(), zoneRecord.zone());
     }
-    
+
     @Deprecated
     public static Asset fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();

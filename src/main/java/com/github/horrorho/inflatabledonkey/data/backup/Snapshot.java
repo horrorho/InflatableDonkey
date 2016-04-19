@@ -5,65 +5,55 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.time.Instant;
+import com.dd.plist.NSDictionary;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.util.PLists;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Manifest.
+ * Snapshot.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Snapshot {
+public final class Snapshot extends AbstractRecord {
 
-    private final Instant timestamp;
-    private final String id;
+    private static final Logger logger = LoggerFactory.getLogger(Snapshot.class);
 
-    public Snapshot(Instant timestamp, String id) {
-        this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
-        this.id = Objects.requireNonNull(id, "id");
+    private final Optional<byte[]> backupProperties;
+    private final List<Manifest> manifests;
+
+    public Snapshot(
+            Optional<byte[]> backupProperties,
+            List<Manifest> manifests,
+            CloudKit.Record record) {
+
+        super(record);
+        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
+        this.manifests = Objects.requireNonNull(manifests, "manifests");
     }
 
-    public Instant timestamp() {
-        return timestamp;
+    public Optional<NSDictionary> backupProperties() {
+        return backupProperties.map(bs -> PLists.<NSDictionary>parseLegacy(bs));
     }
 
-    public String id() {
-        return id;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 37 * hash + Objects.hashCode(this.timestamp);
-        hash = 37 * hash + Objects.hashCode(this.id);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Snapshot other = (Snapshot) obj;
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        if (!Objects.equals(this.timestamp, other.timestamp)) {
-            return false;
-        }
-        return true;
+    public List<Manifest> manifests() {
+        return new ArrayList<>(manifests);
     }
 
     @Override
     public String toString() {
-        return "Snapshot{" + "timestamp=" + timestamp + ", id=" + id + '}';
+        return "Snapshot{"
+                + super.toString()
+                + ", backupProperties=" + backupProperties
+                + ", manifests=" + manifests
+                + '}';
     }
 }

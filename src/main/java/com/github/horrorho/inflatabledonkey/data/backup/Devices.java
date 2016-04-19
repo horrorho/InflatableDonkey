@@ -5,7 +5,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import static com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory.manifestCounts;
+import static com.github.horrorho.inflatabledonkey.data.backup.Snapshots.manifestCounts;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.time.Instant;
 import java.util.Collection;
@@ -31,12 +31,12 @@ public final class Devices {
 
     public static Device from(CloudKit.Record record) {
 
-        List<Snapshot> snapshots = snapshots(record.getRecordFieldList());
+        List<SnapshotID> snapshots = snapshots(record.getRecordFieldList());
 
-        return new Device(snapshots, record.getRecordFieldList());
+        return new Device(snapshots, record);
     }
 
-    static List<Snapshot> snapshots(List<CloudKit.RecordField> records) {
+    static List<SnapshotID> snapshots(List<CloudKit.RecordField> records) {
         List<String> snapshotRecords = snapshotRecords(records);
         List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
 
@@ -53,7 +53,7 @@ public final class Devices {
                 .orElse(0);
 
         return IntStream.range(0, limit)
-                .mapToObj(i -> new Snapshot(
+                .mapToObj(i -> new SnapshotID(
                         WKTimestamp.toInstant(snapshotCommittedDates.get(i)),
                         snapshotRecords.get(i)))
                 .collect(Collectors.toList());

@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ProtectionInfo;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,14 +54,20 @@ public abstract class AbstractRecord {
                         }));
     }
 
+    private final CloudKit.Record record;
     private final Map<String, CloudKit.RecordField> recordFields;
 
-    private AbstractRecord(Map<String, CloudKit.RecordField> recordFields) {
+    private AbstractRecord(CloudKit.Record record, Map<String, CloudKit.RecordField> recordFields) {
+        this.record = Objects.requireNonNull(record, "record");
         this.recordFields = Objects.requireNonNull(recordFields, "recordFields");
     }
 
-    public AbstractRecord(Collection<CloudKit.RecordField> recordFields) {
-        this(map(recordFields));
+    public AbstractRecord(CloudKit.Record record) {
+        this(record, map(record.getRecordFieldList()));
+    }
+
+    public String type() {
+        return record.getType().getName();
     }
 
     public Map<String, CloudKit.RecordField> recordFields() {
@@ -73,10 +80,5 @@ public abstract class AbstractRecord {
 
     public Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
         return Optional.ofNullable(recordFields.get(name).getValue());
-    }
-
-    @Override
-    public String toString() {
-        return "AbstractRecord{" + "recordFields=" + recordFields + '}';
     }
 }

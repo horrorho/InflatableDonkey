@@ -22,15 +22,41 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class Assets {
 
-    public static boolean isEmpty(String asset) {
+    public static boolean isNonEmpty(String asset) {
         // F:UUID:token:length:x
         String[] split = asset.split(":");
         if (split.length < 4) {
             logger.warn("-- isEmpty() - no file size field: {}", asset);
             return true;
         }
+        String x = split[3];
+        if (x.equals("D")) {
+            return false;
+        }
+        
+        try {
+            int size = Integer.parseInt(x);
+            return size != 0;
+        } catch (NumberFormatException ex) {
+            logger.warn("-- isEmpty() - failed to parse asset: {}", asset);
+            return false;
+        }
+    }
 
-        return !split[3].equals("0");
+    public static int size(String asset) {
+        // F:UUID:token:length:x
+        String[] split = asset.split(":");
+        if (split.length < 4) {
+            logger.warn("-- isEmpty() - no file size field: {}", asset);
+            return 0;
+        }
+
+        try {
+            return Integer.parseInt(split[3]);
+        } catch (NumberFormatException ex) {
+            logger.warn("-- size() - failed to parse: {}", asset);
+            return 0;
+        }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(Assets.class);
@@ -53,7 +79,7 @@ public final class Assets {
 
     public List<String> nonEmptyFiles() {
         return files.stream()
-                .filter(Assets::isEmpty)
+                .filter(Assets::isNonEmpty)
                 .collect(Collectors.toList());
     }
 

@@ -23,14 +23,14 @@ public final class Device extends AbstractRecord {
     public static final String DOMAIN_HMAC = "domainHMAC";
     public static final String KEYBAG_UUID = "currentKeybagUUID";
 
-    private final Collection<Snapshot> snapshots;
+    private final Collection<SnapshotID> snapshots;
 
-    public Device(Collection<Snapshot> snapshots, Collection<CloudKit.RecordField> recordFields) {
-        super(recordFields);
+    public Device(Collection<SnapshotID> snapshots, CloudKit.Record record) {
+        super(record);
         this.snapshots = new ArrayList<>(snapshots);
     }
 
-    public List<Snapshot> snapshots() {
+    public List<SnapshotID> snapshots() {
         return new ArrayList<>(snapshots);
     }
 
