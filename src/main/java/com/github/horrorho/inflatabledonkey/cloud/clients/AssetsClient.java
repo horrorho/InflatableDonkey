@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
@@ -69,14 +69,17 @@ public final class AssetsClient {
                         httpClient,
                         "_defaultZone",
                         manifestIDs);
-        logger.debug("-- assets() - responses: {}", responses);
+        logger.info("-- assets() - responses: {}", responses.size());
+
+        // Manifests with multiple counts only return protection info for the first block, as we are passing blocks in
+        // order we can reference the previous protection zone.
+        // TODO tighten up.
+        AtomicReference<ProtectionZone> previous = new AtomicReference<>(zone);
 
         return responses.stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> assets(r, zone))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(r -> assets(r, zone, previous))
                 .collect(Collectors.toList());
     }
 
@@ -86,8 +89,12 @@ public final class AssetsClient {
                 .collect(Collectors.toList());
     }
 
-    static Optional<Assets> assets(CloudKit.Record record, ProtectionZone zone) {
+    static Assets assets(CloudKit.Record record, ProtectionZone zone, AtomicReference<ProtectionZone> previous) {
         return zone.newProtectionZone(record.getProtectionInfo())
-                .map(z -> AssetsFactory.from(record, z::decrypt));
+                .map(z -> {
+                    previous.set(z);
+                    return AssetsFactory.from(record, z::decrypt);
+                })
+                .orElse(AssetsFactory.from(record, previous.get()::decrypt));
     }
 }
