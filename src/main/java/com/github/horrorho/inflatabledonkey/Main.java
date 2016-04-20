@@ -246,7 +246,7 @@ public class Main {
         }
     }
 }
-// TODO time expired tokens
+// TODO time expired tokens / badly adjusted system clocks.
 // TODO handle D in files
 // TODO test that 0 is really 0, something doesn't seem quite right about it
 // TODO file timestamp
