@@ -214,7 +214,7 @@ public class Main {
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder); // TODO chunks value injection
+        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder);
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
         KeyBagManager keyBagManager = backup.newKeyBagManager();
