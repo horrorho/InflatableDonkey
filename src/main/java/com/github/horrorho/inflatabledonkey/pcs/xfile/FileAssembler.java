@@ -64,6 +64,7 @@ public final class FileAssembler {
 
         logger.debug("-- assemble() - file: {} chunks: {} length: {} key: 0x{}",
                 file, chunkData.size(), length, key.map(Hex::toHexString).orElse("NULL"));
+        logger.info("-- assemble() - file: {}", file);
 
         if (!createDirectories(file)) {
             return;

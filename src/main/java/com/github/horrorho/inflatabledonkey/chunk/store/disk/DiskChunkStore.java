@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.ThreadSafe;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
-@ThreadSafe
+//@ThreadSafe - collisions issues
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
@@ -70,7 +69,7 @@ public final class DiskChunkStore implements ChunkStore {
     public ChunkBuilder chunkBuilder(byte[] checksum) {
         Path file = file(checksum);
         if (Files.exists(file)) {
-            logger.warn("chunk overwritten: {}", Hex.toHexString(checksum));
+            logger.debug("chunk overwritten: {}", Hex.toHexString(checksum));
         }
 
         return new DiskChunk.Builder(checksum, file);

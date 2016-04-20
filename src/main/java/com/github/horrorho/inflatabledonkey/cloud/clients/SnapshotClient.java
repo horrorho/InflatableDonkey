@@ -25,9 +25,9 @@ package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
-import com.github.horrorho.inflatabledonkey.data.backup.ManifestsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
@@ -42,52 +42,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ManifestsClient.
+ * SnapshotClient.
  *
  * @author Ahseya
  */
 @Immutable
-public final class ManifestsClient {
+public final class SnapshotClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(ManifestsClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(SnapshotClient.class);
 
-    public static List<Manifests> manifestsForDevices(
-            HttpClient httpClient,
-            CloudKitty kitty,
-            ProtectionZone zone,
-            Collection<Device> devices) throws IOException {
-
-        List<Snapshot> snapshots = devices.stream()
-                .map(Device::snapshots)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-
-        return manifestsForSnapshots(httpClient, kitty, zone, snapshots);
-    }
-
-    public static List<Manifests> manifestsForSnapshots(
-            HttpClient httpClient,
-            CloudKitty kitty,
-            ProtectionZone zone,
-            Collection<Snapshot> snapshots) throws IOException {
-
-        List<String> snapshotIDs = snapshots.stream()
-                .map(Snapshot::id)
-                .collect(Collectors.toList());
-
-        return manifests(httpClient, kitty, zone, snapshotIDs);
-    }
-
-    public static List<Manifests>
-            manifests(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> snapshotIDs)
+    public static List<Snapshot>
+            snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
             throws IOException {
 
         if (snapshotIDs.isEmpty()) {
             return new ArrayList<>();
         }
 
+        List<String> snapshots = snapshotIDs.stream()
+                .map(SnapshotID::id)
+                .collect(Collectors.toList());
+
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshotIDs);
+                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshots);
         logger.debug("-- manifests() - responses: {}", responses);
 
         return responses.stream()
@@ -99,8 +76,8 @@ public final class ManifestsClient {
                 .collect(Collectors.toList());
     }
 
-    static Optional<Manifests> manifests(CloudKit.Record record, ProtectionZone zone) {
+    static Optional<Snapshot> manifests(CloudKit.Record record, ProtectionZone zone) {
         return zone.newProtectionZone(record.getProtectionInfo())
-                .map(z -> ManifestsFactory.from(record, (bs, id) -> z.decrypt(bs, id).get())); // TODO rework Manifests
+                .map(z -> Snapshots.from(record, (bs, id) -> z.decrypt(bs, id).get())); // TODO rework Manifests
     }
 }

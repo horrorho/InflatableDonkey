@@ -57,7 +57,7 @@ public final class AssetWriter implements BiConsumer<Asset, List<Chunk>> {
         this.keyBags = Objects.requireNonNull(keyBags, "keyBags");
     }
 
-    public AssetWriter(Path outputFolder, KeyBag keyBag) {
+    public AssetWriter(Path outputFolder, KeyBag... keyBag) {
         this(outputFolder, new KeyBags(keyBag));
     }
 
@@ -87,7 +87,7 @@ public final class AssetWriter implements BiConsumer<Asset, List<Chunk>> {
         }
 
         Optional<KeyBag> keyBag = uuid
-                .flatMap(keyBags::uuid);
+                .flatMap(keyBags::keybag);
         if (!keyBag.isPresent()) {
             logger.warn("-- encryptionKey() - no keybag for uuid: 0x{}", uuid.map(Hex::toHexString));
             return Optional.empty();
@@ -101,3 +101,4 @@ public final class AssetWriter implements BiConsumer<Asset, List<Chunk>> {
         return "CloudWriter{" + "outputFolder=" + outputFolder + ", keyBags=" + keyBags + '}';
     }
 }
+// TOFIX don't write files in no keybag present

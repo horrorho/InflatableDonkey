@@ -6,10 +6,10 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
+import com.dd.plist.NSObject;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,12 +48,28 @@ public final class Snapshot extends AbstractRecord {
         return new ArrayList<>(manifests);
     }
 
+    public int quotaUsed() {
+        return recordFieldValue("quotaUsed")
+                .map(CloudKit.RecordFieldValue::getUint32)
+                .orElse(-1);
+    }
+
+    public String deviceName() {
+        return recordFieldValue("deviceName")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String info() {
+        return String.format("%6s MB ", (quotaUsed() / 1048576))
+                + deviceName();
+    }
+
     @Override
     public String toString() {
-        return "Snapshot{"
-                + super.toString()
-                + ", backupProperties=" + backupProperties
-                + ", manifests=" + manifests
+        return "Snapshot{" + super.toString()
+                + ", backupProperties=" + backupProperties().map(NSObject::toXMLPropertyList).orElse("NULL")
                 + '}';
     }
+
 }

@@ -13,7 +13,7 @@ import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 /**
- * Snapshots.
+ * Device.
  *
  * @author Ahseya
  */
@@ -44,11 +44,44 @@ public final class Device extends AbstractRecord {
                 .map(CloudKit.RecordFieldValue::getStringValue);
     }
 
+    public String deviceClass() {
+        return recordFieldValue("deviceClass")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String hardwareModel() {
+        return recordFieldValue("hardwareModel")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String marketingName() {
+        return recordFieldValue("marketingName")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String productType() {
+        return recordFieldValue("productType")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String serialNumber() {
+        return recordFieldValue("serialNumber")
+                .map(CloudKit.RecordFieldValue::getStringValue)
+                .orElse("");
+    }
+
+    public String info() {
+        return productType() + " "
+                + hardwareModel() + " "
+                + serialNumber();
+    }
+
     @Override
     public String toString() {
-        return "Snapshots{"
-                + super.toString()
-                + ", snapshots=" + snapshots
-                + '}';
+        return "Device{" + super.toString() + '}';
     }
 }

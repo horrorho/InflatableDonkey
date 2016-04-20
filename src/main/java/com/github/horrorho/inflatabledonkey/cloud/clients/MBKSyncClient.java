@@ -39,17 +39,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * BaseZonesClient.
+ * MBKSyncClient.
  *
  * @author Ahseya
  */
 @Immutable
-public final class BaseZonesClient {
+public final class MBKSyncClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseZonesClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
     public static Optional<ProtectionZone>
-            baseZones(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivate>> keys) throws IOException {
+            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivate>> keys) throws IOException {
 
         List<CloudKit.ZoneRetrieveResponse> responses
                 = kitty.zoneRetrieveRequest(httpClient, "_defaultZone", "mbksync");

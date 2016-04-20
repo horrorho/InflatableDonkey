@@ -26,8 +26,8 @@ package com.github.horrorho.inflatabledonkey.keybag;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +38,7 @@ import net.jcip.annotations.Immutable;
  *
  * @author Ahseya
  */
+@Deprecated
 @Immutable
 public final class KeyBags {
 
@@ -50,8 +51,8 @@ public final class KeyBags {
 
     private final Map<ByteString, KeyBag> keyBags;
 
-    KeyBags(Map<ByteString, KeyBag> keyBags) {
-        this.keyBags = Objects.requireNonNull(keyBags, "keyBags");
+    public KeyBags(Map<ByteString, KeyBag> keyBags) {
+        this.keyBags = new HashMap<>(keyBags);
     }
 
     public KeyBags(Collection<KeyBag> keybags) {
@@ -62,7 +63,7 @@ public final class KeyBags {
         this(Arrays.asList(keybags));
     }
 
-    public Optional<KeyBag> uuid(byte[] uuid) {
+    public Optional<KeyBag> keybag(byte[] uuid) {
         ByteString key = ByteString.copyFrom(uuid);
         return Optional.ofNullable(keyBags.get(key));
     }

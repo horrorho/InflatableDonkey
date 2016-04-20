@@ -23,50 +23,34 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.github.horrorho.inflatabledonkey.args.ArgsParsers;
-import com.github.horrorho.inflatabledonkey.args.Help;
-import com.github.horrorho.inflatabledonkey.args.OptionsFactory;
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
-import com.github.horrorho.inflatabledonkey.cloud.AssetWriter;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
-import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Authenticator;
-import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
-import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
-import com.github.horrorho.inflatabledonkey.cloud.accounts.Tokens;
-import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
-import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
-import com.github.horrorho.inflatabledonkey.cloud.clients.AssetTokenClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.BackupAccountClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.BaseZonesClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.DeviceClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.ManifestsClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.KeyBagClient;
-import com.github.horrorho.inflatabledonkey.cloud.clients.AssetsClient;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
-import com.github.horrorho.inflatabledonkey.data.backup.Manifests;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
+import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
@@ -86,21 +70,14 @@ public class Main {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        Function<String[], Map<Property, String>> argsParser = ArgsParsers.instance();
-        Map<Property, String> arguments = new HashMap<>();
-
         try {
-            arguments = argsParser.apply(args);
-
+            if (!PropertyLoader.instance().test(args)) {
+                return;
+            }
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
-            System.out.println("Try '" + Property.APP_NAME.defaultValue() + " --help' for more information.");
+            System.out.println("Try '" + Property.APP_NAME.value() + " --help' for more information.");
             System.exit(-1);
-        }
-
-        if (arguments.containsKey(Property.ARGS_HELP)) {
-            Help.instance().accept(OptionsFactory.options().keySet());
-            System.exit(0);
         }
 
         // SystemDefault HttpClient.
@@ -110,67 +87,169 @@ public class Main {
                 .useSystemProperties()
                 .build();
 
-        Auth auth = arguments.containsKey(Property.AUTHENTICATION_TOKEN)
-                ? new Auth(arguments.get(Property.AUTHENTICATION_TOKEN))
-                : Authenticator.authenticate(
-                        httpClient,
-                        arguments.get(Property.AUTHENTICATION_APPLEID),
-                        arguments.get(Property.AUTHENTICATION_PASSWORD));
+        // Auth
+        // TODO rework when we have UncheckedIOException for Authenticator
+        Auth auth = Property.AUTHENTICATION_TOKEN.value()
+                .map(Auth::new)
+                .orElse(null);
 
+        if (auth == null) {
+            auth = Authenticator.authenticate(
+                    httpClient,
+                    Property.AUTHENTICATION_APPLEID.value().get(),
+                    Property.AUTHENTICATION_PASSWORD.value().get());
+        }
         logger.debug("-- main() - auth: {}", auth);
         logger.info("-- main() - dsPrsID:mmeAuthToken: {}:{}", auth.dsPrsID(), auth.mmeAuthToken());
 
-        if (arguments.containsKey(Property.ARGS_TOKEN)) {
+        if (Property.ARGS_TOKEN.booleanValue().orElse(false)) {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
-            System.exit(0);
+            return;
         }
+
+        logger.info("-- main() - Apple ID: {}", Property.AUTHENTICATION_APPLEID.value());
+        logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value());
+        logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value());
+
+        // Account
         Account account = Accounts.account(httpClient, auth);
-        Tokens tokens = account.tokens();
 
-        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-        CloudKitty kitty = CloudKitty.backupd(ckInit, tokens.get(Token.CLOUDKITTOKEN));
+        // Backup
+        Backup backup = Backup.create(httpClient, account);
 
-        ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
+        // BackupAccount
+        BackupAccount backupAccount = backup.backupAccount(httpClient);
+        logger.debug("-- main() - backup account: {}", backupAccount);
 
-        ProtectionZone zoneKeys = BaseZonesClient.baseZones(httpClient, kitty, escrowServiceKeySet.keys()).get();
+        // Devices
+        List<Device> devices = backup.devices(httpClient, backupAccount.devices());
+        logger.debug("-- main() - device count: {}", devices.size());
 
-        BackupAccount backupAccount = BackupAccountClient.backupAccount(httpClient, kitty, zoneKeys).get();
-
-        List<Device> devices = DeviceClient.device(httpClient, kitty, backupAccount.devices());
-        logger.info("-- main() - devices: {}", devices);
-        List<Manifests> manifestsList = ManifestsClient.manifestsForDevices(httpClient, kitty, zoneKeys, devices);
-
-        logger.info("-- main() - manifests downloaded: {}", manifestsList);
-
-        Manifest manifest = manifestsList
-                .stream()
-                .map(Manifests::manifests)
+        // Snapshots
+        List<SnapshotID> snapshotIDs = devices.stream()
+                .map(Device::snapshots)
                 .flatMap(Collection::stream)
-                .filter(x -> x.count() != 0)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("no non-empty manifests"));
+                .collect(Collectors.toList());
+        logger.info("-- main() - total snapshot count: {}", snapshotIDs.size());
 
-        List<Assets> assetsList = AssetsClient.assets(httpClient, kitty, zoneKeys, Arrays.asList(manifest));
-        logger.debug("-- main() - assets: {}", assetsList);
+        Map<String, Snapshot> snapshots = backup.snapshot(httpClient, snapshotIDs)
+                .stream()
+                .collect(Collectors.toMap(
+                        s -> s.record()
+                        .getRecordIdentifier()
+                        .getValue()
+                        .getName(),
+                        Function.identity()));
 
-        List<Asset> assets = AssetTokenClient.assets(httpClient, kitty, zoneKeys, assetsList);
-        logger.debug("-- main() - assets: {}", assets);
+        // Selection
+        int deviceIndex = Property.SELECT_DEVICE_INDEX.intValue().get();
+        int snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
+        logger.info("-- main() - arg device index: {}", deviceIndex);
+        logger.info("-- main() - arg snapshot index: {}", snapshotIndex);
 
-        String keybagUUID = devices.get(0).currentKeybagUUID().get();
-        KeyBag keyBag = KeyBagClient.keyBag(httpClient, kitty, zoneKeys, keybagUUID).get();
-        logger.debug("-- main() - key bag: {}", keyBag);
+        for (int i = 0; i < devices.size(); i++) {
+            Device device = devices.get(i);
+            List<SnapshotID> deviceSnapshotIDs = device.snapshots();
 
+            System.out.println(i + " " + device.info());
+
+            for (int j = 0; j < deviceSnapshotIDs.size(); j++) {
+                SnapshotID sid = deviceSnapshotIDs.get(j);
+                System.out.println("\t" + j + snapshots.get(sid.id()).info() + "   " + sid.timestamp());
+            }
+        }
+        if (Property.PRINT_SNAPSHOTS.booleanValue().orElse(false)) {
+            return;
+        }
+
+        if (deviceIndex >= devices.size()) {
+            System.out.println("No such device: " + deviceIndex);
+        }
+        Device device = devices.get(deviceIndex);
+        System.out.println("Selected device: " + deviceIndex + ", " + device.info());
+
+        if (snapshotIndex >= devices.get(deviceIndex).snapshots().size()) {
+            System.out.println("No such snapshot for selected device: " + snapshotIndex);
+        }
+
+        String selected = devices.get(deviceIndex).snapshots().get(snapshotIndex).id();
+        Snapshot snapshot = snapshots.get(selected);
+        System.out.println("Selected snapshot: " + snapshotIndex + ", " + snapshot.info());
+
+        // Asset list.
+        List<Assets> assetsList = backup.assetsList(httpClient, snapshot);
+        logger.info("-- main() - assets count: {}", assetsList.size());
+
+        // Output domains --domains option
+        if (Property.PRINT_DOMAIN_LIST.booleanValue().orElse(false)) {
+            System.out.println("Domains / file count:");
+            assetsList.stream()
+                    .filter(a -> a.domain().isPresent())
+                    .map(a -> a.domain().get() + " / " + a.files().size())
+                    .sorted()
+                    .forEach(System.out::println);
+            return;
+            // TODO check Assets without domain information.
+        }
+
+        // Domains filter --domain option
+        String domainSubstring = Property.FILTER_DOMAIN.value().orElse("")
+                .toLowerCase(Locale.US);
+        logger.info("-- main() - arg domain substring filter: {}", Property.FILTER_DOMAIN.value());
+
+        Predicate<Optional<String>> domainFilter = domain -> domain
+                .map(d -> d.toLowerCase(Locale.US))
+                .map(d -> d.contains(domainSubstring))
+                .orElse(false);
+
+        List<String> files = Assets.files(assetsList, domainFilter);
+        logger.info("-- main() - domain filtered file count: {}", files.size());
+
+        // Output folders.
+        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("output"));
+        Path assetOutputFolder = outputFolder.resolve("assets"); // TODO assets value injection
+        Path chunkOutputFolder = outputFolder.resolve("chunks"); // TODO chunks value injection
+        logger.info("-- main() - output folder chunks: {}", chunkOutputFolder);
+        logger.info("-- main() - output folder assets: {}", assetOutputFolder);
+
+        // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-
-        AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
-
-        DiskChunkStore chunkStore = new DiskChunkStore(Paths.get("chunks"));
+        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder); // TODO chunks value injection
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
+        AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
+        KeyBagManager keyBagManager = backup.newKeyBagManager();
 
-        AssetWriter cloudWriter = new AssetWriter(Paths.get("testfolder"), keyBag);
+        // Mystery Moo. 
+        Moo moo = new Moo(authorizeAssets, assetDownloader, keyBagManager);
 
-        AssetDownloader moo = new AssetDownloader(chunkEngine);
-        moo.get(httpClient, authorizedAssets, cloudWriter);
+        // Filename extension filter.
+        String filenameExtension = Property.FILTER_EXTENSION.value().orElse("")
+                .toLowerCase(Locale.US);
+        logger.info("-- main() - arg filename extension filter: {}", Property.FILTER_EXTENSION.value());
+
+        Predicate<Asset> assetFilter = asset -> asset
+                .relativePath()
+                .map(d -> d.toLowerCase(Locale.US))
+                .map(d -> d.endsWith(filenameExtension))
+                .orElse(false);
+
+        // Batch process files in groups of 200.
+        List<List<String>> batches = ListUtils.partition(files, 200);
+
+        for (List<String> batch : batches) {
+            List<Asset> assets = backup.assets(httpClient, batch)
+                    .stream()
+                    .filter(assetFilter::test)
+                    .collect(Collectors.toList());
+            logger.info("-- main() - filtered asset count: {}", assets.size());
+            moo.download(httpClient, assets, assetOutputFolder);
+        }
     }
 }
 // TODO time expired tokens
+// TODO handle D in files
+// TODO test that 0 is really 0, something doesn't seem quite right about it
+// TODO file timestamp
+// TODO filtering
+// TODO concurrent downloads
+// TODO everything else

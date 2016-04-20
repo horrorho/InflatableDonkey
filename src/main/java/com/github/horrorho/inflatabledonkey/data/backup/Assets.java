@@ -6,9 +6,11 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
@@ -22,6 +24,15 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class Assets {
 
+    public static List<String> files(List<Assets> assetsList, Predicate<Optional<String>> domainFilter) {
+        return assetsList.stream()
+                .filter(assets -> domainFilter.test(assets.domain()))
+                .map(Assets::files)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    // TODO rationalize
     public static boolean isNonEmpty(String asset) {
         // F:UUID:token:length:x
         String[] split = asset.split(":");
@@ -33,7 +44,7 @@ public final class Assets {
         if (x.equals("D")) {
             return false;
         }
-        
+
         try {
             int size = Integer.parseInt(x);
             return size != 0;
@@ -43,6 +54,7 @@ public final class Assets {
         }
     }
 
+    // TODO rationalize
     public static int size(String asset) {
         // F:UUID:token:length:x
         String[] split = asset.split(":");

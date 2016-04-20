@@ -51,16 +51,27 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
+            assetsFromAssetsList(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
             throws IOException {
 
         List<String> fileList = assetsList.stream()
                 .map(Assets::nonEmptyFiles)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
-        logger.debug("-- assets() - non-empty file list size: {}", fileList.size());
+        return assets(httpClient, kitty, zone, fileList);
 
-        if (fileList.isEmpty()) {
+    }
+
+    public static List<Asset>
+            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> fileList)
+            throws IOException {
+
+        List<String> nonEmptyFileList = fileList.stream()
+                .filter(Assets::isNonEmpty)
+                .collect(Collectors.toList());
+        logger.debug("-- assets() - non-empty file list size: {}", nonEmptyFileList.size());
+
+        if (nonEmptyFileList.isEmpty()) {
             return new ArrayList<>();
         }
 
@@ -68,7 +79,7 @@ public final class AssetTokenClient {
                 = kitty.recordRetrieveRequest(
                         httpClient,
                         "_defaultZone",
-                        fileList);
+                        nonEmptyFileList);
 
         return responses.stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)

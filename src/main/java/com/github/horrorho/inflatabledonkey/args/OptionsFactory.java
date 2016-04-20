@@ -77,19 +77,20 @@ public final class OptionsFactory {
                 .build(),
                 Property.OUTPUT_FOLDER);
 
+        options.put(new Option(null, "snapshots", false, "List device/ snapshot information and exit."),
+                Property.PRINT_SNAPSHOTS);
+
         options.put(new Option(null, "domains", false, "List domains/ file count for the selected snapshot and exit."),
                 Property.PRINT_DOMAIN_LIST);
 
-        options.put(new Option(null, "snapshots", false, "List device/ snapshot information and exit."),
-                Property.PRINT_SNAPSHOTS);
+        options.put(
+                new Option(null, "token", false, "Display dsPrsID:mmeAuthToken and exit."),
+                Property.ARGS_TOKEN);
 
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),
                 Property.ARGS_HELP);
 
-        options.put(
-                new Option(null, "token", false, "Display dsPrsID:mmeAuthToken and exit."),
-                Property.ARGS_TOKEN);
         return options;
     }
 }

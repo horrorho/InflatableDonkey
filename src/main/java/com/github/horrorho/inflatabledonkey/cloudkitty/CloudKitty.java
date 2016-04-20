@@ -157,7 +157,6 @@ public final class CloudKitty {
                 .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
                 .collect(Collectors.toList());
 
-        logger.info("-- recordRetrieveRequest() - responses: {}", responses.size());
         return responses;
     }
 

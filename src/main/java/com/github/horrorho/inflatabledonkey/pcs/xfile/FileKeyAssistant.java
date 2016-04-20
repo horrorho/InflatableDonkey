@@ -62,7 +62,7 @@ public final class FileKeyAssistant {
 
     public static Optional<byte[]> unwrap(KeyBags keyBags, int protectionClass, byte[] fileKey) {
         return uuid(fileKey)
-                .flatMap(keyBags::uuid)
+                .flatMap(keyBags::keybag)
                 .flatMap(keyBag -> unwrap(keyBag, protectionClass, fileKey));
     }
 

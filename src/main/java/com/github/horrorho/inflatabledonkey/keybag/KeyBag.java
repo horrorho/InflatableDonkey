@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.keybag;
 
+import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +42,7 @@ public final class KeyBag {
 
     private final KeyBagType type;
     private final byte[] uuid;
+    private final String uuidBase64;
     private final Map<Integer, byte[]> publicKeys;
     private final Map<Integer, byte[]> privateKeys;
 
@@ -52,6 +54,7 @@ public final class KeyBag {
 
         this.type = Objects.requireNonNull(type, "type");
         this.uuid = Objects.requireNonNull(uuid, "uuid");
+        this.uuidBase64 = Base64.getEncoder().encodeToString(uuid);
 
         this.publicKeys = publicKeys.entrySet()
                 .stream()
@@ -82,6 +85,10 @@ public final class KeyBag {
 
     public byte[] uuid() {
         return Arrays.copyOf(uuid, uuid.length);
+    }
+
+    public String uuidBase64() {
+        return uuidBase64;
     }
 
     @Override

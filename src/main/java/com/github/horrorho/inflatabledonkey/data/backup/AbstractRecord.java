@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit.ProtectionInfo;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +40,8 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 public abstract class AbstractRecord {
+
+    protected static String NA = "N/A";
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractRecord.class);
 
@@ -66,19 +67,28 @@ public abstract class AbstractRecord {
         this(record, map(record.getRecordFieldList()));
     }
 
-    public String type() {
+    public final String type() {
         return record.getType().getName();
     }
 
-    public Map<String, CloudKit.RecordField> recordFields() {
+    public final CloudKit.Record record() {
+        return record;
+    }
+
+    public final Map<String, CloudKit.RecordField> recordFields() {
         return new HashMap<>(recordFields);
     }
 
-    public Optional<CloudKit.RecordField> recordField(String name) {
+    public final Optional<CloudKit.RecordField> recordField(String name) {
         return Optional.ofNullable(recordFields.get(name));
     }
 
-    public Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
+    public final Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
         return Optional.ofNullable(recordFields.get(name).getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractRecord{" + "record=" + record + '}';
     }
 }

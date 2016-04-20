@@ -64,7 +64,7 @@ public final class Authenticator {
 
             NSDictionary tokens = PLists.getAs(authentication, "tokens", NSDictionary.class);
             String mmeAuthToken = PLists.getAs(tokens, "mmeAuthToken", NSString.class).getContent();
-            
+
             logger.debug("-- authenticate() -  dsPrsID: {}", dsPrsID);
             logger.debug("-- authenticate() -  mmeAuthToken: {}", mmeAuthToken);
 
