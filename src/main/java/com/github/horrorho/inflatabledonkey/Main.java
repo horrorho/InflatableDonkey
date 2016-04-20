@@ -43,7 +43,9 @@ import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -115,7 +117,7 @@ public class Main {
         Account account = Accounts.account(httpClient, auth);
 
         // Backup
-        Backup backup = Backup.create(httpClient, account);
+        BackupAssistant backup = BackupAssistant.create(httpClient, account);
 
         // BackupAccount
         BackupAccount backupAccount = backup.backupAccount(httpClient);
@@ -193,15 +195,18 @@ public class Main {
         }
 
         // Domains filter --domain option
-        String domainSubstring = Property.FILTER_DOMAIN.value().orElse("")
-                .toLowerCase(Locale.US);
-        logger.info("-- main() - arg domain substring filter: {}", Property.FILTER_DOMAIN.value());
+        List<String> domainSubstringFilter = Property.FILTER_DOMAIN.list().orElse(Collections.emptyList())
+                .stream()
+                .map(s -> s.toLowerCase(Locale.US))
+                .collect(Collectors.toList());
+        logger.info("-- main() - arg domain filters: {}", domainSubstringFilter);
 
         Predicate<Optional<String>> domainFilter = domain -> domain
                 .map(d -> d.toLowerCase(Locale.US))
-                .map(d -> d.contains(domainSubstring))
+                .map(d -> domainSubstringFilter
+                        .stream()
+                        .anyMatch(s -> d.contains(s)))
                 .orElse(false);
-
         List<String> files = Assets.files(assetsList, domainFilter);
         logger.info("-- main() - domain filtered file count: {}", files.size());
 
@@ -223,14 +228,17 @@ public class Main {
         Moo moo = new Moo(authorizeAssets, assetDownloader, keyBagManager);
 
         // Filename extension filter.
-        String filenameExtension = Property.FILTER_EXTENSION.value().orElse("")
-                .toLowerCase(Locale.US);
-        logger.info("-- main() - arg filename extension filter: {}", Property.FILTER_EXTENSION.value());
-
+        List<String> extensionFilterList = Property.FILTER_EXTENSION.list().orElse(Collections.emptyList())
+                .stream()
+                .map(s -> s.toLowerCase(Locale.US))
+                .collect(Collectors.toList());
+        logger.info("-- main() - arg filename extension filters: {}", extensionFilterList);
         Predicate<Asset> assetFilter = asset -> asset
                 .relativePath()
                 .map(d -> d.toLowerCase(Locale.US))
-                .map(d -> d.endsWith(filenameExtension))
+                .map(d -> extensionFilterList
+                        .stream()
+                        .anyMatch(s -> d.endsWith(s)))
                 .orElse(false);
 
         // Batch process files in groups of 100.
@@ -247,10 +255,15 @@ public class Main {
         }
     }
 }
+// TODO multiple domain/ extension filtering arguments
+// TODO complete device/ snapshot backup if device/ snapshot argument is in not present
+// TODO file timestamps
+// TODO date filtering
+// TODO size filtering
 // TODO time expired tokens / badly adjusted system clocks.
 // TODO handle D in files
-// TODO test that 0 is really 0, something doesn't seem quite right about it
+// TODO reconstruct empty files/ empty directories
 // TODO file timestamp
 // TODO filtering
 // TODO concurrent downloads
-// TODO everything else
+// TODO file asset cache

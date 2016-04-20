@@ -29,7 +29,7 @@ import net.jcip.annotations.Immutable;
 import org.apache.commons.cli.Option;
 
 /**
- * Options factory.
+ * OptionsFactory.
  *
  * @author Ahseya
  */
@@ -57,16 +57,16 @@ public final class OptionsFactory {
                 Property.SELECT_SNAPSHOT_INDEX);
 
         options.put(Option.builder().longOpt("extension")
-                .desc("File extension filter, case insensitive.")
+                .desc("File extension filter/ s, case insensitive.")
                 .argName("string")
-                .hasArg()
+                .hasArgs()
                 .build(),
                 Property.FILTER_EXTENSION);
 
         options.put(Option.builder().longOpt("domain")
                 .desc("Domain filter, case insensitive.")
                 .argName("string")
-                .hasArg()
+                .hasArgs()
                 .build(),
                 Property.FILTER_DOMAIN);
 

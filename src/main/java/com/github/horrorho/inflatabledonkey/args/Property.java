@@ -24,8 +24,11 @@
 package com.github.horrorho.inflatabledonkey.args;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +77,14 @@ public enum Property {
         }
     }
 
+    static int parseInt(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ex) {
+            throw ex;
+        }
+    }
+
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {
         return DateTimeFormatter.ISO_DATE;
     }
@@ -105,13 +116,21 @@ public enum Property {
         return Optional.ofNullable(value);
     }
 
-    public Optional<Integer> intValue() {
-        try {
-            return value().map(Integer::parseInt);
+    public Optional<List<String>> list() {
+        return value()
+                .map(v -> Arrays.asList(v.split(" ")));
+    }
 
-        } catch (NumberFormatException ex) {
-            throw ex;
-        }
+    public Optional<Integer> intValue() {
+        return value().map(Property::parseInt);
+    }
+
+    public Optional<List<Integer>> intList() {
+        return list()
+                .map(l -> l
+                        .stream()
+                        .map(Property::parseInt)
+                        .collect(Collectors.toList()));
     }
 
     public Optional<Boolean> booleanValue() {
