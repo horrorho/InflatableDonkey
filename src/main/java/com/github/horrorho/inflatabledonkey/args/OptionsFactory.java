@@ -80,7 +80,7 @@ public final class OptionsFactory {
         options.put(new Option(null, "domains", false, "List domains/ file count for the selected snapshot and exit."),
                 Property.PRINT_DOMAIN_LIST);
 
-        options.put(new Option(null, "snapshots", false, "List devices/ snapshot information and exit."),
+        options.put(new Option(null, "snapshots", false, "List device/ snapshot information and exit."),
                 Property.PRINT_SNAPSHOTS);
 
         options.put(
