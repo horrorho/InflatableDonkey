@@ -233,8 +233,9 @@ public class Main {
                 .map(d -> d.endsWith(filenameExtension))
                 .orElse(false);
 
-        // Batch process files in groups of 200.
-        List<List<String>> batches = ListUtils.partition(files, 200);
+        // Batch process files in groups of 100.
+        // TODO group files into batches based on file size.
+        List<List<String>> batches = ListUtils.partition(files, 100);
 
         for (List<String> batch : batches) {
             List<Asset> assets = backup.assets(httpClient, batch)
