@@ -1,3 +1,15 @@
+**Update**, 20 April 2016. 
+
+Finally, like finally, it's slowly coming together... Well most of it. I've spent long hours over the last few weeks working on it and when I was in bed, my cat took over and also pondered the mysteries of iCloud's inner workings.
+
+So! I've pushed another experimental build that will download backups. It's not been tested and large parts of the code base are mess. I'll continue to tidy up code and stabilize the whole thing. Logging has been set to info, just fiddle with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) to get the debug output back.
+
+At the moment, the priority is refactoring old code and then I'll get work on additional features and unit tests. InflatableDonkey was only ever intended as an experimental proof of concept and it's a rather convoluted mess. I've tidied up the most horrific parts, but there are still phantoms and boogie monsters lurking around in there. 
+
+On a more positive note, it was written ground up to be multi-threaded. Once it's stable and a few sticking points are sorted I'll switch it over to concurrent downloads.
+
+For those wishing to play with it, please use the --token mode for repeated runs as explained below. Also please remember, it's an experimental build, not production code. It was pushed primarily to show off the underlying backup process, not because it was in a state of completion.
+
 **Update**, 7 April 2016. 
 
 Ok! So I've had free time to work on InflatableDonkey. It's been painful, but there's been lots of progress. I've had to pull apart binaries to figure out the decryption process, which I hate doing. Like seriously, it's horrible.
@@ -10,11 +22,7 @@ Sooo... what's left? Chunk decryption is the big one. I'm hoping it's a simple s
 
 
 ### What is it?
-Java playground/ proof of concept command-line tool (currently a work in progress) to demonstrate the key steps in recovering iOS9 iCloud backups. It does not and will not offer a complete iCloud backup retrieval solution. It's primarily intended for developers or otherwise generally nosy folk.
-
-The tool itself logs client-server interaction including headers and protobufs. Along with the source-code this should assist in developing/ upgrading existing iCloud retrieval tools to iOS9 (all those iLoot forks, I'm looking at you).
-
-The CloudKit API calls are largely there. The cryptographical aspect is problematic but progressing.
+Java proof of concept iOS9 iCloud backup retrieval tool.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
@@ -30,16 +38,16 @@ The executable Jar is located at /target/InflatableDonkey.jar
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar --help
 usage: InflatableDonkey [OPTION]... (<token> | <appleid> <password>)
- -d,--device <int>                      Device, default: 0 = first device.
- -s,--snapshot <int>                    Snapshot, default: 0 = first
-                                        snapshot.
- -m,--manifest <int>                    Manifest, default: 0 = first
-                                        manifest.
-    --protoc <protoc executable path>   Protoc --decode_raw logging, null
-                                        path defaults to 'protoc'
-    --help                              Display this help and exit.
-    --token                             Display dsPrsID:mmeAuthToken
-                                        and exit.
+ -d,--device <int>         Device, default: 0 = first device.
+ -s,--snapshot <int>       Snapshot, default: 0 = first snapshot.
+    --extension <string>   File extension filter, case insensitive.
+    --domain <string>      Domain filter, case insensitive.
+ -o,--folder <string>      Output folder.
+    --snapshots            List device/ snapshot information and exit.
+    --domains              List domains/ file count for the selected
+                           snapshot and exit.
+    --token                Display dsPrsID:mmeAuthToken and exit.
+    --help                 Display this help and exit.
 ```
 
 AppleId/ password.
@@ -62,54 +70,31 @@ With HTTPS proxy.
 ~/InflatableDonkey-master/target $ java -Dhttps.proxyHost=HOST -Dhttps.proxyPort=PORT -jar InflatableDonkey.jar elvis@lives.com uhhurhur --token
 ```
 
-Selection.
-For simplicity the tools operates in a linear manner. It will select the first device, first snapshot, first manifest and the first non-empty file.
-The device, snapshot and manifest index can be specified, with 0 representing the first item.
-
-Select the first device, second snapshot, tenth manifest, first non-empty file.
+List devices/ snapshots.
 ```
-~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --manifest 9
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --snapshots
 ```
 
-[Protoc](https://developers.google.com/protocol-buffers) --decode_raw logging. Specify the path to the protoc executable or leave blank to default to 'protoc' on the default path/s.
+Download the first snapshot of the first device.
 ```
-~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --protoc
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 0
 ```
 
-Output snippet.
+Download jpg files only from the first snapshot of the first device.
 ```
-11:56:54.954 [main] DEBUG org.apache.http.headers - http-outgoing-1 << HTTP/1.1 200 OK
-11:56:54.954 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Date: Thu, 22 Oct 2015 10:56:54 GMT
-11:56:54.954 [main] DEBUG org.apache.http.headers - http-outgoing-1 << X-Apple-Request-UUID: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-11:56:54.954 [main] DEBUG org.apache.http.headers - http-outgoing-1 << apple-seq: 0
-11:56:54.961 [main] DEBUG org.apache.http.headers - http-outgoing-1 << apple-tk: false
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << X-Responding-Instance: ckdatabaseservice:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << apple-seq: 0.0
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << apple-tk: false
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Content-Type: application/x-protobuf
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Strict-Transport-Security: max-age=31536000; includeSubDomains
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Transfer-Encoding: chunked
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Content-Encoding: gzip
-11:56:54.962 [main] DEBUG org.apache.http.headers - http-outgoing-1 << Strict-Transport-Security: max-age=31536000; includeSubDomains
-11:56:54.976 [main] DEBUG c.g.horrorho.inflatabledonkey.Main - -- main() - record zones response: [f1: 20
-message {
-  uuid: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  type: 201
-  f4: 1
-}
-status {
-  code: 1
-}
-m201Response {
-  body {
-    result {
-      recordZoneID {
-        zoneName {
-          value: "mbksync"
-          encoding: 6
-        }
-        ownerName {
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 0 --extension jpg
 ```
+
+List domains and the file count for each domain, then exit.
+```
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --domains
+```
+
+Download all files from the HomeDomain.
+```
+~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --device 0 --snapshot 1 --domain HomeDomain
+```
+
 
 For further information please refer to the comments/ code in [Main](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/Main.java). Running the tool will detail the client/ server responses for each step, including headers/ protobufs. You can play with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) and adjust the Apache HttpClient header/ wire logging levels.
 
