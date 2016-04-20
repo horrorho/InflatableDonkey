@@ -57,21 +57,21 @@ public final class OptionsFactory {
                 Property.SELECT_SNAPSHOT_INDEX);
 
         options.put(Option.builder().longOpt("extension")
-                .desc("File extension filter, case insensitive")
+                .desc("File extension filter, case insensitive.")
                 .argName("string")
                 .hasArg()
                 .build(),
                 Property.FILTER_EXTENSION);
 
         options.put(Option.builder().longOpt("domain")
-                .desc("Domain filter, case insensitive")
+                .desc("Domain filter, case insensitive.")
                 .argName("string")
                 .hasArg()
                 .build(),
                 Property.FILTER_DOMAIN);
 
         options.put(Option.builder("o").longOpt("folder")
-                .desc("Output folder")
+                .desc("Output folder.")
                 .argName("string")
                 .hasArg()
                 .build(),
@@ -79,6 +79,9 @@ public final class OptionsFactory {
 
         options.put(new Option(null, "domains", false, "List domains/ file count for the selected snapshot and exit."),
                 Property.PRINT_DOMAIN_LIST);
+
+        options.put(new Option(null, "snapshots", false, "List devices/ snapshot information and exit."),
+                Property.PRINT_SNAPSHOTS);
 
         options.put(
                 new Option(null, "help", false, "Display this help and exit."),

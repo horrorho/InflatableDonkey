@@ -41,7 +41,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- * Args parser.
+ * PropertyLoader.
  *
  * @author Ahseya
  */
@@ -113,7 +113,7 @@ public final class PropertyLoader implements Predicate<String[]> {
         HelpFormatter helpFormatter = new HelpFormatter();
         helpFormatter.setOptionComparator(null);
         helpFormatter.printHelp(
-                Property.APP_NAME.value() + " [OPTION]... (<token> | <appleid> <password>) ",
+                Property.APP_NAME.value().orElse("") + " [OPTION]... (<token> | <appleid> <password>) ",
                 options);
     }
 

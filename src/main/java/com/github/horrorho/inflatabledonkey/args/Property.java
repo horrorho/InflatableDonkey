@@ -48,6 +48,7 @@ public enum Property {
     FILE_ASSEMBLER_BUFFER_LENGTH("16384"),
     OUTPUT_FOLDER("testoutput"),
     PRINT_DOMAIN_LIST("false"),
+    PRINT_SNAPSHOTS("false"),
     PATH_PROTOC("protoc"),
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
