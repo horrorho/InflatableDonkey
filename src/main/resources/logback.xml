@@ -11,7 +11,15 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
+    <logger name="com.github.horrorho.inflatabledonkey.Main" level="debug" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <logger name="com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetAssistant" level="warn" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    
+    <logger name="com.github.horrorho.inflatabledonkey.args" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
     
@@ -20,7 +28,7 @@
         <appender-ref ref="STDOUT" />
     </logger>
     
-    <logger name="org.apache.http.headers" level="debug" additivity="false">
+    <logger name="org.apache.http.headers" level="off" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
     
