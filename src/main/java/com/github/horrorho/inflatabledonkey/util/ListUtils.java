@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ListUtility.
+ * ListUtils.
  *
  * @author Ahseya
  */
