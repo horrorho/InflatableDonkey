@@ -46,35 +46,43 @@ import java.util.stream.IntStream;
 public final class Filters {
 
     public static Predicate<Asset> assetFilter(Collection<String> extensions) {
-        return extensions.isEmpty()
-                ? asset -> true
-                : asset -> asset
-                    .relativePath()
-                    .map(stringFilter(extensions, String::endsWith)::test)
-                    .orElse(false);
+        if (extensions.isEmpty()) {
+            return asset -> true;
+        }
+
+        Predicate<String> filter = stringFilter(extensions, String::endsWith);
+        return asset -> asset
+                .relativePath()
+                .map(filter::test)
+                .orElse(false);
     }
 
     public static Predicate<Assets> assetsFilter(Collection<String> subStrings) {
-        return subStrings.isEmpty()
-                ? assets -> true
-                : assets -> assets
-                    .domain()
-                    .map(stringFilter(subStrings, String::contains)::test)
-                    .orElse(false);
+        if (subStrings.isEmpty()) {
+            return assets -> true;
+        }
+
+        Predicate<String> filter = stringFilter(subStrings, String::contains);
+        return assets -> assets
+                .domain()
+                .map(filter::test)
+                .orElse(false);
     }
 
     public static Predicate<Device> deviceFilter(Collection<String> subStrings) {
-        return subStrings.isEmpty()
-                ? device -> true
-                : device -> stringFilter(subStrings, String::contains)
-                    .test(device.name());
+        if (subStrings.isEmpty()) {
+            return device -> true;
+        }
+
+        Predicate<String> filter = stringFilter(subStrings, String::contains);
+        return device -> filter.test(device.name());
     }
 
     static Predicate<String> stringFilter(Collection<String> strings, BiPredicate<String, String> function) {
         List<String> lowerCase = toLowerCase(strings);
         return string -> lowerCase
                 .stream()
-                .anyMatch(s -> function.test(string, s));
+                .anyMatch(s -> function.test(string.toLowerCase(Property.locale()), s));
     }
 
     static List<String> toLowerCase(Collection<String> strings) {
