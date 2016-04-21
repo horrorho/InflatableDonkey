@@ -91,6 +91,7 @@ public final class AssetTokenClient {
     }
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
+        logger.debug("-- asset() - record: {} zone: {}", record, zone);
         return zone.newProtectionZone(record.getProtectionInfo())
                 .map(z -> AssetFactory.from(record, z::decrypt, z::fpDecrypt));
     }
