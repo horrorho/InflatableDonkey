@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +92,16 @@ public final class AssetTokenClient {
     }
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
+        // Patched. Intercept for 0xFF ProtectionInfo. Unhandled at present.
+        if (record.hasProtectionInfo()) {
+            byte[] bytes = record.getProtectionInfo().getProtectionInfo().toByteArray();
+            if (bytes.length > 0 && bytes[0] == -1) {
+                logger.info("-- asset() - unsupported: {} protectionInfo(0xFF), file: {}",
+                        record.getModifiedByDevice(), record.getRecordIdentifier().getValue().getName());
+                return Optional.empty();
+            }
+        }
+
         logger.debug("-- asset() - record: {} zone: {}", record, zone);
         return zone.newProtectionZone(record.getProtectionInfo())
                 .map(z -> AssetFactory.from(record, z::decrypt, z::fpDecrypt));
