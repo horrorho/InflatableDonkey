@@ -33,8 +33,6 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.function.IntPredicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
@@ -46,8 +44,6 @@ import java.util.stream.IntStream;
  */
 @Immutable
 public final class Filters {
-
-    private static final Logger logger = LoggerFactory.getLogger(Filters.class);
 
     public static Predicate<Asset> assetFilter(Collection<String> extensions) {
         return extensions.isEmpty()
@@ -74,6 +70,19 @@ public final class Filters {
                     .test(device.name());
     }
 
+    static Predicate<String> stringFilter(Collection<String> strings, BiPredicate<String, String> function) {
+        List<String> lowerCase = toLowerCase(strings);
+        return string -> lowerCase
+                .stream()
+                .anyMatch(s -> function.test(string, s));
+    }
+
+    static List<String> toLowerCase(Collection<String> strings) {
+        return strings.stream()
+                .map(s -> s.toLowerCase(Property.locale()))
+                .collect(Collectors.toList());
+    }
+
     public static <T> UnaryOperator<List<T>> listFilter(Collection<Integer> indices) {
         if (indices.isEmpty()) {
             return UnaryOperator.identity();
@@ -87,25 +96,11 @@ public final class Filters {
         };
     }
 
-    static Predicate<String> stringFilter(Collection<String> strings, BiPredicate<String, String> function) {
-        List<String> lowerCase = toLowerCase(strings);
-        return string -> lowerCase
-                .stream()
-                .anyMatch(s -> function.test(string, s));
-    }
-
     static IntPredicate indexFilter(int maxIndex, Collection<Integer> indices) {
         return index -> filterIndex(index, maxIndex, indices);
     }
 
     static boolean filterIndex(int index, int maxIndex, Collection<Integer> indices) {
-        int inverse = maxIndex - index;
-        return indices.contains(index) || indices.contains(inverse);
-    }
-
-    static List<String> toLowerCase(Collection<String> strings) {
-        return strings.stream()
-                .map(s -> s.toLowerCase(Property.locale()))
-                .collect(Collectors.toList());
+        return indices.contains(index) || indices.contains(index - maxIndex);
     }
 }

@@ -47,7 +47,9 @@ import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -64,11 +66,8 @@ public final class BackupAssistant {
 
     public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-
         CloudKitty kitty = CloudKitty.backupd(ckInit, account.tokens().get(Token.CLOUDKITTOKEN));
-
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
-
         ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
 
         return new BackupAssistant(kitty, mbksync);
@@ -88,19 +87,41 @@ public final class BackupAssistant {
         this(kitty, mbksync, KeyBagManager.create(kitty, mbksync));
     }
 
-    BackupAccount backupAccount(HttpClient httpClient) throws IOException {
+    public BackupAccount backupAccount(HttpClient httpClient) throws IOException {
         return BackupAccountClient.backupAccount(httpClient, kitty, mbksync).get();
     }
 
-    List<Device> devices(HttpClient httpClient, Collection<String> devices) throws IOException {
+    public List<Device> devices(HttpClient httpClient, Collection<String> devices) throws IOException {
         return DeviceClient.device(httpClient, kitty, devices);
     }
 
-    List<Snapshot> snapshot(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws IOException {
+    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws IOException {
         return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs);
     }
 
-    List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws IOException {
+    public Map<Device, List<Snapshot>> snapshotsForDevices(HttpClient httpClient, Collection<Device> devices)
+            throws IOException {
+
+        Map<String, Device> snapshotDevice = devices.stream()
+                .map(d -> d
+                        .snapshots()
+                        .stream()
+                        .collect(Collectors.toMap(SnapshotID::id, s -> d)))
+                .map(Map::entrySet)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        List<SnapshotID> snapshotIDs = devices.stream()
+                .map(Device::snapshots)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        return snapshots(httpClient, snapshotIDs)
+                .stream()
+                .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.name())));
+    }
+
+    public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws IOException {
         List<Manifest> manifests = snapshot.manifests()
                 .stream()
                 .filter(x -> x.count() != 0)
@@ -109,7 +130,7 @@ public final class BackupAssistant {
         return AssetsClient.assets(httpClient, kitty, mbksync, manifests);
     }
 
-    List<Asset> assets(HttpClient httpClient, List<String> files) throws IOException {
+    public List<Asset> assets(HttpClient httpClient, List<String> files) throws IOException {
         return AssetTokenClient.assets(httpClient, kitty, mbksync, files);
     }
 

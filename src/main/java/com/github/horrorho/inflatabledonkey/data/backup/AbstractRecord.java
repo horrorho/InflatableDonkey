@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,6 +74,23 @@ public abstract class AbstractRecord {
 
     public final CloudKit.Record record() {
         return record;
+    }
+
+    public String name() {
+        return record()
+                .getRecordIdentifier()
+                .getValue()
+                .getName();
+    }
+
+    public final Instant creation() {
+        double timestamp = record.getTimeStatistics().getCreation().getTime();
+        return WKTimestamp.toInstant(timestamp);
+    }
+
+    public final Instant modification() {
+        double timestamp = record.getTimeStatistics().getModification().getTime();
+        return WKTimestamp.toInstant(timestamp);
     }
 
     public final Map<String, CloudKit.RecordField> recordFields() {

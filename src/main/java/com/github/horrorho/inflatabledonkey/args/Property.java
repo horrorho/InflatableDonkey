@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.args;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,18 +47,17 @@ public enum Property {
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
     AUTHENTICATION_TOKEN,
+    FILTER_DEVICE(""),
     FILTER_DOMAIN(""),
     FILTER_EXTENSION(""),
+    FILTER_SNAPSHOT(),
     FILE_ASSEMBLER_BUFFER_LENGTH("16384"),
-    OUTPUT_FOLDER("testoutput"),
+    OUTPUT_FOLDER("backups"),
     PRINT_DOMAIN_LIST("false"),
     PRINT_SNAPSHOTS("false"),
     PATH_PROTOC("protoc"),
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
-    SELECT_DEVICE_INDEX("0"),
-    SELECT_SNAPSHOT_INDEX("0"),
-    SELECT_MANIFEST_INDEX("0"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
@@ -68,7 +68,7 @@ public enum Property {
         properties.forEach((p, v) -> p.setValue(v));
 
         if (touched) {
-            throw new IllegalStateException("Property already in use");
+            throw new IllegalStateException("Property used during initialization");
         }
         touched = true;
 
@@ -83,6 +83,10 @@ public enum Property {
         } catch (NumberFormatException ex) {
             throw ex;
         }
+    }
+
+    public static Locale locale() {
+        return Locale.US;
     }
 
     public static DateTimeFormatter commandLineInputDateTimeFormatter() {

@@ -32,6 +32,7 @@ import com.github.horrorho.inflatabledonkey.keybag.KeyBags;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -50,18 +51,27 @@ public final class DownloadAssistant {
     private final AuthorizeAssets authorizeAssets;
     private final AssetDownloader assetDownloader;
     private final KeyBagManager keyBagManager;
+    private final Path folder;
 
-    public DownloadAssistant(AuthorizeAssets authorizeAssets, AssetDownloader assetDownloader, KeyBagManager keyBagManager) {
-        this.authorizeAssets = authorizeAssets;
-        this.assetDownloader = assetDownloader;
-        this.keyBagManager = keyBagManager;
+    public DownloadAssistant(
+            AuthorizeAssets authorizeAssets,
+            AssetDownloader assetDownloader,
+            KeyBagManager keyBagManager,
+            Path folder) {
+
+        this.authorizeAssets = Objects.requireNonNull(authorizeAssets, "authorizeAssets");
+        this.assetDownloader = Objects.requireNonNull(assetDownloader, "assetDownloader");
+        this.keyBagManager = Objects.requireNonNull(keyBagManager, "keyBagManager");
+        this.folder = Objects.requireNonNull(folder, "folder");
     }
 
-    void download(HttpClient httpClient, List<Asset> assets, Path folder) throws IOException {
+    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) throws IOException {
+        Path outputFolder = folder.resolve(relativePath);
+
         keyBagManager.update(httpClient, assets);
         KeyBags keyBags = new KeyBags(keyBagManager.keyBags());
 
-        AssetWriter cloudWriter = new AssetWriter(folder, keyBags);
+        AssetWriter cloudWriter = new AssetWriter(outputFolder, keyBags);
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 

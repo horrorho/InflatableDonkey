@@ -35,23 +35,18 @@ import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Authenticator;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
-import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
-import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
+import java.time.Instant;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -72,13 +67,14 @@ public class Main {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+        // MUST initialize Property with args before we use it, otherwise it will throw an IllegalStateException.
         try {
             if (!PropertyLoader.instance().test(args)) {
                 return;
             }
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
-            System.out.println("Try '" + Property.APP_NAME.value() + " --help' for more information.");
+            System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
         }
 
@@ -115,146 +111,98 @@ public class Main {
 
         // Account
         Account account = Accounts.account(httpClient, auth);
+        logger.info("-- main() - Account: {}", account.accountInfo().appleId());
 
         // Backup
-        BackupAssistant backup = BackupAssistant.create(httpClient, account);
-
-        // BackupAccount
-        BackupAccount backupAccount = backup.backupAccount(httpClient);
-        logger.debug("-- main() - backup account: {}", backupAccount);
-
-        // Devices
-        List<Device> devices = backup.devices(httpClient, backupAccount.devices());
-        logger.debug("-- main() - device count: {}", devices.size());
-
-        // Snapshots
-        List<SnapshotID> snapshotIDs = devices.stream()
-                .map(Device::snapshots)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-        logger.info("-- main() - total snapshot count: {}", snapshotIDs.size());
-
-        Map<String, Snapshot> snapshots = backup.snapshot(httpClient, snapshotIDs)
-                .stream()
-                .collect(Collectors.toMap(
-                        s -> s.record()
-                        .getRecordIdentifier()
-                        .getValue()
-                        .getName(),
-                        Function.identity()));
-
-        // Selection
-        int deviceIndex = Property.SELECT_DEVICE_INDEX.intValue().get();
-        int snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
-        logger.info("-- main() - arg device index: {}", deviceIndex);
-        logger.info("-- main() - arg snapshot index: {}", snapshotIndex);
-
-        for (int i = 0; i < devices.size(); i++) {
-            Device device = devices.get(i);
-            List<SnapshotID> deviceSnapshotIDs = device.snapshots();
-
-            System.out.println(i + " " + device.info());
-
-            for (int j = 0; j < deviceSnapshotIDs.size(); j++) {
-                SnapshotID sid = deviceSnapshotIDs.get(j);
-                System.out.println("\t" + j + snapshots.get(sid.id()).info() + "   " + sid.timestamp());
-            }
-        }
-        if (Property.PRINT_SNAPSHOTS.booleanValue().orElse(false)) {
-            return;
-        }
-
-        if (deviceIndex >= devices.size()) {
-            System.out.println("No such device: " + deviceIndex);
-        }
-        Device device = devices.get(deviceIndex);
-        System.out.println("Selected device: " + deviceIndex + ", " + device.info());
-
-        if (snapshotIndex >= devices.get(deviceIndex).snapshots().size()) {
-            System.out.println("No such snapshot for selected device: " + snapshotIndex);
-        }
-
-        String selected = devices.get(deviceIndex).snapshots().get(snapshotIndex).id();
-        Snapshot snapshot = snapshots.get(selected);
-        System.out.println("Selected snapshot: " + snapshotIndex + ", " + snapshot.info());
-
-        // Asset list.
-        List<Assets> assetsList = backup.assetsList(httpClient, snapshot);
-        logger.info("-- main() - assets count: {}", assetsList.size());
-
-        // Output domains --domains option
-        if (Property.PRINT_DOMAIN_LIST.booleanValue().orElse(false)) {
-            System.out.println("Domains / file count:");
-            assetsList.stream()
-                    .filter(a -> a.domain().isPresent())
-                    .map(a -> a.domain().get() + " / " + a.files().size())
-                    .sorted()
-                    .forEach(System.out::println);
-            return;
-            // TODO check Assets without domain information.
-        }
-
-        // Domains filter --domain option
-        List<String> domainSubstringFilter = Property.FILTER_DOMAIN.list().orElse(Collections.emptyList())
-                .stream()
-                .map(s -> s.toLowerCase(Locale.US))
-                .collect(Collectors.toList());
-        logger.info("-- main() - arg domain filters: {}", domainSubstringFilter);
-
-        Predicate<Optional<String>> domainFilter = domain -> domain
-                .map(d -> d.toLowerCase(Locale.US))
-                .map(d -> domainSubstringFilter
-                        .stream()
-                        .anyMatch(s -> d.contains(s)))
-                .orElse(false);
-        List<String> files = Assets.files(assetsList, domainFilter);
-        logger.info("-- main() - domain filtered file count: {}", files.size());
+        BackupAssistant assistant = BackupAssistant.create(httpClient, account);
 
         // Output folders.
-        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("output"));
-        Path assetOutputFolder = outputFolder.resolve("assets"); // TODO assets value injection
-        Path chunkOutputFolder = outputFolder.resolve("chunks"); // TODO chunks value injection
-        logger.info("-- main() - output folder chunks: {}", chunkOutputFolder);
-        logger.info("-- main() - output folder assets: {}", assetOutputFolder);
+        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
+                .resolve(account.accountInfo().appleId());
+        Path assetOutputFolder = outputFolder;
+        Path chunkOutputFolder = outputFolder.resolve("cache");
+        logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
+        logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
         DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder);
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
-        KeyBagManager keyBagManager = backup.newKeyBagManager();
+        KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
-        // Mystery Moo. 
-        Moo moo = new Moo(authorizeAssets, assetDownloader, keyBagManager);
+        DownloadAssistant downloadAssistant
+                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
 
-        // Filename extension filter.
-        List<String> extensionFilterList = Property.FILTER_EXTENSION.list().orElse(Collections.emptyList())
-                .stream()
-                .map(s -> s.toLowerCase(Locale.US))
-                .collect(Collectors.toList());
-        logger.info("-- main() - arg filename extension filters: {}", extensionFilterList);
-        Predicate<Asset> assetFilter = asset -> asset
-                .relativePath()
-                .map(d -> d.toLowerCase(Locale.US))
-                .map(d -> extensionFilterList
-                        .stream()
-                        .anyMatch(s -> d.endsWith(s)))
-                .orElse(false);
+        Backup backup = new Backup(assistant, downloadAssistant);
+        Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
 
-        // Batch process files in groups of 100.
-        // TODO group files into batches based on file size.
-        List<List<String>> batches = ListUtils.partition(files, 100);
-
-        for (List<String> batch : batches) {
-            List<Asset> assets = backup.assets(httpClient, batch)
-                    .stream()
-                    .filter(assetFilter::test)
-                    .collect(Collectors.toList());
-            logger.info("-- main() - filtered asset count: {}", assets.size());
-            moo.download(httpClient, assets, assetOutputFolder);
+        if (deviceSnapshots.isEmpty()) {
+            System.out.println("No devices.");
+            return;
         }
+
+        // List.
+        System.out.println("Devices/ snapshots:\n");
+        deviceSnapshots.forEach((device, snapshotList) -> {
+            System.out.println(device.info());
+            Map<String, Instant> timestamps = device.snapshotTimestampMap();
+            for (int i = 0; i < snapshotList.size(); i++) {
+                Snapshot snapshot = snapshotList.get(i);
+                System.out.println("\t" + i + snapshot.info() + "   " + timestamps.get(snapshot.name()));
+            }
+            if (snapshotList.isEmpty()) {
+                System.out.println("\tNo snapshots.");
+            }
+        });
+        if (deviceSnapshots.isEmpty()) {
+            System.out.println("\tNo devices.");
+        }
+
+        if (Property.PRINT_SNAPSHOTS.booleanValue().orElse(false)) {
+            return;
+        }
+
+        // Filters.
+        Property.FILTER_DEVICE.list().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
+        List<String> filterDevices = Property.FILTER_DEVICE.list().orElse(Collections.emptyList());
+        Predicate<Device> deviceFilter = Filters.deviceFilter(filterDevices);
+
+        Property.FILTER_SNAPSHOT.list().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
+        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.intList().orElse(Collections.emptyList());
+        UnaryOperator<List<Snapshot>> snapshotFilter = Filters.<Snapshot>listFilter(filterSnapshots);
+
+        Map<Device, List<Snapshot>> filtered = deviceSnapshots
+                .entrySet()
+                .stream()
+                .filter(e -> deviceFilter.test(e.getKey()))
+                .map(e -> new SimpleImmutableEntry<>(e.getKey(), snapshotFilter.apply(e.getValue())))
+                .filter(e -> !e.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        if (filtered.isEmpty()) {
+            System.out.println("Nothing selected.");
+            return;
+        }
+
+        filtered.forEach((device, snapshots) -> {
+            logger.info("-- main() - selected device: {}", device.info());
+            snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {}", snapshot.info()));
+        });
+
+        Property.FILTER_DOMAIN.list().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
+        List<String> filterDomains = Property.FILTER_DOMAIN.list().orElse(Collections.emptyList());
+        Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
+
+        Property.FILTER_EXTENSION.list().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
+        List<String> filterExtensions = Property.FILTER_EXTENSION.list().orElse(Collections.emptyList());
+        Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
+
+        backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);
     }
 }
+
+// TODO full path to output files
 // TODO multiple domain/ extension filtering arguments
 // TODO complete device/ snapshot backup if device/ snapshot argument is in not present
 // TODO file timestamps

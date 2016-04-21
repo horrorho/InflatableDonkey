@@ -24,9 +24,18 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class Assets {
 
-    public static List<String> files(List<Assets> assetsList, Predicate<Optional<String>> domainFilter) {
+    @Deprecated
+    public static List<String> filesLegacy(List<Assets> assetsList, Predicate<Optional<String>> domainFilter) {
         return assetsList.stream()
                 .filter(assets -> domainFilter.test(assets.domain()))
+                .map(Assets::files)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    public static List<String> files(List<Assets> assetsList, Predicate<Assets> filter) {
+        return assetsList.stream()
+                .filter(assets -> filter.test(assets))
                 .map(Assets::files)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());

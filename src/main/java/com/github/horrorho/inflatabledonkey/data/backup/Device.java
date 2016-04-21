@@ -5,12 +5,18 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Device.
@@ -19,6 +25,8 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public final class Device extends AbstractRecord {
+
+    private static final Logger logger = LoggerFactory.getLogger(Device.class);
 
     public static final String DOMAIN_HMAC = "domainHMAC";
     public static final String KEYBAG_UUID = "currentKeybagUUID";
@@ -32,6 +40,11 @@ public final class Device extends AbstractRecord {
 
     public List<SnapshotID> snapshots() {
         return new ArrayList<>(snapshots);
+    }
+
+    public Map<String, Instant> snapshotTimestampMap() {
+        return snapshots.stream()
+                .collect(Collectors.toMap(SnapshotID::id, SnapshotID::timestamp));
     }
 
     public Optional<String> domainHMAC() {
@@ -74,10 +87,20 @@ public final class Device extends AbstractRecord {
                 .orElse("");
     }
 
+    public String uuid() {
+        String[] split = name().split(":");
+        if (split.length < 2) {
+            logger.warn("-- main() - unsupported device name format: {}", name());
+            return name();
+        }
+        return split[1].toUpperCase(Property.locale())
+                .toUpperCase();
+    }
+
     public String info() {
-        return productType() + " "
-                + hardwareModel() + " "
-                + serialNumber();
+        return uuid() + " "
+                + productType() + " "
+                + hardwareModel();
     }
 
     @Override

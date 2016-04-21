@@ -43,18 +43,18 @@ public final class OptionsFactory {
         LinkedHashMap<Option, Property> options = new LinkedHashMap<>();
 
         options.put(Option.builder("d").longOpt("device")
-                .desc("Device, default: 0 = first device.")
-                .argName("int")
-                .hasArg()
+                .desc("Device filter, case insensitive.")
+                .argName("string")
+                .hasArgs()
                 .build(),
-                Property.SELECT_DEVICE_INDEX);
+                Property.FILTER_DEVICE);
 
         options.put(Option.builder("s").longOpt("snapshot")
                 .desc("Snapshot, default: 0 = first snapshot.")
                 .argName("int")
-                .hasArg()
+                .hasArgs()
                 .build(),
-                Property.SELECT_SNAPSHOT_INDEX);
+                Property.FILTER_SNAPSHOT);
 
         options.put(Option.builder().longOpt("extension")
                 .desc("File extension filter/ s, case insensitive.")
