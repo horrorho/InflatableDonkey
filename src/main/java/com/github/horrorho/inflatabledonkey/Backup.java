@@ -151,13 +151,26 @@ public final class Backup {
         return Paths.get(device.uuid()).resolve(date);
     }
 
-    public void printDomainList(HttpClient httpClient, BackupAssistant assistant, Device device, Snapshot snapshot)
+    public void printDomainList(HttpClient httpClient, Map<Device, ? extends Collection<Snapshot>> snapshots)
+            throws IOException {
+        // TODO rework once we have UncheckedIOExceptions
+        for (Map.Entry<Device, ? extends Collection<Snapshot>> deviceSnapshot : snapshots.entrySet()) {
+            Device device = deviceSnapshot.getKey();
+            for (Snapshot snapshot : deviceSnapshot.getValue()) {
+                printDomainList(httpClient, device, snapshot);
+            }
+        }
+    }
+
+    public void printDomainList(HttpClient httpClient, Device device, Snapshot snapshot)
             throws IOException {
         // Asset list.
-        List<Assets> assetsList = assistant.assetsList(httpClient, snapshot);
+        List<Assets> assetsList = backupAssistant.assetsList(httpClient, snapshot);
         logger.info("-- printDomainList() - assets count: {}", assetsList.size());
 
         // Output domains --domains option
+        System.out.println("Device: " + device.info());
+        System.out.println("Snapshot: " + snapshot.info());
         System.out.println("Domains / file count:");
         assetsList.stream()
                 .filter(a -> a.domain().isPresent())

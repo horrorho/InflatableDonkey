@@ -156,8 +156,10 @@ public class Main {
         });
         if (deviceSnapshots.isEmpty()) {
             System.out.println("\tNo devices.");
+            return;
         }
 
+        // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.booleanValue().orElse(false)) {
             return;
         }
@@ -188,6 +190,12 @@ public class Main {
             logger.info("-- main() - selected device: {}", device.info());
             snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {}", snapshot.info()));
         });
+        
+        // Print domain list option.
+        if (Property.PRINT_DOMAIN_LIST.booleanValue().orElse(false)) {
+            backup.printDomainList(httpClient, deviceSnapshots);
+            return;
+        }
 
         Property.FILTER_DOMAIN.list().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
         List<String> filterDomains = Property.FILTER_DOMAIN.list().orElse(Collections.emptyList());
@@ -201,9 +209,6 @@ public class Main {
     }
 }
 
-// TODO full path to output files
-// TODO multiple domain/ extension filtering arguments
-// TODO complete device/ snapshot backup if device/ snapshot argument is in not present
 // TODO file timestamps
 // TODO date filtering
 // TODO size filtering
