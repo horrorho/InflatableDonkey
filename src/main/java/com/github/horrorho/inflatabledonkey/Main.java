@@ -103,10 +103,10 @@ public class Main {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
             return;
         }
-        
+
         logger.info("-- main() - Apple ID: {}", Property.AUTHENTICATION_APPLEID.value());
         logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value().map(s -> s.replaceAll(".", "*")));
-        logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value());
+        logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value().map(s -> s.replaceAll(".", "*")));
 
         // Account
         Account account = Accounts.account(httpClient, auth);
@@ -190,7 +190,7 @@ public class Main {
             logger.info("-- main() - selected device: {}", device.info());
             snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {}", snapshot.info()));
         });
-        
+
         // Print domain list option.
         if (Property.PRINT_DOMAIN_LIST.booleanValue().orElse(false)) {
             backup.printDomainList(httpClient, deviceSnapshots);
