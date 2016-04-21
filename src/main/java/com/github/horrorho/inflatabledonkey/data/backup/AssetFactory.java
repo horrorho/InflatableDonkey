@@ -153,7 +153,8 @@ public final class AssetFactory {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
                 .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getUint32)
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(Long::intValue)
                 .findFirst()
                 .orElse(-1);
     }
@@ -162,7 +163,8 @@ public final class AssetFactory {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals("fileType"))
                 .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getUint32)
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(Long::intValue)
                 .findFirst()
                 .orElse(-1);
     }

@@ -21806,13 +21806,13 @@ public final class CloudKit {
     com.google.protobuf.ByteString getBytesValue();
 
     /**
-     * <code>optional uint32 uint32 = 4;</code>
+     * <code>optional uint64 signedValue = 4;</code>
      */
-    boolean hasUint32();
+    boolean hasSignedValue();
     /**
-     * <code>optional uint32 uint32 = 4;</code>
+     * <code>optional uint64 signedValue = 4;</code>
      */
-    int getUint32();
+    long getSignedValue();
 
     /**
      * <code>optional .Date dateValue = 6;</code>
@@ -21967,7 +21967,7 @@ public final class CloudKit {
             }
             case 32: {
               bitField0_ |= 0x00000004;
-              uint32_ = input.readUInt32();
+              signedValue_ = input.readUInt64();
               break;
             }
             case 50: {
@@ -22096,19 +22096,19 @@ public final class CloudKit {
       return bytesValue_;
     }
 
-    public static final int UINT32_FIELD_NUMBER = 4;
-    private int uint32_;
+    public static final int SIGNEDVALUE_FIELD_NUMBER = 4;
+    private long signedValue_;
     /**
-     * <code>optional uint32 uint32 = 4;</code>
+     * <code>optional uint64 signedValue = 4;</code>
      */
-    public boolean hasUint32() {
+    public boolean hasSignedValue() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional uint32 uint32 = 4;</code>
+     * <code>optional uint64 signedValue = 4;</code>
      */
-    public int getUint32() {
-      return uint32_;
+    public long getSignedValue() {
+      return signedValue_;
     }
 
     public static final int DATEVALUE_FIELD_NUMBER = 6;
@@ -22266,7 +22266,7 @@ public final class CloudKit {
     private void initFields() {
       type_ = 0;
       bytesValue_ = com.google.protobuf.ByteString.EMPTY;
-      uint32_ = 0;
+      signedValue_ = 0L;
       dateValue_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Date.getDefaultInstance();
       stringValue_ = "";
       referenceValue_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.RecordReference.getDefaultInstance();
@@ -22293,7 +22293,7 @@ public final class CloudKit {
         output.writeBytes(2, bytesValue_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeUInt32(4, uint32_);
+        output.writeUInt64(4, signedValue_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeMessage(6, dateValue_);
@@ -22329,7 +22329,7 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt32Size(4, uint32_);
+          .computeUInt64Size(4, signedValue_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
@@ -22476,7 +22476,7 @@ public final class CloudKit {
         bitField0_ = (bitField0_ & ~0x00000001);
         bytesValue_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
-        uint32_ = 0;
+        signedValue_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000004);
         if (dateValueBuilder_ == null) {
           dateValue_ = com.github.horrorho.inflatabledonkey.protocol.CloudKit.Date.getDefaultInstance();
@@ -22543,7 +22543,7 @@ public final class CloudKit {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.uint32_ = uint32_;
+        result.signedValue_ = signedValue_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
@@ -22603,8 +22603,8 @@ public final class CloudKit {
         if (other.hasBytesValue()) {
           setBytesValue(other.getBytesValue());
         }
-        if (other.hasUint32()) {
-          setUint32(other.getUint32());
+        if (other.hasSignedValue()) {
+          setSignedValue(other.getSignedValue());
         }
         if (other.hasDateValue()) {
           mergeDateValue(other.getDateValue());
@@ -22740,34 +22740,34 @@ public final class CloudKit {
         return this;
       }
 
-      private int uint32_ ;
+      private long signedValue_ ;
       /**
-       * <code>optional uint32 uint32 = 4;</code>
+       * <code>optional uint64 signedValue = 4;</code>
        */
-      public boolean hasUint32() {
+      public boolean hasSignedValue() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional uint32 uint32 = 4;</code>
+       * <code>optional uint64 signedValue = 4;</code>
        */
-      public int getUint32() {
-        return uint32_;
+      public long getSignedValue() {
+        return signedValue_;
       }
       /**
-       * <code>optional uint32 uint32 = 4;</code>
+       * <code>optional uint64 signedValue = 4;</code>
        */
-      public Builder setUint32(int value) {
+      public Builder setSignedValue(long value) {
         bitField0_ |= 0x00000004;
-        uint32_ = value;
+        signedValue_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional uint32 uint32 = 4;</code>
+       * <code>optional uint64 signedValue = 4;</code>
        */
-      public Builder clearUint32() {
+      public Builder clearSignedValue() {
         bitField0_ = (bitField0_ & ~0x00000004);
-        uint32_ = 0;
+        signedValue_ = 0L;
         onChanged();
         return this;
       }
@@ -32497,39 +32497,39 @@ public final class CloudKit {
       "fier\030\001 \001(\0132\026.RecordFieldIdentifier\022 \n\005va" +
       "lue\030\002 \001(\0132\021.RecordFieldValue\"L\n\017RecordRe" +
       "ference\022\014\n\004type\030\001 \001(\r\022+\n\020recordIdentifie",
-      "r\030\002 \001(\0132\021.RecordIdentifier\"\346\001\n\020RecordFie" +
+      "r\030\002 \001(\0132\021.RecordIdentifier\"\353\001\n\020RecordFie" +
       "ldValue\022\014\n\004type\030\001 \001(\r\022\022\n\nbytesValue\030\002 \001(" +
-      "\014\022\016\n\006uint32\030\004 \001(\r\022\030\n\tdateValue\030\006 \001(\0132\005.D" +
-      "ate\022\023\n\013stringValue\030\007 \001(\t\022(\n\016referenceVal" +
-      "ue\030\t \001(\0132\020.RecordReference\022\032\n\nassetValue" +
-      "\030\n \001(\0132\006.Asset\022+\n\020recordFieldValue\030\013 \003(\013" +
-      "2\021.RecordFieldValue\"\032\n\nRecordType\022\014\n\004nam" +
-      "e\030\001 \001(\t\"]\n\020RecordIdentifier\022\032\n\005value\030\001 \001" +
-      "(\0132\013.Identifier\022-\n\016zoneIdentifier\030\002 \001(\0132" +
-      "\025.RecordZoneIdentifier\"%\n\025RecordFieldIde",
-      "ntifier\022\014\n\004name\030\001 \001(\t\"X\n\024RecordZoneIdent" +
-      "ifier\022\032\n\005value\030\001 \001(\0132\013.Identifier\022$\n\017own" +
-      "erIdentifier\030\002 \001(\0132\013.Identifier\",\n\nFileT" +
-      "okens\022\036\n\nfileTokens\030\001 \003(\0132\n.FileToken\"U\n" +
-      "\tFileToken\022\024\n\014fileChecksum\030\001 \001(\014\022\r\n\005toke" +
-      "n\030\002 \001(\t\022\014\n\004size\030\003 \001(\004\022\025\n\rfileSignature\030\004" +
-      " \001(\014\"\353\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014fileC" +
-      "hecksum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\025\n\rdownloadT" +
-      "oken\030\005 \001(\t\022\026\n\016contentBaseURL\030\010 \001(\t\022\014\n\004ds" +
-      "id\030\t \001(\t\022#\n\010recordId\030\n \001(\0132\021.RecordIdent",
-      "ifier\022\023\n\004data\030\017 \001(\0132\005.Data\022\025\n\rfileSignat" +
-      "ure\030\021 \001(\014\022\037\n\027downloadTokenExpiration\030\022 \001" +
-      "(\004\"\027\n\006UInt32\022\r\n\005value\030\001 \001(\r\"\025\n\004Data\022\r\n\005v" +
-      "alue\030\001 \001(\014\"D\n\023ZoneRetrieveRequest\022-\n\016zon" +
-      "eIdentifier\030\001 \001(\0132\025.RecordZoneIdentifier" +
-      "\"N\n\024ZoneRetrieveResponse\0226\n\014zoneSummarys" +
-      "\030\001 \003(\0132 .ZoneRetrieveResponseZoneSummary" +
-      "\"<\n\037ZoneRetrieveResponseZoneSummary\022\031\n\nt" +
-      "argetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016zoneId" +
-      "entifier\030\001 \001(\0132\025.RecordZoneIdentifier\022\'\n",
-      "\016protectionInfo\030\003 \001(\0132\017.ProtectionInfoB9" +
-      "\n-com.github.horrorho.inflatabledonkey.p" +
-      "rotocolB\010CloudKit"
+      "\014\022\023\n\013signedValue\030\004 \001(\004\022\030\n\tdateValue\030\006 \001(" +
+      "\0132\005.Date\022\023\n\013stringValue\030\007 \001(\t\022(\n\016referen" +
+      "ceValue\030\t \001(\0132\020.RecordReference\022\032\n\nasset" +
+      "Value\030\n \001(\0132\006.Asset\022+\n\020recordFieldValue\030" +
+      "\013 \003(\0132\021.RecordFieldValue\"\032\n\nRecordType\022\014" +
+      "\n\004name\030\001 \001(\t\"]\n\020RecordIdentifier\022\032\n\005valu" +
+      "e\030\001 \001(\0132\013.Identifier\022-\n\016zoneIdentifier\030\002" +
+      " \001(\0132\025.RecordZoneIdentifier\"%\n\025RecordFie",
+      "ldIdentifier\022\014\n\004name\030\001 \001(\t\"X\n\024RecordZone" +
+      "Identifier\022\032\n\005value\030\001 \001(\0132\013.Identifier\022$" +
+      "\n\017ownerIdentifier\030\002 \001(\0132\013.Identifier\",\n\n" +
+      "FileTokens\022\036\n\nfileTokens\030\001 \003(\0132\n.FileTok" +
+      "en\"U\n\tFileToken\022\024\n\014fileChecksum\030\001 \001(\014\022\r\n" +
+      "\005token\030\002 \001(\t\022\014\n\004size\030\003 \001(\004\022\025\n\rfileSignat" +
+      "ure\030\004 \001(\014\"\353\001\n\005Asset\022\017\n\007dsPrsID\030\001 \001(\t\022\024\n\014" +
+      "fileChecksum\030\002 \001(\014\022\014\n\004size\030\004 \001(\004\022\025\n\rdown" +
+      "loadToken\030\005 \001(\t\022\026\n\016contentBaseURL\030\010 \001(\t\022" +
+      "\014\n\004dsid\030\t \001(\t\022#\n\010recordId\030\n \001(\0132\021.Record",
+      "Identifier\022\023\n\004data\030\017 \001(\0132\005.Data\022\025\n\rfileS" +
+      "ignature\030\021 \001(\014\022\037\n\027downloadTokenExpiratio" +
+      "n\030\022 \001(\004\"\027\n\006UInt32\022\r\n\005value\030\001 \001(\r\"\025\n\004Data" +
+      "\022\r\n\005value\030\001 \001(\014\"D\n\023ZoneRetrieveRequest\022-" +
+      "\n\016zoneIdentifier\030\001 \001(\0132\025.RecordZoneIdent" +
+      "ifier\"N\n\024ZoneRetrieveResponse\0226\n\014zoneSum" +
+      "marys\030\001 \003(\0132 .ZoneRetrieveResponseZoneSu" +
+      "mmary\"<\n\037ZoneRetrieveResponseZoneSummary" +
+      "\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016z" +
+      "oneIdentifier\030\001 \001(\0132\025.RecordZoneIdentifi",
+      "er\022\'\n\016protectionInfo\030\003 \001(\0132\017.ProtectionI" +
+      "nfoB9\n-com.github.horrorho.inflatabledon" +
+      "key.protocolB\010CloudKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -32680,7 +32680,7 @@ public final class CloudKit {
     internal_static_RecordFieldValue_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_RecordFieldValue_descriptor,
-        new java.lang.String[] { "Type", "BytesValue", "Uint32", "DateValue", "StringValue", "ReferenceValue", "AssetValue", "RecordFieldValue", });
+        new java.lang.String[] { "Type", "BytesValue", "SignedValue", "DateValue", "StringValue", "ReferenceValue", "AssetValue", "RecordFieldValue", });
     internal_static_RecordType_descriptor =
       getDescriptor().getMessageTypes().get(23);
     internal_static_RecordType_fieldAccessorTable = new

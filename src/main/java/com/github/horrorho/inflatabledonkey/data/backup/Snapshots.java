@@ -71,7 +71,8 @@ public class Snapshots {
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getUint32)
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(Long::intValue)
                 .collect(Collectors.toList());
     }
 
@@ -81,7 +82,8 @@ public class Snapshots {
                 .map(CloudKit.RecordField::getValue)
                 .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getUint32)
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(Long::intValue)
                 .collect(Collectors.toList());
     }
 

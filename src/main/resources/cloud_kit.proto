@@ -387,7 +387,7 @@ message RecordReference {
 message RecordFieldValue {
   optional uint32 type = 1;
   optional bytes bytesValue = 2;
-  optional uint32 uint32 = 4;
+  optional uint64 signedValue = 4;
   optional Date dateValue = 6; // Possibly
   optional string stringValue = 7;
   optional RecordReference referenceValue = 9;

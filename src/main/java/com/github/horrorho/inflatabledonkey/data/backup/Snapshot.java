@@ -48,10 +48,10 @@ public final class Snapshot extends AbstractRecord {
         return new ArrayList<>(manifests);
     }
 
-    public int quotaUsed() {
+    public long quotaUsed() {
         return recordFieldValue("quotaUsed")
-                .map(CloudKit.RecordFieldValue::getUint32)
-                .orElse(-1);
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .orElse(-1L);
     }
 
     public String deviceName() {

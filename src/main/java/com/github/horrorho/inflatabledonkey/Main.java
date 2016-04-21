@@ -98,15 +98,14 @@ public class Main {
                     Property.AUTHENTICATION_PASSWORD.value().get());
         }
         logger.debug("-- main() - auth: {}", auth);
-        logger.info("-- main() - dsPrsID:mmeAuthToken: {}:{}", auth.dsPrsID(), auth.mmeAuthToken());
 
         if (Property.ARGS_TOKEN.booleanValue().orElse(false)) {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
             return;
         }
-
+        
         logger.info("-- main() - Apple ID: {}", Property.AUTHENTICATION_APPLEID.value());
-        logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value());
+        logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value().map(s -> s.replaceAll(".", "*")));
         logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value());
 
         // Account
