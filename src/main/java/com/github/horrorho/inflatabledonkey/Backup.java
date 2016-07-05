@@ -136,7 +136,13 @@ public final class Backup {
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
         Map<String, Instant> snapshotTimestamp = device.snapshots()
                 .stream()
-                .collect(Collectors.toMap(SnapshotID::id, SnapshotID::timestamp));
+                .collect(Collectors.toMap(
+                        SnapshotID::id,
+                        SnapshotID::timestamp,
+                        (a, b) -> {
+                            logger.warn("-- deviceSnapshotDateSubPath() - collsion: {} {}", a, b);
+                            return a;
+                        }));
 
         if (!snapshotTimestamp.containsKey(snapshot.name())) {
             logger.warn("-- deviceSnapshotDateSubPath() - snapshot not found in device: {} {}", snapshot.name(), snapshotTimestamp);

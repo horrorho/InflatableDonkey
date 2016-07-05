@@ -44,7 +44,14 @@ public final class Device extends AbstractRecord {
 
     public Map<String, Instant> snapshotTimestampMap() {
         return snapshots.stream()
-                .collect(Collectors.toMap(SnapshotID::id, SnapshotID::timestamp));
+                .collect(Collectors.toMap(
+                        SnapshotID::id,
+                        SnapshotID::timestamp,
+                        (a, b) -> {
+                            logger.warn("-- snapshotTimestampMap() - collision: {} {}", a, b);
+                            return a;
+                        }
+                ));
     }
 
     public Optional<String> domainHMAC() {

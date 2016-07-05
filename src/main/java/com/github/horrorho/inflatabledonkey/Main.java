@@ -209,6 +209,7 @@ public class Main {
     }
 }
 
+// TODO 0xFF System protectionInfo
 // TODO file timestamps
 // TODO date filtering
 // TODO size filtering

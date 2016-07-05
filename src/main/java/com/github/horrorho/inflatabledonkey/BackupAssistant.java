@@ -105,7 +105,13 @@ public final class BackupAssistant {
                 .map(d -> d
                         .snapshots()
                         .stream()
-                        .collect(Collectors.toMap(SnapshotID::id, s -> d)))
+                        .collect(Collectors.toMap(
+                                SnapshotID::id,
+                                s -> d,
+                                (a, b) -> {
+                                    logger.warn("-- snapshotsForDevices() - collision: {} {}", a, b);
+                                    return a;
+                                })))
                 .map(Map::entrySet)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
