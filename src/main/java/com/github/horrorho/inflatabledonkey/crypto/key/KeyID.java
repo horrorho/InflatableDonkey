@@ -23,15 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.key;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPublic;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECKeyExport;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECPublicKeyExportCompact;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECPublicKeyExportX963;
 import java.util.Arrays;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex; 
 
 /**
  * KeyID.
@@ -47,15 +43,6 @@ public final class KeyID {
 
     public static KeyID of(byte[] publicExportData) {
         byte[] id = id(publicExportData);
-        return new KeyID(id);
-    }
-
-    @Deprecated
-    public static KeyID keyID(ECPublic key, boolean isCompact) {
-        ECKeyExport<ECPublic> export = isCompact
-                ? ECPublicKeyExportCompact.instance()
-                : ECPublicKeyExportX963.instance();
-        byte[] id = id(export.exportKey(key));
         return new KeyID(id);
     }
 

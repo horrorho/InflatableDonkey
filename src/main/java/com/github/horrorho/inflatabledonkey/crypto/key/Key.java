@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.key;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECKey;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import java.util.Arrays;
 import java.util.Objects;
@@ -104,9 +104,11 @@ public final class Key<T extends ECKey> {
     }
 
     public Key<T> verify(Key<? extends ECKey> masterKey) {
-        return SignatureAssistant.verify(this, masterKey)
-                ? new Key<>(keyID, keyData, publicExportData, publicKeyInfo, isCompact, true)
-                : this;
+//        return SignatureAssistant.verify(this, masterKey)
+//                ? new Key<>(keyID, keyData, publicExportData, publicKeyInfo, isCompact, true)
+//                : this;
+        //TOFIX
+        return this;
     }
 
     @Override

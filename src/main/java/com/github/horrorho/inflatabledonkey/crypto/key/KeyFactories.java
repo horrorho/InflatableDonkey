@@ -23,34 +23,31 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.key;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPublic;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECKeyExport;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECPublicKeyExportCompact;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.exports.ECPublicKeyExportX963;
-import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.exports.ECKeyExport;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.exports.ECPublicKeyExportCompact;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.exports.ECPublicKeyExportX963;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Keys.
+ * Key factories.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Keys {
+public final class KeyFactories {
 
-    private static final Logger logger = LoggerFactory.getLogger(Keys.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeyFactories.class);
 
-    static byte[] publicExportData(ECPublic key, boolean isCompact) {
-        ECKeyExport<ECPublic> export = isCompact
+    static byte[] publicExportData(ECPublicKey key, boolean isCompact) {
+        ECKeyExport<ECPublicKey> export = isCompact
                 ? ECPublicKeyExportCompact.instance()
                 : ECPublicKeyExportX963.instance();
 
@@ -71,7 +68,7 @@ public final class Keys {
         }
     }
 
-    public static KeyFactory<ECPublic> createKeyECPublic() {
+    public static KeyFactory<ECPublicKey> createKeyECPublic() {
         return (ecPublicKey, publicKeyInfo, isCompact) -> {
 
             byte[] publicExportData = publicExportData(ecPublicKey, isCompact);
@@ -81,8 +78,8 @@ public final class Keys {
         };
     }
 
-    public static KeyFactory<ECPrivate> createKeyECPrivate() {
-        return (ECPrivate ecPrivateKey, Optional<PublicKeyInfo> publicKeyInfo, boolean isCompact) -> {
+    public static KeyFactory<ECPrivateKey> createKeyECPrivate() {
+        return (ECPrivateKey ecPrivateKey, Optional<PublicKeyInfo> publicKeyInfo, boolean isCompact) -> {
 
             byte[] publicExportData = publicExportData(ecPrivateKey.publicKey(), isCompact);
             checkPublicExportData(publicExportData, publicKeyInfo);
@@ -90,13 +87,4 @@ public final class Keys {
             return new Key<>(KeyID.of(publicExportData), ecPrivateKey, publicExportData, publicKeyInfo, isCompact);
         };
     }
-
-//    public static Function<PrivateKey, Optional<Key<ECPrivate>>>
-//            importPrivateKeyData(
-//                    Function<byte[], Optional<ECPrivate>> keyDataImport,
-//                    BiFunction<ECPrivate, Optional<PublicKeyInfo>, Key<ECPrivate>> buildKey) {
-//
-//        return privateKey -> keyDataImport.apply(privateKey.privateKey())
-//                .map(keyData -> buildKey.apply(keyData, privateKey.publicKeyInfo()));
-//    }
 }

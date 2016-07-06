@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.key;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECKey;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import java.util.Optional;
 import java.util.function.BiFunction;
