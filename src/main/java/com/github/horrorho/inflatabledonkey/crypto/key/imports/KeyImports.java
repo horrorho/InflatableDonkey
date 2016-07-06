@@ -31,36 +31,33 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPublicKeyImp
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPublicKeyImportX963;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyFactories;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.PrivateKeyImport;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.PrivateSECKeyImport;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.PublicKeyImport;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import net.jcip.annotations.Immutable;
- 
 
 /**
- * KeyImport.
+ * KeyImports.
  *
  * @author Ahseya
  */
 @Immutable
 public final class KeyImports {
-    // TODO rationalize
 
     public static Function<byte[], Optional<Key<ECPublicKey>>>
             importPublicX963Key(IntFunction<Optional<String>> fieldLengthToCurveName) {
 
-        return PublicKeyImport.importPublicKeyData(ECPublicKeyImportX963.instance().importKey(fieldLengthToCurveName),
+        return PublicKeyImport.importPublicKeyData(
+                ECPublicKeyImportX963.instance().importKey(fieldLengthToCurveName),
                 KeyFactories.createKeyECPublic().createKey(false));
     }
 
     public static Function<byte[], Optional<Key<ECPublicKey>>>
             importPublicCompactKey(IntFunction<Optional<String>> fieldLengthToCurveName) {
 
-        return PublicKeyImport.importPublicKeyData(ECPublicKeyImportCompact.instance().importKey(fieldLengthToCurveName),
+        return PublicKeyImport.importPublicKeyData(
+                ECPublicKeyImportCompact.instance().importKey(fieldLengthToCurveName),
                 KeyFactories.createKeyECPublic().createKey(true));
     }
 
@@ -91,14 +88,16 @@ public final class KeyImports {
     public static Function<PrivateKey, Optional<Key<ECPrivateKey>>>
             importPrivateSECKey(IntFunction<Optional<String>> fieldLengthToCurveName) {
 
-        return PrivateSECKeyImport.importKeyData(ECPrivateKeyImport.instance().importKey(fieldLengthToCurveName),
+        return PrivateSECKeyImport.importKeyData(
+                ECPrivateKeyImport.instance().importKey(fieldLengthToCurveName),
                 KeyFactories.createKeyECPrivate().createKey(false));
     }
 
     public static Function<PrivateKey, Optional<Key<ECPrivateKey>>>
             importCompactPrivateKey(IntFunction<Optional<String>> fieldLengthToCurveName) {
 
-        return PrivateKeyImport.importPrivateKeyData(ECPrivateKeyImportCompact.instance().importKey(fieldLengthToCurveName),
+        return PrivateKeyImport.importPrivateKeyData(
+                ECPrivateKeyImportCompact.instance().importKey(fieldLengthToCurveName),
                 KeyFactories.createKeyECPrivate().createKey(true));
     }
 
