@@ -40,7 +40,6 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class PrivateKeyImport {
 
-    // TODO rationalize, probably doesn't belong in this package
     public static Function<PrivateKey, Optional<Key<ECPrivateKey>>>
             importPrivateKeyData(
                     Function<byte[], Optional<ECPrivateKey>> keyDataImport,

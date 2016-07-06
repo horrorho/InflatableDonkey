@@ -42,7 +42,6 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class PrivateSECKeyImport {
 
-    // TODO rationalize, probably doesn't belong in this package
     public static Function<PrivateKey, Optional<Key<ECPrivateKey>>>
             importKeyData(
                     Function<byte[], Optional<ECPrivateKey>> keyDataImport,
