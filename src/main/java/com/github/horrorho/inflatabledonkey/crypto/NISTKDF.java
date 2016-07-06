@@ -61,7 +61,7 @@ public final class NISTKDF {
     public static byte[]
             ctrHMac(byte[] keyDerivationKey, byte[] label, Supplier<Digest> digestSupplier, int keyLengthBytes) {
 
-        logger.trace("<< ctrHMac() - keyDerivationKey: 0x{} label: '{}' digestSupplier: {} length: {}",
+        logger.trace("<< ctrHMac() - keyDerivationKey: 0x{} label: {} digestSupplier: {} length: {}",
                 Hex.toHexString(keyDerivationKey), Hex.toHexString(label), digestSupplier, keyLengthBytes);
 
         byte[] derivedKey = new byte[keyLengthBytes];
