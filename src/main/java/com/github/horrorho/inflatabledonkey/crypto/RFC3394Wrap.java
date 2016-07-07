@@ -52,7 +52,7 @@ public final class RFC3394Wrap {
             return Optional.of(engine.unwrap(wrappedKey, 0, wrappedKey.length));
 
         } catch (InvalidCipherTextException ex) {
-            logger.warn("-- unwrap() - InvalidCipherTextException: {}", ex);
+            logger.debug("-- unwrap() - InvalidCipherTextException: {}", ex.getMessage());
             return Optional.empty();
         }
     }
