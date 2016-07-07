@@ -1,3 +1,12 @@
+**Update**, 7 July 2016. 
+
+Sorry for the lack of input, but I've been snowed under at work. I've pushed a new build that should hopefully work with iOS 9.3.
+
+I have this week off, so I'll try and work through the backlog of emails and tickets.
+
+Code wise I'll continue to tame the horrors that lie within. There's still a lot of quick and dirty code that was based off my initial interpretation of x86 binaries. Well, that and the fact that I'm not really sure I know how to program.
+
+
 **Update**, 20 April 2016. 
 
 Finally, like finally, it's slowly coming together... Well most of it. I've spent long hours over the last few weeks working on it and when I was in bed, my cat took over and also pondered the mysteries of iCloud's inner workings.
@@ -9,16 +18,6 @@ At the moment, the priority is refactoring old code and then I'll get work on ad
 On a more positive note, it was written ground up to be multi-threaded. Once it's stable and a few sticking points are sorted I'll switch it over to concurrent downloads.
 
 For those wishing to play with it, please use the --token mode for repeated runs as explained below. Also please remember, it's an experimental build, not production code. It was pushed primarily to show off the underlying backup process, not because it was in a state of completion.
-
-**Update**, 7 April 2016. 
-
-Ok! So I've had free time to work on InflatableDonkey. It's been painful, but there's been lots of progress. I've had to pull apart binaries to figure out the decryption process, which I hate doing. Like seriously, it's horrible.
-
-At present the escrow recovery is working so we have access to decryption keys. I do have the protection zone decryption figured and I'll be coding that in over the next few weeks. Keybag/ file protection mechanics seem to be unchanged so that code will follow.
-
-There's a lot of cryptographical code from a non-cryptographer. So feel free to pull it apart and suggest any improvements. Some of the code is quite raw and will make your eyes bleed, but it should illustrate what's going on. I will tidy it up at some point.
-
-Sooo... what's left? Chunk decryption is the big one. I'm hoping it's a simple solution, otherwise it's back to pulling apart binaries. :'(
 
 
 ### What is it?
