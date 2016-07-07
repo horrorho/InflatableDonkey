@@ -28,7 +28,8 @@ import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public final class SnapshotClient {
     }
 
     static Optional<Snapshot> manifests(CloudKit.Record record, ProtectionZone zone) {
-        return zone.newProtectionZone(record.getProtectionInfo())
+        return PZFactory.instance().create(zone, record.getProtectionInfo())
                 .map(z -> Snapshots.from(record, (bs, id) -> z.decrypt(bs, id).get())); // TODO rework Manifests
     }
 }

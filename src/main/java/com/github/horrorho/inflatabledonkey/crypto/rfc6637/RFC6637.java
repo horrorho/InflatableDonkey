@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.rfc6637;
 
-import com.github.horrorho.inflatabledonkey.crypto.ecpoint.ECPointsCompact;
+import com.github.horrorho.inflatabledonkey.crypto.ec.ECPointsCompact;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -37,6 +37,9 @@ import org.bouncycastle.crypto.Wrapper;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * *
@@ -48,6 +51,8 @@ import org.bouncycastle.math.ec.ECPoint;
  */
 @Immutable
 public final class RFC6637 {
+
+    private static final Logger logger = LoggerFactory.getLogger(RFC6637.class);
 
     private final Supplier<Wrapper> wrapperFactory;
     private final String curveName;
@@ -69,6 +74,8 @@ public final class RFC6637 {
 
     public byte[] unwrap(byte[] data, byte[] fingerprint, BigInteger d) {
         try {
+            logger.trace("-- unwrap() - data: 0x{} fingerprint: 0x{} d: 0x{}",
+                    Hex.toHexString(data), Hex.toHexString(fingerprint), d.toString(16));
             // TODO write verifcation/ exception handling code.
             ByteBuffer buffer = ByteBuffer.wrap(data);
 
@@ -94,8 +101,10 @@ public final class RFC6637 {
             byte[] unwrap = wrapper.unwrap(wrapped, 0, wrapped.length);
 
             // TODO sym alg
-            return finalize(unwrap);
-
+            byte[] finalize = finalize(unwrap);
+            logger.trace("-- unwrap() - unwrapped: 0x{}",Hex.toHexString(finalize));
+            return finalize;
+            
         } catch (IOException | InvalidCipherTextException ex) {
             throw new IllegalArgumentException(ex);
         }

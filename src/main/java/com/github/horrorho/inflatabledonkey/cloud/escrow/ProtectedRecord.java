@@ -27,17 +27,17 @@ import com.dd.plist.NSData;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.crypto.GCMDataB;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECAssistant;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPublic;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECurves;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
+import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.BackupEscrow;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.KeyImport;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XUnwrapData;
+import com.github.horrorho.inflatabledonkey.crypto.key.imports.KeyImports;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZDataUnwrap;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.math.BigInteger;
 import java.util.Optional;
@@ -46,7 +46,7 @@ import java.util.function.IntFunction;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory; 
 
 /**
  * EscrowedRecords.
@@ -60,7 +60,7 @@ public final class ProtectedRecord {
 
     // TODO tidy
     public static byte[] unlockData(
-            byte[] metadata, Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
+            byte[] metadata, Function<KeyID, Optional<Key<ECPrivateKey>>> getMasterKey) {
 
         NSDictionary dictionary = PLists.parseDictionary(metadata);
 
@@ -70,7 +70,7 @@ public final class ProtectedRecord {
 
         BigInteger d = d(backupEscrow, getMasterKey);
 
-        byte[] key = XUnwrapData.instance().apply(backupEscrow.wrappedKey(), d);
+        byte[] key = PZDataUnwrap.instance().apply(backupEscrow.wrappedKey(), d);
 
         return GCMDataB.decrypt(key, backupEscrow.data());
     }
@@ -92,7 +92,7 @@ public final class ProtectedRecord {
     }
 
     static BigInteger
-            d(BackupEscrow backupEscrow, Function<KeyID, Optional<Key<ECPrivate>>> getMasterKey) {
+            d(BackupEscrow backupEscrow, Function<KeyID, Optional<Key<ECPrivateKey>>> getMasterKey) {
 
         Optional<KeyID> masterKeyID = importPublicKey(backupEscrow.masterKeyPublic())
                 .map(Key::keyID);
@@ -101,20 +101,20 @@ public final class ProtectedRecord {
         // Take master key d value if we have it in the key set.
         BigInteger d = masterKeyID.flatMap(getMasterKey::apply)
                 .map(Key::keyData)
-                .map(ECPrivate::d)
+                .map(ECPrivateKey::d)
                 .orElseThrow(() -> new IllegalArgumentException("no master key for escrowed record"));
         logger.debug("-- decrypt() - master key d: 0x{}", d.toString(16));
 
         return d;
     }
 
-    static Optional<Key<ECPublic>> importPublicKey(byte[] keyData) {
+    static Optional<Key<ECPublicKey>> importPublicKey(byte[] keyData) {
         // Defaults = SECPR1/ NIST curves.
         IntFunction<Optional<String>> fieldLengthToCurveName = ECAssistant.fieldLengthToCurveName(ECurves.defaults());
 
         // Import keys based on length.
         // TODO non-partial application form
-        return KeyImport.importPublicKey(fieldLengthToCurveName, true)
+        return KeyImports.importPublicKey(fieldLengthToCurveName, true)
                 .apply(keyData);
     }
 

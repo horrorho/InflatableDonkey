@@ -43,7 +43,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;

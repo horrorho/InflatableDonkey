@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Key. Decorates ECKey types.
+ * Key.
  *
  * @author Ahseya
  * @param <T> key data type
@@ -79,7 +79,7 @@ public final class Key<T extends ECKey> {
         return keyData;
     }
 
-    public byte[] publicExportData() {
+    public byte[] exportPublicData() {
         return Arrays.copyOf(publicExportData, publicExportData.length);
     }
 

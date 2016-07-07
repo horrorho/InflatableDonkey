@@ -26,7 +26,8 @@ package com.github.horrorho.inflatabledonkey.cloud.clients;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -64,7 +65,7 @@ public final class KeyBagClient {
                 .getRecord()
                 .getProtectionInfo();
 
-        Optional<ProtectionZone> optionalNewZone = zone.newProtectionZone(protectionInfo);
+        Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
         if (!optionalNewZone.isPresent()) {
             logger.warn("-- keyBag() - failed to retrieve protection info");
             return Optional.empty();

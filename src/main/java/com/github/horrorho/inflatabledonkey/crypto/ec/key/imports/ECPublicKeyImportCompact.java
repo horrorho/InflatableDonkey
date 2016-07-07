@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.ec.key.imports;
 
-import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECKeys;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECKeyFactories;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECPointsCompact;
@@ -68,7 +68,7 @@ public final class ECPublicKeyImportCompact implements ECKeyImport<ECPublicKey> 
         BigInteger x = BigIntegers.fromUnsignedByteArray(data);
         BigInteger y = ECPointsCompact.y(x9ECParameters.getCurve(), x);
 
-        return ECKeys.publicKeyFactory()
+        return ECKeyFactories.publicKeyFactory()
                 .createECPublicKey(x, y, curveName);
     }
 

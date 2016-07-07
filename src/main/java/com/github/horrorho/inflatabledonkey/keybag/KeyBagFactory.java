@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.keybag;
 
-import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
+import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.PBKDF2;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -166,7 +166,7 @@ public final class KeyBagFactory {
             return Optional.empty();
         }
 
-        Optional<byte[]> key = AESWrap.unwrap(kek, wpky);
+        Optional<byte[]> key = RFC3394Wrap.unwrap(kek, wpky);
         logger.debug("-- unwrap() - unwrap kek: 0x{} wpky: 0x{} > key: 0x{}",
                 Hex.toHexString(kek), Hex.toHexString(wpky), key.map(Hex::toHexString).orElse("NULL"));
         return key;

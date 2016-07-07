@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xzone;
+package com.github.horrorho.inflatabledonkey.pcs.zone;
 
 import com.github.horrorho.inflatabledonkey.crypto.rfc6637.RFC6637;
 import com.github.horrorho.inflatabledonkey.crypto.rfc6637.RFC6637Factory;
@@ -32,26 +32,26 @@ import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * XUnwrapData.
+ * PZDataUnwrap.
  *
  * @author Ahseya
  */
 @Immutable
-public final class XUnwrapData implements BiFunction<byte[], BigInteger, byte[]> {
+public final class PZDataUnwrap implements BiFunction<byte[], BigInteger, byte[]> {
 
-    public static final XUnwrapData instance() {
+    public static final PZDataUnwrap instance() {
         return INSTANCE;
     }
-
-    private static final RFC6637 RFC6637_SECP256R1 = RFC6637Factory.secp256r1();
-    private static final byte[] FINGERPRINT = Hex.decode("66696E6765727072696E74000000000000000000");
-
-    private static final XUnwrapData INSTANCE = new XUnwrapData(RFC6637_SECP256R1, FINGERPRINT);
+ 
+    // TODO inject via Property
+    private static final PZDataUnwrap INSTANCE = new PZDataUnwrap(
+            RFC6637Factory.secp256r1(), 
+            Hex.decode("66696E6765727072696E74000000000000000000"));
 
     private final RFC6637 rfc6637;
     private final byte[] fingerprint;
 
-    public XUnwrapData(RFC6637 rfc6637, byte[] fingerprint) {
+    public PZDataUnwrap(RFC6637 rfc6637, byte[] fingerprint) {
         this.rfc6637 = Objects.requireNonNull(rfc6637, "rfc6637");
         this.fingerprint = Objects.requireNonNull(fingerprint, "fingerprint");
     }

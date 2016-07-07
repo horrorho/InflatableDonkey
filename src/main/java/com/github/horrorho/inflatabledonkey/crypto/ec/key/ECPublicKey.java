@@ -47,6 +47,7 @@ public final class ECPublicKey implements ECKey {
         this.point = Objects.requireNonNull(point, "point");
     }
 
+    @Override
     public ECCurvePoint point() {
         return point;
     }

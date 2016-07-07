@@ -27,7 +27,8 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,18 +93,8 @@ public final class AssetTokenClient {
     }
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
-        // Patched. Intercept for 0xFF ProtectionInfo. Unhandled at present.
-        if (record.hasProtectionInfo()) {
-            byte[] bytes = record.getProtectionInfo().getProtectionInfo().toByteArray();
-            if (bytes.length > 0 && bytes[0] == -1) {
-                logger.info("-- asset() - unsupported: {} protectionInfo(0xFF), file: {}",
-                        record.getModifiedByDevice(), record.getRecordIdentifier().getValue().getName());
-                return Optional.empty();
-            }
-        }
-
         logger.debug("-- asset() - record: {} zone: {}", record, zone);
-        return zone.newProtectionZone(record.getProtectionInfo())
-                .map(z -> AssetFactory.from(record, z::decrypt, z::fpDecrypt));
+        return PZFactory.instance().create(zone, record.getProtectionInfo())
+                .map(z -> AssetFactory.from(record, z::decrypt, z::unwrapKey));
     }
 }

@@ -23,16 +23,16 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.service;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECAssistant;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECurves;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
+import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
+import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import com.github.horrorho.inflatabledonkey.data.der.SignatureInfo;
 import com.github.horrorho.inflatabledonkey.data.der.TypeData;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.KeyImport;
+import com.github.horrorho.inflatabledonkey.crypto.key.imports.KeyImports;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,7 +44,7 @@ import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Objects;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex; 
 
 /**
  * ServiceKeySetBuilder.
@@ -154,24 +154,23 @@ public final class ServiceKeySetBuilder {
         boolean isCompact = (flags & 0x01) == 0x01;
 
         // Import keys.
-        Map<KeyID, Key<ECPrivate>> privateKeys
-                = ServiceKeySetAssistant.importPrivateKeys(
-                        keys,
-                        KeyImport.importPrivateKey(fieldLengthToCurveName, useCompactKeys));
+        Map<KeyID, Key<ECPrivateKey>> privateKeys
+                = ServiceKeySetAssistant.importPrivateKeys(keys,
+                        KeyImports.importPrivateKey(fieldLengthToCurveName, useCompactKeys));
 
         // If a single key with service 0/ null return basic Identity.
         if (privateKeys.size() == 1) {
-            Key<ECPrivate> key = privateKeys.values().iterator().next();
+            Key<ECPrivateKey> key = privateKeys.values().iterator().next();
             if (key.service().map(s -> s == 0).orElse(true)) {
 
-                Map<Integer, Key<ECPrivate>> serviceKeys = new HashMap<>();
+                Map<Integer, Key<ECPrivateKey>> serviceKeys = new HashMap<>();
                 serviceKeys.put(0, key);
                 ServiceKeySet serviceKeySet = new ServiceKeySet(serviceKeys, name, ksID, isCompact);
                 return Optional.of(serviceKeySet);
             }
         }
 
-        Optional<Key<ECPrivate>> masterKeyOptional
+        Optional<Key<ECPrivateKey>> masterKeyOptional
                 = ServiceKeySetAssistant.keyForService(privateKeys.values(), Service.MASTER.number());
         if (!masterKeyOptional.isPresent()) {
             logger.warn("-- build() - master key not found: {}");
@@ -179,7 +178,7 @@ public final class ServiceKeySetBuilder {
         }
 
         // Key verification.
-        Key<ECPrivate> masterKey = masterKeyOptional.get().selfVerify();
+        Key<ECPrivateKey> masterKey = masterKeyOptional.get().selfVerify();
         privateKeys.putAll(ServiceKeySetAssistant.verifyKeys(privateKeys.values(), masterKey));
 
         List<KeyID> untrustedKeys = ServiceKeySetAssistant.untrustedKeys(privateKeys.values());
@@ -188,13 +187,13 @@ public final class ServiceKeySetBuilder {
         }
 
         // Service to Key.
-        Map<Integer, Key<ECPrivate>> serviceKeys = ServiceKeySetAssistant.serviceKeys(serviceKeyIDs, privateKeys);
+        Map<Integer, Key<ECPrivateKey>> serviceKeys = ServiceKeySetAssistant.serviceKeys(serviceKeyIDs, privateKeys);
 
         // Test for but leave in unreferenced keys.
-        List<Key<ECPrivate>> unreferencedKeys = ServiceKeySetAssistant.unreferencedKeys(serviceKeyIDs, privateKeys);
+        List<Key<ECPrivateKey>> unreferencedKeys = ServiceKeySetAssistant.unreferencedKeys(serviceKeyIDs, privateKeys);
 
         // Test for but leave in incongruent keys (for now).
-        Map<Integer, Key<ECPrivate>> incongruentKeys = ServiceKeySetAssistant.incongruentKeys(serviceKeys);
+        Map<Integer, Key<ECPrivateKey>> incongruentKeys = ServiceKeySetAssistant.incongruentKeys(serviceKeys);
 
         // Debug information.
         logger.debug("-- build() - name: {}", name);
@@ -207,7 +206,7 @@ public final class ServiceKeySetBuilder {
         serviceKeyIDs.forEach((service, keyID) -> logger.debug("-- build() - service: {} key id: {}", service, keyID));
 
         privateKeys.forEach((keyId, key) -> logger.debug("-- build() - key id: {} trusted: {} public export: 0x{}",
-                keyId, key.isTrusted(), Hex.toHexString(key.publicExportData())));
+                keyId, key.isTrusted(), Hex.toHexString(key.exportPublicData())));
 
         // Build.
         ServiceKeySet serviceKeySet = new ServiceKeySet(serviceKeys, name, ksID, isCompact);

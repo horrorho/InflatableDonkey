@@ -24,9 +24,10 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
 import java.util.Collection;
@@ -49,7 +50,7 @@ public final class MBKSyncClient {
     private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
     public static Optional<ProtectionZone>
-            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivate>> keys) throws IOException {
+            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys) throws IOException {
 
         List<CloudKit.ZoneRetrieveResponse> responses
                 = kitty.zoneRetrieveRequest(httpClient, "_defaultZone", "mbksync");
@@ -60,11 +61,11 @@ public final class MBKSyncClient {
             return Optional.empty();
         }
 
-        ProtectionZone zone = ProtectionZone.createBaseZone(keys);
+        ProtectionZone zone = PZFactory.instance().create(keys);
 
         List<CloudKit.ProtectionInfo> protectionInfoList = zone(responses, zone);
         for (CloudKit.ProtectionInfo protectionInfo : protectionInfoList) {
-            zone = zone.newProtectionZone(protectionInfo)
+            zone = PZFactory.instance().create(zone, protectionInfo)
                     .orElse(zone);
         }
         return Optional.of(zone);

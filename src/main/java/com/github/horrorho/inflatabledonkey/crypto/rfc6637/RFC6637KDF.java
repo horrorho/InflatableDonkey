@@ -74,7 +74,7 @@ public final class RFC6637KDF {
 
     public byte[] apply(ECPoint S, byte[] fingerprint) throws IOException {
         // RFC Sections 7, 8
-        byte[] ZB = S.getXCoord().getEncoded();
+        byte[] ZB = S.getAffineXCoord().getEncoded();
 
         Digest digest = digestFactory.get();
 

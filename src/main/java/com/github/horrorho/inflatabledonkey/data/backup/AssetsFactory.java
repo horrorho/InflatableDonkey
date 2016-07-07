@@ -5,9 +5,6 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import static com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory.devices;
-import static com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory.hmacKey;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.XZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.google.protobuf.ByteString;
 import java.util.Collection;
@@ -28,9 +25,9 @@ public final class AssetsFactory {
     private static final String DOMAIN = "domain";
     private static final String FILES = "files";
 
-    public static Assets from(ZoneRecord recordDecryptor) {
-        return fromLegacy(recordDecryptor.record(), recordDecryptor.zone());
-    }
+//    public static Assets from(ZoneRecord recordDecryptor) {
+//        return fromLegacy(recordDecryptor.record(), recordDecryptor.zone());
+//    }
 
     public static Assets from(CloudKit.Record record, BiFunction<byte[], String, Optional<byte[]>> decrypt) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
@@ -43,17 +40,17 @@ public final class AssetsFactory {
         return new Assets(domain, files);
     }
 
-    public static Assets fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
-        List<CloudKit.RecordField> records = record.getRecordFieldList();
-
-        List<String> files = files(records);
-
-        Optional<String> domain = domain(records)
-                .flatMap(bs -> zone.map(z -> z.decrypt(bs, DOMAIN)))
-                .map(String::new);
-
-        return new Assets(domain, files);
-    }
+//    public static Assets fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
+//        List<CloudKit.RecordField> records = record.getRecordFieldList();
+//
+//        List<String> files = files(records);
+//
+//        Optional<String> domain = domain(records)
+//                .flatMap(bs -> zone.map(z -> z.decrypt(bs, DOMAIN)))
+//                .map(String::new);
+//
+//        return new Assets(domain, files);
+//    }
 
     static Optional<byte[]> domain(List<CloudKit.RecordField> records) {
         return records.stream()

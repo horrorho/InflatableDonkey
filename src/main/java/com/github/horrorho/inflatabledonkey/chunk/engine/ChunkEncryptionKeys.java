@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.crypto.AESWrap;
+import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
@@ -75,7 +75,7 @@ public final class ChunkEncryptionKeys {
         logger.debug("-- key() - wrapped key: 0x{} kek: 0x{}", 
                 Hex.toHexString(wrappedKey), kek.map(Hex::toHexString).orElse("NULL"));
         
-        Optional<byte[]> unwrappedKey = AESWrap.unwrap(kek.get(), wrappedKey);
+        Optional<byte[]> unwrappedKey = RFC3394Wrap.unwrap(kek.get(), wrappedKey);
         logger.debug("-- key() - unwrapped key: 0x{}", unwrappedKey.map(Hex::toHexString).orElse("NULL"));
         
         return unwrappedKey;

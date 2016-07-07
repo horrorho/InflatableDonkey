@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.service;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory; 
 
 /**
  * ServiceKeySetAssistant.
@@ -51,12 +51,12 @@ public final class ServiceKeySetAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceKeySetAssistant.class);
 
-    public static Map<KeyID, Key<ECPrivate>> importPrivateKeys(
+    public static Map<KeyID, Key<ECPrivateKey>> importPrivateKeys(
             Collection<PrivateKey> keys,
-            Function<PrivateKey, Optional<Key<ECPrivate>>> importFunction) {
+            Function<PrivateKey, Optional<Key<ECPrivateKey>>> importFunction) {
 
         // Logging via peeks here as opposed to introducing logging code downstream.
-        Map<KeyID, Key<ECPrivate>> importedKeys = keys.stream()
+        Map<KeyID, Key<ECPrivateKey>> importedKeys = keys.stream()
                 .peek(pk -> {
                     logger.debug("-- importPrivateKeys() > import: {}", pk);
                 })
@@ -86,7 +86,7 @@ public final class ServiceKeySetAssistant {
         return importedKeys;
     }
 
-    public static Map<KeyID, Key<ECPrivate>> verifyKeys(Collection<Key<ECPrivate>> privateKeys, Key<ECPrivate> masterKey) {
+    public static Map<KeyID, Key<ECPrivateKey>> verifyKeys(Collection<Key<ECPrivateKey>> privateKeys, Key<ECPrivateKey> masterKey) {
         if (!masterKey.isTrusted()) {
             logger.warn("-- verifyKeys() - master key is not trusted: {}", masterKey.keyID());
             return new HashMap<>();
@@ -101,14 +101,14 @@ public final class ServiceKeySetAssistant {
                 .collect(Collectors.toMap(Key::keyID, Function.identity()));
     }
 
-    public static List<KeyID> untrustedKeys(Collection<Key<ECPrivate>> privateKeys) {
+    public static List<KeyID> untrustedKeys(Collection<Key<ECPrivateKey>> privateKeys) {
         return privateKeys.stream()
                 .filter(privateKey -> !privateKey.isTrusted())
                 .map(Key::keyID)
                 .collect(Collectors.toList());
     }
 
-    public static Optional<Key<ECPrivate>> keyForService(Collection<Key<ECPrivate>> privateKeys, int service) {
+    public static Optional<Key<ECPrivateKey>> keyForService(Collection<Key<ECPrivateKey>> privateKeys, int service) {
         return privateKeys.stream()
                 .filter(privateKey -> privateKey.service()
                         .map(s -> s == service)
@@ -116,11 +116,11 @@ public final class ServiceKeySetAssistant {
                 .findFirst();
     }
 
-    public static List<Key<ECPrivate>>
-            unreferencedKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivate>> privateKeys) {
+    public static List<Key<ECPrivateKey>>
+            unreferencedKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivateKey>> privateKeys) {
 
         HashSet<KeyID> keyIDs = new HashSet<>(serviceKeyIDs.values());
-        Predicate<Map.Entry<KeyID, Key<ECPrivate>>> isOrphaned = entry -> !keyIDs.contains(entry.getKey());
+        Predicate<Map.Entry<KeyID, Key<ECPrivateKey>>> isOrphaned = entry -> !keyIDs.contains(entry.getKey());
 
         return privateKeys.entrySet()
                 .stream()
@@ -129,8 +129,8 @@ public final class ServiceKeySetAssistant {
                 .collect(Collectors.toList());
     }
 
-    public static Map<Integer, Key<ECPrivate>>
-            serviceKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivate>> privateKeys) {
+    public static Map<Integer, Key<ECPrivateKey>>
+            serviceKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivateKey>> privateKeys) {
 
         Predicate<Map.Entry<Integer, KeyID>> isPresent = entry -> {
             if (privateKeys.containsKey(entry.getValue())) {
@@ -150,8 +150,8 @@ public final class ServiceKeySetAssistant {
                         entry -> privateKeys.get(entry.getValue())));
     }
 
-    public static Map<Integer, Key<ECPrivate>> incongruentKeys(Map<Integer, Key<ECPrivate>> serviceKeys) {
-        Predicate<Map.Entry<Integer, Key<ECPrivate>>> isIncongruent = entry
+    public static Map<Integer, Key<ECPrivateKey>> incongruentKeys(Map<Integer, Key<ECPrivateKey>> serviceKeys) {
+        Predicate<Map.Entry<Integer, Key<ECPrivateKey>>> isIncongruent = entry
                 -> entry.getValue().publicKeyInfo()
                 .map(PublicKeyInfo::service)
                 .map(s -> !entry.getKey().equals(s))

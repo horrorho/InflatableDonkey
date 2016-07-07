@@ -23,14 +23,14 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.service;
 
-import com.github.horrorho.inflatabledonkey.crypto.eckey.ECPrivate;
+import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.key.Key;
 import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import net.jcip.annotations.Immutable; 
 
 /**
  * ServiceKeySet.
@@ -40,13 +40,13 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class ServiceKeySet {
 
-    private final Map<Integer, Key<ECPrivate>> serviceKeys = new HashMap<>();
+    private final Map<Integer, Key<ECPrivateKey>> serviceKeys = new HashMap<>();
     private final String name;
     private final String ksID;
     private final boolean isCompact;
 
     ServiceKeySet(
-            Map<Integer, Key<ECPrivate>> serviceKeys,
+            Map<Integer, Key<ECPrivateKey>> serviceKeys,
             String name,
             String ksID,
             boolean isCompact) {
@@ -57,26 +57,26 @@ public final class ServiceKeySet {
         this.isCompact = isCompact;
     }
 
-    public Optional<Key<ECPrivate>> key(Service service) {
+    public Optional<Key<ECPrivateKey>> key(Service service) {
         return key(service.number());
     }
 
-    public Optional<Key<ECPrivate>> key(int service) {
+    public Optional<Key<ECPrivateKey>> key(int service) {
         return Optional.ofNullable(serviceKeys.get(service));
     }
 
-    public Optional<Key<ECPrivate>> key(KeyID keyID) {
+    public Optional<Key<ECPrivateKey>> key(KeyID keyID) {
         return serviceKeys.values()
                 .stream()
                 .filter(key -> key.keyID().equals(keyID))
                 .findFirst();
     }
 
-    public Map<Integer, Key<ECPrivate>> services() {
+    public Map<Integer, Key<ECPrivateKey>> services() {
         return new HashMap<>(serviceKeys);
     }
 
-    public Collection<Key<ECPrivate>> keys() {
+    public Collection<Key<ECPrivateKey>> keys() {
         return serviceKeys.values();
     }
 

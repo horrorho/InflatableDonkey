@@ -26,7 +26,8 @@ package com.github.horrorho.inflatabledonkey.cloud.clients;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
 import java.util.List;
@@ -62,7 +63,7 @@ public final class BackupAccountClient {
                 .getRecord()
                 .getProtectionInfo();
 
-        Optional<ProtectionZone> optionalNewZone = zone.newProtectionZone(protectionInfo);
+        Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
         if (!optionalNewZone.isPresent()) {
             logger.warn("-- backupAccount() - failed to retrieve protection info");
             return Optional.empty();

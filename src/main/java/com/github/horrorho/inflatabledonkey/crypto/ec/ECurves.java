@@ -36,6 +36,10 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class ECurves {
 
+    public static String defaultCurve() {
+        return "secp256r1";
+    }
+
     public static List<String> defaults() {
         return secpr1();
     }

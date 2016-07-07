@@ -138,6 +138,7 @@ public final class EscrowedKeys {
         byte[] metadata = Base64.getDecoder().decode(metadataBase64);
 
         byte[] data = ProtectedRecord.unlockData(metadata, backupBagPassword::key);
+        logger.debug("-- escrowedKeys() - decrypted metadata: {}", Hex.toHexString(data));
 
         return DERUtils.parse(data, KeySet::new)
                 .flatMap(ServiceKeySetBuilder::build)

@@ -27,7 +27,8 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
-import com.github.horrorho.inflatabledonkey.pcs.xzone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public final class AssetsClient {
     }
 
     static Assets assets(CloudKit.Record record, ProtectionZone zone, AtomicReference<ProtectionZone> previous) {
-        return zone.newProtectionZone(record.getProtectionInfo())
+        return PZFactory.instance().create(zone, record.getProtectionInfo())
                 .map(z -> {
                     previous.set(z);
                     return AssetsFactory.from(record, z::decrypt);
