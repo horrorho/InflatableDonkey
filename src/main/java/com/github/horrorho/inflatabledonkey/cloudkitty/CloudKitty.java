@@ -24,6 +24,8 @@
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.RawProtoDecoderLogger;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
+import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
@@ -53,13 +55,20 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class CloudKitty {
 
-    public static CloudKitty backupd(CKInit ckInit, String cloudKitToken) {
+    public static CloudKitty backupd(CKInit ckInit, Account account) {
 
         String container = "com.apple.backup.ios";
         String bundle = "com.apple.backupd";
 
         String cloudKitUserId = ckInit.cloudKitUserId();
-        String baseUrl = ckInit.production().url();
+
+        // Re-direct issues with ckInit baseUrl.
+        String baseUrl = account.mobileMe()
+                .optional("com.apple.Dataclass.CKDatabaseService", "url")
+                .map(url -> url + "/api/client")
+                .orElse(ckInit.production().url());
+
+        String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
 
         String deviceID = UUID.randomUUID().toString();
         String deviceHardwareID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);

@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
-import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.clients.AssetTokenClient;
 import com.github.horrorho.inflatabledonkey.cloud.clients.AssetsClient;
 import com.github.horrorho.inflatabledonkey.cloud.clients.BackupAccountClient;
@@ -64,8 +63,8 @@ import org.slf4j.LoggerFactory;
 public final class BackupAssistant {
 
     public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
-        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-        CloudKitty kitty = CloudKitty.backupd(ckInit, account.tokens().get(Token.CLOUDKITTOKEN));
+        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);        
+        CloudKitty kitty = CloudKitty.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
         ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
 

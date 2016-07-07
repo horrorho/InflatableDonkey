@@ -50,6 +50,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,7 @@ public class Main {
         // TODO concurrent
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setUserAgent("CloudKit/479 (13A404)")
+                .setRedirectStrategy(new LaxRedirectStrategy())
                 .useSystemProperties()
                 .build();
 
