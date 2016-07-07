@@ -31,6 +31,8 @@ import java.io.IOException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CKInits.
@@ -39,6 +41,8 @@ import org.apache.http.client.methods.HttpUriRequest;
  */
 @Immutable
 public final class CKInits {
+
+    private static final Logger logger = LoggerFactory.getLogger(CKInits.class);
 
     public static CKInit ckInitBackupd(HttpClient httpClient, Account account) throws IOException {
         return ckInit(httpClient, account, "com.apple.backupd", "com.apple.backup.ios");
@@ -51,6 +55,9 @@ public final class CKInits {
         String mmeAuthToken = account.tokens().get(Token.MMEAUTHTOKEN);
         String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
 
+        logger.debug("-- ckInit() - dsPrsID: {} mmeAuthToken: {} cloudKitToken: {} bundle: {} container: {}",
+                dsPrsID, mmeAuthToken, cloudKitToken, bundle, container);
+
         HttpUriRequest ckAppInitRequest
                 = CkAppInitBackupRequestFactory.instance()
                 .newRequest(
@@ -61,8 +68,10 @@ public final class CKInits {
                         container);
 
         JsonResponseHandler<CKInit> jsonResponseHandler = new JsonResponseHandler<>(CKInit.class);
+        CKInit ckInit = httpClient.execute(ckAppInitRequest, jsonResponseHandler);
+        logger.debug("-- ckInit()- ckInit: {}", ckInit);
 
-        return httpClient.execute(ckAppInitRequest, jsonResponseHandler);
+        return ckInit;
     }
 }
 // TODO consider bundle, container fields in CKInit.
