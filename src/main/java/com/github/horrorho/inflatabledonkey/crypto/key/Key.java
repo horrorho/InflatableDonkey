@@ -108,7 +108,7 @@ public final class Key<T extends ECKey> {
 //                ? new Key<>(keyID, keyData, publicExportData, publicKeyInfo, isCompact, true)
 //                : this;
         //TOFIX
-        return this;
+        return new Key<>(keyID, keyData, publicExportData, publicKeyInfo, isCompact, true);
     }
 
     @Override
