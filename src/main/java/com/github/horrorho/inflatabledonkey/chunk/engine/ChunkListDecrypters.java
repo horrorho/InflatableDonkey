@@ -93,7 +93,12 @@ public final class ChunkListDecrypters {
                     Integer.toHexString(offset), Integer.toHexString(length));
         }
 
-        byte[] chunkData = ChunkDecrypters.decrypt(key, data, offset, length);
+        Optional<byte[]> optionalChunkData = ChunkDecrypters.decrypt(key, data, offset, length);
+        if (!optionalChunkData.isPresent()) {
+            logger.warn("-- decrypt() - decrypt failed");
+            return Optional.empty();
+        }
+        byte[] chunkData = optionalChunkData.get();
 
         return validate(chunkInfo, chunkData)
                 .flatMap(checksum -> chunk(chunkStore, checksum, chunkData));

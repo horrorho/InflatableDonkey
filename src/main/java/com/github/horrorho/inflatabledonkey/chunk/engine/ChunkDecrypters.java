@@ -23,7 +23,9 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.StreamBlockCipher;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CFBBlockCipher;
@@ -44,19 +46,23 @@ public final class ChunkDecrypters {
     private ChunkDecrypters() {
     }
 
-    public static byte[] decrypt(byte[] key, byte[] data, int offset, int length) {
+    public static Optional<byte[]> decrypt(byte[] key, byte[] data, int offset, int length) {
         StreamBlockCipher cipher = new CFBBlockCipher(new AESFastEngine(), 128);
         return decrypt(key, cipher, data, offset, length);
     }
 
-    public static byte[] decrypt(byte[] key, StreamBlockCipher cipher, byte[] data, int offset, int length) {
-        KeyParameter keyParameter = new KeyParameter(key);
-        cipher.init(false, keyParameter);
-        byte[] decrypted = new byte[length];
-        cipher.processBytes(data, offset, length, decrypted, 0);
-        return decrypted;
+    public static Optional<byte[]> decrypt(byte[] key, StreamBlockCipher cipher, byte[] data, int offset, int length) {
+        try {
+            KeyParameter keyParameter = new KeyParameter(key);
+            cipher.init(false, keyParameter);
+            byte[] decrypted = new byte[length];
+            cipher.processBytes(data, offset, length, decrypted, 0);
+            return Optional.of(decrypted);
+
+        } catch (DataLengthException ex) {
+            logger.warn("-- decrypt() - exception: ", ex);
+            return Optional.empty();
+        }
     }
 }
-// TODO optional for errors
 // TODO OutputStream
-// org.bouncycastle.crypto.DataLengthException
