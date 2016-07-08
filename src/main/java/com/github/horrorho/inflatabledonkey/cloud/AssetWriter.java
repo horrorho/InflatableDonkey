@@ -29,11 +29,13 @@ import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBags;
 import com.github.horrorho.inflatabledonkey.pcs.xfile.FileAssembler;
 import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyAssistant;
+import com.github.horrorho.inflatabledonkey.util.FileNameCleaners;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.UnaryOperator;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
@@ -49,6 +51,8 @@ public final class AssetWriter implements BiConsumer<Asset, List<Chunk>> {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetWriter.class);
 
+    private static final UnaryOperator<String> CLEAN = FileNameCleaners.instance();
+
     private final Path outputFolder;
     private final KeyBags keyBags;
 
@@ -63,14 +67,27 @@ public final class AssetWriter implements BiConsumer<Asset, List<Chunk>> {
 
     @Override
     public void accept(Asset asset, List<Chunk> assetChunkList) {
-        Path file = outputFolder
-                .resolve(asset.domain().get())
-                .resolve(asset.relativePath().get());
+        if (!asset.domain().isPresent()) {
+            logger.warn("-- accept() - asset has no domain: {}", asset);
+            return;
+        }
 
-        logger.debug("-- assembleFile() - asset: {}", asset);
+        if (!asset.relativePath().isPresent()) {
+            logger.warn("-- accept() - asset has no relativePath: {}", asset);
+            return;
+        }
+
+        String domain = CLEAN.apply(asset.domain().get());
+        String relativePath = CLEAN.apply(asset.relativePath().get());
+
+        Path file = outputFolder
+                .resolve(domain)
+                .resolve(relativePath);
+
+        logger.debug("-- accept() - asset: {}", asset);
         Optional<byte[]> encryptionKey = encryptionKey(asset);
 
-        logger.debug("-- assembleFile() - encryption key: {}", asset);
+        logger.debug("-- accept() - encryption key: {}", asset);
         FileAssembler.assemble(file, assetChunkList, asset.size(), encryptionKey);
     }
 
