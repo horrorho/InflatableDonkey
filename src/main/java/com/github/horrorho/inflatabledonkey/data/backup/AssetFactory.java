@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +110,7 @@ public final class AssetFactory {
                 ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
                 : Instant.ofEpochSecond(tokenExpiration);
 
-        return new Asset(
+        Asset newAsset = new Asset(
                 protectionClass,
                 fileSize,
                 fileType,
@@ -123,6 +122,9 @@ public final class AssetFactory {
                 keyEncryptionKey,
                 encryptedAttributes,
                 asset);
+        logger.debug("-- from() - asset: {}", newAsset);
+
+        return newAsset;
     }
 //
 //    static Optional<byte[]> decryptData(Optional<byte[]> data, Optional<XZone> zone) {
