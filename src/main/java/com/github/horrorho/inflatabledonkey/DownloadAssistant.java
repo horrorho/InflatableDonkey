@@ -24,15 +24,16 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
-import com.github.horrorho.inflatabledonkey.cloud.AssetWriter;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBags;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.FileAssembler;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyAssistant;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -69,13 +70,18 @@ public final class DownloadAssistant {
         Path outputFolder = folder.resolve(relativePath);
 
         keyBagManager.update(httpClient, assets);
-        KeyBags keyBags = new KeyBags(keyBagManager.keyBags());
 
-        AssetWriter cloudWriter = new AssetWriter(outputFolder, keyBags);
-
+        
+        FileAssembler fileAssembler = new FileAssembler(this::unwrapKey, outputFolder); 
+                
+                
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 
-        assetDownloader.get(httpClient, authorizedAssets, cloudWriter);
+        assetDownloader.get(httpClient, authorizedAssets, fileAssembler);
+    }
+
+    Optional<byte[]> unwrapKey(byte[] wrappedKey, int protectionClass) {
+        return FileKeyAssistant.unwrap(keyBagManager::keyBag, protectionClass, wrappedKey);
     }
 }
 // TODO time expiration tokens

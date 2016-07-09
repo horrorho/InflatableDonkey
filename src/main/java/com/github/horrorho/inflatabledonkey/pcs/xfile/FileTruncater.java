@@ -21,29 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.util;
+package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import java.util.function.UnaryOperator;
-import net.jcip.annotations.Immutable;
-import org.apache.commons.lang3.SystemUtils;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.WRITE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * FileNameCleaners.
+ * FileTruncater.
  *
  * @author Ahseya
  */
-@Immutable
-public final class FileNameCleaners {
+public class FileTruncater {
 
-    public static UnaryOperator<String> instance() {
-        return INSTANCE;
+    private static final Logger logger = LoggerFactory.getLogger(FileTruncater.class);
+
+    public static void truncate(Path file, long to) throws UncheckedIOException {
+        try {
+            if (to == 0) {
+                return;
+            }
+
+            long size = Files.size(file);
+            if (size > to) {
+                Files.newByteChannel(file, WRITE)
+                        .truncate(to)
+                        .close();
+                logger.debug("-- truncate() - truncated: {}, {} > {}", file, size, to);
+
+            } else if (size < to) {
+                logger.warn("-- truncate() - cannot truncate: {}, {} > {}", file, size, to);
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
-
-    private static final String WINDOWS_FILTER = "[\u0001-\u001f\\\\:*?\"<>|\u007f]";
-    private static final String REPLACE = "_";
-
-    private static final UnaryOperator<String> INSTANCE
-            = SystemUtils.IS_OS_WINDOWS
-                    ? path -> path.replaceAll(WINDOWS_FILTER, REPLACE)
-                    : UnaryOperator.identity(); // Assumed Nix/ MacOS mapping directly.
 }

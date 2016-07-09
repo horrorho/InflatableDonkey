@@ -26,10 +26,10 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBags;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.Arrays;
@@ -60,9 +60,9 @@ public final class FileKeyAssistant {
         }
     }
 
-    public static Optional<byte[]> unwrap(KeyBags keyBags, int protectionClass, byte[] fileKey) {
+    public static Optional<byte[]> unwrap(Function<byte[], Optional<KeyBag>> keyBags, int protectionClass, byte[] fileKey) {
         return uuid(fileKey)
-                .flatMap(keyBags::keybag)
+                .flatMap(keyBags::apply)
                 .flatMap(keyBag -> unwrap(keyBag, protectionClass, fileKey));
     }
 
