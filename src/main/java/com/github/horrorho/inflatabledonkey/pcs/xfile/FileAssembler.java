@@ -81,7 +81,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     @Override
     public boolean test(Asset asset, List<Chunk> chunks) {
-        logger.trace("<< test() - asset: {}", asset);
+        logger.trace("<< test() - asset: {} chunks: {}", asset, chunks.size());
         boolean success = filePath.apply(asset)
                 .filter(DirectoryAssistant::createParent)
                 .map(path -> encryptionkeyOp(path, asset, chunks))
