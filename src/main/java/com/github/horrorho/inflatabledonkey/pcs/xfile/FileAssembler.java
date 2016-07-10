@@ -109,8 +109,11 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
             IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
 
-            return fileChecksum.map(fc -> testFileChecksum(fc, in.reference()))
+            boolean status = fileChecksum.map(fc -> testFileChecksum(fc, in.reference()))
                     .orElse(true);
+            logger.info("-- assemble() - written: {} complete: {}", path, status);
+
+            return status;
 
         } catch (IOException ex) {
             logger.warn("-- assemble() - file error: ", ex);
