@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -41,15 +40,10 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
-import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.io.DigestInputStream;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,14 +58,17 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.intValue().orElse(8192);
-    private static final UnaryOperator<String> CLEAN = FileNameCleaners.instance();
 
     private final BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey;
-    private final Path outputFolder;
+    private final FilePath filePath;
+
+    public FileAssembler(BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey, FilePath filePath) {
+        this.unwrapKey = Objects.requireNonNull(unwrapKey, "unwrapKey");
+        this.filePath = Objects.requireNonNull(filePath, "filePath");
+    }
 
     public FileAssembler(BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey, Path outputFolder) {
-        this.unwrapKey = Objects.requireNonNull(unwrapKey, "unwrapKey");
-        this.outputFolder = Objects.requireNonNull(outputFolder);
+        this(unwrapKey, new FilePath(outputFolder));
     }
 
     @Override
@@ -85,98 +82,67 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     @Override
     public boolean test(Asset asset, List<Chunk> chunks) {
         logger.trace("<< test() - asset: {}", asset);
-        boolean success = decryptOperator(asset)
-                .map(decrypt -> folderOp(asset, chunks, decrypt))
+        boolean success = filePath.apply(asset)
+                .filter(DirectoryAssistant::createParent)
+                .map(path -> encryptionkeyOp(path, asset, chunks))
                 .orElse(false);
-
         logger.trace(">> test() - success: {}", success);
         return success;
     }
 
-    public boolean folderOp(Asset asset, List<Chunk> chunks, UnaryOperator<InputStream> chain) {
-        return path(asset)
-                .filter(DirectoryAssistant::createParent)
-                .map(file -> assembleOp(file, chunks, chain, asset.fileChecksum()))
-                .orElse(false);
+    public boolean encryptionkeyOp(Path path, Asset asset, List<Chunk> chunks) {
+        return asset.encryptionKey()
+                .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
-    boolean assembleOp(Path file, List<Chunk> chunks, UnaryOperator<InputStream> chain, Optional<byte[]> fileChecksum) {
-        try (OutputStream out = Files.newOutputStream(file);
-                InputStream in = chain.apply(fileData(chunks))) {
+    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] wrappedKey) {
+        Boolean orElse = unwrapKey.apply(wrappedKey, asset.protectionClass())
+                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
+                .orElse(false);
+        return orElse;
+    }
 
-            Optional<DigestInputStream> digestInputStream = fileChecksum.flatMap(FileSignatureInputStreams::factoryFor)
-                    .map(factory -> factory.apply(in));
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+        try (OutputStream out = Files.newOutputStream(path);
+                InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, fileChecksum)) {
 
-            return digestInputStream.isPresent()
-                    ? write(digestInputStream.get(), out, fileChecksum.get())
-                    : write(in, out);
+            IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
+
+            return fileChecksum.map(fc -> testFileChecksum(fc, in.reference()))
+                    .orElse(true);
 
         } catch (IOException ex) {
-            logger.warn("-- assembleOp() - file error: ", ex);
+            logger.warn("-- assemble() - file error: ", ex);
             return false;
         }
     }
 
-    boolean write(InputStream in, OutputStream out) throws IOException {
-        IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
-        return true;
+    InputReferenceStream<Optional<DigestInputStream>>
+            chain(List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+
+        InputStream one = fileData(chunks);
+
+        Optional<DigestInputStream> digestInputStream = fileChecksum.flatMap(fc -> FileSignatures.like(one, fc));
+        InputStream two = digestInputStream.map(dis -> (InputStream) dis)
+                .orElse(one);
+
+        InputStream three = decryptKey.map(key -> (InputStream) FileDecrypterInputStreams.create(two, key))
+                .orElse(two);
+
+        return new InputReferenceStream<>(three, digestInputStream);
     }
 
-    boolean write(DigestInputStream in, OutputStream out, byte[] fileChecksum) throws IOException {
-        IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
-        return fileChecksumTest(fileChecksum, in.getDigest());
-    }
-
-    InputStream fileData(List<Chunk> chunkData) {
-        List<InputStream> inputStreams = chunkData.stream()
+    InputStream fileData(List<Chunk> chunks) {
+        List<InputStream> inputStreams = chunks.stream()
                 .map(Chunk::inputStream)
                 .collect(Collectors.toList());
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
         return new SequenceInputStream(enumeration);
     }
 
-    Optional<Path> path(Asset asset) {
-        if (!asset.domain().isPresent()) {
-            logger.warn("-- path() - asset has no domain: {}", asset);
-            return Optional.empty();
-        }
-
-        if (!asset.relativePath().isPresent()) {
-            logger.warn("-- path() - asset has no relativePath: {}", asset);
-            return Optional.empty();
-        }
-
-        Path path = outputFolder
-                .resolve(CLEAN.apply(asset.domain().get()))
-                .resolve(CLEAN.apply(asset.relativePath().get()));
-        return Optional.of(path);
-    }
-
-    Optional<UnaryOperator<InputStream>> decryptOperator(Asset asset) {
-        return asset.encryptionKey()
-                .map(wrappedKey -> decryptOperator(wrappedKey, asset.protectionClass()))
-                .orElse(Optional.of(UnaryOperator.identity()));
-    }
-
-    Optional<UnaryOperator<InputStream>> decryptOperator(byte[] wrappedKey, int protectionClass) {
-        return unwrapKey.apply(wrappedKey, protectionClass)
-                .map(key -> inputStream -> FileDecrypterInputStreams.create(inputStream, key));
-    }
-
-    boolean fileChecksumTest(byte[] fileChecksum, Digest digest) {
-        byte[] expected = Arrays.copyOfRange(fileChecksum, 1, fileChecksum.length);
-
-        byte[] out = new byte[digest.getDigestSize()];
-        digest.doFinal(out, 0);
-
-        boolean equals = Arrays.equals(out, expected);
-        if (!equals) {
-            logger.warn("-- fileChecksumTest() - negative digest match, assembled: 0x{} expected: 0x{}",
-                    Hex.toHexString(out), Hex.toHexString(expected));
-        } else {
-            logger.debug("-- fileChecksumTest() - positive digest match, assembled: 0x{} expected: 0x{}",
-                    Hex.toHexString(out), Hex.toHexString(expected));
-        }
-        return equals;
+    boolean testFileChecksum(byte[] fileChecksum, Optional<DigestInputStream> digestInputStream) {
+        return digestInputStream.map(dis -> FileSignatures.compare(dis, fileChecksum))
+                .orElse(true);
     }
 }
