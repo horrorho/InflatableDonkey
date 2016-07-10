@@ -48,18 +48,11 @@ public final class FileKeyAssistant {
     private static final Logger logger = LoggerFactory.getLogger(FileKeyAssistant.class);
 
     public static Optional<byte[]> uuid(byte[] fileKey) {
-        try {
-            ByteBuffer buffer = ByteBuffer.wrap(fileKey);
-            byte[] uuid = new byte[0x10];
-            buffer.get(uuid);
-            return Optional.of(uuid);
-
-        } catch (BufferUnderflowException ex) {
-            logger.warn("-- uuid() - BufferUnderflowException: {}", ex);
-            return Optional.empty();
-        }
+        return fileKey.length < 0x10
+                ? Optional.empty()
+                : Optional.of(Arrays.copyOfRange(fileKey, 0, 0x10));
     }
-
+ 
     public static Optional<byte[]> unwrap(Function<byte[], Optional<KeyBag>> keyBags, int protectionClass, byte[] fileKey) {
         return uuid(fileKey)
                 .flatMap(keyBags::apply)
@@ -73,8 +66,12 @@ public final class FileKeyAssistant {
 
         boolean uuidMatch = uuid.map(u -> Arrays.areEqual(keyBag.uuid(), u))
                 .orElse(false);
-        if (!uuidMatch) {
-            logger.warn("-- unwrap() - fileKey/ keybag uuid mismatch: 0x{} 0x{}",
+
+        if (uuidMatch) {
+            logger.debug("-- unwrap() - positive uuid match fileKey: 0x{} keybag: 0x{}",
+                    uuid.map(Hex::toHexString), Hex.toHexString(keyBag.uuid()));
+        } else {
+            logger.warn("-- unwrap() - negative uuid match fileKey: 0x{} keybag: 0x{}",
                     uuid.map(Hex::toHexString), Hex.toHexString(keyBag.uuid()));
         }
 
