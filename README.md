@@ -1,3 +1,12 @@
+**Update**, 9 July 2016. 
+
+It's been a looooooong 48 hours and I've added some code, I've tidied up some code and I've eaten some doughnuts. I also managed to break the protection class decryption in earlier builds which should now be functional again.
+
+I was rather hoping that someone would like to port this over to Python. If you are interested, don't let the code complexity put you off. I don't have an IT background, I don't work in IT and I'm not a programmer yet I've still been able to make progress and there's no reason why anyone else can't also. Please let me know and I'll be happy to assist as my free time allows.
+
+In the meantime I'll continue to simplify the codebase and eat more doughnuts.
+
+
 **Update**, 7 July 2016. 
 
 Sorry for the lack of input, but I've been snowed under at work. I've pushed a new build that should hopefully work with iOS 9.3.
