@@ -21,49 +21,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xfile;
+package com.github.horrorho.inflatabledonkey.crypto.xblock;
 
 import java.util.Arrays;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
 
 /**
- * BlockDecrypters.
+ * XBlockCiphers.
  *
  * @author Ahseya
  */
 @Immutable
-public final class BlockDecrypters {
+public final class XBlockCiphers {
 
-    public static BlockDecrypter create(byte[] key) {
-        BufferedBlockCipher cipher = new BufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
-        SHA1Digest digest = new SHA1Digest();
-        return create(cipher, digest, key);
-    }
+    private static final int BLOCK_LENGTH = 0x1000;
 
-    static BlockDecrypter create(BufferedBlockCipher cipher, Digest digest, byte[] key) {
-        ParametersWithIV blockIVKey = blockIVKey(digest, cipher.getBlockSize(), key);
+    public static XBlockCipher create(byte[] key) {
+        XBlockIndexHash blockIndexHash = blockIndexHash(key);
         KeyParameter keyParameter = new KeyParameter(key);
+        BlockCipher cipher = new CBCBlockCipher(new AESEngine());
 
-        return new BlockDecrypter(cipher, blockIVKey, keyParameter);
+        return new XBlockCipher(cipher, blockIndexHash, keyParameter, BLOCK_LENGTH);
     }
 
-    static ParametersWithIV blockIVKey(Digest digest, int length, byte[] key) {
-        byte[] hash = new byte[digest.getDigestSize()];
-
+    static XBlockIndexHash blockIndexHash(byte[] key) {
+        Digest digest = new SHA1Digest();
+        byte[] out = new byte[digest.getDigestSize()];
         digest.reset();
         digest.update(key, 0, key.length);
-        digest.doFinal(hash, 0);
+        digest.doFinal(out, 0);
 
-        KeyParameter keyParameter = new KeyParameter(Arrays.copyOfRange(hash, 0, length));
-        byte[] iv = new byte[length];
+        AESFastEngine cipher = new AESFastEngine();
+        int blockSize = cipher.getBlockSize();
 
-        return new ParametersWithIV(keyParameter, iv);
+        KeyParameter keyParameter = new KeyParameter(Arrays.copyOfRange(out, 0, blockSize));
+        cipher.init(true, keyParameter);
+
+        return new XBlockIndexHash(cipher);
     }
 }

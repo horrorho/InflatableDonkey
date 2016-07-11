@@ -42,7 +42,7 @@ public class FileTruncater {
 
     public static void truncate(Path file, long to) throws UncheckedIOException {
         try {
-            if (to == 0) {
+            if (to <= 0) {  // TODO consider:  to < 0
                 return;
             }
 

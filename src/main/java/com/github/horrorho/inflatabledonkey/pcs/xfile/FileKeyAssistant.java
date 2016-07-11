@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
+import com.github.horrorho.inflatabledonkey.crypto.FC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import java.nio.BufferUnderflowException;
@@ -145,7 +145,7 @@ public final class FileKeyAssistant {
         sha256.update(myPublicKey, 0, myPublicKey.length);
         sha256.doFinal(hash, 0);
 
-        return RFC3394Wrap.unwrap(hash, wrappedKey);
+        return FC3394Wrap.unwrapAES(hash, wrappedKey);
     }
 }
 // TODO buffer underflow exceptions

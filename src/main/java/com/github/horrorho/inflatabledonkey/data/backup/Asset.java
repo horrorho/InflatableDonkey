@@ -165,6 +165,10 @@ public final class Asset {
         return encryptedAttribute("encryptionKey", NSData.class, NSData::bytes);
     }
 
+    public Optional<Integer> attributeSize() {
+        return encryptedAttribute("size", NSNumber.class, NSNumber::intValue);
+    }
+
     public Optional<CloudKit.Asset> asset() {
         return asset;
     }

@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.zone;
 
-import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
+import com.github.horrorho.inflatabledonkey.crypto.FC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.RFC5869KDF;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
@@ -131,7 +131,7 @@ public final class PZAssistantLight {
         byte[] dk = RFC5869KDF.apply(S, salt, info, SHA256Digest::new, keyLength);
         logger.debug("-- unwrap() - dk: 0x{}", Hex.toHexString(salt));
 
-        Optional<byte[]> unwrapped = RFC3394Wrap.unwrap(dk, wrappedKey);
+        Optional<byte[]> unwrapped = FC3394Wrap.unwrapAES(dk, wrappedKey);
         logger.debug("-- unwrap() - unwrapped key: 0x{}", unwrapped.map(Hex::toHexString));
 
         return unwrapped;

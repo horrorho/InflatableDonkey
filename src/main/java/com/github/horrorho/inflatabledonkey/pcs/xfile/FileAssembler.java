@@ -23,13 +23,16 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.io.InputReferenceStream;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.crypto.xblock.XBlockCiphers;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -43,7 +46,10 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.DigestInputStream;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,28 +88,56 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     @Override
     public boolean test(Asset asset, List<Chunk> chunks) {
         logger.trace("<< test() - asset: {} chunks: {}", asset, chunks.size());
-        boolean success = filePath.apply(asset)
-                .filter(DirectoryAssistant::createParent)
-                .map(path -> encryptionkeyOp(path, asset, chunks))
-                .orElse(false);
+        boolean success = pathOp(asset, chunks);
         logger.trace(">> test() - success: {}", success);
         return success;
     }
 
-    public boolean encryptionkeyOp(Path path, Asset asset, List<Chunk> chunks) {
+    public boolean pathOp(Asset asset, List<Chunk> chunks) {
+        return filePath.apply(asset)
+                .filter(DirectoryAssistant::createParent)
+                .map(path -> truncateOp(path, asset, chunks))
+                .orElse(false);
+    }
+
+    public boolean truncateOp(Path path, Asset asset, List<Chunk> chunks) {
+        if (encryptionKeyOp(path, asset, chunks)) {
+            try {
+                asset.attributeSize()
+                        .filter(size -> size != asset.size())
+                        .ifPresent(size -> FileTruncater.truncate(path, size));
+                return true;
+            } catch (UncheckedIOException ex) {
+                logger.warn("-- truncateOp() - UncheckedIOException: ", ex);
+            }
+        }
+        return false;
+    }
+
+    public boolean encryptionKeyOp(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
-                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum(), asset.size()));
     }
 
     public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] wrappedKey) {
-        Boolean orElse = unwrapKey.apply(wrappedKey, asset.protectionClass())
-                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
-                .orElse(false);
-        return orElse;
+        return unwrapKey.apply(wrappedKey, asset.protectionClass())
+                .map(key -> assemble(
+                        path,
+                        chunks,
+                        Optional.of(key),
+                        asset.fileChecksum(),
+                        asset.attributeSize().orElse(asset.size())))
+                .orElseGet(() -> {
+                    logger.warn("-- unwrapKeyOp() - failed to unwrap key: 0x{}", Hex.toHexString(wrappedKey));
+                    return false;
+                });
     }
 
-    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum, long size) {
+        logger.debug("-- assemble() - path: {} decryptKey: {} fileChecksum: {} size: {}", path,
+                decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString), size);
+
         try (OutputStream out = Files.newOutputStream(path);
                 InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, fileChecksum)) {
 
@@ -111,8 +145,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
             boolean status = fileChecksum.map(fc -> testFileChecksum(fc, in.reference()))
                     .orElse(true);
-            logger.info("-- assemble() - written: {} complete: {}", path, status);
-
+            logger.info("-- assemble() - written: {} status: {}", path, status);
             return status;
 
         } catch (IOException ex) {
@@ -124,16 +157,25 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     InputReferenceStream<Optional<DigestInputStream>>
             chain(List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
 
-        InputStream one = fileData(chunks);
+        return chainFileChecksumOp(fileData(chunks), decryptKey, fileChecksum);
+    }
 
-        Optional<DigestInputStream> digestInputStream = fileChecksum.flatMap(fc -> FileSignatures.like(one, fc));
-        InputStream two = digestInputStream.map(dis -> (InputStream) dis)
-                .orElse(one);
+    InputReferenceStream<Optional<DigestInputStream>>
+            chainFileChecksumOp(InputStream input, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
 
-        InputStream three = decryptKey.map(key -> (InputStream) FileDecrypterInputStreams.create(two, key))
-                .orElse(two);
+        return fileChecksum.flatMap(fc -> FileSignatures.like(input, fc))
+                .map(dis -> chainDecryptOp(dis, Optional.of(dis), decryptKey))
+                .orElseGet(() -> chainDecryptOp(input, Optional.empty(), decryptKey));
+    }
 
-        return new InputReferenceStream<>(three, digestInputStream);
+    InputReferenceStream<Optional<DigestInputStream>>
+            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> decryptKey) {
+
+        InputStream is = decryptKey.map(XBlockCiphers::create)
+                .map(BufferedBlockCipher::new)
+                .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
+                .orElse(input);
+        return new InputReferenceStream<>(is, digestInput);
     }
 
     InputStream fileData(List<Chunk> chunks) {
@@ -149,3 +191,5 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 .orElse(true);
     }
 }
+// TODO DataLengthException, IllegalStateException
+
