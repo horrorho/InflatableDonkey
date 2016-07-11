@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.DigestInputStream;
 import org.bouncycastle.util.encoders.Hex;
@@ -117,26 +118,21 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     public boolean encryptionKeyOp(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
-                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum(), asset.size()));
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
     public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] wrappedKey) {
         return unwrapKey.apply(wrappedKey, asset.protectionClass())
-                .map(key -> assemble(
-                        path,
-                        chunks,
-                        Optional.of(key),
-                        asset.fileChecksum(),
-                        asset.attributeSize().orElse(asset.size())))
+                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
                 .orElseGet(() -> {
                     logger.warn("-- unwrapKeyOp() - failed to unwrap key: 0x{}", Hex.toHexString(wrappedKey));
                     return false;
                 });
     }
 
-    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum, long size) {
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
         logger.debug("-- assemble() - path: {} decryptKey: {} fileChecksum: {} size: {}", path,
-                decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString), size);
+                decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString));
 
         try (OutputStream out = Files.newOutputStream(path);
                 InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, fileChecksum)) {
@@ -148,8 +144,8 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
             logger.info("-- assemble() - written: {} status: {}", path, status);
             return status;
 
-        } catch (IOException ex) {
-            logger.warn("-- assemble() - file error: ", ex);
+        } catch (IOException | DataLengthException | IllegalStateException ex) {
+            logger.warn("-- assemble() - error: ", ex);
             return false;
         }
     }
@@ -191,5 +187,3 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 .orElse(true);
     }
 }
-// TODO DataLengthException, IllegalStateException
-
