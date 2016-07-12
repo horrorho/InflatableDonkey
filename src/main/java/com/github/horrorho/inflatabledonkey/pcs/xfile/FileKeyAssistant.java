@@ -52,7 +52,7 @@ public final class FileKeyAssistant {
                 ? Optional.empty()
                 : Optional.of(Arrays.copyOfRange(fileKey, 0, 0x10));
     }
- 
+
     public static Optional<byte[]> unwrap(Function<byte[], Optional<KeyBag>> keyBags, int protectionClass, byte[] fileKey) {
         return uuid(fileKey)
                 .flatMap(keyBags::apply)
@@ -84,16 +84,18 @@ public final class FileKeyAssistant {
             unwrap(byte[] myPublicKey, byte[] myPrivateKey, int protectionClass, byte[] fileKey) {
 
         try {
+            logger.trace("<< unwrap() - wrapped key: 0x{} my public: 0x{} my private: 0x{} protection class: {}",
+                    Hex.toHexString(fileKey), Hex.toHexString(myPublicKey), Hex.toHexString(myPrivateKey), protectionClass);
             // Version 2 support only.
             ByteBuffer buffer = ByteBuffer.wrap(fileKey);
 
             byte[] uuid = new byte[0x10];
             buffer.get(uuid);
 
-            buffer.getInt(); // ignored
-            buffer.getInt(); // ignored
+            int u1 = buffer.getInt(); // ignored
+            int u2 = buffer.getInt(); // ignored
             int pc = buffer.getInt();
-            buffer.getInt(); // ignored
+            int u3 = buffer.getInt(); // ignored
             int length = buffer.getInt();
 
             byte[] longKey = new byte[buffer.limit() - buffer.position()];
@@ -107,10 +109,17 @@ public final class FileKeyAssistant {
                 logger.warn("-- unwrap() - incongruent protection class");
             }
 
-            return FileKeyAssistant.unwrap(myPublicKey, myPrivateKey, longKey);
+            logger.debug("-- unwrap() - u1: 0x{} u2: 0x{} u3: 0x{} pc: {} length: {} uuid: 0x{} long: 0x:{} ",
+                    Integer.toHexString(u1), Integer.toHexString(u2), Integer.toHexString(u3),
+                    pc, length, Hex.toHexString(uuid), Hex.toHexString(longKey));
+
+            Optional<byte[]> unwrapped = FileKeyAssistant.unwrap(myPublicKey, myPrivateKey, longKey);
+            logger.trace("<< unwrap() - unwrapped key: 0x{}", unwrapped.map(Hex::toHexString).orElse("NULL"));
+            return unwrapped;
 
         } catch (BufferUnderflowException ex) {
             logger.warn("-- unwrap() - BufferUnderflowException: {}", ex);
+            logger.trace("<< unwrap() - unwrapped key: {}", Optional.empty());
             return Optional.empty();
         }
     }
@@ -135,6 +144,8 @@ public final class FileKeyAssistant {
         SHA256Digest sha256 = new SHA256Digest();
 
         byte[] shared = Curve25519.agreement(otherPublicKey, myPrivateKey);
+        logger.debug("-- curve25519Unwrap() - shared agreement: 0x{}", Hex.toHexString(shared));
+
         byte[] pad = new byte[]{0x00, 0x00, 0x00, 0x01};
         byte[] hash = new byte[sha256.getDigestSize()];
 
@@ -145,6 +156,7 @@ public final class FileKeyAssistant {
         sha256.update(myPublicKey, 0, myPublicKey.length);
         sha256.doFinal(hash, 0);
 
+        logger.debug("-- curve25519Unwrap() - kek: {}", Hex.toHexString(hash));
         return RFC3394Wrap.unwrapAES(hash, wrappedKey);
     }
 }

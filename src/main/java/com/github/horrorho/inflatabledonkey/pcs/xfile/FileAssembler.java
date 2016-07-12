@@ -26,7 +26,6 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import com.github.horrorho.inflatabledonkey.io.InputReferenceStream;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import com.github.horrorho.inflatabledonkey.crypto.xblock.XBlockCiphers;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +49,7 @@ import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.DigestInputStream;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,18 +159,26 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     InputReferenceStream<Optional<DigestInputStream>>
             chainFileChecksumOp(InputStream input, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
 
-        return fileChecksum.flatMap(fc -> FileSignatures.like(input, fc))
+        return fileChecksum
+                .flatMap(fc -> FileSignatures.like(input, fc))
                 .map(dis -> chainDecryptOp(dis, Optional.of(dis), decryptKey))
                 .orElseGet(() -> chainDecryptOp(input, Optional.empty(), decryptKey));
     }
 
     InputReferenceStream<Optional<DigestInputStream>>
-            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> decryptKey) {
+            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey) {
 
-        InputStream is = decryptKey.map(XBlockCiphers::create)
+        InputStream is = fileKey
+                .map(KeyParameter::new)
+                .map(key -> {
+                    FileBlockCipher cipher = new FileBlockCipher();
+                    cipher.init(false, key);
+                    return cipher;
+                })
                 .map(BufferedBlockCipher::new)
                 .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
                 .orElse(input);
+
         return new InputReferenceStream<>(is, digestInput);
     }
 
