@@ -5,7 +5,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.zone;
 
-import com.github.horrorho.inflatabledonkey.crypto.FC3394Wrap;
+import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.NISTKDF;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -47,7 +47,7 @@ public final class PZKeyUnwrap implements BiFunction<byte[], byte[], Optional<by
         byte[] ctrHMac = NISTKDF.ctrHMac(keyDerivationKey, label, SHA256Digest::new, keyLength);
         logger.debug("-- apply() - ctrHMac: 0x{}", Hex.toHexString(ctrHMac));
 
-        Optional<byte[]> key = FC3394Wrap.unwrapAES(ctrHMac, wrappedKey);
+        Optional<byte[]> key = RFC3394Wrap.unwrapAES(ctrHMac, wrappedKey);
         logger.debug("-- apply() - key: 0x:{}", key.map(Hex::toHexString).orElse("NULL"));
 
         return key;

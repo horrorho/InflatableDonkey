@@ -38,11 +38,11 @@ import org.slf4j.LoggerFactory;
  * @author ahseya
  */
 @Immutable
-public final class FC3394Wrap {
+public final class RFC3394Wrap {
 
-    private static final Logger logger = LoggerFactory.getLogger(FC3394Wrap.class);
+    private static final Logger logger = LoggerFactory.getLogger(RFC3394Wrap.class);
 
-    private FC3394Wrap() {
+    private RFC3394Wrap() {
     }
 
     public static Optional<byte[]> unwrapAES(byte[] keyEncryptionKey, byte[] wrappedKey) {
