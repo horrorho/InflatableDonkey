@@ -77,6 +77,10 @@ public enum Property {
         }
     }
 
+    static void touch() {
+        touched = true;
+    }
+    
     static int parseInt(String s) {
         try {
             return Integer.parseInt(s);
@@ -116,7 +120,7 @@ public enum Property {
     }
 
     public Optional<String> value() {
-        touched = true;
+        touch();
         return Optional.ofNullable(value);
     }
 

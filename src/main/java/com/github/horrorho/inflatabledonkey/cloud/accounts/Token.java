@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.accounts;
 
+import com.github.horrorho.inflatabledonkey.args.Property;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -48,6 +49,6 @@ public enum Token {
             .collect(Collectors.toMap(Enum::name, Function.identity()));
 
     public static Optional<Token> token(String name) {
-        return Optional.ofNullable(TOKENS.get(name.toUpperCase()));
+        return Optional.ofNullable(TOKENS.get(name.toUpperCase(Property.locale())));
     }
 }

@@ -33,11 +33,11 @@ import java.util.Objects;
 public class UncheckedInterruptedException extends RuntimeException {
 
     public UncheckedInterruptedException(String message, InterruptedException cause) {
-        super(message, Objects.requireNonNull(cause));
+        super(message, cause);
     }
 
     public UncheckedInterruptedException(InterruptedException cause) {
-        super(Objects.requireNonNull(cause));
+        super(cause);
     }
 
     @Override

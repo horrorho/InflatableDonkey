@@ -101,7 +101,7 @@ public final class Device extends AbstractRecord {
             return name();
         }
         return split[1].toUpperCase(Property.locale())
-                .toUpperCase();
+                .toUpperCase(Property.locale());
     }
 
     public String info() {

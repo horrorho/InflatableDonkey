@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,9 @@ public final class RawProtoDecoder {
 
             boolean completed = exec.waitFor(15, TimeUnit.SECONDS);
 
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(exec.getInputStream()))) {
+            try (BufferedReader br
+                    = new BufferedReader(new InputStreamReader(exec.getInputStream(), StandardCharsets.UTF_8))) {
+
                 StringWriter decoded = new StringWriter();
                 PrintWriter print = new PrintWriter(decoded);
 

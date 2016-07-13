@@ -168,11 +168,11 @@ public class Main {
 
         // Filters.
         Property.FILTER_DEVICE.list().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
-        List<String> filterDevices = Property.FILTER_DEVICE.list().orElse(Collections.emptyList());
+        List<String> filterDevices = Property.FILTER_DEVICE.list().orElseGet(() -> Collections.emptyList());
         Predicate<Device> deviceFilter = Filters.deviceFilter(filterDevices);
 
         Property.FILTER_SNAPSHOT.list().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
-        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.intList().orElse(Collections.emptyList());
+        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.intList().orElseGet(() -> Collections.emptyList());
         UnaryOperator<List<Snapshot>> snapshotFilter = Filters.<Snapshot>listFilter(filterSnapshots);
 
         Map<Device, List<Snapshot>> filtered = deviceSnapshots
@@ -200,11 +200,11 @@ public class Main {
         }
 
         Property.FILTER_DOMAIN.list().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
-        List<String> filterDomains = Property.FILTER_DOMAIN.list().orElse(Collections.emptyList());
+        List<String> filterDomains = Property.FILTER_DOMAIN.list().orElseGet(() -> Collections.emptyList());
         Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
 
         Property.FILTER_EXTENSION.list().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
-        List<String> filterExtensions = Property.FILTER_EXTENSION.list().orElse(Collections.emptyList());
+        List<String> filterExtensions = Property.FILTER_EXTENSION.list().orElseGet(() -> Collections.emptyList());
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
         backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);

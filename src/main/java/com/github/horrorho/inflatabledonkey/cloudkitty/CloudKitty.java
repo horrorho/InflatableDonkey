@@ -66,7 +66,7 @@ public final class CloudKitty {
         String baseUrl = account.mobileMe()
                 .optional("com.apple.Dataclass.CKDatabaseService", "url")
                 .map(url -> url + "/api/client")
-                .orElse(ckInit.production().url());
+                .orElseGet(() -> ckInit.production().url());
 
         String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
 

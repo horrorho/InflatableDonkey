@@ -66,8 +66,6 @@ public class StandardChunkEngine implements ChunkEngine {
             StorageHostChunkListContainer storageHostChunkListContainer,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
-        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
-
         Optional<Map<ChunkServer.ChunkReference, Chunk>> chunkStoreChunks
                 = chunkStoreChunks(storageHostChunkListContainer);
 
@@ -98,7 +96,7 @@ public class StandardChunkEngine implements ChunkEngine {
 
     byte[] fetchChunkData(HttpClient httpClient, ChunkServer.StorageHostChunkList chunkList) {
         return ChunkClient.fetch(httpClient, chunkList)
-                .orElse(new byte[]{});
+                .orElseGet(() -> new byte[]{});
     }
 
     Optional<Map<ChunkServer.ChunkReference, Chunk>>

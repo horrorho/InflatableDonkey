@@ -96,6 +96,6 @@ public final class AssetsClient {
                     previous.set(z);
                     return AssetsFactory.from(record, z::decrypt);
                 })
-                .orElse(AssetsFactory.from(record, previous.get()::decrypt));
+                .orElseGet(() -> AssetsFactory.from(record, previous.get()::decrypt));
     }
 }
