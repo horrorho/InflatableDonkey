@@ -24,8 +24,8 @@
 package com.github.horrorho.inflatabledonkey.pcs.service;
 
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

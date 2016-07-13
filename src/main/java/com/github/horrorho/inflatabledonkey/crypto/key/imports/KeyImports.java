@@ -29,8 +29,8 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPrivateKeyIm
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPrivateKeyImportCompact;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPublicKeyImportCompact;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPublicKeyImportX963;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.crypto.key.KeyFactories;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyFactories;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import java.util.Optional;
 import java.util.function.Function;

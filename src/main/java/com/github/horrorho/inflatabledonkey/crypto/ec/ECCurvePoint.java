@@ -27,8 +27,10 @@ import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.slf4j.Logger;
@@ -92,6 +94,16 @@ public final class ECCurvePoint {
 
             return P.getAffineXCoord().getEncoded();
         }
+    }
+
+    public boolean verifySignature(byte[] message, BigInteger r, BigInteger s) {
+        ECDomainParameters ecDomainParameters = ECAssistant.ecDomainParametersFrom(x9ECParameters);
+        ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(Q, ecDomainParameters);
+
+        ECDSASigner signer = new ECDSASigner();
+        signer.init(false, ecPublicKeyParameters);
+
+        return signer.verifySignature(message, r, s);
     }
 
     public ECPoint copyQ() {
@@ -164,8 +176,7 @@ public final class ECCurvePoint {
     @Override
     public String toString() {
         return "ECCurvePoint{"
-                + "lock=" + lock
-                + ", Q=" + Q
+                + "Q=" + Q
                 + ", curveName=" + curveName
                 + ", x9ECParameters=" + x9ECParameters
                 + '}';

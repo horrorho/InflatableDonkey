@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.imports.ECPublicKeyImportCompact;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;

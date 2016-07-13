@@ -26,8 +26,8 @@ package com.github.horrorho.inflatabledonkey.pcs.service;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import com.github.horrorho.inflatabledonkey.data.der.SignatureInfo;
@@ -44,7 +44,7 @@ import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Objects;
-import org.bouncycastle.util.encoders.Hex; 
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * ServiceKeySetBuilder.
@@ -203,7 +203,8 @@ public final class ServiceKeySetBuilder {
         logger.debug("-- build() - unreferenced keys: {}", unreferencedKeys);
         logger.debug("-- build() - incongruent keys: {}", incongruentKeys);
 
-        serviceKeyIDs.forEach((service, keyID) -> logger.debug("-- build() - service: {} key id: {}", service, keyID));
+        serviceKeyIDs.forEach((service, keyID)
+                -> logger.debug("-- build() - service: {} key id: {} name: {} ", service, keyID, Service.service(service)));
 
         privateKeys.forEach((keyId, key) -> logger.debug("-- build() - key id: {} trusted: {} public export: 0x{}",
                 keyId, key.isTrusted(), Hex.toHexString(key.exportPublicData())));

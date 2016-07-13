@@ -25,8 +25,8 @@ package com.github.horrorho.inflatabledonkey.pcs.zone;
 
 import com.github.horrorho.inflatabledonkey.crypto.GCMDataA;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
-import com.github.horrorho.inflatabledonkey.crypto.key.Key;
-import com.github.horrorho.inflatabledonkey.crypto.key.KeyID;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
