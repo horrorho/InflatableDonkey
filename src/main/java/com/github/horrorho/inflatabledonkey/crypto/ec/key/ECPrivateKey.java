@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * DefaultECPublicKey.
  *
  * @author cain
  */
@@ -46,21 +45,21 @@ public final class ECPrivateKey implements ECKey {
             create(Optional<BigInteger> x, Optional<BigInteger> y, BigInteger d, String curveName) {
 
         return ECCurvePoint.create(d, curveName)
-                .filter(Q -> correlate(x, y, Q))
+                .filter(Q -> test(x, y, Q))
                 .map(ECPublicKey::create)
                 .map(pub -> new ECPrivateKey(pub, d));
     }
 
-    static boolean correlate(Optional<BigInteger> x, Optional<BigInteger> y, ECCurvePoint Q) {
-        boolean correlates = (x.map(c -> c.equals(Q.x())).orElse(true)
+    static boolean test(Optional<BigInteger> x, Optional<BigInteger> y, ECCurvePoint Q) {
+        boolean test = (x.map(c -> c.equals(Q.x())).orElse(true)
                 && y.map(c -> c.equals(Q.y())).orElse(true));
 
-        if (!correlates) {
-            logger.warn("-- correlate() - bad point, x: 0x{} y: 0x{} Q: {}",
+        if (!test) {
+            logger.warn("-- test() - bad point, x: 0x{} y: 0x{} Q: {}",
                     x.map(b -> b.toString(16)), y.map(b -> b.toString(16)), Q);
         }
 
-        return correlates;
+        return test;
     }
 
     private final ECPublicKey publicKey;
@@ -74,7 +73,7 @@ public final class ECPrivateKey implements ECKey {
     public byte[] agreement(ECPublicKey publicKey) {
         return publicKey.point().agreement(d);
     }
-    
+
     public BigInteger d() {
         return d;
     }
