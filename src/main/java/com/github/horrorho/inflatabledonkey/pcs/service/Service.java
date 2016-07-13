@@ -29,24 +29,24 @@ package com.github.horrorho.inflatabledonkey.pcs.service;
  * @author Ahseya
  */
 public enum Service {
-    NULL(0),            // Unspecified.
-    MASTER(1),          // MasterKey
+    RAW(0),             // Raw
+    PCS_MASTERKEY(1),   // MasterKey
     BLADERUNNER(2),     // iCloudDrive
     HYPERION(3),        // Photos
     LIVERPOOL(4),       // CloudKit
-    IMESSAGE(5),        // iMessage
-    FDE(6),             // FDE
+    PCS_ESCROW(5),      // Escrow
+    PCS_FDE(6),         // FDE
     PIANOMOVER(7),      // Maildrop
-    LUMPYMATTRESS(8),   // * placeholder *
-    FURIOUSPOTATO(9),   // * placeholder *
-    BROKENCOCONUT(10),  // * placeholder *
-    DRIEDWATER(11),     // * placeholder *
+    PCS_BACKUP(8),      // Backup
+    PCS_NOTES(9),       // Notes
+    PCS_IMESSAGE(10),   // iMessage
+    FELDSPAR(11),       // News.
     BURNTCOOKIE(12),    // * placeholder *
-    WOBBLYQUARK(13),    // * placeholder *
+    WOBBLYJELLY(13),    // * placeholder *
     MIDNIGHTBLUE(14),   // * placeholder *
-    MISSINGBUTTON(15),  // * placeholder *
-    ELECTRICSHEEP(16),  // * placeholder *
-    EXMACHINA(17);      // * placeholder *
+    DRIEDWATER(15),     // * placeholder *
+    FURIOUSPOTATO(16),  // * placeholder *
+    LUMPMATTRESS(17);   // * placeholder *
         
     private final int number;
 

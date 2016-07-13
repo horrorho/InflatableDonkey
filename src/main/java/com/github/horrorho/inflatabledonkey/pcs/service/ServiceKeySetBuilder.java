@@ -171,7 +171,7 @@ public final class ServiceKeySetBuilder {
         }
 
         Optional<Key<ECPrivateKey>> masterKeyOptional
-                = ServiceKeySetAssistant.keyForService(privateKeys.values(), Service.MASTER.number());
+                = ServiceKeySetAssistant.keyForService(privateKeys.values(), Service.PCS_MASTERKEY.number());
         if (!masterKeyOptional.isPresent()) {
             logger.warn("-- build() - master key not found: {}");
             return Optional.empty();
