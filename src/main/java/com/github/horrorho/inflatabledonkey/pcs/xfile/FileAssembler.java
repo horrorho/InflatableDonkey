@@ -168,7 +168,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     InputReferenceStream<Optional<DigestInputStream>>
             chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey) {
 
-        InputStream is = fileKey
+        return fileKey
                 .map(KeyParameter::new)
                 .map(key -> {
                     FileBlockCipher cipher = new FileBlockCipher();
@@ -177,9 +177,8 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 })
                 .map(BufferedBlockCipher::new)
                 .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
-                .orElse(input);
-
-        return new InputReferenceStream<>(is, digestInput);
+                .map(cis -> new InputReferenceStream<>(cis, digestInput))
+                .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
     }
 
     InputStream fileData(List<Chunk> chunks) {
