@@ -26,7 +26,6 @@ package com.github.horrorho.inflatabledonkey.responsehandler;
 import java.io.IOException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.HttpEntity;
-import org.apache.http.impl.client.AbstractResponseHandler;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -35,13 +34,13 @@ import org.apache.http.util.EntityUtils;
  * @author Ahseya
  */
 @Immutable
-public final class ByteArrayResponseHandler extends AbstractResponseHandler<byte[]> {
+public final class ByteArrayResponseHandler extends DonkeyResponseHandler<byte[]> {
 
     public static ByteArrayResponseHandler instance() {
-        return instance;
+        return INSTANCE;
     }
 
-    private static final ByteArrayResponseHandler instance = new ByteArrayResponseHandler();
+    private static final ByteArrayResponseHandler INSTANCE = new ByteArrayResponseHandler();
 
     ByteArrayResponseHandler() {
     }

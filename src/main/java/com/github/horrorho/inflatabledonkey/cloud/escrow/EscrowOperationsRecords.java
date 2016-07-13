@@ -44,7 +44,7 @@ public final class EscrowOperationsRecords {
     private static final Logger logger = LoggerFactory.getLogger(EscrowOperationsRecords.class);
 
     private static final PropertyListResponseHandler<NSDictionary> RESPONSE_HANDLER
-            = PropertyListResponseHandler.nsDictionaryResponseHandler();
+            = PropertyListResponseHandler.dictionary();
 
     public static NSDictionary records(HttpClient httpClient, EscrowProxyRequestFactory requests) throws IOException {
         /* 

@@ -36,10 +36,10 @@ import com.dd.plist.UID;
 import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Objects;
 import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.HttpEntity;
-import org.apache.http.impl.client.AbstractResponseHandler;
 import org.apache.http.util.EntityUtils;
 import org.xml.sax.SAXException;
 
@@ -50,73 +50,72 @@ import org.xml.sax.SAXException;
  * @param <T> type
  */
 @Immutable
-public final class PropertyListResponseHandler<T extends NSObject> extends AbstractResponseHandler<T> {
+public final class PropertyListResponseHandler<T extends NSObject> extends DonkeyResponseHandler<T> {
 
-    public static PropertyListResponseHandler<NSArray> nsArrayResponseHandler() {
-        return nsArrayResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSArray> array() {
+        return ARRAY;
     }
 
-    public static PropertyListResponseHandler<NSData> nsDataResponseHandler() {
-        return nsDataResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSData> data() {
+        return DATA;
     }
 
-    public static PropertyListResponseHandler<NSDate> nsDateResponseHandler() {
-        return nsDateResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSDate> date() {
+        return DATE;
     }
 
-    public static PropertyListResponseHandler<NSDictionary> nsDictionaryResponseHandler() {
-        return nsDictionaryResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSDictionary> dictionary() {
+        return DICTIONARY;
     }
 
-    public static PropertyListResponseHandler<NSNumber> nsNumberResponseHandler() {
-        return nsNumberResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSNumber> number() {
+        return NUMBER;
     }
 
-    public static PropertyListResponseHandler<NSSet> nsSetResponseHandler() {
-        return nsSetResponseHandlerInstance;
+    public static PropertyListResponseHandler<NSSet> set() {
+        return SET;
     }
 
-    public static PropertyListResponseHandler<UID> nsUIDResponseHandler() {
-        return nsUIDResponseHandlerInstance;
+    public static PropertyListResponseHandler<UID> uid() {
+        return UID;
     }
 
-    private static final PropertyListResponseHandler<NSArray> nsArrayResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSArray> ARRAY = new PropertyListResponseHandler<>(NSArray.class);
 
-    private static final PropertyListResponseHandler<NSData> nsDataResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSData> DATA = new PropertyListResponseHandler<>(NSData.class);
 
-    private static final PropertyListResponseHandler<NSDate> nsDateResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSDate> DATE = new PropertyListResponseHandler<>(NSDate.class);
 
-    private static final PropertyListResponseHandler<NSDictionary> nsDictionaryResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSDictionary> DICTIONARY = new PropertyListResponseHandler<>(NSDictionary.class);
 
-    private static final PropertyListResponseHandler<NSNumber> nsNumberResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSNumber> NUMBER = new PropertyListResponseHandler<>(NSNumber.class);
 
-    private static final PropertyListResponseHandler<NSSet> nsSetResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<NSSet> SET = new PropertyListResponseHandler<>(NSSet.class);
 
-    private static final PropertyListResponseHandler<UID> nsUIDResponseHandlerInstance
-            = new PropertyListResponseHandler<>();
+    private static final PropertyListResponseHandler<UID> UID = new PropertyListResponseHandler<>(UID.class);
 
-    PropertyListResponseHandler() {
+    private final Class<T> to;
+
+    PropertyListResponseHandler(Class<T> to) {
+        this.to = Objects.requireNonNull(to, "to");
     }
 
     @Override
     public T handleEntity(HttpEntity entity) throws IOException {
+        NSObject nsObject;
+
         try {
-            return (T) PropertyListParser.parse(EntityUtils.toByteArray(entity));
+            // Avoiding PropertyListParser#parse(InputStream) as the current Maven build (1.16) can bug out.
+            nsObject = PropertyListParser.parse(EntityUtils.toByteArray(entity));
 
-        } catch (ClassCastException |
-                IOException |
-                PropertyListFormatException |
-                ParseException |
-                ParserConfigurationException |
-                SAXException ex) {
-
-            throw new BadDataException("Failed to parse property list", ex);
+        } catch (PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+            throw new BadDataException("failed to parse property list", ex);
         }
+
+        if (to.isAssignableFrom(nsObject.getClass())) {
+            return to.cast(nsObject);
+        }
+
+        throw new BadDataException("failed to cast property list: " + nsObject.getClass());
     }
 }

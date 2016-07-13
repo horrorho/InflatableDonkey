@@ -52,7 +52,7 @@ public final class Authenticator {
 
         AuthenticationRequestFactory authenticationRequestFactory = AuthenticationRequestFactory.instance();
         PropertyListResponseHandler<NSDictionary> nsDictionaryResponseHandler
-                = PropertyListResponseHandler.nsDictionaryResponseHandler();
+                = PropertyListResponseHandler.dictionary();
 
         try {
             HttpUriRequest request = authenticationRequestFactory.apply(id, password);

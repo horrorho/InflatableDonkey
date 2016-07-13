@@ -53,7 +53,7 @@ public final class Accounts {
                 .apply(auth.dsPrsID(), auth.mmeAuthToken());
 
         NSDictionary settings
-                = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.nsDictionaryResponseHandler());
+                = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.dictionary());
 
         return account(settings);
     }

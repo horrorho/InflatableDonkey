@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 import org.apache.http.HttpEntity;
-import org.apache.http.impl.client.AbstractResponseHandler;
 
 /**
  * Json ResponseHandler.
@@ -40,29 +39,31 @@ import org.apache.http.impl.client.AbstractResponseHandler;
  * @param <T> type
  */
 @Immutable
-public final class JsonResponseHandler<T> extends AbstractResponseHandler<T> {
+public final class JsonResponseHandler<T> extends DonkeyResponseHandler<T> {
 
-    private static final ObjectMapper defaultObjectMapper = new ObjectMapper();
+    // ObjectMapper thread safe if we don't modify its configuration.
+    // http://stackoverflow.com/questions/3907929/should-i-declare-jacksons-objectmapper-as-a-static-field
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final ObjectMapper objectMapper;
-    private final Class<T> clazz;
+    private final Class<T> to;
 
-    JsonResponseHandler(ObjectMapper objectMapper, Class<T> clazz) {
+    JsonResponseHandler(ObjectMapper objectMapper, Class<T> to) {
         this.objectMapper = Objects.requireNonNull(objectMapper);
-        this.clazz = Objects.requireNonNull(clazz);
+        this.to = Objects.requireNonNull(to);
     }
 
-    public JsonResponseHandler(Class<T> clazz) {
-        this(defaultObjectMapper, clazz);
+    public JsonResponseHandler(Class<T> to) {
+        this(OBJECT_MAPPER, to);
     }
 
     @Override
     public T handleEntity(HttpEntity entity) throws IOException {
         try (InputStream inputStream = entity.getContent()) {
-            return objectMapper.readValue(inputStream, clazz);
-            
+            return objectMapper.readValue(inputStream, to);
+
         } catch (JsonProcessingException ex) {
-            throw new BadDataException("Failed to parse json", ex);
+            throw new BadDataException("failed to parse json", ex);
         }
     }
 }

@@ -61,7 +61,7 @@ public final class EscrowOperationsRecover {
     private static final Logger logger = LoggerFactory.getLogger(EscrowOperationsRecover.class);
 
     private static final PropertyListResponseHandler<NSDictionary> RESPONSE_HANDLER
-            = PropertyListResponseHandler.nsDictionaryResponseHandler();
+            = PropertyListResponseHandler.dictionary();
 
     public static NSDictionary recover(HttpClient httpClient, EscrowProxyRequestFactory requests) throws IOException {
         SRPClient srpClient = SRPFactory.rfc5054(new SecureRandom());

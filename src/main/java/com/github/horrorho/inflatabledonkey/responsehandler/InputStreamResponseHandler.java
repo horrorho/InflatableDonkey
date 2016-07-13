@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 import org.apache.http.HttpEntity;
-import org.apache.http.impl.client.AbstractResponseHandler;
 
 /**
  * InputStream ResponseHandler.
@@ -38,7 +37,7 @@ import org.apache.http.impl.client.AbstractResponseHandler;
  * @param <T> return type
  */
 @Immutable
-public final class InputStreamResponseHandler<T> extends AbstractResponseHandler<T> {
+public final class InputStreamResponseHandler<T> extends DonkeyResponseHandler<T> {
 
     private final IOFunction<InputStream, T> function;
 
