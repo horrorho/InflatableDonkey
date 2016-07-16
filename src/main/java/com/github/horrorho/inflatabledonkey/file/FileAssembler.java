@@ -71,15 +71,15 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.intValue().orElse(8192);
     private static final int DATA_UNIT_SIZE = 0x1000; // TODO inject via Property
 
-    private final Function<FileKeyMetaData, Optional<byte[]>> fileKey;
+    private final Function<EncryptionKeyBlob, Optional<byte[]>> fileKey;
     private final FilePath filePath;
 
-    public FileAssembler(Function<FileKeyMetaData, Optional<byte[]>> fileKey, FilePath filePath) {
+    public FileAssembler(Function<EncryptionKeyBlob, Optional<byte[]>> fileKey, FilePath filePath) {
         this.fileKey = Objects.requireNonNull(fileKey, "fileKey");
         this.filePath = Objects.requireNonNull(filePath, "filePath");
     }
 
-    public FileAssembler(Function<FileKeyMetaData, Optional<byte[]>> fileKey, Path outputFolder) {
+    public FileAssembler(Function<EncryptionKeyBlob, Optional<byte[]>> fileKey, Path outputFolder) {
         this(fileKey, new FilePath(outputFolder));
     }
 
@@ -127,7 +127,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] encryptionKey) {
-        return FileKeyMetaData.create(encryptionKey)
+        return EncryptionKeyBlob.create(encryptionKey)
                 .map(fileKeyMetaData -> unwrapKeyOp(path, asset, chunks, fileKeyMetaData))
                 .orElseGet(() -> {
                     logger.warn("-- unwrapKeyOp() - failed to extract file key metadata");
@@ -135,7 +135,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 });
     }
 
-    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, FileKeyMetaData fileKeyMetaData) {
+    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, EncryptionKeyBlob fileKeyMetaData) {
         if (asset.protectionClass() != fileKeyMetaData.protectionClass()) {
             logger.warn("-- unwrapKeyOp() - negative protection class match asset: {} metadata: {}",
                     asset.protectionClass(), fileKeyMetaData.protectionClass());

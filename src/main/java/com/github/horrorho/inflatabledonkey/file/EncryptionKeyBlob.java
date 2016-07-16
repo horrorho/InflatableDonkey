@@ -32,21 +32,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Unspecified file key blob data.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileKeyMetaData {
+public final class EncryptionKeyBlob {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileKeyMetaData.class);
+    private static final Logger logger = LoggerFactory.getLogger(EncryptionKeyBlob.class);
 
-    public static Optional<byte[]> uuid(byte[] fileKey) {
-        return fileKey.length < 0x10
+    public static Optional<byte[]> uuid(byte[] data) {
+        return data.length < 0x10
                 ? Optional.empty()
-                : Optional.of(Arrays.copyOfRange(fileKey, 0, 0x10));
+                : Optional.of(Arrays.copyOfRange(data, 0, 0x10));
     }
 
-    public static Optional<FileKeyMetaData> create(byte[] data) {
+    public static Optional<EncryptionKeyBlob> create(byte[] data) {
         logger.trace("<< create() - data: 0x{}", Hex.toHexString(data));
         if (data.length < 36) {
             logger.warn("-- create() - short input length: 0x{}", Hex.toHexString(data));
@@ -77,7 +78,7 @@ public final class FileKeyMetaData {
         buffer.get(publicKey);
         buffer.get(wrappedKey);
 
-        FileKeyMetaData fileMetaData = new FileKeyMetaData(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
+        EncryptionKeyBlob fileMetaData = new EncryptionKeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
         logger.trace(">> create() - fileMetaData: {}", fileMetaData);
         return Optional.of(fileMetaData);
     }
@@ -90,7 +91,7 @@ public final class FileKeyMetaData {
     private final int u2;
     private final int u3;
 
-    public FileKeyMetaData(byte[] uuid, byte[] publicKey, byte[] wrappedKey, int protectionClass, int u1, int u2, int u3) {
+    public EncryptionKeyBlob(byte[] uuid, byte[] publicKey, byte[] wrappedKey, int protectionClass, int u1, int u2, int u3) {
         this.uuid = Arrays.copyOf(uuid, uuid.length);
         this.publicKey = Arrays.copyOf(publicKey, publicKey.length);
         this.wrappedKey = Arrays.copyOf(wrappedKey, wrappedKey.length);
@@ -157,7 +158,7 @@ public final class FileKeyMetaData {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileKeyMetaData other = (FileKeyMetaData) obj;
+        final EncryptionKeyBlob other = (EncryptionKeyBlob) obj;
         if (this.protectionClass != other.protectionClass) {
             return false;
         }
@@ -184,7 +185,7 @@ public final class FileKeyMetaData {
 
     @Override
     public String toString() {
-        return "FileKeyMetaData{"
+        return "FileKeyBlob{"
                 + "uuid=0x" + Hex.toHexString(uuid)
                 + ", publicKey=0x" + Hex.toHexString(publicKey)
                 + ", wrappedKey=0x" + Hex.toHexString(wrappedKey)

@@ -28,8 +28,8 @@ import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
-import com.github.horrorho.inflatabledonkey.file.FileKeyAssistant;
-import com.github.horrorho.inflatabledonkey.file.FileKeyMetaData;
+import com.github.horrorho.inflatabledonkey.file.FileKeys;
+import com.github.horrorho.inflatabledonkey.file.EncryptionKeyBlob;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -79,8 +79,8 @@ public final class DownloadAssistant {
         assetDownloader.get(httpClient, authorizedAssets, fileAssembler);
     }
 
-    Optional<byte[]> unwrapKey(FileKeyMetaData fileKeyMetaData) {
-        return FileKeyAssistant.unwrap(fileKeyMetaData, keyBagManager::keyBag);
+    Optional<byte[]> unwrapKey(EncryptionKeyBlob fileKeyMetaData) {
+        return FileKeys.unwrap(fileKeyMetaData, keyBagManager::keyBag);
     }
 }
 // TODO time expiration tokens

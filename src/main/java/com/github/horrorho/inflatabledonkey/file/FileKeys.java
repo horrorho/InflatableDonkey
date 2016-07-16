@@ -36,16 +36,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * FileKeyAssistant.
+ * FileKeys.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileKeyAssistant {
+public final class FileKeys {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileKeyAssistant.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileKeys.class);
 
-    public static Optional<byte[]> unwrap(FileKeyMetaData fileMetaData, Function<byte[], Optional<KeyBag>> keyBags) {
+    public static Optional<byte[]> unwrap(EncryptionKeyBlob fileMetaData, Function<byte[], Optional<KeyBag>> keyBags) {
         return keyBags.apply(fileMetaData.uuid())
                 .map(keyBag -> unwrap(fileMetaData, keyBag))
                 .orElseGet(() -> {
@@ -54,7 +54,7 @@ public final class FileKeyAssistant {
                 });
     }
 
-    public static Optional<byte[]> unwrap(FileKeyMetaData fileMetaData, KeyBag keyBag) {
+    public static Optional<byte[]> unwrap(EncryptionKeyBlob fileMetaData, KeyBag keyBag) {
         if (Arrays.equals(keyBag.uuid(), fileMetaData.uuid())) {
             logger.debug("-- unwrap() - positive uuid match fileKey: 0x{} keybag: 0x{}",
                     Hex.toHexString(fileMetaData.uuid()), Hex.toHexString(keyBag.uuid()));

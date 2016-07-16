@@ -26,9 +26,9 @@ package com.github.horrorho.inflatabledonkey;
 import com.github.horrorho.inflatabledonkey.cloud.clients.KeyBagClient;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.file.EncryptionKeyBlob;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagType;
-import com.github.horrorho.inflatabledonkey.file.FileKeyMetaData;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -133,7 +133,7 @@ public final class KeyBagManager {
     Set<String> keyBagUUIDs(Collection<Asset> assets) {
         return assets.stream()
                 .map(Asset::encryptionKey)
-                .map(key -> key.flatMap(FileKeyMetaData::uuid))
+                .map(key -> key.flatMap(EncryptionKeyBlob::uuid))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(uuid -> Base64.getEncoder().encodeToString(uuid))
