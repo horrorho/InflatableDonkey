@@ -40,6 +40,12 @@ public final class FileKeyMetaData {
 
     private static final Logger logger = LoggerFactory.getLogger(FileKeyMetaData.class);
 
+    public static Optional<byte[]> uuid(byte[] fileKey) {
+        return fileKey.length < 0x10
+                ? Optional.empty()
+                : Optional.of(Arrays.copyOfRange(fileKey, 0, 0x10));
+    }
+
     public static Optional<FileKeyMetaData> create(byte[] data) {
         logger.trace("<< create() - data: 0x{}", Hex.toHexString(data));
         if (data.length < 36) {
