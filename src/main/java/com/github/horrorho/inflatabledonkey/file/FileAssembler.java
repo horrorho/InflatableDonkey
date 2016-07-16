@@ -152,7 +152,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
         logger.debug("-- assemble() - path: {} decryptKey: {} fileChecksum: {} size: {}", path,
                 decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString));
-
         try (OutputStream out = Files.newOutputStream(path);
                 InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, isXTS, fileChecksum)) {
 
@@ -171,13 +170,11 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     InputReferenceStream<Optional<DigestInputStream>>
             chain(List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
-
         return chainFileChecksumOp(fileData(chunks), decryptKey, isXTS, fileChecksum);
     }
 
     InputReferenceStream<Optional<DigestInputStream>>
             chainFileChecksumOp(InputStream input, Optional<byte[]> fileKey, boolean isXTS, Optional<byte[]> fileChecksum) {
-
         return fileChecksum
                 .flatMap(fc -> FileSignatures.like(input, fc))
                 .map(dis -> chainDecryptOp(dis, Optional.of(dis), fileKey, isXTS))
@@ -186,23 +183,24 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     InputReferenceStream<Optional<DigestInputStream>>
             chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey, boolean isXTS) {
-
         return fileKey
                 .map(KeyParameter::new)
-                .map(key -> {
-                    BlockCipher cipher = isXTS
-                            ? new XTSAESBlockCipher(this::iosTweakFunction, DATA_UNIT_SIZE)
-                            : new FileBlockCipher();
-                    cipher.init(false, key);
-                    return cipher;
-                })
+                .map(key -> cipher(isXTS, key))
                 .map(BufferedBlockCipher::new)
                 .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
                 .map(cis -> new InputReferenceStream<>(cis, digestInput))
                 .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
     }
 
-    public byte[] iosTweakFunction(long tweakValue) {
+    BlockCipher cipher(boolean isXTS, KeyParameter fileKey) {
+        BlockCipher cipher = isXTS
+                ? new XTSAESBlockCipher(this::iosTweakFunction, DATA_UNIT_SIZE)
+                : new FileBlockCipher();
+        cipher.init(false, fileKey);
+        return cipher;
+    }
+
+    byte[] iosTweakFunction(long tweakValue) {
         byte[] bs = Pack.longToLittleEndian(tweakValue);
         return Arrays.concatenate(bs, bs);
     }
