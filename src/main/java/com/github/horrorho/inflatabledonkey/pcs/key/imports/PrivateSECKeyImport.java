@@ -21,31 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.crypto.key.imports;
+package com.github.horrorho.inflatabledonkey.pcs.key.imports;
 
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
+import com.github.horrorho.inflatabledonkey.data.der.SECPrivateKey;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 
 /**
- * PrivateKeyImport.
+ * PrivateSECKeyImport.
  *
  * @author Ahseya
  */
 @Immutable
-public final class PrivateKeyImport {
+public final class PrivateSECKeyImport {
 
     public static Function<PrivateKey, Optional<Key<ECPrivateKey>>>
-            importPrivateKeyData(
+            importKeyData(
                     Function<byte[], Optional<ECPrivateKey>> keyDataImport,
                     BiFunction<ECPrivateKey, Optional<PublicKeyInfo>, Key<ECPrivateKey>> buildKey) {
 
-        return privateKey -> keyDataImport.apply(privateKey.privateKey())
+        return privateKey -> DERUtils.parse(privateKey.privateKey(), SECPrivateKey::new)
+                .flatMap(secPrivateKey -> keyDataImport.apply(secPrivateKey.privateKey()))
                 .map(keyData -> buildKey.apply(keyData, privateKey.publicKeyInfo()));
     }
 }

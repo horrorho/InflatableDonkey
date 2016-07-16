@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.crypto.key.imports;
+package com.github.horrorho.inflatabledonkey.pcs.key.imports;
 
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
 import com.github.horrorho.inflatabledonkey.pcs.key.Key;

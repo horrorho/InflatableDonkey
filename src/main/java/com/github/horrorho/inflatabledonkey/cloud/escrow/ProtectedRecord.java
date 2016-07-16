@@ -36,7 +36,7 @@ import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.BackupEscrow;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.KeyImports;
+import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZDataUnwrap;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.math.BigInteger;

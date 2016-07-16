@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
 import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.KeyImports;
+import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.EncryptedKey;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;

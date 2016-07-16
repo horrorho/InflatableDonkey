@@ -32,7 +32,7 @@ import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import com.github.horrorho.inflatabledonkey.data.der.SignatureInfo;
 import com.github.horrorho.inflatabledonkey.data.der.TypeData;
-import com.github.horrorho.inflatabledonkey.crypto.key.imports.KeyImports;
+import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
