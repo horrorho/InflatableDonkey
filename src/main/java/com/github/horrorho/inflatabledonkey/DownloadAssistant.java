@@ -29,6 +29,7 @@ import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.pcs.xfile.FileAssembler;
 import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyAssistant;
+import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyMetaData;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -71,17 +72,15 @@ public final class DownloadAssistant {
 
         keyBagManager.update(httpClient, assets);
 
-        
-        FileAssembler fileAssembler = new FileAssembler(this::unwrapKey, outputFolder); 
-                
-                
+        FileAssembler fileAssembler = new FileAssembler(this::unwrapKey, outputFolder);
+
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 
         assetDownloader.get(httpClient, authorizedAssets, fileAssembler);
     }
 
-    Optional<byte[]> unwrapKey(byte[] wrappedKey, int protectionClass) {
-        return FileKeyAssistant.unwrap(keyBagManager::keyBag, protectionClass, wrappedKey);
+    Optional<byte[]> unwrapKey(FileKeyMetaData fileKeyMetaData) {
+        return FileKeyAssistant.unwrap(fileKeyMetaData, keyBagManager::keyBag);
     }
 }
 // TODO time expiration tokens
