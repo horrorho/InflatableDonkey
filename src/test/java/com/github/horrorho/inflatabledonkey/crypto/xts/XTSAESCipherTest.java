@@ -23,41 +23,57 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.xts;
 
-import static com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESTestVector.BLOCK_LENGTH;
-import java.util.Arrays;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
+import static org.junit.Assert.*;
 import org.junit.runner.RunWith;
-import static org.junit.Assert.assertArrayEquals;
 
 /**
  *
  * @author Ahseya
  */
 @RunWith(JUnitParamsRunner.class)
-public class XTSTweakTest {
+public class XTSAESCipherTest {
+
+    private final XTSAESCipher cipher = new XTSAESCipher();
 
     @Test
     @Parameters
-    public void test(XTSAESTestVector testVector) {
-        KeyParameter key = new KeyParameter(testVector.key2());
-        XTSTweak tweak = new XTSTweak()
-                .init(key)
-                .reset(testVector.dataUnitSequenceNumber());
+    public void testEncryption(XTSAESTestVector testVector) {
+        KeyParameter key1 = new KeyParameter(testVector.key1());
+        KeyParameter key2 = new KeyParameter(testVector.key2());
+        byte[] data = testVector.ptx();
+        long n = testVector.dataUnitSequenceNumber();
 
-        byte[] twk = testVector.twk();
-        for (int i = 0; i < twk.length; i += BLOCK_LENGTH) {
-            byte[] value = tweak.value();
-            byte[] expected = Arrays.copyOfRange(twk, i, i + BLOCK_LENGTH);
+        int bytes = cipher.init(true, key1, key2)
+                .processDataUnit(data, 0, data.length, data, 0, n);
 
-            assertArrayEquals(testVector.id(), value, expected);
-            tweak.next();
-        }
+        assertEquals(testVector.id(), bytes, data.length);
+        assertArrayEquals(testVector.id(), data, testVector.ctx());
     }
 
-    private Object[] parametersForTest() {
+    private Object[] parametersForTestEncryption() {
+        return XTSAESTestVector.vectors();
+    }
+
+    @Test
+    @Parameters
+    public void testDecryption(XTSAESTestVector testVector) {
+        KeyParameter key1 = new KeyParameter(testVector.key1());
+        KeyParameter key2 = new KeyParameter(testVector.key2());
+        byte[] data = testVector.ctx();
+        long n = testVector.dataUnitSequenceNumber();
+
+        int bytes = cipher.init(false, key1, key2)
+                .processDataUnit(data, 0, data.length, data, 0, n);
+
+        assertEquals(testVector.id(), bytes, data.length);
+        assertArrayEquals(testVector.id(), data, testVector.ptx());
+    }
+
+    private Object[] parametersForTestDecryption() {
         return XTSAESTestVector.vectors();
     }
 }
