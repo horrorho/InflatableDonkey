@@ -21,11 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xfile;
+package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.io.InputReferenceStream;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESBlockCipher;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,20 +41,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.DigestInputStream;
-import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.Pack;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,22 +64,23 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class FileAssemblerLegacy implements BiConsumer<Asset, List<Chunk>>, BiPredicate<Asset, List<Chunk>> {
+public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPredicate<Asset, List<Chunk>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileAssemblerLegacy.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.intValue().orElse(8192);
+    private static final int DATA_UNIT_SIZE = 0x1000; // TODO inject via Property
 
-    private final BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey;
+    private final Function<FileKeyMetaData, Optional<byte[]>> fileKey;
     private final FilePath filePath;
 
-    public FileAssemblerLegacy(BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey, FilePath filePath) {
-        this.unwrapKey = Objects.requireNonNull(unwrapKey, "unwrapKey");
+    public FileAssembler(Function<FileKeyMetaData, Optional<byte[]>> fileKey, FilePath filePath) {
+        this.fileKey = Objects.requireNonNull(fileKey, "fileKey");
         this.filePath = Objects.requireNonNull(filePath, "filePath");
     }
 
-    public FileAssemblerLegacy(BiFunction<byte[], Integer, Optional<byte[]>> unwrapKey, Path outputFolder) {
-        this(unwrapKey, new FilePath(outputFolder));
+    public FileAssembler(Function<FileKeyMetaData, Optional<byte[]>> fileKey, Path outputFolder) {
+        this(fileKey, new FilePath(outputFolder));
     }
 
     @Override
@@ -106,43 +107,54 @@ public final class FileAssemblerLegacy implements BiConsumer<Asset, List<Chunk>>
     }
 
     public boolean truncateOp(Path path, Asset asset, List<Chunk> chunks) {
-        encryptionKeyOp(path, asset, chunks);
-        return true;
-        
-//        if (encryptionKeyOp(path, asset, chunks)) {
-//            try {
-//                asset.attributeSize()
-//                        .filter(size -> size != asset.size())
-//                        .ifPresent(size -> FileTruncater.truncate(path, size));
-//                return true;
-//            } catch (UncheckedIOException ex) {
-//                logger.warn("-- truncateOp() - UncheckedIOException: ", ex);
-//            }
-//        }
-//        return false;
+        if (encryptionKeyOp(path, asset, chunks)) {
+            try {
+                asset.attributeSize()
+                        .filter(size -> size != asset.size())
+                        .ifPresent(size -> FileTruncater.truncate(path, size));
+                return true;
+            } catch (UncheckedIOException ex) {
+                logger.warn("-- truncateOp() - UncheckedIOException: ", ex);
+            }
+        }
+        return false;
     }
 
     public boolean encryptionKeyOp(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
-                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), false, asset.fileChecksum()));
     }
 
-    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] wrappedKey) {
-        return unwrapKey.apply(wrappedKey, asset.protectionClass())
-                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
+    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] encryptionKey) {
+        return FileKeyMetaData.create(encryptionKey)
+                .map(fileKeyMetaData -> unwrapKeyOp(path, asset, chunks, fileKeyMetaData))
                 .orElseGet(() -> {
-                    logger.warn("-- unwrapKeyOp() - failed to unwrap key: 0x{}", Hex.toHexString(wrappedKey));
+                    logger.warn("-- unwrapKeyOp() - failed to extract file key metadata");
                     return false;
                 });
     }
 
-    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, FileKeyMetaData fileKeyMetaData) {
+        if (asset.protectionClass() != fileKeyMetaData.protectionClass()) {
+            logger.warn("-- unwrapKeyOp() - negative protection class match asset: {} metadata: {}",
+                    asset.protectionClass(), fileKeyMetaData.protectionClass());
+        }
+
+        return fileKey.apply(fileKeyMetaData)
+                .map(key -> assemble(path, chunks, Optional.of(key), fileKeyMetaData.isXTS(), asset.fileChecksum()))
+                .orElseGet(() -> {
+                    logger.warn("-- unwrapKeyOp() - failed to recover file key: ", fileKeyMetaData);
+                    return false;
+                });
+    }
+
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
         logger.debug("-- assemble() - path: {} decryptKey: {} fileChecksum: {} size: {}", path,
                 decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString));
 
         try (OutputStream out = Files.newOutputStream(path);
-                InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, fileChecksum)) {
+                InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, isXTS, fileChecksum)) {
 
             IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
 
@@ -158,37 +170,41 @@ public final class FileAssemblerLegacy implements BiConsumer<Asset, List<Chunk>>
     }
 
     InputReferenceStream<Optional<DigestInputStream>>
-            chain(List<Chunk> chunks, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+            chain(List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
 
-        return chainFileChecksumOp(fileData(chunks), decryptKey, fileChecksum);
+        return chainFileChecksumOp(fileData(chunks), decryptKey, isXTS, fileChecksum);
     }
 
     InputReferenceStream<Optional<DigestInputStream>>
-            chainFileChecksumOp(InputStream input, Optional<byte[]> decryptKey, Optional<byte[]> fileChecksum) {
+            chainFileChecksumOp(InputStream input, Optional<byte[]> fileKey, boolean isXTS, Optional<byte[]> fileChecksum) {
 
         return fileChecksum
                 .flatMap(fc -> FileSignatures.like(input, fc))
-                .map(dis -> chainDecryptOp(dis, Optional.of(dis), decryptKey))
-                .orElseGet(() -> chainDecryptOp(input, Optional.empty(), decryptKey));
+                .map(dis -> chainDecryptOp(dis, Optional.of(dis), fileKey, isXTS))
+                .orElseGet(() -> chainDecryptOp(input, Optional.empty(), fileKey, isXTS));
     }
 
     InputReferenceStream<Optional<DigestInputStream>>
-            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey) {
+            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey, boolean isXTS) {
 
-                return new InputReferenceStream<>(input, digestInput);
-                
-                
-//        return fileKey
-//                .map(KeyParameter::new)
-//                .map(key -> {
-//                    FileBlockCipher cipher = new FileBlockCipher();
-//                    cipher.init(false, key);
-//                    return cipher;
-//                })
-//                .map(BufferedBlockCipher::new)
-//                .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
-//                .map(cis -> new InputReferenceStream<>(cis, digestInput))
-//                .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
+        return fileKey
+                .map(KeyParameter::new)
+                .map(key -> {
+                    BlockCipher cipher = isXTS
+                            ? new XTSAESBlockCipher(this::iosTweakFunction, DATA_UNIT_SIZE)
+                            : new FileBlockCipher();
+                    cipher.init(false, key);
+                    return cipher;
+                })
+                .map(BufferedBlockCipher::new)
+                .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
+                .map(cis -> new InputReferenceStream<>(cis, digestInput))
+                .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
+    }
+
+    public byte[] iosTweakFunction(long tweakValue) {
+        byte[] bs = Pack.longToLittleEndian(tweakValue);
+        return Arrays.concatenate(bs, bs);
     }
 
     InputStream fileData(List<Chunk> chunks) {

@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagType;
-import com.github.horrorho.inflatabledonkey.pcs.xfile.FileKeyMetaData;
+import com.github.horrorho.inflatabledonkey.file.FileKeyMetaData;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.io.IOException;
 import java.io.UncheckedIOException;

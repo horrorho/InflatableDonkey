@@ -21,29 +21,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xfile;
+package com.github.horrorho.inflatabledonkey.file;
 
-import java.util.function.UnaryOperator;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import net.jcip.annotations.Immutable;
-import org.apache.commons.lang3.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * FileNameCleaners.
+ * DirectoryAssistant.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileNameCleaners {
+public final class DirectoryAssistant {
 
-    public static UnaryOperator<String> instance() {
-        return INSTANCE;
+    private static final Logger logger = LoggerFactory.getLogger(DirectoryAssistant.class);
+
+    public static boolean createParent(Path file) {
+        Path parent = file.getParent();
+        if (parent == null) {
+            return true;
+        }
+
+        return create(parent);
     }
 
-    private static final String WINDOWS_FILTER = "[\u0001-\u001f\\\\:*?\"<>|\u007f]";
-    private static final String REPLACE = "_";
+    public static boolean create(Path directory) {
+        if (Files.exists(directory)) {
+            if (Files.isDirectory(directory)) {
+                return true;
 
-    private static final UnaryOperator<String> INSTANCE
-            = SystemUtils.IS_OS_WINDOWS
-                    ? path -> path.replaceAll(WINDOWS_FILTER, REPLACE)
-                    : UnaryOperator.identity(); // Assumed Nix/ MacOS mapping directly.
+            } else {
+                logger.warn("-- create() - directory path exists but is not a directory: {}", directory);
+                return false;
+            }
+        }
+
+        try {
+            Files.createDirectories(directory);
+            return true;
+
+        } catch (IOException ex) {
+            logger.debug("-- create() - IOException: {}", ex);
+            return false;
+        }
+    }
 }

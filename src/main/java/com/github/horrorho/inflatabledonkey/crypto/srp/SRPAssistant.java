@@ -30,12 +30,11 @@ import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.BigIntegers;
 
 /**
- * SRPCore.
  *
  * @author Ahseya
  */
 @Immutable
-public final class SRPCore {
+public final class SRPAssistant {
     // https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
     // based on org.bouncycastle.crypto.agreement.srp.SRP6Util
 
@@ -72,10 +71,10 @@ public final class SRPCore {
         int length = length(N);
 
         // hI = H(I)
-        byte[] hI = SRPCore.hash(digest, identity);
+        byte[] hI = SRPAssistant.hash(digest, identity);
 
         // tmp = H(N) XOR H(g)
-        byte[] hNxhG = ByteUtils.xor(SRPCore.hash(digest, padded(N, length)), SRPCore.hash(digest, padded(g, length)));
+        byte[] hNxhG = ByteUtils.xor(SRPAssistant.hash(digest, padded(N, length)), SRPAssistant.hash(digest, padded(g, length)));
 
         return hash(digest, hNxhG, hI, salt, ephemeralKeyA, ephemeralKeyB, key);
     }

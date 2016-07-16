@@ -21,8 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.crypto.xtsaes;
+package com.github.horrorho.inflatabledonkey.crypto.xts;
 
+import com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESCipher;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bouncycastle.crypto.params.KeyParameter;

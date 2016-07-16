@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.file.FileBlockIVGenerator;
 import java.nio.charset.StandardCharsets;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;

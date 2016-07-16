@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xfile;
+package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;

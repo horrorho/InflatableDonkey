@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
+import com.github.horrorho.inflatabledonkey.file.FileBlockCipher;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.bouncycastle.crypto.params.KeyParameter;

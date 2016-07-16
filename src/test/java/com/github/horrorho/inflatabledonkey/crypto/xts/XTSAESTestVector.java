@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.crypto.xtsaes;
+package com.github.horrorho.inflatabledonkey.crypto.xts;
 
 import java.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;

@@ -21,9 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.crypto.xtsaes;
+package com.github.horrorho.inflatabledonkey.crypto.xts;
 
-import static com.github.horrorho.inflatabledonkey.crypto.xtsaes.XTSAESTestVector.BLOCK_LENGTH;
+import com.github.horrorho.inflatabledonkey.crypto.xts.XTSTweak;
+import static com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESTestVector.BLOCK_LENGTH;
 import java.util.Arrays;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;

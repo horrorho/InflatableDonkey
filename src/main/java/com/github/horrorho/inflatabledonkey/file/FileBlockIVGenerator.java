@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.pcs.xfile;
+package com.github.horrorho.inflatabledonkey.file;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

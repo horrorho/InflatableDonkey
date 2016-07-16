@@ -1,3 +1,5 @@
+package com.github.horrorho.inflatabledonkey.file;
+
 ///* 
 // * The MIT License
 // *
