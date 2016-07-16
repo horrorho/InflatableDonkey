@@ -47,13 +47,13 @@ public enum Service {
     PCS_BACKUP(8), // Backup
     PCS_NOTES(9), // Notes
     PCS_IMESSAGE(10), // iMessage
-    FELDSPAR(11), // News.
+    FELDSPAR(11), // News
     BURNTCOOKIE(12), // * placeholder *
     WOBBLYJELLY(13), // * placeholder *
     MIDNIGHTBLUE(14), // * placeholder *
     DRIEDWATER(15), // * placeholder *
     FURIOUSPOTATO(16), // * placeholder *
-    LUMPMATTRESS(17);   // * placeholder *
+    LUMPYMATTRESS(17);   // * placeholder *
 
     private static final Map<Integer, Service> map = Arrays.asList(Service.values())
             .stream()

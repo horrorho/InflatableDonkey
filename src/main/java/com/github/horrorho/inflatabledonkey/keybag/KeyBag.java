@@ -33,7 +33,6 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * Keybag
  *
  * @author ahseya
  */

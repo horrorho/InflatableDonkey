@@ -46,10 +46,9 @@ import java.util.function.IntFunction;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; 
+import org.slf4j.LoggerFactory;
 
 /**
- * EscrowedRecords.
  *
  * @author Ahseya
  */
@@ -96,14 +95,14 @@ public final class ProtectedRecord {
 
         Optional<KeyID> masterKeyID = importPublicKey(backupEscrow.masterKeyPublic())
                 .map(Key::keyID);
-        logger.debug("-- decrypt() - master key id: {}", masterKeyID);
+        logger.debug("-- d) - master key id: {}", masterKeyID);
 
         // Take master key d value if we have it in the key set.
         BigInteger d = masterKeyID.flatMap(getMasterKey::apply)
                 .map(Key::keyData)
                 .map(ECPrivateKey::d)
                 .orElseThrow(() -> new IllegalArgumentException("no master key for escrowed record"));
-        logger.debug("-- decrypt() - master key d: 0x{}", d.toString(16));
+        logger.debug("-- d() - master key d: 0x{}", d.toString(16));
 
         return d;
     }
@@ -118,15 +117,15 @@ public final class ProtectedRecord {
                 .apply(keyData);
     }
 
-    static void describe(byte[] metadata) {
+    static void diagnostic(byte[] metadata) {
         NSDictionary dictionary = PLists.parseDictionary(metadata);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - dictionary: {}", dictionary.toXMLPropertyList());
+        logger.debug("-- diagnostic() - dictionary: {}", dictionary.toXMLPropertyList());
 
         byte[] backupKeybagDigest = PLists.getAs(dictionary, "BackupKeybagDigest", NSData.class).bytes();
-        logger.debug("-- decryptGetRecordsResponseMetadata() - BackupKeybagDigest: 0x{}", Hex.toHexString(backupKeybagDigest));
+        logger.debug("-- diagnostic() - BackupKeybagDigest: 0x{}", Hex.toHexString(backupKeybagDigest));
 
         Optional<NSString> timestamp = PLists.optionalAs(dictionary, "com.apple.securebackup.timestamp", NSString.class);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - com.apple.securebackup.timestamp: {}",
+        logger.debug("-- diagnostic() - com.apple.securebackup.timestamp: {}",
                 timestamp.map(NSString::getContent));
 
         NSDictionary clientMetadata = PLists.getAs(dictionary, "ClientMetadata", NSDictionary.class);
@@ -139,10 +138,10 @@ public final class ProtectedRecord {
 
         Optional<PublicKeyInfo> optionalPublicKeyInfo
                 = DERUtils.parse(secureBackupiCloudIdentityPublicData, PublicKeyInfo::new);
-        logger.debug("-- decryptGetRecordsResponseMetadata() - publicKeyInfo: {}", optionalPublicKeyInfo);
+        logger.debug("-- diagnostic() - publicKeyInfo: {}", optionalPublicKeyInfo);
 
         byte[] kPCSMetadataEscrowedKeys
                 = PLists.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
-        logger.debug("-- describe() - kPCSMetadataEscrowedKeys: 0x{}", Hex.toHexString(kPCSMetadataEscrowedKeys));
+        logger.debug("-- diagnostic() - kPCSMetadataEscrowedKeys: 0x{}", Hex.toHexString(kPCSMetadataEscrowedKeys));
     }
 }

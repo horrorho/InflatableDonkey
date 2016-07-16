@@ -54,7 +54,7 @@ public final class FileStreams {
         return fileChecksumOp(chunkStream(chunks), key, checksum);
     }
 
-    static InputReferenceStream<Optional<DigestInputStream>>
+    public static InputReferenceStream<Optional<DigestInputStream>>
             fileChecksumOp(InputStream input, Optional<FileKey> key, Optional<byte[]> checksum) {
         return checksum
                 .flatMap(fc -> FileSignatures.like(input, fc))
@@ -93,3 +93,4 @@ public final class FileStreams {
         return new SequenceInputStream(enumeration);
     }
 }
+// TODO consider purity/ removing chunkStream

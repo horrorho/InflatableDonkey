@@ -56,7 +56,7 @@ public final class TagLengthValue {
             // Signed 32 bit length. Limited to 2 GB.
             int length = buffer.getInt();
             if (length < 0 || length > buffer.remaining()) {
-                throw new IllegalArgumentException("Bad TagLengthValue length: " + length);
+                throw new IllegalArgumentException("bad tag data length: " + length);
             }
 
             byte[] value = new byte[length];
@@ -90,7 +90,7 @@ public final class TagLengthValue {
 
     @Override
     public String toString() {
-        return "TagValue{"
+        return "TagLengthValue{"
                 + "tag=" + tag
                 + ", value=0x" + Hex.toHexString(value)
                 + '}';
