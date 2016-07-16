@@ -26,13 +26,11 @@ package com.github.horrorho.inflatabledonkey.pcs.xfile;
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,92 +45,38 @@ public final class FileKeyAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(FileKeyAssistant.class);
 
-    public static Optional<byte[]> uuid(byte[] fileKey) {
-        return fileKey.length < 0x10
-                ? Optional.empty()
-                : Optional.of(Arrays.copyOfRange(fileKey, 0, 0x10));
+    public static Optional<byte[]> unwrap(FileMetaData fileMetaData, Function<byte[], Optional<KeyBag>> keyBags) {
+        return keyBags.apply(fileMetaData.uuid())
+                .map(keyBag -> unwrap(fileMetaData, keyBag))
+                .orElseGet(() -> {
+                    logger.warn("-- unwrap() - no keybag matching uuid: 0x{}", fileMetaData.uuid());
+                    return Optional.empty();
+                });
     }
 
-    public static Optional<byte[]> unwrap(Function<byte[], Optional<KeyBag>> keyBags, int protectionClass, byte[] fileKey) {
-        return uuid(fileKey)
-                .flatMap(keyBags::apply)
-                .flatMap(keyBag -> unwrap(keyBag, protectionClass, fileKey));
-    }
-
-    public static Optional<byte[]> unwrap(KeyBag keyBag, int protectionClass, byte[] fileKey) {
-        Optional<byte[]> optionalPublicKey = keyBag.publicKey(protectionClass);
-        Optional<byte[]> optionalPrivateKey = keyBag.privateKey(protectionClass);
-        Optional<byte[]> uuid = uuid(fileKey);
-
-        boolean uuidMatch = uuid.map(u -> Arrays.areEqual(keyBag.uuid(), u))
-                .orElse(false);
-
-        if (uuidMatch) {
+    public static Optional<byte[]> unwrap(FileMetaData fileMetaData, KeyBag keyBag) {
+        if (Arrays.equals(keyBag.uuid(), fileMetaData.uuid())) {
             logger.debug("-- unwrap() - positive uuid match fileKey: 0x{} keybag: 0x{}",
-                    uuid.map(Hex::toHexString), Hex.toHexString(keyBag.uuid()));
+                    Hex.toHexString(fileMetaData.uuid()), Hex.toHexString(keyBag.uuid()));
         } else {
             logger.warn("-- unwrap() - negative uuid match fileKey: 0x{} keybag: 0x{}",
-                    uuid.map(Hex::toHexString), Hex.toHexString(keyBag.uuid()));
-        }
-
-        return optionalPublicKey.isPresent() && optionalPrivateKey.isPresent()
-                ? unwrap(optionalPublicKey.get(), optionalPrivateKey.get(), protectionClass, fileKey)
-                : Optional.empty();
-    }
-
-    public static Optional<byte[]>
-            unwrap(byte[] myPublicKey, byte[] myPrivateKey, int protectionClass, byte[] fileKey) {
-
-        try {
-            logger.trace("<< unwrap() - wrapped key: 0x{} my public: 0x{} my private: 0x{} protection class: {}",
-                    Hex.toHexString(fileKey), Hex.toHexString(myPublicKey), Hex.toHexString(myPrivateKey), protectionClass);
-            // Version 2 support only.
-            ByteBuffer buffer = ByteBuffer.wrap(fileKey);
-
-            byte[] uuid = new byte[0x10];
-            buffer.get(uuid);
-
-            int u1 = buffer.getInt(); // ignored
-            int u2 = buffer.getInt(); // ignored
-            int pc = buffer.getInt();
-            int u3 = buffer.getInt(); // ignored
-            int length = buffer.getInt();
-
-            byte[] longKey = new byte[buffer.limit() - buffer.position()];
-            buffer.get(longKey);
-
-            if (longKey.length != length) {
-                logger.warn("-- unwrap() - incongruent key length");
-            }
-
-            if (pc != protectionClass) {
-                logger.warn("-- unwrap() - incongruent protection class");
-            }
-
-            logger.debug("-- unwrap() - u1: 0x{} u2: 0x{} u3: 0x{} pc: {} length: {} uuid: 0x{} long: 0x:{} ",
-                    Integer.toHexString(u1), Integer.toHexString(u2), Integer.toHexString(u3),
-                    pc, length, Hex.toHexString(uuid), Hex.toHexString(longKey));
-
-            Optional<byte[]> unwrapped = FileKeyAssistant.unwrap(myPublicKey, myPrivateKey, longKey);
-            logger.trace("<< unwrap() - unwrapped key: 0x{}", unwrapped.map(Hex::toHexString).orElse("NULL"));
-            return unwrapped;
-
-        } catch (BufferUnderflowException ex) {
-            logger.warn("-- unwrap() - BufferUnderflowException: {}", ex);
-            logger.trace("<< unwrap() - unwrapped key: {}", Optional.empty());
+                    Hex.toHexString(fileMetaData.uuid()), Hex.toHexString(keyBag.uuid()));
             return Optional.empty();
         }
-    }
 
-    public static Optional<byte[]> unwrap(byte[] myPublicKey, byte[] myPrivateKey, byte[] longKey) {
-        byte[] otherPublicKey = new byte[0x20];
-        byte[] wrappedKey = new byte[longKey.length - 0x20];
+        Optional<byte[]> publicKey = keyBag.publicKey(fileMetaData.protectionClass());
+        if (!publicKey.isPresent()) {
+            logger.warn("-- unwrap() - no public key for protection class: {}", fileMetaData.protectionClass());
+            return Optional.empty();
+        }
 
-        ByteBuffer buffer = ByteBuffer.wrap(longKey);
-        buffer.get(otherPublicKey);
-        buffer.get(wrappedKey);
+        Optional<byte[]> privateKey = keyBag.privateKey(fileMetaData.protectionClass());
+        if (!privateKey.isPresent()) {
+            logger.warn("-- unwrap() - no private key for protection class: {}", fileMetaData.protectionClass());
+            return Optional.empty();
+        }
 
-        return curve25519Unwrap(myPublicKey, myPrivateKey, otherPublicKey, wrappedKey);
+        return curve25519Unwrap(publicKey.get(), privateKey.get(), fileMetaData.publicKey(), fileMetaData.wrappedKey());
     }
 
     public static Optional<byte[]> curve25519Unwrap(
@@ -146,11 +90,12 @@ public final class FileKeyAssistant {
         byte[] shared = Curve25519.agreement(otherPublicKey, myPrivateKey);
         logger.debug("-- curve25519Unwrap() - shared agreement: 0x{}", Hex.toHexString(shared));
 
-        byte[] pad = new byte[]{0x00, 0x00, 0x00, 0x01};
+        // Stripped down NIST SP 800-56A KDF.
+        byte[] counter = new byte[]{0x00, 0x00, 0x00, 0x01};
         byte[] hash = new byte[sha256.getDigestSize()];
 
         sha256.reset();
-        sha256.update(pad, 0, pad.length);
+        sha256.update(counter, 0, counter.length);
         sha256.update(shared, 0, shared.length);
         sha256.update(otherPublicKey, 0, otherPublicKey.length);
         sha256.update(myPublicKey, 0, myPublicKey.length);
@@ -160,4 +105,3 @@ public final class FileKeyAssistant {
         return RFC3394Wrap.unwrapAES(hash, wrappedKey);
     }
 }
-// TODO buffer underflow exceptions
