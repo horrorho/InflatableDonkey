@@ -91,10 +91,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     @Override
     public boolean test(Asset asset, List<Chunk> chunks) {
-        logger.trace("<< test() - asset: {} chunks: {}", asset, chunks.size());
-        boolean success = assemble(asset, chunks);
-        logger.trace(">> test() - success: {}", success);
-        return success;
+        return assemble(asset, chunks);
     }
 
     public boolean assemble(Asset asset, List<Chunk> chunks) {
