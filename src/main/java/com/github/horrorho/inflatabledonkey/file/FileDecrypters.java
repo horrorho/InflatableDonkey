@@ -23,74 +23,67 @@
  */
 package com.github.horrorho.inflatabledonkey.file;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESBlockCipher;
-import com.github.horrorho.inflatabledonkey.io.InputReferenceStream;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.io.CipherInputStream;
-import org.bouncycastle.crypto.io.DigestInputStream;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 
 /**
+ * AES-CBC/ AES-XTS Data Protection decryption.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileStreams {
+public final class FileDecrypters {
 
-    public static InputReferenceStream<Optional<DigestInputStream>>
-            inputStream(List<Chunk> chunks, Optional<FileKey> key, Optional<byte[]> checksum) {
-        return fileChecksumOp(chunkStream(chunks), key, checksum);
+    private final Optional<Boolean> xtsOverride;
+
+    public FileDecrypters(Optional<Boolean> xtsOverride) {
+        this.xtsOverride = Objects.requireNonNull(xtsOverride, "xtsOverride");
     }
 
-    public static InputReferenceStream<Optional<DigestInputStream>>
-            fileChecksumOp(InputStream input, Optional<FileKey> key, Optional<byte[]> checksum) {
-        return checksum
-                .flatMap(fc -> FileSignatures.like(input, fc))
-                .map(dis -> decryptOp(dis, Optional.of(dis), key))
-                .orElseGet(() -> decryptOp(input, Optional.empty(), key));
+    public FileDecrypters() {
+        this(Optional.empty());
     }
 
-    static InputReferenceStream<Optional<DigestInputStream>>
-            decryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<FileKey> data) {
-        return data
-                .map(FileStreams::cipher)
+    public static InputStream decrypt(InputStream in, Optional<FileKey> key) {
+        return key
+                .map(FileDecrypters::cipher)
                 .map(BufferedBlockCipher::new)
-                .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
-                .map(cis -> new InputReferenceStream<>(cis, digestInput))
-                .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
+                .map(cipher -> (InputStream) new CipherInputStream(in, cipher))
+                .orElse(in);
     }
 
     static BlockCipher cipher(FileKey key) {
-        BlockCipher cipher = key.isXTS()
-                ? new XTSAESBlockCipher(FileStreams::iosTweakFunction, key.dataUnitSize())
+        BlockCipher cipher = useXTS(key)
+                ? new XTSAESBlockCipher(FileDecrypters::iosTweakFunction, key.dataUnitSize())
                 : new FileBlockCipher();
         cipher.init(false, new KeyParameter(key.key()));
         return cipher;
+    }
+
+    static boolean useXTS(FileKey key) {
+        if (Property.XTS_FORCE.booleanValue().orElse(false)) {
+            return true;
+        }
+
+        if (Property.XTS_DISABLE.booleanValue().orElse(false)) {
+            return false;
+        }
+
+        return key.isXTS();
     }
 
     static byte[] iosTweakFunction(long tweakValue) {
         byte[] bs = Pack.longToLittleEndian(tweakValue);
         return Arrays.concatenate(bs, bs);
     }
-
-    static InputStream chunkStream(List<Chunk> chunks) {
-        List<InputStream> inputStreams = chunks.stream()
-                .map(Chunk::inputStream)
-                .collect(Collectors.toList());
-        Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
-        return new SequenceInputStream(enumeration);
-    }
 }
-// TODO consider purity/ removing chunkStream
