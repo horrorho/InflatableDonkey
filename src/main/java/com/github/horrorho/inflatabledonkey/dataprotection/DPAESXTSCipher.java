@@ -35,19 +35,19 @@ import org.bouncycastle.util.Pack;
  * @author Ahseya
  */
 @NotThreadSafe
-public class DPAESXTS extends XTSAESBlockCipher {
+public class DPAESXTSCipher extends XTSAESBlockCipher {
 
     static byte[] tweakFunction(long tweakValue) {
         byte[] bs = Pack.longToLittleEndian(tweakValue);
         return Arrays.concatenate(bs, bs);
     }
-    private static final int BLOCK_SIZE = Property.DP_AESXTS_BLOCK_SIZE.intValue().orElse(4096);
+    private static final int BLOCK_SIZE = Property.DP_AESXTS_BLOCK_SIZE.asInteger().orElse(4096);
 
-    public DPAESXTS(int blockSize) {
-        super(DPAESXTS::tweakValue, blockSize);
+    public DPAESXTSCipher(int blockSize) {
+        super(DPAESXTSCipher::tweakFunction, blockSize);
     }
 
-    public DPAESXTS() {
+    public DPAESXTSCipher() {
         this(BLOCK_SIZE);
     }
 }

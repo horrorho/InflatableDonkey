@@ -47,6 +47,9 @@ public enum Property {
     AUTHENTICATION_APPLEID,
     AUTHENTICATION_PASSWORD,
     AUTHENTICATION_TOKEN,
+    DP_AESCBC_BLOCK_SIZE("4096"),
+    DP_AESXTS_BLOCK_SIZE("4096"),
+    DP_OVERRIDE(),
     FILTER_DEVICE(""),
     FILTER_DOMAIN(""),
     FILTER_EXTENSION(""),
@@ -59,9 +62,7 @@ public enum Property {
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
-    PROPERTIES_RESOURCE("/inflatable_donkey.properties"),
-    XTS_DISABLE("false"),
-    XTS_FORCE("false");
+    PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     static void setProperties(Map<Property, String> properties) {
         if (touched) {
@@ -82,7 +83,7 @@ public enum Property {
     static void touch() {
         touched = true;
     }
-    
+
     static int parseInt(String s) {
         try {
             return Integer.parseInt(s);
@@ -126,25 +127,25 @@ public enum Property {
         return Optional.ofNullable(value);
     }
 
-    public Optional<List<String>> list() {
+    public Optional<Boolean> asBoolean() {
         return value()
-                .map(v -> Arrays.asList(v.split(" ")));
+                .map(v -> Boolean.TRUE.toString().equals(v));
     }
 
-    public Optional<Integer> intValue() {
+    public Optional<Integer> asInteger() {
         return value().map(Property::parseInt);
     }
 
-    public Optional<List<Integer>> intList() {
-        return list()
+    public Optional<List<Integer>> asIntegerList() {
+        return asStringList()
                 .map(l -> l
                         .stream()
                         .map(Property::parseInt)
                         .collect(Collectors.toList()));
     }
 
-    public Optional<Boolean> booleanValue() {
+    public Optional<List<String>> asStringList() {
         return value()
-                .map(v -> Boolean.TRUE.toString().equals(v));
+                .map(v -> Arrays.asList(v.split(" ")));
     }
 }

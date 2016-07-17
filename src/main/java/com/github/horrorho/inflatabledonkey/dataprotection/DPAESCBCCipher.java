@@ -42,7 +42,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  * @author Ahseya
  */
 @NotThreadSafe
-public class DPAESCBC implements BlockCipher {
+public class DPAESCBCCipher implements BlockCipher {
 
     // 'Every time a file on the data partition is created, Data Protection creates a new 256-bit
     // key (the “per-file” key) and gives it to the hardware AES engine, which uses the key to
@@ -51,7 +51,7 @@ public class DPAESCBC implements BlockCipher {
     // block offset into the file, encrypted with the SHA-1 hash of the per-file key.'
     // Apple: iOS Security iOS 9.3 or later. May 2016. 
     // https://www.apple.com/business/docs/iOS_Security_Guide.pdf
-    private static final int BLOCK_SIZE = Property.DP_AESCBC_BLOCK_SIZE.intValue().orElse(4096);
+    private static final int BLOCK_SIZE = Property.DP_AESCBC_BLOCK_SIZE.asInteger().orElse(4096);
 
     private final BlockCipher cipher;
     private final int blockLength;
@@ -61,7 +61,7 @@ public class DPAESCBC implements BlockCipher {
     private int index;
     private int offset;
 
-    DPAESCBC(
+    DPAESCBCCipher(
             BlockCipher cipher,
             int blockLength, IntFunction<byte[]> ivGenerator,
             KeyParameter key,
@@ -78,15 +78,15 @@ public class DPAESCBC implements BlockCipher {
         this.offset = offset;
     }
 
-    DPAESCBC(BlockCipher cipher, int blockLength) {
+    DPAESCBCCipher(BlockCipher cipher, int blockLength) {
         this(cipher, blockLength, null, null, false, 0, 0);
     }
 
-    public DPAESCBC(int blockSize) {
+    public DPAESCBCCipher(int blockSize) {
         this(new CBCBlockCipher(new AESEngine()), blockSize);
     }
 
-    public DPAESCBC() {
+    public DPAESCBCCipher() {
         this(BLOCK_SIZE);
     }
 

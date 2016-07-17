@@ -79,8 +79,11 @@ public final class PropertyLoader implements Predicate<String[]> {
                 return false;
             }
 
-            if (properties.containsKey(Property.XTS_FORCE) && properties.containsKey(Property.XTS_DISABLE)) {
-                throw new IllegalArgumentException("mutually exclusive XTS options set: xts-force/ xts-disable");
+            if (properties.containsKey(Property.DP_OVERRIDE)) {
+                String override = properties.get(Property.DP_OVERRIDE);
+                if (!DataProtectionMode.parse(override).isPresent()) {
+                    throw new IllegalArgumentException("bad Data Protection override mode: " + override);
+                }
             }
 
             List<String> operands = commandLine.getArgList();
