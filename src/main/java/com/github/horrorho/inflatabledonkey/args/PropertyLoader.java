@@ -79,6 +79,10 @@ public final class PropertyLoader implements Predicate<String[]> {
                 return false;
             }
 
+            if (properties.containsKey(Property.XTS_FORCE) && properties.containsKey(Property.XTS_DISABLE)) {
+                throw new IllegalArgumentException("mutually exclusive XTS options set: xts-force/ xts-disable");
+            }
+
             List<String> operands = commandLine.getArgList();
             switch (operands.size()) {
                 case 0:
@@ -99,6 +103,7 @@ public final class PropertyLoader implements Predicate<String[]> {
                             "too many non-optional arguments, expected appleid/ password or authentication token only");
             }
             Property.setProperties(properties);
+
             return true;
 
         } catch (ParseException ex) {

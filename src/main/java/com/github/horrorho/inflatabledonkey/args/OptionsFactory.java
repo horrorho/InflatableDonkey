@@ -92,7 +92,7 @@ public final class OptionsFactory {
                 Property.XTS_DISABLE);
 
         options.put(
-                new Option(null, "xts-force", false, "Force AES-XTS Data Protection."),
+                new Option(null, "xts-force", false, "Force AES-XTS Data Protection (disables AES-CBC)."),
                 Property.XTS_FORCE);
 
         options.put(
