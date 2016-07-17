@@ -56,13 +56,13 @@ public final class FileStreamWriter {
             copy(InputStream in, OutputStream out, Optional<FileKeyCipher> keyCipher, Optional<byte[]> signature)
             throws IOException {
 
-        Digest digest = signature.flatMap(CKSignature::type)
-                .orElse(CKSignature.ONE)
+        Digest digest = signature.flatMap(FileSignature::type)
+                .orElse(FileSignature.ONE)
                 .newDigest();
 
         DigestInputStream digestInputStream = new DigestInputStream(in, digest);
 
-        IOUtils.copyLarge(FileStreamWriter.decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
+        IOUtils.copyLarge(decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
 
         return testSignature(digestInputStream.getDigest(), signature);
     }

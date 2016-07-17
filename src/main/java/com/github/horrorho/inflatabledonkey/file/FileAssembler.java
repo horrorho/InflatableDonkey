@@ -94,22 +94,21 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
         return assemble(asset, chunks);
     }
 
-    public boolean assemble(Asset asset, List<Chunk> chunks) {
+    boolean assemble(Asset asset, List<Chunk> chunks) {
         return filePath.apply(asset)
                 .filter(DirectoryAssistant::createParent)
                 .map(path -> assemble(path, asset, chunks))
                 .orElse(false);
     }
 
-    public boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
+    boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
         if (!write(path, chunks, fileKeyCipher(asset), asset.fileSignature())) {
             return false;
         }
         return truncate(path, asset);
     }
 
-    public boolean
-            write(Path path, List<Chunk> chunks, Optional<FileKeyCipher> keyCipher, Optional<byte[]> signature) {
+    boolean write(Path path, List<Chunk> chunks, Optional<FileKeyCipher> keyCipher, Optional<byte[]> signature) {
 
         logger.debug("-- write() - path: {} key cipher: {} signature: 0x{}",
                 path, keyCipher, signature.map(Hex::toHexString).orElse("NULL"));

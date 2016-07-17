@@ -34,14 +34,14 @@ import org.bouncycastle.util.encoders.Hex;
  * @author Ahseya
  */
 @NotThreadSafe
-public class CKDigestA implements Digest {
+public class FileDigestA implements Digest {
 
     private static final byte[] SALT
             = Hex.decode("636F6D2E6170706C652E58617474724F626A65637453616C7400636F6D2E6170706C652E446174614F626A65637453616C7400");
 
     private final Digest digest;
 
-    public CKDigestA() {
+    public FileDigestA() {
         digest = new SHA1Digest();
         digest.update(SALT, 0, SALT.length);
     }

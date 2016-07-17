@@ -35,10 +35,10 @@ import org.bouncycastle.crypto.Digest;
  * @author Ahseya
  */
 @Immutable
-public enum CKSignature {
-    ONE(CKDigestA::new);
+public enum FileSignature {
+    ONE(FileDigestA::new);
 
-    public static Optional<CKSignature> type(byte[] signature) {
+    public static Optional<FileSignature> type(byte[] signature) {
         if (signature.length == 0) {
             return Optional.empty();
         }
@@ -58,7 +58,7 @@ public enum CKSignature {
 
     private final Supplier<Digest> supplier;
 
-    private CKSignature(Supplier<Digest> supplier) {
+    private FileSignature(Supplier<Digest> supplier) {
         this.supplier = Objects.requireNonNull(supplier, "supplier");
     }
 

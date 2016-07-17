@@ -163,8 +163,8 @@ public final class FileAssemblerLegacy implements BiConsumer<Asset, List<Chunk>>
         logger.debug("-- assemble() - path: {} key: {} signature: {}",
                 path, key.map(Hex::toHexString), signature.map(Hex::toHexString));
 
-        Digest digest = signature.flatMap(CKSignature::type)
-                .orElse(CKSignature.ONE)
+        Digest digest = signature.flatMap(FileSignature::type)
+                .orElse(FileSignature.ONE)
                 .newDigest();
 
         try (OutputStream out = Files.newOutputStream(path);
