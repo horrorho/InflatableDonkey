@@ -55,7 +55,7 @@ public final class EscrowedKeys {
     private static final Logger logger = LoggerFactory.getLogger(EscrowedKeys.class);
 
     private static final int REMAINING_ATTEMPTS_THRESHOLD
-            = Property.SRP_REMAINING_ATTEMPTS_THRESHOLD.intValue().orElse(3);
+            = Property.SRP_REMAINING_ATTEMPTS_THRESHOLD.asInteger().orElse(3);
 
     public static EscrowProxyRequestFactory requestFactory(Account account) {
         return new EscrowProxyRequestFactory(

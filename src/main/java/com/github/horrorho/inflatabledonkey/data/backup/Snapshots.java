@@ -54,7 +54,9 @@ public class Snapshots {
         Optional<byte[]> optionalBackupProperties = backupProperties(record.getRecordFieldList())
                 .map(k -> decrypt.apply(k, BACKUP_PROPERTIES));
 
-        return new Snapshot(optionalBackupProperties, manifests, record);
+        Snapshot snapshot = new Snapshot(optionalBackupProperties, manifests, record);
+        logger.debug("-- from() - snapshot: {}", snapshot);
+        return snapshot;
     }
 
     static List<Manifest> manifests(List<CloudKit.RecordField> records) {

@@ -21,43 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.file;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.bouncycastle.util.encoders.Hex;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import net.jcip.annotations.Immutable;
+import org.bouncycastle.crypto.Digest;
 
 /**
- * DiskChunkFiles.
+ * MMCSSignatureGenerator/ CKFileSignatureGenerator.
  *
  * @author Ahseya
  */
-public class DiskChunkFiles {
+@Immutable
+public enum CKSignature {
+    ONE(CKDigestOne::new);
 
-    private static final int SUBSPLIT = Property.PATH_CHUNK_STORE_SUBSPLIT
-            .asInteger()
-            .orElse(3);
-
-    static Path filename(byte[] chunkChecksum) {
-        return filename(chunkChecksum, SUBSPLIT);
-    }
-
-    static Path filename(byte[] chunkChecksum, int subSplit) {
-        String filename = Hex.toHexString(chunkChecksum);
-
-        return filename.length() < subSplit
-                ? Paths.get(filename)
-                : subSplit(filename, subSplit);
-    }
-
-    static Path subSplit(String filename, int subSplit) {
-        Path path = Paths.get(".");
-        for (int i = 0; i < subSplit; i++) {
-            path = path.resolve(String.valueOf(filename.charAt(i)));
+    public static Optional<CKSignature> type(byte[] signature) {
+        if (signature.length == 0) {
+            return Optional.empty();
         }
 
-        return path.resolve(filename.substring(subSplit))
-                .normalize();
+        switch (signature[0] & 0x7F) {
+            case 0x01:
+            case 0x02:
+            case 0x0B:
+                return signature.length == 21
+                        ? Optional.of(ONE)
+                        : Optional.empty();
+
+            default:
+                return Optional.empty();
+        }
+    }
+
+    private final Supplier<Digest> supplier;
+
+    private CKSignature(Supplier<Digest> supplier) {
+        this.supplier = Objects.requireNonNull(supplier, "supplier");
+    }
+
+    public Digest newDigest() {
+        return supplier.get();
     }
 }

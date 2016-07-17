@@ -81,7 +81,7 @@ public final class PropertyLoader implements Predicate<String[]> {
 
             if (properties.containsKey(Property.DP_OVERRIDE)) {
                 String override = properties.get(Property.DP_OVERRIDE);
-                if (!DataProtectionMode.parse(override).isPresent()) {
+                if (!PropertyDPMode.parse(override).isPresent()) {
                     throw new IllegalArgumentException("bad Data Protection override mode: " + override);
                 }
             }

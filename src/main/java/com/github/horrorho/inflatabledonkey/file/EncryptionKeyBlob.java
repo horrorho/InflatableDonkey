@@ -130,7 +130,7 @@ public final class EncryptionKeyBlob {
     }
 
     public boolean isXTS() {
-        // Experimental.
+        // Experimental. Doesn't work.
         return (u3 & 0x00FF0000) != 0;
     }
 

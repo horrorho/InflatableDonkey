@@ -31,28 +31,29 @@ import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 
 /**
+ * Data Protection mode.
  *
  * @author Ahseya
  */
 @Immutable
-public enum DataProtectionMode {
+public enum PropertyDPMode {
     CBC,
     XTS,
     OFF;
 
-    public static Optional<DataProtectionMode> parse(String mode) {
+    public static Optional<PropertyDPMode> parse(String mode) {
         return Optional.ofNullable(map.get(mode.toUpperCase(Property.locale())));
     }
 
     public static String options() {
-        return Arrays.asList(DataProtectionMode.values())
+        return Arrays.asList(PropertyDPMode.values())
                 .stream()
-                .map(DataProtectionMode::name)
+                .map(PropertyDPMode::name)
                 .map(s -> s.toLowerCase(Property.locale()))
                 .collect(Collectors.joining(" "));
     }
 
-    private static final Map<String, DataProtectionMode> map = Arrays.asList(DataProtectionMode.values())
+    private static final Map<String, PropertyDPMode> map = Arrays.asList(PropertyDPMode.values())
             .stream()
-            .collect(Collectors.toMap(DataProtectionMode::name, Function.identity()));
+            .collect(Collectors.toMap(PropertyDPMode::name, Function.identity()));
 }

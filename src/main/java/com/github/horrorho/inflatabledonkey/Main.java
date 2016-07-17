@@ -101,7 +101,7 @@ public class Main {
         }
         logger.debug("-- main() - auth: {}", auth);
 
-        if (Property.ARGS_TOKEN.booleanValue().orElse(false)) {
+        if (Property.ARGS_TOKEN.asBoolean().orElse(false)) {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
             return;
         }
@@ -162,17 +162,17 @@ public class Main {
         }
 
         // Print snapshots option.
-        if (Property.PRINT_SNAPSHOTS.booleanValue().orElse(false)) {
+        if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
             return;
         }
 
         // Filters.
-        Property.FILTER_DEVICE.list().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
-        List<String> filterDevices = Property.FILTER_DEVICE.list().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_DEVICE.asStringList().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
+        List<String> filterDevices = Property.FILTER_DEVICE.asStringList().orElseGet(() -> Collections.emptyList());
         Predicate<Device> deviceFilter = Filters.deviceFilter(filterDevices);
 
-        Property.FILTER_SNAPSHOT.list().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
-        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.intList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_SNAPSHOT.asStringList().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
+        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.asIntegerList().orElseGet(() -> Collections.emptyList());
         UnaryOperator<List<Snapshot>> snapshotFilter = Filters.<Snapshot>listFilter(filterSnapshots);
 
         Map<Device, List<Snapshot>> filtered = deviceSnapshots
@@ -194,17 +194,17 @@ public class Main {
         });
 
         // Print domain list option.
-        if (Property.PRINT_DOMAIN_LIST.booleanValue().orElse(false)) {
+        if (Property.PRINT_DOMAIN_LIST.asBoolean().orElse(false)) {
             backup.printDomainList(httpClient, deviceSnapshots);
             return;
         }
 
-        Property.FILTER_DOMAIN.list().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
-        List<String> filterDomains = Property.FILTER_DOMAIN.list().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_DOMAIN.asStringList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
+        List<String> filterDomains = Property.FILTER_DOMAIN.asStringList().orElseGet(() -> Collections.emptyList());
         Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
 
-        Property.FILTER_EXTENSION.list().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
-        List<String> filterExtensions = Property.FILTER_EXTENSION.list().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_EXTENSION.asStringList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
+        List<String> filterExtensions = Property.FILTER_EXTENSION.asStringList().orElseGet(() -> Collections.emptyList());
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
         backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);

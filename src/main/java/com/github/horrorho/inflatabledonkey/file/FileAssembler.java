@@ -23,10 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.file;
 
-import com.github.horrorho.inflatabledonkey.io.InputReferenceStream;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESBlockCipher;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,17 +41,18 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.io.CipherInputStream;
 import org.bouncycastle.crypto.io.DigestInputStream;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.Pack;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,19 +67,29 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
-    private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.intValue().orElse(8192);
+    private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.asInteger().orElse(8192);
     private static final int DATA_UNIT_SIZE = 0x1000; // TODO inject via Property
 
+    private final Optional<Supplier<BlockCipher>> ciphers;
     private final Function<EncryptionKeyBlob, Optional<byte[]>> fileKey;
     private final FilePath filePath;
 
-    public FileAssembler(Function<EncryptionKeyBlob, Optional<byte[]>> fileKey, FilePath filePath) {
+    public FileAssembler(
+            Optional<Supplier<BlockCipher>> ciphers,
+            Function<EncryptionKeyBlob, Optional<byte[]>> fileKey,
+            FilePath filePath) {
+
+        this.ciphers = Objects.requireNonNull(ciphers, "ciphers");
         this.fileKey = Objects.requireNonNull(fileKey, "fileKey");
         this.filePath = Objects.requireNonNull(filePath, "filePath");
     }
 
-    public FileAssembler(Function<EncryptionKeyBlob, Optional<byte[]>> fileKey, Path outputFolder) {
-        this(fileKey, new FilePath(outputFolder));
+    public FileAssembler(
+            Optional<Supplier<BlockCipher>> ciphers,
+            Function<EncryptionKeyBlob, Optional<byte[]>> fileKey,
+            Path outputFolder) {
+
+        this(ciphers, fileKey, new FilePath(outputFolder));
     }
 
     @Override
@@ -123,7 +132,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     public boolean encryptionKeyOp(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
-                .orElseGet(() -> assemble(path, chunks, Optional.empty(), false, asset.fileChecksum()));
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
     public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] encryptionKey) {
@@ -135,30 +144,35 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 });
     }
 
-    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, EncryptionKeyBlob fileKeyMetaData) {
-        if (asset.protectionClass() != fileKeyMetaData.protectionClass()) {
+    public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, EncryptionKeyBlob blob) {
+        if (asset.protectionClass() != blob.protectionClass()) {
             logger.warn("-- unwrapKeyOp() - negative protection class match asset: {} metadata: {}",
-                    asset.protectionClass(), fileKeyMetaData.protectionClass());
+                    asset.protectionClass(), blob.protectionClass());
         }
 
-        return fileKey.apply(fileKeyMetaData)
-                .map(key -> assemble(path, chunks, Optional.of(key), fileKeyMetaData.isXTS(), asset.fileChecksum()))
+        return fileKey.apply(blob)
+                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
                 .orElseGet(() -> {
-                    logger.warn("-- unwrapKeyOp() - failed to recover file key: ", fileKeyMetaData);
+                    logger.warn("-- unwrapKeyOp() - failed to recover file key: ", blob);
                     return false;
                 });
     }
 
-    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
-        logger.debug("-- assemble() - path: {} decryptKey: {} fileChecksum: {} size: {}", path,
-                decryptKey.map(Hex::toHexString), fileChecksum.map(Hex::toHexString));
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> key, Optional<byte[]> signature) {
+        logger.debug("-- assemble() - path: {} key: {} signature: {}",
+                path, key.map(Hex::toHexString), signature.map(Hex::toHexString));
+
+        Digest digest = signature.flatMap(CKSignature::type)
+                .orElse(CKSignature.ONE)
+                .newDigest();
+
         try (OutputStream out = Files.newOutputStream(path);
-                InputReferenceStream<Optional<DigestInputStream>> in = chain(chunks, decryptKey, isXTS, fileChecksum)) {
+                DigestInputStream digestInputStream = new DigestInputStream(chunkStream(chunks), digest)) {
 
-            IOUtils.copyLarge(in, out, new byte[BUFFER_SIZE]);
+            IOUtils.copyLarge(FileAssembler.this.decryptStream(digestInputStream, key), out, new byte[BUFFER_SIZE]);
 
-            boolean status = fileChecksum.map(fc -> testFileChecksum(fc, in.reference()))
-                    .orElse(true);
+            boolean status = FileAssembler.this.testSignature(digestInputStream.getDigest(), signature);
+
             logger.info("-- assemble() - written: {} status: {}", path, status);
             return status;
 
@@ -168,44 +182,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
         }
     }
 
-    InputReferenceStream<Optional<DigestInputStream>>
-            chain(List<Chunk> chunks, Optional<byte[]> decryptKey, boolean isXTS, Optional<byte[]> fileChecksum) {
-        return chainFileChecksumOp(fileData(chunks), decryptKey, isXTS, fileChecksum);
-    }
-
-    InputReferenceStream<Optional<DigestInputStream>>
-            chainFileChecksumOp(InputStream input, Optional<byte[]> fileKey, boolean isXTS, Optional<byte[]> fileChecksum) {
-        return fileChecksum
-                .flatMap(fc -> FileSignatures.like(input, fc))
-                .map(dis -> chainDecryptOp(dis, Optional.of(dis), fileKey, isXTS))
-                .orElseGet(() -> chainDecryptOp(input, Optional.empty(), fileKey, isXTS));
-    }
-
-    InputReferenceStream<Optional<DigestInputStream>>
-            chainDecryptOp(InputStream input, Optional<DigestInputStream> digestInput, Optional<byte[]> fileKey, boolean isXTS) {
-        return fileKey
-                .map(KeyParameter::new)
-                .map(key -> cipher(isXTS, key))
-                .map(BufferedBlockCipher::new)
-                .map(cipher -> (InputStream) new CipherInputStream(input, cipher))
-                .map(cis -> new InputReferenceStream<>(cis, digestInput))
-                .orElseGet(() -> new InputReferenceStream<>(input, digestInput));
-    }
-
-    BlockCipher cipher(boolean isXTS, KeyParameter fileKey) {
-        BlockCipher cipher = isXTS
-                ? new XTSAESBlockCipher(this::iosTweakFunction, DATA_UNIT_SIZE)
-                : new FileBlockCipher();
-        cipher.init(false, fileKey);
-        return cipher;
-    }
-
-    byte[] iosTweakFunction(long tweakValue) {
-        byte[] bs = Pack.longToLittleEndian(tweakValue);
-        return Arrays.concatenate(bs, bs);
-    }
-
-    InputStream fileData(List<Chunk> chunks) {
+    InputStream chunkStream(List<Chunk> chunks) {
         List<InputStream> inputStreams = chunks.stream()
                 .map(Chunk::inputStream)
                 .collect(Collectors.toList());
@@ -213,8 +190,50 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
         return new SequenceInputStream(enumeration);
     }
 
-    boolean testFileChecksum(byte[] fileChecksum, Optional<DigestInputStream> digestInputStream) {
-        return digestInputStream.map(dis -> FileSignatures.compare(dis, fileChecksum))
-                .orElse(true);
+    InputStream decryptStream(InputStream in, Optional<byte[]> key) {
+        return key
+                .flatMap(this::decryptStream)
+                .map(BufferedBlockCipher::new)
+                .map(cipher -> (InputStream) new CipherInputStream(in, cipher))
+                .orElse(in);
+    }
+
+    Optional<BlockCipher> decryptStream(byte[] key) {
+        return ciphers
+                .map(Supplier::get)
+                .map(cipher -> {
+                    cipher.init(false, new KeyParameter(key));
+                    return cipher;
+                });
+    }
+
+    boolean testSignature(Digest digest, Optional<byte[]> signature) {
+        return signature
+                .map(c -> testSignature(digest, c))
+                .orElseGet(() -> {
+                    byte[] out = signature(digest);
+                    logger.debug("-- testSignature() - signature: 0x{}", Hex.toHexString(out));
+                    return true;
+                });
+    }
+
+    boolean testSignature(Digest digest, byte[] signature) {
+        byte[] out = signature(digest);
+        boolean match = Arrays.areEqual(out, signature);
+        if (match) {
+            logger.debug("-- testSignature() - positive match out: 0x{} target: 0x{}",
+                    Hex.toHexString(out), Hex.toHexString(signature));
+        } else {
+
+            logger.debug("-- testSignature() - negative match out: 0x{} target: 0x{}",
+                    Hex.toHexString(out), Hex.toHexString(signature));
+        }
+        return match;
+    }
+
+    byte[] signature(Digest digest) {
+        byte[] out = new byte[digest.getDigestSize()];
+        digest.doFinal(out, 0);
+        return out;
     }
 }

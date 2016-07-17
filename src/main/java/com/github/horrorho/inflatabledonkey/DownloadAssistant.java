@@ -27,6 +27,7 @@ import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPAESXTSCipher;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.FileKeys;
 import com.github.horrorho.inflatabledonkey.file.EncryptionKeyBlob;
@@ -72,7 +73,7 @@ public final class DownloadAssistant {
 
         keyBagManager.update(httpClient, assets);
 
-        FileAssembler fileAssembler = new FileAssembler(this::unwrapKey, outputFolder);
+        FileAssembler fileAssembler = new FileAssembler(Optional.of(DPAESXTSCipher::new), this::unwrapKey, outputFolder); // TOFIX Cipher injection
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 

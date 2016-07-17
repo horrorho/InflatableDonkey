@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.file.FileBlockCipher;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPAESCBCCipher;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -42,7 +42,7 @@ public class FileBlockCipherTest {
         byte[] plaintext = Base64.getDecoder().decode(PLAINTEXT);
         byte[] ciphertext = Base64.getDecoder().decode(CIPHERTEXT);
 
-        FileBlockCipher cipher = new FileBlockCipher();
+        DPAESCBCCipher cipher = new DPAESCBCCipher();
         cipher.init(true, key);
 
         byte[] out = process(cipher, plaintext);
@@ -55,7 +55,7 @@ public class FileBlockCipherTest {
         byte[] plaintext = Base64.getDecoder().decode(PLAINTEXT);
         byte[] ciphertext = Base64.getDecoder().decode(CIPHERTEXT);
 
-        FileBlockCipher cipher = new FileBlockCipher();
+        DPAESCBCCipher cipher = new DPAESCBCCipher();
         cipher.init(false, key);
 
         byte[] out = process(cipher, ciphertext);
@@ -68,7 +68,7 @@ public class FileBlockCipherTest {
         byte[] plaintext = Base64.getDecoder().decode(PLAINTEXT);
         byte[] ciphertext = Base64.getDecoder().decode(CIPHERTEXT);
 
-        FileBlockCipher cipher = new FileBlockCipher();
+        DPAESCBCCipher cipher = new DPAESCBCCipher();
         cipher.init(true, key);
 
         byte[] out = process(cipher, plaintext);
@@ -80,7 +80,7 @@ public class FileBlockCipherTest {
         assertArrayEquals(out, ciphertext);
     }
 
-    byte[] process(FileBlockCipher cipher, byte[] data) {
+    byte[] process(DPAESCBCCipher cipher, byte[] data) {
         byte[] out = new byte[data.length];
         for (int i = 0; i < data.length; i += cipher.getBlockSize()) {
             cipher.processBlock(data, i, out, i);

@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.pcs.xfile;
 
-import com.github.horrorho.inflatabledonkey.file.FileBlockIVGenerator;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPAESCBCBlockIVGenerator;
 import java.nio.charset.StandardCharsets;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -41,7 +41,7 @@ public class FileBlockIVGeneratorTest {
 
     @Test
     @Parameters
-    public void testApply(FileBlockIVGenerator generator, int blockOffset, String hex) {
+    public void testApply(DPAESCBCBlockIVGenerator generator, int blockOffset, String hex) {
         byte[] expected = Hex.decode(hex);
 
         byte[] iv = generator.apply(blockOffset);
@@ -55,8 +55,8 @@ public class FileBlockIVGeneratorTest {
     private static final byte[] KEY_A = "Nagsisipagsisinungasinungalingan".getBytes(StandardCharsets.UTF_8);
     private static final byte[] KEY_B = "Konstantynopolitanczykowianeczka".getBytes(StandardCharsets.UTF_8);
 
-    private static final FileBlockIVGenerator A = new FileBlockIVGenerator(KEY_A);
-    private static final FileBlockIVGenerator B = new FileBlockIVGenerator(KEY_B);
+    private static final DPAESCBCBlockIVGenerator A = new DPAESCBCBlockIVGenerator(KEY_A);
+    private static final DPAESCBCBlockIVGenerator B = new DPAESCBCBlockIVGenerator(KEY_B);
 
     private static final Object[] PARAMETERS = new Object[][]{
         new Object[]{A, 3, "799b72049d47b572399f489548238e38"},
