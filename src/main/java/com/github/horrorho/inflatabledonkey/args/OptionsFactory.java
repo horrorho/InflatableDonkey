@@ -88,6 +88,14 @@ public final class OptionsFactory {
                 Property.ARGS_TOKEN);
 
         options.put(
+                new Option(null, "xts-disable", false, "Disable AES-XTS Data Protection (falls back to AES-CBC)."),
+                Property.XTS_DISABLE);
+
+        options.put(
+                new Option(null, "xts-force", false, "Force AES-XTS Data Protection."),
+                Property.XTS_FORCE);
+
+        options.put(
                 new Option(null, "help", false, "Display this help and exit."),
                 Property.ARGS_HELP);
 

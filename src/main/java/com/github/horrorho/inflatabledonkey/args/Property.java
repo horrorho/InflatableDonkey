@@ -59,7 +59,9 @@ public enum Property {
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
-    PROPERTIES_RESOURCE("/inflatable_donkey.properties");
+    PROPERTIES_RESOURCE("/inflatable_donkey.properties"),
+    XTS_DISABLE,
+    XTS_FORCE;
 
     static void setProperties(Map<Property, String> properties) {
         if (touched) {
