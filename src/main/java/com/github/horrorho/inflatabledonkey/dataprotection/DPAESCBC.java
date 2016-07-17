@@ -36,7 +36,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
 /**
- * AES CBC mode with per block IV generation.
+ * Data Protection AES CBC mode with per block IV generation.
  *
  * @see DPAESCBCBlockIVGenerator
  * @author Ahseya

@@ -36,7 +36,7 @@ import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 /**
- * LFSR / AES block IV generator.
+ * Data Protection AES CBC mode block IV generator.
  *
  * @author Ahseya
  */

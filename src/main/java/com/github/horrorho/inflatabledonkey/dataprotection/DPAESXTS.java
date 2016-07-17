@@ -30,7 +30,7 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 
 /**
- * AES XTS mode with modified tweak function.
+ * Data Protection AES XTS mode with modified tweak function.
  *
  * @author Ahseya
  */
