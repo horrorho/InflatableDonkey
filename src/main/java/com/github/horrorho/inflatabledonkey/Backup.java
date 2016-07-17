@@ -165,7 +165,7 @@ public final class Backup {
             for (Snapshot snapshot : deviceSnapshot.getValue()) {
                 printDomainList(httpClient, device, snapshot);
             }
-        }
+        } 
     }
 
     public void printDomainList(HttpClient httpClient, Device device, Snapshot snapshot)
@@ -178,6 +178,7 @@ public final class Backup {
         System.out.println("Device: " + device.info());
         System.out.println("Snapshot: " + snapshot.info());
         System.out.println("Domains / file count:");
+        
         assetsList.stream()
                 .filter(a -> a.domain().isPresent())
                 .map(a -> a.domain().get() + " / " + a.files().size())

@@ -27,7 +27,6 @@ import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.dataprotection.DPAESXTSCipher;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.FileKeys;
 import com.github.horrorho.inflatabledonkey.file.EncryptionKeyBlob;
@@ -36,8 +35,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
+import org.bouncycastle.crypto.BlockCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,17 +55,20 @@ public final class DownloadAssistant {
     private final AuthorizeAssets authorizeAssets;
     private final AssetDownloader assetDownloader;
     private final KeyBagManager keyBagManager;
+    private final Optional<Supplier<BlockCipher>> ciphers;
     private final Path folder;
 
     public DownloadAssistant(
             AuthorizeAssets authorizeAssets,
             AssetDownloader assetDownloader,
             KeyBagManager keyBagManager,
+            Optional<Supplier<BlockCipher>> ciphers,
             Path folder) {
 
         this.authorizeAssets = Objects.requireNonNull(authorizeAssets, "authorizeAssets");
         this.assetDownloader = Objects.requireNonNull(assetDownloader, "assetDownloader");
         this.keyBagManager = Objects.requireNonNull(keyBagManager, "keyBagManager");
+        this.ciphers = Objects.requireNonNull(ciphers, "ciphers");
         this.folder = Objects.requireNonNull(folder, "folder");
     }
 
@@ -73,7 +77,7 @@ public final class DownloadAssistant {
 
         keyBagManager.update(httpClient, assets);
 
-        FileAssembler fileAssembler = new FileAssembler(Optional.of(DPAESXTSCipher::new), this::unwrapKey, outputFolder); // TOFIX Cipher injection
+        FileAssembler fileAssembler = new FileAssembler(ciphers, this::unwrapKey, outputFolder);
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 

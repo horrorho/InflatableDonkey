@@ -87,7 +87,7 @@ public final class OptionsFactory {
                 new Option(null, "token", false, "Display dsPrsID:mmeAuthToken and exit."),
                 Property.ARGS_TOKEN);
 
-        options.put(new Option(null, "dataprotection", true, "Override Data Protection decryption method. Options: " + PropertyDPMode.options()),
+        options.put(new Option(null, "mode", true, "Override Data Protection decryption mode. Options: " + PropertyDPMode.options()),
                 Property.DP_OVERRIDE);
 
         options.put(

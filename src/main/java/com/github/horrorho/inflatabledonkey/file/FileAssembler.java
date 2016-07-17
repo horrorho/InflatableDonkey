@@ -68,7 +68,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     private static final int BUFFER_SIZE = Property.FILE_ASSEMBLER_BUFFER_LENGTH.asInteger().orElse(8192);
-    private static final int DATA_UNIT_SIZE = 0x1000; // TODO inject via Property
 
     private final Optional<Supplier<BlockCipher>> ciphers;
     private final Function<EncryptionKeyBlob, Optional<byte[]>> fileKey;
@@ -132,7 +131,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     public boolean encryptionKeyOp(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(wrappedKey -> unwrapKeyOp(path, asset, chunks, wrappedKey))
-                .orElseGet(() -> assemble(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .orElseGet(() -> assemble(path, chunks, Optional.empty(), "", asset.fileChecksum()));
     }
 
     public boolean unwrapKeyOp(Path path, Asset asset, List<Chunk> chunks, byte[] encryptionKey) {
@@ -150,15 +149,17 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                     asset.protectionClass(), blob.protectionClass());
         }
 
+        String diagnostic = Integer.toHexString(blob.u3());
+
         return fileKey.apply(blob)
-                .map(key -> assemble(path, chunks, Optional.of(key), asset.fileChecksum()))
+                .map(key -> assemble(path, chunks, Optional.of(key), diagnostic + " " + asset.protectionClass(), asset.fileChecksum()))
                 .orElseGet(() -> {
                     logger.warn("-- unwrapKeyOp() - failed to recover file key: ", blob);
                     return false;
                 });
     }
 
-    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> key, Optional<byte[]> signature) {
+    public boolean assemble(Path path, List<Chunk> chunks, Optional<byte[]> key, String diagnostic, Optional<byte[]> signature) {
         logger.debug("-- assemble() - path: {} key: {} signature: {}",
                 path, key.map(Hex::toHexString), signature.map(Hex::toHexString));
 
@@ -173,7 +174,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
             boolean status = FileAssembler.this.testSignature(digestInputStream.getDigest(), signature);
 
-            logger.info("-- assemble() - written: {} status: {}", path, status);
+            logger.info("-- assemble() - written: {} status: {} diagnostic: {}", path, status, diagnostic);
             return status;
 
         } catch (IOException | DataLengthException | IllegalStateException ex) {

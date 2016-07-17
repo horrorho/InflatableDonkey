@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.args.PropertyDPMode;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
@@ -37,6 +38,8 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPAESCBCCipher;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPAESXTSCipher;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,12 +48,15 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.bouncycastle.crypto.BlockCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,8 +138,30 @@ public class Main {
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
+        // TODO automatic decrypt mode
+        PropertyDPMode mode = Property.DP_OVERRIDE.value()
+                .flatMap(PropertyDPMode::parse)
+                .orElse(PropertyDPMode.XTS);
+
+        // TODO tidy
+        Optional<Supplier<BlockCipher>> ciphers;
+        switch (mode) {
+            case CBC:
+                ciphers = Optional.of(DPAESCBCCipher::new);
+                break;
+            case XTS:
+                ciphers = Optional.of(DPAESXTSCipher::new);
+                break;
+            case OFF:
+                ciphers = Optional.empty();
+                break;
+            default:
+                throw new UnsupportedOperationException("unknown mode: " + mode);
+        }
+        logger.info("-- main() - decrypt mode: {}", mode);
+
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
+                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, ciphers, outputFolder);
 
         Backup backup = new Backup(assistant, downloadAssistant);
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
