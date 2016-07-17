@@ -51,6 +51,7 @@ public final class FilePath implements Function<Asset, Optional<Path>> {
         this.outputFolder = Objects.requireNonNull(outputFolder, "outputFolder");
     }
 
+    @Override
     public Optional<Path> apply(Asset asset) {
         if (!asset.domain().isPresent()) {
             logger.warn("-- path() - asset has no domain: {}", asset);

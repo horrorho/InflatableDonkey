@@ -21,48 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.file;
+package com.github.horrorho.inflatabledonkey.dataprotection;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.BlockCipher;
 
 /**
- * MMCSSignatureGenerator/ CKFileSignatureGenerator.
  *
  * @author Ahseya
  */
 @Immutable
-public enum CKSignature {
-    ONE(CKDigestA::new);
+public enum DPCipher implements Supplier<BlockCipher> {
+    AES_CBC(DPAESCBCCipher::new),
+    AES_XTS(DPAESXTSCipher::new);
 
-    public static Optional<CKSignature> type(byte[] signature) {
-        if (signature.length == 0) {
-            return Optional.empty();
-        }
+    private final Supplier<BlockCipher> factory;
 
-        switch (signature[0] & 0x7F) {
-            case 0x01:
-            case 0x02:
-            case 0x0B:
-                return signature.length == 21
-                        ? Optional.of(ONE)
-                        : Optional.empty();
-
-            default:
-                return Optional.empty();
-        }
+    private DPCipher(Supplier<BlockCipher> factory) {
+        this.factory = Objects.requireNonNull(factory, "factory");
     }
 
-    private final Supplier<Digest> supplier;
-
-    private CKSignature(Supplier<Digest> supplier) {
-        this.supplier = Objects.requireNonNull(supplier, "supplier");
-    }
-
-    public Digest newDigest() {
-        return supplier.get();
+    @Override
+    public BlockCipher get() {
+        return factory.get();
     }
 }

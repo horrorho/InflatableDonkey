@@ -54,7 +54,7 @@ public enum Property {
     FILTER_DOMAIN(""),
     FILTER_EXTENSION(""),
     FILTER_SNAPSHOT(),
-    FILE_ASSEMBLER_BUFFER_LENGTH("16384"),
+    FILE_WRITER_BUFFER_LENGTH("16384"),
     OUTPUT_FOLDER("backups"),
     PRINT_DOMAIN_LIST("false"),
     PRINT_SNAPSHOTS("false"),
