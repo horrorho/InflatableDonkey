@@ -78,9 +78,9 @@ public final class EncryptionKeyBlob {
         buffer.get(publicKey);
         buffer.get(wrappedKey);
 
-        EncryptionKeyBlob fileMetaData = new EncryptionKeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
-        logger.trace(">> create() - fileMetaData: {}", fileMetaData);
-        return Optional.of(fileMetaData);
+        EncryptionKeyBlob blob = new EncryptionKeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
+        logger.trace(">> create() - blob: {}", blob);
+        return Optional.of(blob);
     }
 
     private final byte[] uuid;
@@ -127,11 +127,6 @@ public final class EncryptionKeyBlob {
 
     public int u3() {
         return u3;
-    }
-
-    public boolean isXTS() {
-        // Experimental. Doesn't work.
-        return (u3 & 0x00FF0000) != 0;
     }
 
     @Override
