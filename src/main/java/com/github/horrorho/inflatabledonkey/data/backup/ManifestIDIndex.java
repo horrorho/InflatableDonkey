@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -24,44 +24,66 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Manifest.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Manifest {
+public final class ManifestIDIndex {
 
-    private final int count;
-    private final int checksum;
+    private static final Logger logger = LoggerFactory.getLogger(ManifestIDIndex.class);
+
+    public static Optional<ManifestIDIndex> from(String formatted) {
+        // Format: M:<uuid>:<base64 hash>:<index>
+        String[] split = formatted.split(":");
+        if (split.length != 4) {
+            logger.warn("-- from() - unexpected format: {}", formatted);
+        }
+        if (split.length < 4) {
+            return Optional.empty();
+        }
+
+        int index;
+        try {
+            index = Integer.parseInt(split[3]);
+        } catch (NumberFormatException ex) {
+            logger.warn("-- from() - input: {} NumberFormatException: {}", formatted, ex.getMessage());
+            return Optional.empty();
+        }
+
+        return Optional.of(new ManifestIDIndex(split[1], split[2], index));
+    }
+
     private final ManifestID id;
+    private final int index;
 
-    public Manifest(int count, int checksum, ManifestID id) {
-        this.count = count;
-        this.checksum = checksum;
+    public ManifestIDIndex(ManifestID id, int index) {
         this.id = Objects.requireNonNull(id, "id");
+        this.index = index;
     }
 
-    public int count() {
-        return count;
-    }
-
-    public int checksum() {
-        return checksum;
+    public ManifestIDIndex(String uuid, String hash, int index) {
+        this(new ManifestID(uuid, hash), index);
     }
 
     public ManifestID id() {
         return id;
     }
 
+    public int index() {
+        return index;
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        hash = 43 * hash + Objects.hashCode(this.id);
+        hash = 43 * hash + this.index;
         return hash;
     }
 
@@ -76,11 +98,8 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
-            return false;
-        }
-        if (this.checksum != other.checksum) {
+        final ManifestIDIndex other = (ManifestIDIndex) obj;
+        if (this.index != other.index) {
             return false;
         }
         if (!Objects.equals(this.id, other.id)) {
@@ -91,6 +110,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "count=" + count + ", checksum=" + checksum + ", id=" + id + '}';
+        return id + ":" + index;
     }
 }

@@ -23,14 +23,17 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
-import com.google.protobuf.ByteString;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AssetsFactory.
@@ -40,55 +43,82 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class AssetsFactory {
 
+    private static final Logger logger = LoggerFactory.getLogger(AssetsFactory.class);
+
     private static final String DOMAIN = "domain";
     private static final String FILES = "files";
 
-//    public static Assets from(ZoneRecord recordDecryptor) {
-//        return fromLegacy(recordDecryptor.record(), recordDecryptor.zone());
-//    }
-
-    public static Assets from(CloudKit.Record record, BiFunction<byte[], String, Optional<byte[]>> decrypt) {
-        List<CloudKit.RecordField> records = record.getRecordFieldList();
-        List<String> files = files(records);
-
-        Optional<String> domain = domain(records)
-                .flatMap(bs -> decrypt.apply(bs, DOMAIN))
-                .map(String::new);
-
-        return new Assets(domain, files);
+    public static Optional<Assets> from(List<CloudKit.Record> records, ProtectionZone protectionZone) {
+        return records.isEmpty()
+                ? Optional.empty()
+                : manifestID(records).flatMap(id -> from(id, records, protectionZone));
     }
 
-//    public static Assets fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
-//        List<CloudKit.RecordField> records = record.getRecordFieldList();
-//
-//        List<String> files = files(records);
-//
-//        Optional<String> domain = domain(records)
-//                .flatMap(bs -> zone.map(z -> z.decrypt(bs, DOMAIN)))
-//                .map(String::new);
-//
-//        return new Assets(domain, files);
-//    }
+    static Optional<Assets> from(ManifestID id, List<CloudKit.Record> records, ProtectionZone protectionZone) {
+        return domain(records, protectionZone::decrypt)
+                .map(u -> from(id, u, records));
+    }
 
-    static Optional<byte[]> domain(List<CloudKit.RecordField> records) {
-        return records.stream()
-                .filter(c -> c.getIdentifier().getName().equals(DOMAIN))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
+    static Assets from(ManifestID id, String domain, List<CloudKit.Record> records) {
+        List<String> files = files(records);
+        Assets assets = new Assets(id, domain, files);
+        logger.debug("-- from() - manifestID: {} domain: {} files: {}",
+                assets.manifestID(), assets.domain(), assets.count());
+        return assets;
+    }
+
+    static Optional<ManifestID> manifestID(List<CloudKit.Record> records) {
+        Set<ManifestID> ids = records.stream()
+                .map(u -> u.getRecordIdentifier().getValue().getName())
+                .map(ManifestIDIndex::from)
+                .filter(Optional::isPresent)
+                .map(u -> u.get().id())
+                .collect(Collectors.toSet());
+        if (ids.size() != 1) {
+            logger.warn("-- manifestID() - multiple manifest ids found: {}", ids);
+        }
+        return ids.size() == 1
+                ? Optional.of(ids.iterator().next())
+                : Optional.empty();
+    }
+
+    static Optional<String>
+            domain(List<CloudKit.Record> records, BiFunction<byte[], String, Optional<byte[]>> decrypt) {
+        Optional<String> domain = records
+                .stream()
+                .map(CloudKit.Record::getRecordFieldList)
+                .map(AssetsFactory::domain)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(u -> decrypt.apply(u, DOMAIN))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(String::new)
+                .findFirst();
+        if (!domain.isPresent()) {
+            logger.warn("-- domain() - no domain found");
+        }
+        return domain;
+    }
+
+    static Optional<byte[]>
+            domain(List<CloudKit.RecordField> records) {
+        return records
+                .stream()
+                .filter(u -> u.getIdentifier().getName().equals(DOMAIN))
+                .map(u -> u.getValue().getBytesValue().toByteArray())
                 .findFirst();
     }
 
-    static List<String> files(List<CloudKit.RecordField> records) {
-        return records.stream()
-                .filter(c -> c.getIdentifier().getName().equals(FILES))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
+    static List<String> files(List<CloudKit.Record> records) {
+        return records
+                .stream()
+                .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getReferenceValue)
-                .map(CloudKit.RecordReference::getRecordIdentifier)
-                .map(CloudKit.RecordIdentifier::getValue)
-                .map(CloudKit.Identifier::getName)
+                .filter(u -> u.getIdentifier().getName().equals(FILES))
+                .map(u -> u.getValue().getRecordFieldValueList())
+                .flatMap(Collection::stream)
+                .map(u -> u.getReferenceValue().getRecordIdentifier().getValue().getName())
                 .collect(Collectors.toList());
     }
 }

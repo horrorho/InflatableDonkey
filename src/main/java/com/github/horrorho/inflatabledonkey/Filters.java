@@ -63,10 +63,7 @@ public final class Filters {
         }
 
         Predicate<String> filter = stringFilter(subStrings, String::contains);
-        return assets -> assets
-                .domain()
-                .map(filter::test)
-                .orElse(false);
+        return assets -> filter.test(assets.domain());
     }
 
     public static Predicate<Device> deviceFilter(Collection<String> subStrings) {

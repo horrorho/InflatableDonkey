@@ -27,14 +27,18 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
+import com.github.horrorho.inflatabledonkey.data.backup.ManifestID;
+import com.github.horrorho.inflatabledonkey.data.backup.ManifestIDIndex;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
@@ -60,42 +64,80 @@ public final class AssetsClient {
             return new ArrayList<>();
         }
 
-        List<String> manifestIDs = manifests.stream()
-                .map(AssetsClient::manifestIDs)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        List<String> manifestIDs = manifestIDs(manifests);
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(
-                        httpClient,
-                        "_defaultZone",
-                        manifestIDs);
-        logger.info("-- assets() - responses: {}", responses.size());
+                = kitty.recordRetrieveRequest(httpClient, "_defaultZone", manifestIDs);
 
-        // Manifests with multiple counts only return protection info for the first block, as we are passing blocks in
-        // order we can reference the previous protection zone.
-        // TODO tighten up.
-        AtomicReference<ProtectionZone> previous = new AtomicReference<>(zone);
+        return assetsList(responses, zone);
+    }
 
-        return responses.stream()
-                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> assets(r, zone, previous))
+    static List<String> manifestIDs(Collection<Manifest> manifests) {
+        return manifests
+                .stream()
+                .map(AssetsClient::manifestIDs)
+                .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
     static List<String> manifestIDs(Manifest manifest) {
         return IntStream.range(0, manifest.count())
-                .mapToObj(i -> manifest.id() + ":" + i)
+                .mapToObj(i -> new ManifestIDIndex(manifest.id(), i))
+                .map(Object::toString)
                 .collect(Collectors.toList());
     }
 
-    static Assets assets(CloudKit.Record record, ProtectionZone zone, AtomicReference<ProtectionZone> previous) {
-        return PZFactory.instance().create(zone, record.getProtectionInfo())
-                .map(z -> {
-                    previous.set(z);
-                    return AssetsFactory.from(record, z::decrypt);
-                })
-                .orElseGet(() -> AssetsFactory.from(record, previous.get()::decrypt));
+    static List<Assets> assetsList(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+        return groupByManifestID(responses)
+                .values()
+                .stream()
+                .map(u -> assets(u, zone))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    static Optional<Assets> assets(List<CloudKit.Record> records, ProtectionZone zone) {
+        return zone(records, zone)
+                .flatMap(u -> AssetsFactory.from(records, u));
+    }
+
+    static Optional<ProtectionZone> zone(Collection<CloudKit.Record> records, ProtectionZone zone) {
+        List<ProtectionZone> zones = records
+                .stream()
+                .filter(CloudKit.Record::hasProtectionInfo)
+                .map(CloudKit.Record::getProtectionInfo)
+                .map(u -> PZFactory.instance().create(zone, u))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+        if (zones.size() != 1) {
+            logger.warn("-- zone() - unexpected protection info count: {}", zones.size());
+        }
+        return zones.isEmpty()
+                ? Optional.empty()
+                : Optional.of(zones.get(0));
+    }
+
+    static Map<ManifestID, List<CloudKit.Record>>
+            groupByManifestID(Collection<CloudKit.RecordRetrieveResponse> responses) {
+        return responses
+                .stream()
+                .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .map(AssetsClient::manifestIDRecord)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.groupingBy(Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+    }
+
+    static Optional<Map.Entry<ManifestID, CloudKit.Record>> manifestIDRecord(CloudKit.Record record) {
+        String name = record.getRecordIdentifier().getValue().getName();
+        Optional<Map.Entry<ManifestID, CloudKit.Record>> entry = ManifestIDIndex.from(name)
+                .map(u -> new SimpleImmutableEntry<>(u.id(), record));
+        if (!entry.isPresent()) {
+            logger.warn("-- manifestIDRecord() - no manifest id found: {}", name);
+        }
+        return entry;
     }
 }

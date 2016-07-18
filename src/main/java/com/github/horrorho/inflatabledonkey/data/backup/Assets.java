@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -92,20 +91,30 @@ public final class Assets {
 
     private static final Logger logger = LoggerFactory.getLogger(Assets.class);
 
-    private final Optional<String> domain;
+    private final ManifestID manifestID;
+    private final String domain;
     private final List<String> files;
 
-    public Assets(Optional<String> domain, List<String> files) {
+    public Assets(ManifestID manifestID, String domain, List<String> files) {
+        this.manifestID = Objects.requireNonNull(manifestID, "manifestID");
         this.domain = Objects.requireNonNull(domain, "domain");
         this.files = new ArrayList<>(files);
     }
 
-    public Optional<String> domain() {
+    public String domain() {
         return domain;
+    }
+
+    public ManifestID manifestID() {
+        return manifestID;
     }
 
     public List<String> files() {
         return new ArrayList<>(files);
+    }
+
+    public int count() {
+        return files.size();
     }
 
     public List<String> nonEmptyFiles() {
@@ -116,6 +125,6 @@ public final class Assets {
 
     @Override
     public String toString() {
-        return "Assets{" + "domain=" + domain + ", files=" + files + '}';
+        return "Assets{" + "manifestID=" + manifestID + ", domain=" + domain + ", files=" + files + '}';
     }
 }

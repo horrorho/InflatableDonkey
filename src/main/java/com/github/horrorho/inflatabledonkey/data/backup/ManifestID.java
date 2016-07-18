@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -24,44 +24,53 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Manifest.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Manifest {
+public final class ManifestID {
 
-    private final int count;
-    private final int checksum;
-    private final ManifestID id;
+    private static final Logger logger = LoggerFactory.getLogger(ManifestID.class);
 
-    public Manifest(int count, int checksum, ManifestID id) {
-        this.count = count;
-        this.checksum = checksum;
-        this.id = Objects.requireNonNull(id, "id");
+    public static Optional<ManifestID> from(String formatted) {
+        // Format: M:<uuid>:<base64 hash>
+        String[] split = formatted.split(":");
+        if (split.length != 3) {
+            logger.warn("-- from() - unexpected format: {}", formatted);
+        }
+
+        return split.length < 3
+                ? Optional.empty()
+                : Optional.of(new ManifestID(split[1], split[2]));
     }
 
-    public int count() {
-        return count;
+    private final String uuid;
+    private final String hash;  // Base64
+
+    public ManifestID(String uuid, String hash) {
+        this.uuid = uuid;
+        this.hash = hash;
     }
 
-    public int checksum() {
-        return checksum;
+    public String uuid() {
+        return uuid;
     }
 
-    public ManifestID id() {
-        return id;
+    public String hash() {
+        return hash;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        int hash = 5;
+        hash = 41 * hash + Objects.hashCode(this.uuid);
+        hash = 41 * hash + Objects.hashCode(this.hash);
         return hash;
     }
 
@@ -76,14 +85,11 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
+        final ManifestID other = (ManifestID) obj;
+        if (!Objects.equals(this.uuid, other.uuid)) {
             return false;
         }
-        if (this.checksum != other.checksum) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
+        if (!Objects.equals(this.hash, other.hash)) {
             return false;
         }
         return true;
@@ -91,6 +97,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "count=" + count + ", checksum=" + checksum + ", id=" + id + '}';
+        return "M:" + uuid + ":" + hash;
     }
 }

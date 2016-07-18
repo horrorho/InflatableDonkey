@@ -62,7 +62,7 @@ public class Snapshots {
     static List<Manifest> manifests(List<CloudKit.RecordField> records) {
         List<Integer> manifestCounts = manifestCounts(records);
         List<Integer> manifestChecksums = manifestChecksums(records);
-        List<String> manifestIDs = manifestIDs(records);
+        List<ManifestID> manifestIDs = manifestIDs(records);
 
         logger.debug("-- manifests() - counts: {}", manifestCounts.size());
         logger.debug("-- manifests() - checksums: {}", manifestChecksums.size());
@@ -107,13 +107,15 @@ public class Snapshots {
                 .collect(Collectors.toList());
     }
 
-    static List<String> manifestIDs(List<CloudKit.RecordField> records) {
+    static List<ManifestID> manifestIDs(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals("manifestIDs"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
+                .map(u -> u.getValue().getRecordFieldValueList())
                 .flatMap(Collection::stream)
                 .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(ManifestID::from)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
@@ -125,5 +127,4 @@ public class Snapshots {
                 .map(ByteString::toByteArray)
                 .findFirst();
     }
-
 }
