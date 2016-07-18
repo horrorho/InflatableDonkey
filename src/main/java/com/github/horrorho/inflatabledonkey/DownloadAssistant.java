@@ -27,9 +27,9 @@ import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.file.FileAssemblerLegacy;
 import com.github.horrorho.inflatabledonkey.file.FileKeys;
 import com.github.horrorho.inflatabledonkey.file.EncryptionKeyBlob;
+import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -77,7 +77,7 @@ public final class DownloadAssistant {
 
         keyBagManager.update(httpClient, assets);
 
-        FileAssemblerLegacy fileAssembler = new FileAssemblerLegacy(ciphers, this::unwrapKey, outputFolder);
+        FileAssembler fileAssembler = new FileAssembler(ciphers, this::unwrapKey, outputFolder);
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 

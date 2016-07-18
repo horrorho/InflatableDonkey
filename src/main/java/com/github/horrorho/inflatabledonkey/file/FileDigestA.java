@@ -48,7 +48,7 @@ public class FileDigestA implements Digest {
 
     @Override
     public String getAlgorithmName() {
-        return "CKDigestA";
+        return "FileDigestA";
     }
 
     @Override

@@ -91,13 +91,16 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     @Override
     public boolean test(Asset asset, List<Chunk> chunks) {
-        return assemble(asset, chunks);
+        logger.trace("<< test() - asset: {} chunks: {}", asset, chunks.size());
+        boolean success = assemble(asset, chunks);
+        logger.trace(">> test() - success: {}", success);
+        return success;
     }
 
     boolean assemble(Asset asset, List<Chunk> chunks) {
         return filePath.apply(asset)
                 .filter(DirectoryAssistant::createParent)
-                .filter(path -> write(path, chunks, fileKeyCipher(asset), asset.fileSignature()))
+                .filter(path -> write(path, chunks, fileKeyCipher(asset), asset.fileChecksum()))
                 .map(path -> truncate(path, asset))
                 .orElse(false);
     }

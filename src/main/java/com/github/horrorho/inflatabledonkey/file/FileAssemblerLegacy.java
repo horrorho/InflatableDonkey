@@ -170,9 +170,9 @@ public final class FileAssemblerLegacy implements BiConsumer<Asset, List<Chunk>>
         try (OutputStream out = Files.newOutputStream(path);
                 DigestInputStream digestInputStream = new DigestInputStream(chunkStream(chunks), digest)) {
 
-            IOUtils.copyLarge(FileAssemblerLegacy.this.decryptStream(digestInputStream, key), out, new byte[BUFFER_SIZE]);
+            IOUtils.copyLarge(decryptStream(digestInputStream, key), out, new byte[BUFFER_SIZE]);
 
-            boolean status = FileAssemblerLegacy.this.testSignature(digestInputStream.getDigest(), signature);
+            boolean status = testSignature(digestInputStream.getDigest(), signature);
 
             logger.info("-- assemble() - written: {} status: {} diagnostic: {}", path, status, diagnostic);
             return status;

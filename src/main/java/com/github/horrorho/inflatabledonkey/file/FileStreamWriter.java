@@ -63,6 +63,7 @@ public final class FileStreamWriter {
         DigestInputStream digestInputStream = new DigestInputStream(in, digest);
 
         IOUtils.copyLarge(decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
+        out.flush();
 
         return testSignature(digestInputStream.getDigest(), signature);
     }
@@ -97,7 +98,7 @@ public final class FileStreamWriter {
                     Hex.toHexString(out), Hex.toHexString(signature));
         } else {
 
-            logger.debug("-- testSignature() - negative match out: 0x{} target: 0x{}",
+            logger.warn("-- testSignature() - negative match out: 0x{} target: 0x{}",
                     Hex.toHexString(out), Hex.toHexString(signature));
         }
         return match;
