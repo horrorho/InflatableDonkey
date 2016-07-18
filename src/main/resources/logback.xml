@@ -15,11 +15,11 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetAssistant" level="warn" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetAssistant" level="debug" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
     
-    <logger name="com.github.horrorho.inflatabledonkey.args" level="warn" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey.args" level="debug" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
     

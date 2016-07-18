@@ -118,7 +118,6 @@ public class Main {
 
         // Account
         Account account = Accounts.account(httpClient, auth);
-        logger.info("-- main() - Account: {}", account.accountInfo().appleId());
 
         // Backup
         BackupAssistant assistant = BackupAssistant.create(httpClient, account);
@@ -236,7 +235,52 @@ public class Main {
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
         backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);
+
+//      rodrimc@github
+//        boolean repeat = false;
+//        do {
+//      rodrimc@github
+//        // Selection
+//        Scanner input = new Scanner(System.in);
+//
+//        int deviceIndex;
+//        int snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
+//
+//        if (devices.size() > 1) {
+//            System.out.printf("Select a device [0 - %d]: ", devices.size() - 1);
+//            deviceIndex = input.nextInt();
+//        } else {
+//            deviceIndex = Property.SELECT_DEVICE_INDEX.intValue().get();
+//        }
+//
+//        if (deviceIndex >= devices.size() || deviceIndex < 0) {
+//            System.out.println("No such device: " + deviceIndex);
+//            System.exit(-1);
+//        }
+//
+//        Device device = devices.get(deviceIndex);
+//        System.out.println("Selected device: " + deviceIndex + ", " + device.info());
+//
+//        if (device.snapshots().size() > 1) {
+//            System.out.printf("Select a snapshot [0 - %d]: ", device.snapshots().size() - 1);
+//            snapshotIndex = input.nextInt();
+//        } else {
+//            snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
+//        }
+//
+//        if (snapshotIndex >= devices.get(deviceIndex).snapshots().size() || snapshotIndex < 0) {
+//            System.out.println("No such snapshot for selected device: " + snapshotIndex);
+//            System.exit(-1);
+//        }
+//
+//        logger.info("-- main() - arg device index: {}", deviceIndex);
+//        logger.info("-- main() - arg snapshot index: {}", snapshotIndex);
+//      rodrimc@github
+//            System.out.print("Download other snapshot (Y/N)? ");
+//            repeat = input.next().toLowerCase(Locale.US).charAt(0) == 'y';
+//        } while (repeat == true);
     }
+
 }
 
 // TODO 0xFF System protectionInfo
