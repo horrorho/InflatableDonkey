@@ -58,13 +58,11 @@ public final class ProtocRawDecoder {
     public static final Optional<ProtocRawDecoder> defaults() {
         return DEFAULTS;
     }
-    private static final String PATH = Property.PROTOC_PATH.value().orElse(null);
+    private static final Optional<String> PATH = Property.PROTOC_PATH.value();
     private static final long TIMEOUT = Property.PROTOC_TIMEOUT_MS.asLong().orElse(150000L);
 
     private static final Optional<ProtocRawDecoder> DEFAULTS
-            = PATH != null
-                    ? Optional.of(new ProtocRawDecoder())
-                    : Optional.empty();
+            = PATH.map(u -> new ProtocRawDecoder(u));
 
     private static final Logger logger = LoggerFactory.getLogger(ProtocRawDecoder.class);
 
@@ -78,10 +76,6 @@ public final class ProtocRawDecoder {
 
     public ProtocRawDecoder(String protocPath) {
         this(protocPath, TIMEOUT);
-    }
-
-    ProtocRawDecoder() {
-        this(PATH);
     }
 
     public List<String> decodeDelimited(InputStream in) {
