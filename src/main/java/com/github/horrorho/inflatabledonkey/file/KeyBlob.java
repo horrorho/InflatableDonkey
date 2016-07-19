@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class EncryptionKeyBlob {
+public final class KeyBlob {
 
-    private static final Logger logger = LoggerFactory.getLogger(EncryptionKeyBlob.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeyBlob.class);
 
     public static Optional<byte[]> uuid(byte[] data) {
         return data.length < 0x10
@@ -47,7 +47,7 @@ public final class EncryptionKeyBlob {
                 : Optional.of(Arrays.copyOfRange(data, 0, 0x10));
     }
 
-    public static Optional<EncryptionKeyBlob> create(byte[] data) {
+    public static Optional<KeyBlob> create(byte[] data) {
         logger.trace("<< create() - data: 0x{}", Hex.toHexString(data));
         if (data.length < 36) {
             logger.warn("-- create() - short input length: 0x{}", Hex.toHexString(data));
@@ -78,7 +78,7 @@ public final class EncryptionKeyBlob {
         buffer.get(publicKey);
         buffer.get(wrappedKey);
 
-        EncryptionKeyBlob blob = new EncryptionKeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
+        KeyBlob blob = new KeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
         logger.trace(">> create() - blob: {}", blob);
         return Optional.of(blob);
     }
@@ -91,7 +91,7 @@ public final class EncryptionKeyBlob {
     private final int u2;
     private final int u3;
 
-    public EncryptionKeyBlob(byte[] uuid, byte[] publicKey, byte[] wrappedKey, int protectionClass, int u1, int u2, int u3) {
+    public KeyBlob(byte[] uuid, byte[] publicKey, byte[] wrappedKey, int protectionClass, int u1, int u2, int u3) {
         this.uuid = Arrays.copyOf(uuid, uuid.length);
         this.publicKey = Arrays.copyOf(publicKey, publicKey.length);
         this.wrappedKey = Arrays.copyOf(wrappedKey, wrappedKey.length);
@@ -153,7 +153,7 @@ public final class EncryptionKeyBlob {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final EncryptionKeyBlob other = (EncryptionKeyBlob) obj;
+        final KeyBlob other = (KeyBlob) obj;
         if (this.protectionClass != other.protectionClass) {
             return false;
         }

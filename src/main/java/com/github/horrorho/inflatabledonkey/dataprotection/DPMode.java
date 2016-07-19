@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.dataprotection;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.BlockCipher;
@@ -33,18 +32,17 @@ import org.bouncycastle.crypto.BlockCipher;
  * @author Ahseya
  */
 @Immutable
-public enum DPCipher implements Supplier<BlockCipher> {
-    AES_CBC(DPAESCBCCipher::new),
-    AES_XTS(DPAESXTSCipher::new);
-
-    private final Supplier<BlockCipher> factory;
-
-    private DPCipher(Supplier<BlockCipher> factory) {
-        this.factory = Objects.requireNonNull(factory, "factory");
-    }
-
-    @Override
-    public BlockCipher get() {
-        return factory.get();
-    }
+public enum DPMode implements Supplier<BlockCipher> {
+    AES_CBC() {
+        @Override
+        public BlockCipher get() {
+            return new DPAESCBCCipher();
+        }
+    },
+    AES_XTS() {
+        @Override
+        public BlockCipher get() {
+            return new DPAESXTSCipher();
+        }
+    };
 }

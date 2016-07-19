@@ -143,24 +143,24 @@ public class Main {
                 .orElse(PropertyDPMode.XTS);
 
         // TODO tidy
-        Optional<Supplier<BlockCipher>> ciphers;
+        Optional<Supplier<BlockCipher>> override;
         switch (mode) {
             case CBC:
-                ciphers = Optional.of(DPAESCBCCipher::new);
+                override = Optional.of(DPAESCBCCipher::new);
                 break;
             case XTS:
-                ciphers = Optional.of(DPAESXTSCipher::new);
+                override = Optional.of(DPAESXTSCipher::new);
                 break;
             case OFF:
-                ciphers = Optional.empty();
+                override = Optional.empty();
                 break;
             default:
                 throw new UnsupportedOperationException("unknown mode: " + mode);
         }
-        logger.info("-- main() - decrypt mode: {}", mode);
+        override.ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
 
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, ciphers, outputFolder);
+                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, override, outputFolder);
 
         Backup backup = new Backup(assistant, downloadAssistant);
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);

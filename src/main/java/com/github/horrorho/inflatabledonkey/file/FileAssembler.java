@@ -40,10 +40,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
@@ -59,26 +57,16 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
-    private final Optional<Supplier<BlockCipher>> cipherSupplier;
-    private final Function<EncryptionKeyBlob, Optional<byte[]>> fileKeyDecrypter;
+    private final Function<byte[], Optional<XFileKey>> fileKeys;
     private final FilePath filePath;
 
-    public FileAssembler(
-            Optional<Supplier<BlockCipher>> cipherSupplier,
-            Function<EncryptionKeyBlob, Optional<byte[]>> fileKeyDecrypter,
-            FilePath filePath) {
-
-        this.cipherSupplier = Objects.requireNonNull(cipherSupplier, "cipherSupplier");
-        this.fileKeyDecrypter = Objects.requireNonNull(fileKeyDecrypter, "fileKeyDecrypter");
+    public FileAssembler(Function<byte[], Optional<XFileKey>> fileKeys, FilePath filePath) {
+        this.fileKeys = Objects.requireNonNull(fileKeys, "fileKeys");
         this.filePath = Objects.requireNonNull(filePath, "filePath");
     }
 
-    public FileAssembler(
-            Optional<Supplier<BlockCipher>> ciphers,
-            Function<EncryptionKeyBlob, Optional<byte[]>> fileKey,
-            Path outputFolder) {
-
-        this(ciphers, fileKey, new FilePath(outputFolder));
+    public FileAssembler(Function<byte[], Optional<XFileKey>> fileKeys, Path outputFolder) {
+        this(fileKeys, new FilePath(outputFolder));
     }
 
     @Override
@@ -100,12 +88,27 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     boolean assemble(Asset asset, List<Chunk> chunks) {
         return filePath.apply(asset)
                 .filter(DirectoryAssistant::createParent)
-                .filter(path -> write(path, chunks, fileKeyCipher(asset), asset.fileChecksum()))
+                .filter(path -> assemble(path, asset, chunks))
                 .map(path -> truncate(path, asset))
                 .orElse(false);
     }
 
-    boolean write(Path path, List<Chunk> chunks, Optional<FileKeyCipher> keyCipher, Optional<byte[]> signature) {
+    boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
+        return asset.encryptionKey()
+                .map(u -> decrypt(path, chunks, u, asset.fileChecksum()))
+                .orElseGet(() -> write(path, chunks, Optional.empty(), asset.fileChecksum()));
+    }
+
+    boolean decrypt(Path path, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
+        return fileKeys.apply(encryptionKey)
+                .map(u -> write(path, chunks, Optional.of(u), signature))
+                .orElseGet(() -> {
+                    logger.warn("-- decrypt() - failed to unwrap encryption key");
+                    return false;
+                });
+    }
+
+    boolean write(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
         logger.debug("-- write() - path: {} key cipher: {} signature: 0x{}",
                 path, keyCipher, signature.map(Hex::toHexString).orElse("NULL"));
 
@@ -114,7 +117,13 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
             boolean status = FileStreamWriter.copy(in, out, keyCipher, signature);
 
-            logger.info("-- write() - written: {} status: {}", path, status);
+            if (keyCipher.isPresent()) {
+                XFileKey kc = keyCipher.get();
+                logger.info("-- write() - written: {} status: {} mode: {} flags: 0x{}",
+                        path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
+            } else {
+                logger.info("-- write() - written: {} status:", path, status);
+            }
             return status;
 
         } catch (IOException | DataLengthException | IllegalStateException ex) {
@@ -129,18 +138,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 .collect(Collectors.toList());
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
         return new SequenceInputStream(enumeration);
-    }
-
-    Optional<FileKeyCipher> fileKeyCipher(Asset asset) {
-        return cipherSupplier
-                .flatMap(ciphers -> fileKeyCipher(asset, ciphers));
-    }
-
-    Optional<FileKeyCipher> fileKeyCipher(Asset asset, Supplier<BlockCipher> ciphers) {
-        return asset.encryptionKey()
-                .flatMap(EncryptionKeyBlob::create)
-                .flatMap(fileKeyDecrypter::apply)
-                .map(fileKey -> new FileKeyCipher(fileKey, ciphers));
     }
 
     boolean truncate(Path path, Asset asset) {

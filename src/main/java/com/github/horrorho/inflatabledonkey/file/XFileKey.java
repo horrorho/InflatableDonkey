@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.file;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.BlockCipher;
@@ -35,14 +36,20 @@ import org.bouncycastle.util.encoders.Hex;
  * @author Ahseya
  */
 @Immutable
-public final class FileKeyCipher {
+public final class XFileKey {
 
     private final byte[] key;
     private final Supplier<BlockCipher> ciphers;
+    private final byte[] flags;    // TODO can remove once we have figured the xts/ cbc switches
 
-    public FileKeyCipher(byte[] key, Supplier<BlockCipher> ciphers) {
+    public XFileKey(byte[] key, Supplier<BlockCipher> ciphers, byte[] flags) {
         this.key = Arrays.copyOf(key, key.length);
         this.ciphers = Objects.requireNonNull(ciphers, "ciphers");
+        this.flags = Objects.requireNonNull(flags, "flags");
+    }
+
+    public XFileKey(byte[] key, Supplier<BlockCipher> ciphers) {
+        this(key, ciphers, new byte[]{});
     }
 
     public byte[] key() {
@@ -51,6 +58,10 @@ public final class FileKeyCipher {
 
     public Supplier<BlockCipher> ciphers() {
         return ciphers;
+    }
+
+    public byte[] flags() {
+        return Arrays.copyOf(flags, flags.length);
     }
 
     @Override
@@ -72,7 +83,7 @@ public final class FileKeyCipher {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileKeyCipher other = (FileKeyCipher) obj;
+        final XFileKey other = (XFileKey) obj;
         if (!Arrays.equals(this.key, other.key)) {
             return false;
         }
@@ -87,6 +98,7 @@ public final class FileKeyCipher {
         return "FileKeyCipher{"
                 + "key=0x" + Hex.toHexString(key)
                 + ", ciphers=" + ciphers
+                + ", flags=0x" + Hex.toHexString(flags)
                 + '}';
     }
 }

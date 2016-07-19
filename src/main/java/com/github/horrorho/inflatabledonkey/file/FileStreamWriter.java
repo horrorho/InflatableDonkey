@@ -53,7 +53,7 @@ public final class FileStreamWriter {
     private static final int BUFFER_SIZE = Property.FILE_WRITER_BUFFER_LENGTH.asInteger().orElse(8192);
 
     public static boolean
-            copy(InputStream in, OutputStream out, Optional<FileKeyCipher> keyCipher, Optional<byte[]> signature)
+            copy(InputStream in, OutputStream out, Optional<XFileKey> keyCipher, Optional<byte[]> signature)
             throws IOException {
 
         Digest digest = signature.flatMap(FileSignature::type)
@@ -68,13 +68,13 @@ public final class FileStreamWriter {
         return testSignature(digestInputStream.getDigest(), signature);
     }
 
-    static InputStream decryptStream(InputStream in, Optional<FileKeyCipher> keyCipher) {
+    static InputStream decryptStream(InputStream in, Optional<XFileKey> keyCipher) {
         return keyCipher
                 .map(kc -> decryptStream(in, kc))
                 .orElse(in);
     }
 
-    static InputStream decryptStream(InputStream in, FileKeyCipher keyCipher) {
+    static InputStream decryptStream(InputStream in, XFileKey keyCipher) {
         BlockCipher cipher = keyCipher.ciphers().get();
         cipher.init(false, new KeyParameter(keyCipher.key()));
         return new CipherInputStream(in, new BufferedBlockCipher(cipher));
