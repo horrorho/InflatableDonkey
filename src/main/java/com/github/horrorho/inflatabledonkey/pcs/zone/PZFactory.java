@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.ProtectionInfo;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Objects;

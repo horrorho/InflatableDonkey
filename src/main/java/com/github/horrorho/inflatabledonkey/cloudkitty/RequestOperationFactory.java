@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

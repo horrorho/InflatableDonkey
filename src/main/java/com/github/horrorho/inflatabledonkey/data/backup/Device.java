@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;

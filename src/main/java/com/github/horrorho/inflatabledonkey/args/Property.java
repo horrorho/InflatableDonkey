@@ -58,9 +58,10 @@ public enum Property {
     OUTPUT_FOLDER("backups"),
     PRINT_DOMAIN_LIST("false"),
     PRINT_SNAPSHOTS("false"),
-    PATH_PROTOC("protoc"),
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
+    PROTOC_PATH("protoc"),
+    PROTOC_TIMEOUT_MS("15000"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
@@ -87,6 +88,14 @@ public enum Property {
     static int parseInt(String s) {
         try {
             return Integer.parseInt(s);
+        } catch (NumberFormatException ex) {
+            throw ex;
+        }
+    }
+
+    static long parseLong(String s) {
+        try {
+            return Long.parseLong(s);
         } catch (NumberFormatException ex) {
             throw ex;
         }
@@ -142,6 +151,10 @@ public enum Property {
                         .stream()
                         .map(Property::parseInt)
                         .collect(Collectors.toList()));
+    }
+
+    public Optional<Long> asLong() {
+        return value().map(Property::parseLong);
     }
 
     public Optional<List<String>> asStringList() {

@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collection;

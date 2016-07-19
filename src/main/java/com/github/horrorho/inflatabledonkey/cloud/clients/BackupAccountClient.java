@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -73,7 +73,6 @@ public final class BackupAccountClient {
         BackupAccount backupAccount
                 = BackupAccountFactory.from(responses.get(0).getRecord(), (bs, id) -> newZone.decrypt(bs, id).get());    // TODO rework BackupAccount
         logger.debug("-- backupAccount() - backup account: {}", backupAccount);
-
         return Optional.of(backupAccount);
     }
 }

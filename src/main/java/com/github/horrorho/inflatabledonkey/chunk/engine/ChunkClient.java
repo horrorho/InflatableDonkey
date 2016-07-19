@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.ByteArrayResponseHandler;
 import java.io.IOException;

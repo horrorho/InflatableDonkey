@@ -1,4 +1,4 @@
-/*
+/* 
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -21,42 +21,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.clients;
+package com.github.horrorho.inflatabledonkey.protobuf.util;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Devices;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.Message;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collection;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
-import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * DeviceClient.
+ * Delimited Protobuf parser with protoc --raw_decode logging.
  *
  * @author Ahseya
+ * @param <T>
  */
 @Immutable
-public final class DeviceClient {
+public class DelimitedProtobufParser<T extends Message> implements IOFunction<InputStream, List<T>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
+    private final ProtobufParser<T> handler;
 
-    public static List<Device>
-            device(HttpClient httpClient, CloudKitty kitty, Collection<String> deviceID)
-            throws IOException {
+    public DelimitedProtobufParser(ProtobufParser<T> handler) {
+        this.handler = Objects.requireNonNull(handler, "handler");
+    }
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", deviceID);
-        logger.debug("-- device() - responses: {}", responses);
+    public DelimitedProtobufParser(IOFunction<InputStream, T> parse) {
+        this(new ProtobufParser(parse));
+    }
 
-        return responses.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(Devices::from)
-                .collect(Collectors.toList());
+    @Override
+    public List<T> apply(InputStream input) throws IOException {
+        List<T> list = new ArrayList<>();
+        CodedInputStream stream = CodedInputStream.newInstance(input);
+        int size;
+        while (!stream.isAtEnd() && (size = stream.readRawVarint32()) != 0) {
+            ByteArrayInputStream delimited = new ByteArrayInputStream(stream.readRawBytes(size));
+            list.add(handler.apply(delimited));
+        }
+        return list;
     }
 }

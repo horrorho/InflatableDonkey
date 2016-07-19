@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

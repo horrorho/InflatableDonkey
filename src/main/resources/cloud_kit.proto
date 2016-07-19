@@ -4,7 +4,7 @@
 // ItsASmallWorld https://github.com/ItsASmallWorld
 
 
-option java_package = "com.github.horrorho.inflatabledonkey.protocol";
+option java_package = "com.github.horrorho.inflatabledonkey.protobuf";
 option java_outer_classname = "CloudKit";
 
 message RequestOperation { // CKDPRequestOperation

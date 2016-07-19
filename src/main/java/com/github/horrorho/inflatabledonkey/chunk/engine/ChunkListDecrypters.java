@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;

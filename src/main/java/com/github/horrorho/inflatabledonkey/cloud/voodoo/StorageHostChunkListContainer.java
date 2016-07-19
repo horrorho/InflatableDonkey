@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.voodoo;
 
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 

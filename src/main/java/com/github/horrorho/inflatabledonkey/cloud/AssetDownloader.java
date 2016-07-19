@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
 import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
 import com.github.horrorho.inflatabledonkey.cloud.voodoo.Voodoo;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;

@@ -1,6 +1,10 @@
 // source https://code.google.com/p/iphonebackupbrowser/
 // modified Ahseya
 
+
+option java_package = "com.github.horrorho.inflatabledonkey.protobuf";
+option java_outer_classname = "ICloud";
+
 message MBSAccount {
     optional string AccountID = 1;
     repeated bytes backupUDID = 2;

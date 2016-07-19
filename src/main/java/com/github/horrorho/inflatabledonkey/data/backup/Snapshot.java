@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import java.util.ArrayList;
 import java.util.List;

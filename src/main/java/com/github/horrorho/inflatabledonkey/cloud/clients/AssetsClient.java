@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.ManifestID;
 import com.github.horrorho.inflatabledonkey.data.backup.ManifestIDIndex;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.IOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;

@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
-import com.github.horrorho.inflatabledonkey.protocol.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;

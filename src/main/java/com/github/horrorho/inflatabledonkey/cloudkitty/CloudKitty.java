@@ -23,14 +23,16 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.RawProtoDecoderLogger;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
-import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
+import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
+import com.github.horrorho.inflatabledonkey.responsehandler.DelimitedProtobufHandler;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +45,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,8 +84,12 @@ public final class CloudKitty {
                         deviceHardwareID,
                         deviceID);
 
-        InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler
-                = new InputStreamResponseHandler<>(new RawProtoDecoderLogger(null));
+        IOFunction<InputStream, CloudKit.ResponseOperation> parser
+                = logger.isDebugEnabled()
+                        ? new ProtobufParser<>(CloudKit.ResponseOperation::parseFrom)
+                        : CloudKit.ResponseOperation::parseFrom;
+        ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler
+                = new DelimitedProtobufHandler<>(parser);
 
         return new CloudKitty(
                 factory,
@@ -106,7 +113,7 @@ public final class CloudKitty {
     private final String cloudKitUserId;
     private final String cloudKitToken;
     private final String baseUrl;
-    private final InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler;
+    private final ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler;
 
     public CloudKitty(
             RequestOperationFactory factory,
@@ -115,7 +122,7 @@ public final class CloudKitty {
             String cloudKitUserId,
             String cloudKitToken,
             String baseUrl,
-            InputStreamResponseHandler<List<CloudKit.ResponseOperation>> responseHandler) {
+            ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler) {
 
         this.factory = Objects.requireNonNull(factory, "factory");
         this.container = Objects.requireNonNull(container, "container");

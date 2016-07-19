@@ -5,7 +5,7 @@
 // reversed by Lokkju <lokkju@lokkju.com>
 // modified Ahseya
 
-option java_package = "com.github.horrorho.inflatabledonkey.protocol";
+option java_package = "com.github.horrorho.inflatabledonkey.protobuf";
 option java_outer_classname = "ChunkServer";
 
 message ChunkInfo {

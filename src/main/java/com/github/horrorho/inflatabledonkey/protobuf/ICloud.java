@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.protocol;
+package com.github.horrorho.inflatabledonkey.protobuf;
 
 public final class ICloud {
   private ICloud() {}

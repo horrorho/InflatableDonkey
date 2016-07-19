@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
-import com.github.horrorho.inflatabledonkey.protocol.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
 import java.time.Instant;
@@ -126,23 +126,6 @@ public final class AssetFactory {
 
         return newAsset;
     }
-//
-//    static Optional<byte[]> decryptData(Optional<byte[]> data, Optional<XZone> zone) {
-//        if (!data.isPresent()) {
-//            logger.debug("-- decryptData() - no data");
-//            return Optional.empty();
-//        }
-//
-//        if (!zone.isPresent()) {
-//            logger.debug("-- decryptData() - no zone");
-//            return Optional.empty();
-//        }
-//
-//        Optional<byte[]> key = zone.get().fpDecrypt(data.get());
-//        logger.debug("-- decryptData() - data 0x{} > key: 0x{}",
-//                data.map(Hex::toHexString).orElse("NULL"), key.map(Hex::toHexString).orElse("NULL"));
-//        return key;
-//    }
 
     static Optional<byte[]> optional(byte[] bytes) {
         return bytes.length == 0
@@ -186,77 +169,4 @@ public final class AssetFactory {
                 .map(ByteString::toByteArray)
                 .findFirst();
     }
-//
-//    @Deprecated
-//    public static Asset fromLegacy(ZoneRecord zoneRecord) {
-//        return fromLegacy(zoneRecord.record(), zoneRecord.zone());
-//    }
-//
-//    @Deprecated
-//    public static Asset fromLegacy(CloudKit.Record record, Optional<XZone> zone) {
-//        List<CloudKit.RecordField> records = record.getRecordFieldList();
-//
-//        int protectionClass = protectionClass(records);
-//        int fileType = fileType(records);
-//
-//        Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
-//                .flatMap(bs -> zone.map(z -> z.decrypt(bs, ENCRYPTED_ATTRIBUTES)))
-//                .map(bs -> PLists.<NSDictionary>parseLegacy(bs)); // TODO cover the illegal argument exception.
-//
-//        Optional<CloudKit.Asset> asset = asset(records);
-//
-//        Optional<byte[]> data
-//                = asset.flatMap(as -> as.hasData()
-//                        ? Optional.of(as.getData().getValue().toByteArray())
-//                        : Optional.empty());
-//
-//        Optional<byte[]> keyEncryptionKey = decryptData(data, zone);
-//
-//        // TODO rework to getters in Asset.
-//        Optional<byte[]> fileChecksum
-//                = asset.flatMap(as -> as.hasFileChecksum()
-//                        ? Optional.of(as.getFileChecksum().toByteArray())
-//                        : Optional.empty());
-//
-//        Optional<byte[]> fileSignature
-//                = asset.flatMap(as -> as.hasFileSignature()
-//                        ? Optional.of(as.getFileSignature().toByteArray())
-//                        : Optional.empty());
-//
-//        Optional<String> contentBaseURL
-//                = asset.flatMap(as -> as.hasContentBaseURL()
-//                        ? Optional.of(as.getContentBaseURL())
-//                        : Optional.empty());
-//
-//        String dsPrsID
-//                = asset.flatMap(as -> as.hasDsPrsID()
-//                        ? Optional.of(as.getDsPrsID())
-//                        : Optional.empty())
-//                .orElseThrow(() -> new IllegalArgumentException("asset missing dsPrsID")); // TODO test, can always inject dsPrsID
-//
-//        int fileSize = asset.map(as -> as.getSize()).orElse(0L).intValue();
-//        long tokenExpiration = asset.map(as -> as.getDownloadTokenExpiration()).orElse(0L);
-//
-//        long currentTimeSeconds = System.currentTimeMillis() / 1000;
-//
-//        // Adjust for bad system clocks.
-//        Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
-//                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
-//                : Instant.ofEpochSecond(tokenExpiration);
-//
-//        return new Asset(
-//                protectionClass,
-//                fileSize,
-//                fileType,
-//                downloadTokenExpiration,
-//                dsPrsID,
-//                contentBaseURL,
-//                fileChecksum,
-//                fileSignature,
-//                keyEncryptionKey,
-//                encryptedAttributes,
-//                asset);
-//    }
-
 }
-// TODO simplify
