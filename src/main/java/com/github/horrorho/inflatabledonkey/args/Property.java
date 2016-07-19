@@ -86,22 +86,6 @@ public enum Property {
         touched = true;
     }
 
-    static int parseInt(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException ex) {
-            throw ex;
-        }
-    }
-
-    static long parseLong(String s) {
-        try {
-            return Long.parseLong(s);
-        } catch (NumberFormatException ex) {
-            throw ex;
-        }
-    }
-
     public static Locale locale() {
         return Locale.US;
     }
@@ -138,32 +122,42 @@ public enum Property {
     }
 
     public Optional<Boolean> asBoolean() {
-        return value()
-                .map(v -> Boolean.TRUE.toString().equals(v));
+        return as(Boolean::parseBoolean);
     }
 
     public Optional<Integer> asInteger() {
-        return value().map(Property::parseInt);
-    }
-
-    public Optional<List<Integer>> asIntegerList() {
-        return asStringList()
-                .map(l -> l
-                        .stream()
-                        .map(Property::parseInt)
-                        .collect(Collectors.toList()));
+        return as(Integer::parseInt);
     }
 
     public Optional<Long> asLong() {
-        return value().map(Property::parseLong);
+        return as(Long::parseLong);
     }
 
-    public Optional<List<String>> asStringList() {
+    public Optional<List<String>> asList() {
         return value()
                 .map(v -> Arrays.asList(v.split(" ")));
     }
 
-    public <T> Optional<T> as(Function<String, Optional<T>> function) {
+    public <T> Optional<List<T>> asList(Function<String, T> to) {
+        return value()
+                .map(u -> Arrays.asList(u.split(" ")))
+                .map(u -> u.stream().map(to).collect(Collectors.toList()));
+    }
+
+    public <T> Optional<T> as(Function<String, T> to) {
+        return value().map(to);
+    }
+
+    public <T> Optional<T> optional(Function<String, Optional<T>> function) {
         return value().flatMap(function);
+    }
+
+    @Deprecated
+    public Optional<List<Integer>> asIntegerList() {
+        return asList()
+                .map(l -> l
+                        .stream()
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList()));
     }
 }
