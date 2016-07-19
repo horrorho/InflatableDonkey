@@ -24,24 +24,15 @@
 package com.github.horrorho.inflatabledonkey.protobuf.util;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.util.ProcessManager;
 import com.google.protobuf.CodedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -67,11 +58,15 @@ public final class ProtocRawDecoder {
     private static final Logger logger = LoggerFactory.getLogger(ProtocRawDecoder.class);
 
     private final String protocPath;
-    private final long timeoutMS;
+    private final ProcessManager processManager;
 
-    public ProtocRawDecoder(String protocPath, long timeoutMS) {
+    public ProtocRawDecoder(String protocPath, ProcessManager processManager) {
         this.protocPath = Objects.requireNonNull(protocPath, "protocPath");
-        this.timeoutMS = timeoutMS;
+        this.processManager = Objects.requireNonNull(processManager, "processManager");
+    }
+
+    public ProtocRawDecoder(String protocPath, long timeout) {
+        this(protocPath, new ProcessManager(timeout));
     }
 
     public ProtocRawDecoder(String protocPath) {
@@ -85,103 +80,24 @@ public final class ProtocRawDecoder {
             int size;
             while (!stream.isAtEnd() && (size = stream.readRawVarint32()) != 0) {
                 if (Thread.currentThread().isInterrupted()) {
-                    logger.warn("-- decodeProtos() - interrupted");
+                    logger.warn("-- decodeDelimited() - interrupted");
                     break;
                 }
                 ByteArrayInputStream delimited = new ByteArrayInputStream(stream.readRawBytes(size));
                 decode(delimited).map(list::add);
             }
         } catch (IOException ex) {
-            logger.warn("-- decodeProtos() - IOException: {}", ex.getMessage());
+            logger.warn("-- decodeDelimited() - IOException: {}", ex.getMessage());
 
         } finally {
-            close(in);
+            IOUtils.closeQuietly(in);
         }
         return list;
     }
 
     public Optional<String> decode(InputStream in) {
-        try {
-            Process protoc = Runtime.getRuntime().exec(protocPath + " --decode_raw");
-            return decode(in, protoc);
-
-        } catch (IOException ex) {
-            logger.warn("-- decodeProto() - IOException: {}", ex.getMessage());
-
-        } catch (InterruptedException ex) {
-            logger.warn("-- decodeProto() - InterruptedException: {}", ex.getMessage());
-            Thread.currentThread().interrupt();
-
-        } finally {
-            close(in);
-        }
-        return Optional.empty();
-    }
-
-    Optional<String> decode(InputStream in, Process protoc) throws IOException, InterruptedException {
-        try (InputStream decoderIn = protoc.getInputStream();
-                OutputStream decoderOut = protoc.getOutputStream()) {
-
-            AtomicReference<String> decoded = new AtomicReference<>(new String());
-
-            Thread copy = new Thread(() -> copy(in, decoderOut));
-            Thread read = new Thread(() -> read(decoderIn, decoded));
-            copy.start();
-            read.start();
-
-            if (!protoc.waitFor(timeoutMS, TimeUnit.MILLISECONDS)) {
-                logger.warn("--decode() - timed out");
-                // read/ copy threads will exit on exceptions as their streams are closed.
-                return Optional.empty();
-            }
-            read.join(timeoutMS);
-
-            return Optional.of(decoded.get());
-
-        } finally {
-            if (logger.isWarnEnabled()) {
-                try (BufferedReader br
-                        = new BufferedReader(new InputStreamReader(protoc.getErrorStream(), StandardCharsets.UTF_8))) {
-
-                    String error = br.lines().collect(Collectors.joining("\n"));
-                    if (!error.isEmpty()) {
-                        logger.warn("-- decode() - error: {}", error);
-                    }
-                }
-            }
-        }
-    }
-
-    void copy(InputStream in, OutputStream out) {
-        try {
-            IOUtils.copy(in, out);
-
-        } catch (Throwable ex) {
-            logger.warn("-- copy() - Throwable: {}", ex.getMessage());
-        } finally {
-            // close protoc's output stream at which point protoc will shortly terminate
-            close(out);
-        }
-    }
-
-    void read(InputStream in, AtomicReference<String> out) {
-        try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            br.lines().forEach(pw::println);
-            out.set(sw.toString());
-
-        } catch (Throwable ex) {
-            logger.warn("-- read() - Throwable: {}", ex.getMessage());
-        }
-    }
-
-    void close(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (IOException ex) {
-            logger.warn("-- close() - IOException: {}", ex.getMessage());
-        }
+        String command = protocPath + " --decode_raw";
+        return processManager.apply(command, in)
+                .map(String::new);
     }
 }
