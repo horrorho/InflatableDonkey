@@ -56,20 +56,17 @@ public final class DownloadAssistant {
     private final AuthorizeAssets authorizeAssets;
     private final AssetDownloader assetDownloader;
     private final KeyBagManager keyBagManager;
-    private final Optional<Supplier<BlockCipher>> override;
     private final Path folder;
 
     public DownloadAssistant(
             AuthorizeAssets authorizeAssets,
             AssetDownloader assetDownloader,
             KeyBagManager keyBagManager,
-            Optional<Supplier<BlockCipher>> ciphers,
             Path folder) {
 
         this.authorizeAssets = Objects.requireNonNull(authorizeAssets, "authorizeAssets");
         this.assetDownloader = Objects.requireNonNull(assetDownloader, "assetDownloader");
         this.keyBagManager = Objects.requireNonNull(keyBagManager, "keyBagManager");
-        this.override = Objects.requireNonNull(ciphers, "override");
         this.folder = Objects.requireNonNull(folder, "folder");
     }
 
@@ -78,16 +75,12 @@ public final class DownloadAssistant {
 
         keyBagManager.update(httpClient, assets);
 
-        XFileKeyFactory fileKeys = new XFileKeyFactory(override, this::unwrapKey);
+        XFileKeyFactory fileKeys = new XFileKeyFactory(keyBagManager::keyBag);
         FileAssembler fileAssembler = new FileAssembler(fileKeys, outputFolder);
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 
         assetDownloader.get(httpClient, authorizedAssets, fileAssembler);
-    }
-
-    Optional<byte[]> unwrapKey(KeyBlob fileKeyMetaData) {
-        return KeyBlobCurve25519Unwrap.unwrap(fileKeyMetaData, keyBagManager::keyBag);
     }
 }
 // TODO time expiration tokens

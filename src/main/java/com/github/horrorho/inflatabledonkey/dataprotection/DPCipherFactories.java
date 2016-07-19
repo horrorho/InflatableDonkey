@@ -32,7 +32,7 @@ import org.bouncycastle.crypto.BlockCipher;
  * @author Ahseya
  */
 @Immutable
-public enum DPMode implements Supplier<BlockCipher> {
+public enum DPCipherFactories implements Supplier<BlockCipher> {
     AES_CBC() {
         @Override
         public BlockCipher get() {

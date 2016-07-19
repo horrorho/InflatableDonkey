@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.args.PropertyDPMode;
+import com.github.horrorho.inflatabledonkey.args.PropertyDP;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
@@ -138,29 +138,10 @@ public class Main {
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
         // TODO automatic decrypt mode
-        PropertyDPMode mode = Property.DP_OVERRIDE.value()
-                .flatMap(PropertyDPMode::parse)
-                .orElse(PropertyDPMode.XTS);
-
-        // TODO tidy
-        Optional<Supplier<BlockCipher>> override;
-        switch (mode) {
-            case CBC:
-                override = Optional.of(DPAESCBCCipher::new);
-                break;
-            case XTS:
-                override = Optional.of(DPAESXTSCipher::new);
-                break;
-            case OFF:
-                override = Optional.empty();
-                break;
-            default:
-                throw new UnsupportedOperationException("unknown mode: " + mode);
-        }
-        override.ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
+        Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
 
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, override, outputFolder);
+                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
 
         Backup backup = new Backup(assistant, downloadAssistant);
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);

@@ -36,24 +36,25 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public enum PropertyDPMode {
+public enum PropertyDP {
+    AUTO,
     CBC,
     XTS,
     OFF;
 
-    public static Optional<PropertyDPMode> parse(String mode) {
+    public static Optional<PropertyDP> parse(String mode) {
         return Optional.ofNullable(map.get(mode.toUpperCase(Property.locale())));
     }
 
     public static String options() {
-        return Arrays.asList(PropertyDPMode.values())
+        return Arrays.asList(PropertyDP.values())
                 .stream()
-                .map(PropertyDPMode::name)
+                .map(PropertyDP::name)
                 .map(s -> s.toLowerCase(Property.locale()))
                 .collect(Collectors.joining(" "));
     }
 
-    private static final Map<String, PropertyDPMode> map = Arrays.asList(PropertyDPMode.values())
+    private static final Map<String, PropertyDP> map = Arrays.asList(PropertyDP.values())
             .stream()
-            .collect(Collectors.toMap(PropertyDPMode::name, Function.identity()));
+            .collect(Collectors.toMap(PropertyDP::name, Function.identity()));
 }

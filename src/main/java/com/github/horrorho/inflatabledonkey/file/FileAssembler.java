@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.DataLengthException;
@@ -58,15 +59,21 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     private final Function<byte[], Optional<XFileKey>> fileKeys;
+    private final UnaryOperator<Optional<XFileKey>> injector;
     private final FilePath filePath;
 
-    public FileAssembler(Function<byte[], Optional<XFileKey>> fileKeys, FilePath filePath) {
+    public FileAssembler(
+            Function<byte[], Optional<XFileKey>> fileKeys,
+            UnaryOperator<Optional<XFileKey>> injector,
+            FilePath filePath) {
+
         this.fileKeys = Objects.requireNonNull(fileKeys, "fileKeys");
+        this.injector = Objects.requireNonNull(injector, "injector");
         this.filePath = Objects.requireNonNull(filePath, "filePath");
     }
 
     public FileAssembler(Function<byte[], Optional<XFileKey>> fileKeys, Path outputFolder) {
-        this(fileKeys, new FilePath(outputFolder));
+        this(fileKeys, XFileKeyInjectorFactory.defaults(), new FilePath(outputFolder));
     }
 
     @Override
@@ -96,16 +103,20 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(u -> decrypt(path, chunks, u, asset.fileChecksum()))
-                .orElseGet(() -> write(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .orElseGet(() -> inject(path, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
     boolean decrypt(Path path, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
         return fileKeys.apply(encryptionKey)
-                .map(u -> write(path, chunks, Optional.of(u), signature))
+                .map(u -> inject(path, chunks, Optional.of(u), signature))
                 .orElseGet(() -> {
                     logger.warn("-- decrypt() - failed to unwrap encryption key");
                     return false;
                 });
+    }
+
+    boolean inject(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
+        return write(path, chunks, injector.apply(keyCipher), signature);
     }
 
     boolean write(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
@@ -151,5 +162,10 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
             logger.warn("-- truncate() - UncheckedIOException: ", ex);
             return false;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FileAssembler{" + "fileKeys=" + fileKeys + ", injector=" + injector + ", filePath=" + filePath + '}';
     }
 }

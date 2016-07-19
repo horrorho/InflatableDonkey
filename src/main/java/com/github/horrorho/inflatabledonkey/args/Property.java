@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public enum Property {
     AUTHENTICATION_TOKEN,
     DP_AESCBC_BLOCK_SIZE("4096"),
     DP_AESXTS_BLOCK_SIZE("4096"),
-    DP_OVERRIDE(),
+    DP_MODE("auto"),
     FILTER_DEVICE(""),
     FILTER_DOMAIN(""),
     FILTER_EXTENSION(""),
@@ -160,5 +161,9 @@ public enum Property {
     public Optional<List<String>> asStringList() {
         return value()
                 .map(v -> Arrays.asList(v.split(" ")));
+    }
+
+    public <T> Optional<T> as(Function<String, Optional<T>> function) {
+        return value().flatMap(function);
     }
 }

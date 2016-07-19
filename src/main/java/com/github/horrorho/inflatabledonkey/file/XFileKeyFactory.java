@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.file;
 
-import com.github.horrorho.inflatabledonkey.dataprotection.DPMode;
+import com.github.horrorho.inflatabledonkey.dataprotection.DPCipherFactories;
+import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,12 +40,10 @@ import org.bouncycastle.crypto.BlockCipher;
 @Immutable
 public final class XFileKeyFactory implements Function<byte[], Optional<XFileKey>> {
 
-    private final Optional<Supplier<BlockCipher>> override;
-    private final Function<KeyBlob, Optional<byte[]>> unwrap;
+    private final Function<byte[], Optional<KeyBag>> keyBags;
 
-    public XFileKeyFactory(Optional<Supplier<BlockCipher>> override, Function<KeyBlob, Optional<byte[]>> fileKeys) {
-        this.override = Objects.requireNonNull(override, "override");
-        this.unwrap = Objects.requireNonNull(fileKeys, "unwrap");
+    public XFileKeyFactory(Function<byte[], Optional<KeyBag>> keyBags) {
+        this.keyBags = Objects.requireNonNull(keyBags, "keyBags");
     }
 
     @Override
@@ -54,27 +53,27 @@ public final class XFileKeyFactory implements Function<byte[], Optional<XFileKey
     }
 
     Optional<XFileKey> fileKey(KeyBlob blob) {
-        return unwrap.apply(blob)
+        return KeyBlobCurve25519Unwrap.unwrap(blob, keyBags)
                 .map(u -> fileKey(blob, u));
     }
 
     XFileKey fileKey(KeyBlob blob, byte[] key) {
-        byte[] flags = ByteBuffer.allocate(12)
+        return new XFileKey(key, ciphers(blob), flags(blob));
+    }
+
+    byte[] flags(KeyBlob blob) {
+        return ByteBuffer.allocate(12)
                 .putInt(blob.u1())
                 .putInt(blob.u2())
                 .putInt(blob.u3())
                 .array();
-
-        Supplier<BlockCipher> ciphers = override.orElseGet(() -> ciphers(blob));
-
-        return new XFileKey(key, ciphers, flags);
     }
 
     Supplier<BlockCipher> ciphers(KeyBlob blob) {
         // u3 - 0x00FF0000;
         // experimental
         return (blob.u3() & 0x00FF0000) == 0
-                ? DPMode.AES_CBC
-                : DPMode.AES_XTS;
+                ? DPCipherFactories.AES_CBC
+                : DPCipherFactories.AES_XTS;
     }
 }
