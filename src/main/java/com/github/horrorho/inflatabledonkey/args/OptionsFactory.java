@@ -23,8 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.cli.Option;
 
@@ -87,7 +89,11 @@ public final class OptionsFactory {
                 new Option(null, "token", false, "Display dsPrsID:mmeAuthToken and exit."),
                 Property.ARGS_TOKEN);
 
-        options.put(new Option(null, "mode", true, "Override Data Protection decryption mode. Options: " + PropertyDP.options()),
+        options.put(Option.builder().longOpt("mode")
+                .desc("Data Protection decryption mode: " + optionsDefault(PropertyDP.class, Property.DP_MODE))
+                .argName("mode")
+                .hasArg()
+                .build(),
                 Property.DP_MODE);
 
         options.put(
@@ -95,5 +101,29 @@ public final class OptionsFactory {
                 Property.ARGS_HELP);
 
         return options;
+    }
+
+    static String defaultValue(Property property) {
+        return property.value()
+                .map(u -> " Default: " + u + ".")
+                .orElse("");
+    }
+
+    static <E extends Enum<E>> String optionsDefault(Class<E> e, Property defaultValue) {
+        String dv = defaultValue.value()
+                .map(u -> " (" + u + ").")
+                .orElse(".");
+        return   values(e) + dv;
+    }
+
+    static <E extends Enum<E>> String options(Class<E> e) {
+        return values(e) + ".";
+    }
+
+    static <E extends Enum<E>> String values(Class<E> e) {
+        return Arrays.asList(e.getEnumConstants())
+                .stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(" "));
     }
 }

@@ -50,7 +50,7 @@ public enum Property {
     AUTHENTICATION_TOKEN,
     DP_AESCBC_BLOCK_SIZE("4096"),
     DP_AESXTS_BLOCK_SIZE("4096"),
-    DP_MODE("auto"),
+    DP_MODE("AUTO"),
     FILTER_DEVICE(""),
     FILTER_DOMAIN(""),
     FILTER_EXTENSION(""),
@@ -66,7 +66,7 @@ public enum Property {
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
-    static void setProperties(Map<Property, String> properties) {
+    static synchronized void setProperties(Map<Property, String> properties) {
         if (touched) {
             throw new IllegalStateException("Property already in use");
         }
