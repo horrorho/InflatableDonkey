@@ -166,7 +166,7 @@ public class Main {
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
 
         if (deviceSnapshots.isEmpty()) {
-            System.out.println("No devices.");
+            System.out.println("No devices/ snapshots.");
             return;
         }
 
@@ -217,7 +217,7 @@ public class Main {
 
         filtered.forEach((device, snapshots) -> {
             logger.info("-- main() - selected device: {}", device.info());
-            snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {}", snapshot.info()));
+            snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {} backupType: {}", snapshot.info(), snapshot.backupType()));
         });
 
         // Print domain list option.

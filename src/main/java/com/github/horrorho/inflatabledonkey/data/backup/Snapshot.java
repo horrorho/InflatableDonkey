@@ -66,6 +66,18 @@ public final class Snapshot extends AbstractRecord {
         return new ArrayList<>(manifests);
     }
 
+    public long backupReason() {
+        return recordFieldValue("backupReason")
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .orElse(-1L);
+    }
+
+    public long backupType() {
+        return recordFieldValue("backupType")
+                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .orElse(-1L);
+    }
+
     public long quotaUsed() {
         return recordFieldValue("quotaUsed")
                 .map(CloudKit.RecordFieldValue::getSignedValue)
@@ -89,5 +101,5 @@ public final class Snapshot extends AbstractRecord {
                 + ", backupProperties=" + backupProperties().map(NSObject::toXMLPropertyList).orElse("NULL")
                 + '}';
     }
-
 }
+// SnapshotHMACKey

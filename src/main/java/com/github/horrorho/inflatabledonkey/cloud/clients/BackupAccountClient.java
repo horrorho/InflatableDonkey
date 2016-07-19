@@ -59,9 +59,13 @@ public final class BackupAccountClient {
             return Optional.empty();
         }
 
-        CloudKit.ProtectionInfo protectionInfo = responses.get(0)
-                .getRecord()
-                .getProtectionInfo();
+        CloudKit.RecordRetrieveResponse response = responses.get(0);
+        if (!response.hasRecord()) {
+            logger.warn("-- backupAccount() - no BackupAccount record");
+            return Optional.empty();
+        }
+
+        CloudKit.ProtectionInfo protectionInfo = response.getRecord().getProtectionInfo();
 
         Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
         if (!optionalNewZone.isPresent()) {

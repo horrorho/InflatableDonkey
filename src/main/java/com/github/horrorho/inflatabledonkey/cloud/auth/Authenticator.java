@@ -74,6 +74,7 @@ public final class Authenticator {
             return auth;
 
         } catch (HttpResponseException ex) {
+            logger.debug("--authenticate() - HttpResponseException: {}", ex.getMessage());
             int statusCode = ex.getStatusCode();
 
             if (statusCode == 401) {

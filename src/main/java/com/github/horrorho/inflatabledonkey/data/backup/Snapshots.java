@@ -126,5 +126,5 @@ public class Snapshots {
                 .map(CloudKit.RecordFieldValue::getBytesValue)
                 .map(ByteString::toByteArray)
                 .findFirst();
-    }
+    } 
 }

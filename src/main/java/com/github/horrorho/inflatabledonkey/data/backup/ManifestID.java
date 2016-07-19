@@ -40,6 +40,7 @@ public final class ManifestID {
 
     public static Optional<ManifestID> from(String formatted) {
         // Format: M:<uuid>:<base64 hash>
+        // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
         String[] split = formatted.split(":");
         if (split.length != 3) {
             logger.warn("-- from() - unexpected format: {}", formatted);

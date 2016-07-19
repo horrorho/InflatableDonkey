@@ -38,9 +38,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -69,10 +71,14 @@ public final class Backup {
     }
 
     public Map<Device, List<Snapshot>> snapshots(HttpClient httpClient) throws IOException {
-        BackupAccount backupAccount = backupAssistant.backupAccount(httpClient);
+        Optional<BackupAccount> backupAccount = backupAssistant.backupAccount(httpClient);
         logger.debug("-- snapshots() - backup account: {}", backupAccount);
+        if (!backupAccount.isPresent()) {
+            System.out.println("No iOS9 backups found. InflatableDonkey does not recover iOS8 or earlier backups.");
+            return Collections.emptyMap();
+        }
 
-        List<Device> devices = backupAssistant.devices(httpClient, backupAccount.devices());
+        List<Device> devices = backupAssistant.devices(httpClient, backupAccount.get().devices());
         logger.debug("-- snapshots() - device count: {}", devices.size());
 
         Map<Device, List<Snapshot>> snapshots = backupAssistant.snapshotsForDevices(httpClient, devices);

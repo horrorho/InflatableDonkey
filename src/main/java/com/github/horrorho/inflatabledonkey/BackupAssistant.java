@@ -48,6 +48,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -63,7 +64,7 @@ import org.slf4j.LoggerFactory;
 public final class BackupAssistant {
 
     public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
-        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);        
+        CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
         CloudKitty kitty = CloudKitty.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
         ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
@@ -85,8 +86,8 @@ public final class BackupAssistant {
         this(kitty, mbksync, KeyBagManager.create(kitty, mbksync));
     }
 
-    public BackupAccount backupAccount(HttpClient httpClient) throws IOException {
-        return BackupAccountClient.backupAccount(httpClient, kitty, mbksync).get();
+    public Optional<BackupAccount> backupAccount(HttpClient httpClient) throws IOException {
+        return BackupAccountClient.backupAccount(httpClient, kitty, mbksync);
     }
 
     public List<Device> devices(HttpClient httpClient, Collection<String> devices) throws IOException {
