@@ -2,7 +2,7 @@
 
 I've pushed the new XTS code. I'm not really convinced I have the AES-CBC/ AES-XTS switching fully worked out so please set the mode manually if you have corrupted files (--mode XTS or --mode CBC). The FileAssembler logger output tells you which mode is being used, so try the opposite. 
 
-Please ticket any instances where you've had to manually set the mode along with a couple of lines of the FileAssembler output.
+Please ticket any instances where you've had to manually set the mode along with a couple of lines of the FileAssembler output (please edit out your Apple ID and the 40 character length device hash immediately after it).
 
 Now that the core functionality appears to be largely there, fingers crossed, I'll work on improving the user experience. I have various filters/ user interactive selection code I fully intend to ninja from [LiquidDonkey](https://github.com/horrorho/LiquidDonkey).
 
