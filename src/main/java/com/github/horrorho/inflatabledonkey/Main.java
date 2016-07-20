@@ -131,6 +131,7 @@ public class Main {
         Path chunkOutputFolder = outputFolder.resolve("cache");
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
+        System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
