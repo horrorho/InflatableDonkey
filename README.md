@@ -1,17 +1,18 @@
+**Update**, 20 July 2016. 
+
+I've pushed the new XTS code. I'm not really convinced I have the AES-CBC/ AES-XTS switching fully worked out so please set the mode manually if you have corrupted files (--mode XTS or --mode CBC). The FileAssembler logger output tells you which mode is being used, so try the opposite. 
+
+Please ticket any instances where you've had to manually set the mode along with a couple of lines of the FileAssembler output.
+
+Now that the core functionality appears to be largely there, fingers crossed, I'll work on improving the user experience. I have various filters/ user interactive selection code I fully intend to ninja from [LiquidDonkey](https://github.com/horrorho/LiquidDonkey).
+
+
 **Update**, 16 July 2016. 
 
 Ok. So AES-XTS is a thing. It's also a thing that's been preventing InflatableDonkey from decrypting certain files ([issue 9](https://github.com/horrorho/InflatableDonkey/issues/9)). Newer devices upload files that are AES-XTS encrypted for which we have lacked decryption code.
 
 To remedy this I've coded an [XTS-AES engine](https://github.com/horrorho/Java-XTS-AES) that I've inserted in the appropriate orifice of InflatableDonkey. Initial tests suggest that it works. Once I figure out where the AES-CBC/ AES-XTS switches live I'll go ahead a push the new code.
 
-
-**Update**, 9 July 2016. 
-
-It's been a looooooong 48 hours and I've added some code, I've tidied up some code and I've eaten some doughnuts. I also managed to break the protection class decryption in earlier builds which should now be functional again.
-
-I was rather hoping that someone would like to port this over to Python. If you are interested, don't let the code complexity put you off. I don't have an IT background, I don't work in IT and I'm not a programmer yet I've still been able to make progress and there's no reason why anyone else can't also. Please let me know and I'll be happy to assist as my free time allows.
-
-In the meantime I'll continue to simplify the codebase and eat more doughnuts.
 
 ### What is it?
 Java proof of concept iOS9 iCloud backup retrieval tool.
