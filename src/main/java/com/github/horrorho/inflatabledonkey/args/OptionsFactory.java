@@ -104,13 +104,13 @@ public final class OptionsFactory {
     }
 
     static String defaultValue(Property property) {
-        return property.value()
+        return property.peek()
                 .map(u -> " Default: " + u + ".")
                 .orElse("");
     }
 
     static <E extends Enum<E>> String optionsDefault(Class<E> e, Property defaultValue) {
-        String dv = defaultValue.value()
+        String dv = defaultValue.peek()
                 .map(u -> " (" + u + ").")
                 .orElse(".");
         return   values(e) + dv;

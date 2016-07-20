@@ -116,6 +116,10 @@ public enum Property {
         this.value = value;
     }
 
+    Optional<String> peek() {
+        return Optional.ofNullable(value);
+    }
+
     public Optional<String> value() {
         touch();
         return Optional.ofNullable(value);
