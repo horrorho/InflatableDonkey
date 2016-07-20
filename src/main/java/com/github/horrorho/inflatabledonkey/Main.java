@@ -80,12 +80,12 @@ public class Main {
         }
 
         // INFO
-        System.out.println("NOTE!");
-        System.out.println("Experimental Data Protection class mode detection.");
+        System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
         System.out.println("    --mode CBC");
         System.out.println("or");
         System.out.println("    --mode XTS");
+        System.out.println("");
 
         // SystemDefault HttpClient.
         // TODO concurrent
