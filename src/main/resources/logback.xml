@@ -10,7 +10,7 @@
     <logger name="com.github.horrorho.inflatabledonkey" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
-
+ 
     <logger name="com.github.horrorho.inflatabledonkey.file.FileAssembler" level="info" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
