@@ -1,3 +1,10 @@
+**Update**, 16 July 2016. 
+
+Ok. So AES-XTS is a thing. It's also a thing that's been preventing InflatableDonkey from decrypting certain files ([issue 9](https://github.com/horrorho/InflatableDonkey/issues/9)). Newer devices upload files that are AES-XTS encrypted for which we have lacked decryption code.
+
+To remedy this I've coded an [XTS-AES engine](https://github.com/horrorho/Java-XTS-AES) that I've inserted in the appropriate orifice of InflatableDonkey. Initial tests suggest that it works. Once I figure out where the AES-CBC/ AES-XTS switches live I'll go ahead a push the new code.
+
+
 **Update**, 9 July 2016. 
 
 It's been a looooooong 48 hours and I've added some code, I've tidied up some code and I've eaten some doughnuts. I also managed to break the protection class decryption in earlier builds which should now be functional again.
@@ -5,30 +12,6 @@ It's been a looooooong 48 hours and I've added some code, I've tidied up some co
 I was rather hoping that someone would like to port this over to Python. If you are interested, don't let the code complexity put you off. I don't have an IT background, I don't work in IT and I'm not a programmer yet I've still been able to make progress and there's no reason why anyone else can't also. Please let me know and I'll be happy to assist as my free time allows.
 
 In the meantime I'll continue to simplify the codebase and eat more doughnuts.
-
-
-**Update**, 7 July 2016. 
-
-Sorry for the lack of input, but I've been snowed under at work. I've pushed a new build that should hopefully work with iOS 9.3.
-
-I have this week off, so I'll try and work through the backlog of emails and tickets.
-
-Code wise I'll continue to tame the horrors that lie within. There's still a lot of quick and dirty code that was based off my initial interpretation of x86 binaries. Well, that and the fact that I'm not really sure I know how to program.
-
-
-
-**Update**, 20 April 2016. 
-
-Finally, like finally, it's slowly coming together... Well most of it. I've spent long hours over the last few weeks working on it and when I was in bed, my cat took over and also pondered the mysteries of iCloud's inner workings.
-
-So! I've pushed another experimental build that will download backups. It's not been tested and large parts of the code base are mess. I'll continue to tidy up code and stabilize the whole thing. Logging has been set to info, just fiddle with [logback.xml](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) to get the debug output back.
-
-At the moment, the priority is refactoring old code and then I'll get work on additional features and unit tests. InflatableDonkey was only ever intended as an experimental proof of concept and it's a rather convoluted mess. I've tidied up the most horrific parts, but there are still phantoms and boogie monsters lurking around in there. 
-
-On a more positive note, it was written ground up to be multi-threaded. Once it's stable and a few sticking points are sorted I'll switch it over to concurrent downloads.
-
-For those wishing to play with it, please use the --token mode for repeated runs as explained below. Also please remember, it's an experimental build, not production code. It was pushed primarily to show off the underlying backup process, not because it was in a state of completion.
-
 
 ### What is it?
 Java proof of concept iOS9 iCloud backup retrieval tool.
