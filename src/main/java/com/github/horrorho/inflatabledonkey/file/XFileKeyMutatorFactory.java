@@ -40,20 +40,20 @@ import org.bouncycastle.crypto.BlockCipher;
  *
  * @author Ahseya
  */
-public class XFileKeyInjectorFactory {
+public class XFileKeyMutatorFactory {
 
     public static UnaryOperator<Optional<XFileKey>> defaults() {
         return DEFAULT;
     }
 
-    public static UnaryOperator<Optional<XFileKey>> injector(PropertyDP mode) {
+    public static UnaryOperator<Optional<XFileKey>> create(PropertyDP mode) {
         switch (mode) {
             case AUTO:
                 return UnaryOperator.identity();
             case CBC:
-                return injector(DPCipherFactories.AES_CBC);
+                return create(DPCipherFactories.AES_CBC);
             case XTS:
-                return injector(DPCipherFactories.AES_XTS);
+                return create(DPCipherFactories.AES_XTS);
             case OFF:
                 return key -> Optional.empty();
             default:
@@ -61,16 +61,16 @@ public class XFileKeyInjectorFactory {
         }
     }
 
-    public static UnaryOperator<Optional<XFileKey>> injector(Supplier<BlockCipher> cipherFactory) {
-        return key -> inject(key, Objects.requireNonNull(cipherFactory, "cipherFactory"));
+    public static UnaryOperator<Optional<XFileKey>> create(Supplier<BlockCipher> cipherFactory) {
+        return key -> mutateCipher(key, Objects.requireNonNull(cipherFactory, "cipherFactory"));
     }
 
-    static Optional<XFileKey> inject(Optional<XFileKey> key, Supplier<BlockCipher> mode) {
+    static Optional<XFileKey> mutateCipher(Optional<XFileKey> key, Supplier<BlockCipher> mode) {
         return key.map(u -> new XFileKey(u.key(), mode, u.flags()));
     }
 
     private static final PropertyDP DEFAULT_MODE
-            = Property.DP_MODE.as(PropertyDP::parse).orElse(PropertyDP.AUTO);
+            = Property.DP_MODE.optional(PropertyDP::parse).orElse(PropertyDP.AUTO);
 
-    private static final UnaryOperator<Optional<XFileKey>> DEFAULT = XFileKeyInjectorFactory.injector(DEFAULT_MODE);
+    private static final UnaryOperator<Optional<XFileKey>> DEFAULT = XFileKeyMutatorFactory.create(DEFAULT_MODE);
 }

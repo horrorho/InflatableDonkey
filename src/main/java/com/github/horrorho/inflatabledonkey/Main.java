@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.args.PropertyDP;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
@@ -38,8 +37,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.dataprotection.DPAESCBCCipher;
-import com.github.horrorho.inflatabledonkey.dataprotection.DPAESXTSCipher;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,15 +45,12 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.bouncycastle.crypto.BlockCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +78,14 @@ public class Main {
             System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
         }
+
+        // INFO
+        System.out.println("NOTE!");
+        System.out.println("Experimental Data Protection class mode detection.");
+        System.out.println("If you have file corruption issues please try setting the mode manually:");
+        System.out.println("    --mode CBC");
+        System.out.println("or");
+        System.out.println("    --mode XTS");
 
         // SystemDefault HttpClient.
         // TODO concurrent
@@ -175,11 +177,11 @@ public class Main {
         }
 
         // Filters.
-        Property.FILTER_DEVICE.asStringList().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
-        List<String> filterDevices = Property.FILTER_DEVICE.asStringList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_DEVICE.asList().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
+        List<String> filterDevices = Property.FILTER_DEVICE.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Device> deviceFilter = Filters.deviceFilter(filterDevices);
 
-        Property.FILTER_SNAPSHOT.asStringList().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
+        Property.FILTER_SNAPSHOT.asList().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
         List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.asIntegerList().orElseGet(() -> Collections.emptyList());
         UnaryOperator<List<Snapshot>> snapshotFilter = Filters.<Snapshot>listFilter(filterSnapshots);
 
@@ -207,12 +209,12 @@ public class Main {
             return;
         }
 
-        Property.FILTER_DOMAIN.asStringList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
-        List<String> filterDomains = Property.FILTER_DOMAIN.asStringList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_DOMAIN.asList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
+        List<String> filterDomains = Property.FILTER_DOMAIN.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
 
-        Property.FILTER_EXTENSION.asStringList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
-        List<String> filterExtensions = Property.FILTER_EXTENSION.asStringList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_EXTENSION.asList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
+        List<String> filterExtensions = Property.FILTER_EXTENSION.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
         backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);
