@@ -7,19 +7,11 @@
     </appender>
     
     <!-- DEBUG/ TRACE switches WILL log sensitive information. Use with caution. -->
-    <logger name="com.github.horrorho.inflatabledonkey" level="info" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="com.github.horrorho.inflatabledonkey.Main" level="info" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-
-    <logger name="com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetAssistant" level="off" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-    
-    <logger name="com.github.horrorho.inflatabledonkey.args" level="off" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey.file.FileAssembler" level="info" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
     
