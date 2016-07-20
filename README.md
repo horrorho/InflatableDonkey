@@ -7,9 +7,9 @@ To remedy this I've coded an [XTS-AES engine](https://github.com/horrorho/Java-X
 
 **Update**, 9 July 2016. 
 
-It's been a looooooong 48 hours and I've added some code, I've tidied up some code and I've eaten some doughnuts. I also managed to break the protection class decryption in earlier builds which should now be functional again.
+I've pushed the new XTS code. I'm not really convinced I have the AES-CBC/ AES-XTS switching fully worked out so please set the mode manually if you have corrupted files (--mode XTS or --mode CBC). The FileAssembler logger output tells you which mode is being used, so try the opposite. 
 
-I was rather hoping that someone would like to port this over to Python. If you are interested, don't let the code complexity put you off. I don't have an IT background, I don't work in IT and I'm not a programmer yet I've still been able to make progress and there's no reason why anyone else can't also. Please let me know and I'll be happy to assist as my free time allows.
+Please ticket any instances where you've had to manually set the mode along with a couple of lines of the FileAssembler output (please edit out your Apple ID and the 40 character length device hash immediately after it).
 
 In the meantime I'll continue to simplify the codebase and eat more doughnuts.
 
