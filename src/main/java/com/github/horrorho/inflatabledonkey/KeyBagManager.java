@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.cloud.clients.KeyBagClient;
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.KeyBlob;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
@@ -58,14 +58,14 @@ public final class KeyBagManager {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBagManager.class);
 
-    public static KeyBagManager create(CloudKittyLegacy kitty, ProtectionZone mbksync) {
+    public static KeyBagManager create(CloudKitty  kitty, ProtectionZone mbksync) {
         BiFunction<HttpClient, String, Optional<KeyBag>> keyBagFactory
                 = (httpClient, uuid) -> keyBag(httpClient, kitty, mbksync, uuid);
 
         return new KeyBagManager(keyBagFactory);
     }
 
-    static Optional<KeyBag> keyBag(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone mbksync, String uuid) {
+    static Optional<KeyBag> keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone mbksync, String uuid) {
         try {
             return KeyBagClient.keyBag(httpClient, kitty, mbksync, uuid);
 

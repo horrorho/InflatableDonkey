@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Devices;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
@@ -47,11 +48,11 @@ public final class DeviceClient {
     private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
 
     public static List<Device>
-            device(HttpClient httpClient, CloudKittyLegacy kitty, Collection<String> deviceID)
+            device(HttpClient httpClient, CloudKitty kitty, Collection<String> deviceID)
             throws IOException {
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", deviceID);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceID);
         logger.debug("-- device() - responses: {}", responses);
 
         return responses.stream()

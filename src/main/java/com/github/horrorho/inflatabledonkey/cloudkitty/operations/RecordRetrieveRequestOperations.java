@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,9 +42,14 @@ import org.apache.http.client.HttpClient;
 public final class RecordRetrieveRequestOperations {
 
     public static List<RecordRetrieveResponse>
-            get(CloudKitty client, HttpClient httpClient, String zone, Collection<String> recordNames) {
-        List<RequestOperation> operations = operations(zone, recordNames, client.cloudKitUserId());
-        return client.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
+            get(CloudKitty kitty, HttpClient httpClient, String zone, String... recordNames) {
+        return get(kitty, httpClient, zone, Arrays.asList(recordNames));
+    }
+
+    public static List<RecordRetrieveResponse>
+            get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames) {
+        List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
+        return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
     }
 
     public static List<RequestOperation>

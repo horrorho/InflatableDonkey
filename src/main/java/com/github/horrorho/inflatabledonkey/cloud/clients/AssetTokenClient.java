@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
@@ -52,7 +53,7 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            assetsFromAssetsList(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, Collection<Assets> assetsList)
+            assetsFromAssetsList(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
             throws IOException {
 
         List<String> fileList = assetsList.stream()
@@ -64,7 +65,7 @@ public final class AssetTokenClient {
     }
 
     public static List<Asset>
-            assets(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, Collection<String> fileList)
+            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> fileList)
             throws IOException {
 
         List<String> nonEmptyFileList = fileList.stream()
@@ -77,10 +78,7 @@ public final class AssetTokenClient {
         }
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(
-                        httpClient,
-                        "_defaultZone",
-                        nonEmptyFileList);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", fileList);
 
         return responses.stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)

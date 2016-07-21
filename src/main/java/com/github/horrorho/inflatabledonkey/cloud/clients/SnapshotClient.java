@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
@@ -52,7 +53,7 @@ public final class SnapshotClient {
     private static final Logger logger = LoggerFactory.getLogger(SnapshotClient.class);
 
     public static List<Snapshot>
-            snapshots(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
+            snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
             throws IOException {
 
         if (snapshotIDs.isEmpty()) {
@@ -62,9 +63,8 @@ public final class SnapshotClient {
         List<String> snapshots = snapshotIDs.stream()
                 .map(SnapshotID::id)
                 .collect(Collectors.toList());
-
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshots);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots);
         logger.debug("-- manifests() - responses: {}", responses);
 
         return responses.stream()

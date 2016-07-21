@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
 import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
@@ -50,12 +51,11 @@ public final class KeyBagClient {
     private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
     public static Optional<KeyBag>
-            keyBag(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, String keyBagUUID) throws IOException {
+            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String keyBagUUID) throws IOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagUUID);
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", "K:" + keyBagUUID);
-
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "K:" + keyBagUUID);
         if (responses.size() != 1) {
             logger.warn("-- keyBag() - bad response list size: {}", responses);
             return Optional.empty();

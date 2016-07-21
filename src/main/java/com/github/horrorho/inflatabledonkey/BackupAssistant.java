@@ -33,7 +33,8 @@ import com.github.horrorho.inflatabledonkey.cloud.clients.SnapshotClient;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
 import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitties;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
@@ -65,7 +66,7 @@ public final class BackupAssistant {
 
     public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-        CloudKittyLegacy kitty = CloudKittyLegacy.backupd(ckInit, account);
+        CloudKitty kitty = CloudKitties.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
         ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
 
@@ -74,15 +75,15 @@ public final class BackupAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(BackupAssistant.class);
 
-    private final CloudKittyLegacy kitty;
+    private final CloudKitty kitty;
     private final ProtectionZone mbksync;
 
-    public BackupAssistant(CloudKittyLegacy kitty, ProtectionZone mbksync, KeyBagManager keyBagManager) {
+    public BackupAssistant(CloudKitty kitty, ProtectionZone mbksync, KeyBagManager keyBagManager) {
         this.kitty = Objects.requireNonNull(kitty, "kitty");
         this.mbksync = Objects.requireNonNull(mbksync, "mbksync");
     }
 
-    public BackupAssistant(CloudKittyLegacy kitty, ProtectionZone mbksync) {
+    public BackupAssistant(CloudKitty kitty, ProtectionZone mbksync) {
         this(kitty, mbksync, KeyBagManager.create(kitty, mbksync));
     }
 

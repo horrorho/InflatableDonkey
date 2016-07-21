@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
@@ -48,11 +49,10 @@ public final class BackupAccountClient {
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountClient.class);
 
     public static Optional<BackupAccount>
-            backupAccount(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone) throws IOException {
+            backupAccount(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws IOException {
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", "BackupAccount");
-        logger.debug("-- backupAccount() - responses: {}", responses);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount");
 
         if (responses.size() != 1) {
             logger.warn("-- backupAccount() - bad response list size: {}", responses);

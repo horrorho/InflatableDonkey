@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.ZoneRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
@@ -50,12 +51,11 @@ public final class MBKSyncClient {
     private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
     public static Optional<ProtectionZone>
-            mbksync(HttpClient httpClient, CloudKittyLegacy kitty, Collection<Key<ECPrivateKey>> keys) throws IOException {
+            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys) throws IOException {
 
         List<CloudKit.ZoneRetrieveResponse> responses
-                = kitty.zoneRetrieveRequest(httpClient, "_defaultZone", "mbksync");
+                = ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync");
         logger.debug("-- baseZones() - responses: {}", responses);
-
         if (responses.size() != 2) {
             logger.warn("-- baseZones() - bad response list size: {}", responses);
             return Optional.empty();
