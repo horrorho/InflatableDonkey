@@ -190,3 +190,4 @@ public final class Asset {
     }
 }
 // TODO simplify
+// Optional fields

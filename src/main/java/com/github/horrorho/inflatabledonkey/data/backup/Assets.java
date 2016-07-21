@@ -64,7 +64,7 @@ public final class Assets {
         }
 
         try {
-            int size = Integer.parseInt(x);
+            int size = Integer.parseInt(x); 
             return size != 0;
         } catch (NumberFormatException ex) {
             logger.warn("-- isEmpty() - failed to parse asset: {}", asset);

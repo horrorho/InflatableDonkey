@@ -78,7 +78,7 @@ public final class AssetTokenClient {
         }
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", fileList);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyFileList);
 
         return responses.stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)

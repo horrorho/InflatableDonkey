@@ -106,12 +106,16 @@ public final class CloudKitty {
 
     <T> List<T> doGet(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws UncheckedIOException {
-        return ListUtils.split(requests, LIMIT)
+        List<T> responses = ListUtils.split(requests, LIMIT)
                 .stream()
                 .map(u -> request(httpClient, header, u))
                 .flatMap(Collection::stream)
                 .map(field)
                 .collect(Collectors.toList());
+        if (responses.size() != requests.size()) {
+            logger.warn("-- doGet() - size mismatch requests: {} responses: {}", requests.size(), responses.size());
+        }
+        return responses;
     }
 
     List<ResponseOperation>

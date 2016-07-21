@@ -96,7 +96,7 @@ public final class AssetFactory {
                         ? Optional.of(as.getDsPrsID())
                         : Optional.empty())
                 .orElseGet(() -> {
-                    logger.warn("-- from() - no dsPrsID");
+                    logger.warn("-- from() - no dsPrsID: {}", record.getRecordIdentifier().getValue().getName());
                     return "";
                 }); // TODO test, can always inject dsPrsID
 
