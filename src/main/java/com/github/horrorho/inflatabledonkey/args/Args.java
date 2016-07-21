@@ -23,31 +23,44 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
 
 /**
- * Data Protection mode.
  *
  * @author Ahseya
  */
 @Immutable
-public enum PropertyDP {
-    AUTO,
-    CBC,
-    XTS,
-    OFF;
+public final class Args {
 
-    @Deprecated
-    public static Optional<PropertyDP> parse(String mode) {
-        return Optional.ofNullable(map.get(mode.toUpperCase(Property.locale())));
+    private final Supplier<List<Arg>> args;
+
+    private final String cmdLineSyntax;
+    private final String header;
+    private final String footer;
+
+    public Args(Supplier<List<Arg>> args, String cmdLineSyntax, String header, String footer) {
+        this.args = Objects.requireNonNull(args, "args");
+        this.cmdLineSyntax = cmdLineSyntax;
+        this.header = header;
+        this.footer = footer;
     }
 
-    private static final Map<String, PropertyDP> map = Arrays.asList(PropertyDP.values())
-            .stream()
-            .collect(Collectors.toMap(PropertyDP::name, Function.identity()));
+    public List<Arg> args() {
+        return args.get();
+    }
+
+    public String cmdLineSyntax() {
+        return cmdLineSyntax;
+    }
+
+    public String header() {
+        return header;
+    }
+
+    public String footer() {
+        return footer;
+    }
 }

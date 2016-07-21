@@ -23,10 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.x;
 
+import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
@@ -48,6 +51,31 @@ public final class FilterAssets {
 
     public static Predicate<Asset> isDownloadable() {
         return DOWNLOADABLE;
+    }
+
+    public static Predicate<Asset> defaults() {
+        Builder builder = builder();
+        Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong()
+                .map(Instant::ofEpochSecond)
+                .ifPresent(u -> builder.test(Asset::statusChanged, Instant::isBefore, u));
+        Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong()
+                .map(Instant::ofEpochSecond)
+                .ifPresent(u -> builder.test(Asset::statusChanged, Instant::isAfter, u));
+        Property.FILTER_ASSET_SIZE_MAX.asLong()
+                .ifPresent(u -> builder.test(Asset::attributeSize, s -> s <= u));
+        Property.FILTER_ASSET_SIZE_MIN.asLong()
+                .ifPresent(u -> builder.test(Asset::attributeSize, s -> s >= u));
+        Property.FILTER_ASSET_DOMAIN.asList()
+                .ifPresent(u -> builder.any(Asset::domain, ignoreCase(String::contains), u));
+        Property.FILTER_ASSET_EXTENSION.asList()
+                .ifPresent(u -> builder.any(Asset::domain, ignoreCase(String::endsWith), u));
+        Property.FILTER_ASSET_RELATIVE_PATH.asList()
+                .ifPresent(u -> builder.any(Asset::relativePath, ignoreCase(String::contains), u));
+        return builder.build();
+    }
+
+    static BiPredicate<String, String> ignoreCase(BiPredicate<String, String> function) {
+        return (s, t) -> function.test(s.toLowerCase(Locale.US), t.toLowerCase(Locale.US));
     }
 
     private static final Predicate<Asset> DOWNLOADABLE = builder()

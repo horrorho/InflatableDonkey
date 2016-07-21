@@ -78,7 +78,7 @@ public class Main {
             System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
         }
-
+        
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
@@ -210,12 +210,12 @@ public class Main {
             return;
         }
 
-        Property.FILTER_DOMAIN.asList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
-        List<String> filterDomains = Property.FILTER_DOMAIN.asList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_ASSET_DOMAIN.asList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
+        List<String> filterDomains = Property.FILTER_ASSET_DOMAIN.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
 
-        Property.FILTER_EXTENSION.asList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
-        List<String> filterExtensions = Property.FILTER_EXTENSION.asList().orElseGet(() -> Collections.emptyList());
+        Property.FILTER_ASSET_EXTENSION.asList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
+        List<String> filterExtensions = Property.FILTER_ASSET_EXTENSION.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
         backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);
@@ -267,7 +267,7 @@ public class Main {
 
 }
 
-// TODO 0xFF System protectionInfo
+// TODO 0xFF System protectionInfo DONE
 // TODO file timestamps
 // TODO date filtering
 // TODO size filtering
@@ -278,4 +278,4 @@ public class Main {
 // TODO filtering
 // TODO concurrent downloads
 // TODO file asset cache
-// TODO 5000 limit?
+// TODO 5000 limit? FIXED
