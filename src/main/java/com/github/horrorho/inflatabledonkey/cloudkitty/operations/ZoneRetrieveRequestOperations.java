@@ -24,18 +24,32 @@
 package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.apache.http.client.HttpClient;
 
 /**
- * CloudKit M201 ZoneRetrieveRequestOperation.
+ * CloudKit M211 RecordRetrieveRequestOperation.
  *
  * @author Ahseya
  */
 @Immutable
 public final class ZoneRetrieveRequestOperations {
 
-    public static final String OPERATION = "CKDFetchRecordZonesOperation";
+    public static List<ZoneRetrieveResponse> get(CloudKitty client, HttpClient httpClient, Collection<String> zones) {
+        List<RequestOperation> operations = operations(zones, client.cloudKitUserId());
+        return client.get(httpClient, OPERATION, operations, ResponseOperation::getZoneRetrieveResponse);
+    }
+
+    public static List<RequestOperation> operations(Collection<String> zones, String cloudKitUserId) {
+        return zones.stream()
+                .map(u -> operation(u, cloudKitUserId))
+                .collect(Collectors.toList());
+    }
 
     public static RequestOperation operation(String zone, String cloudKitUserId) {
         return RequestOperation.newBuilder()
@@ -50,4 +64,6 @@ public final class ZoneRetrieveRequestOperations {
                 .setZoneIdentifier(recordZoneID)
                 .build();
     }
+
+    private static final String OPERATION = "CKDFetchRecordZonesOperation";
 }

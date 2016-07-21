@@ -127,7 +127,7 @@ public final class Backup {
         // Filename extension filter.
         // Batch process files in groups of 100.
         // TODO group files into batches based on file size.
-        List<List<String>> batches = ListUtils.partition(files, 100);
+        List<List<String>> batches = ListUtils.split(files, 100);
 
         for (List<String> batch : batches) {
             List<Asset> assets = backupAssistant.assets(httpClient, batch)

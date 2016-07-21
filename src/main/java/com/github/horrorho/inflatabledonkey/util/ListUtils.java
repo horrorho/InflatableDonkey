@@ -33,19 +33,14 @@ import java.util.List;
  */
 public final class ListUtils {
 
-    public static <T> List<List<T>> partition(List<T> list, int size) {
+    public static <T> List<List<T>> split(List<T> list, int size) {
         if (size <= 0) {
             throw new IllegalArgumentException("bad size: " + size);
         }
         List<List<T>> lists = new ArrayList<>();
         for (int i = 0; i < list.size(); i += size) {
-            int fromIndex = i;
-            int toIndex = fromIndex + size;
-            toIndex = toIndex > list.size()
-                    ? list.size()
-                    : toIndex;
-            List<T> subList = list.subList(fromIndex, toIndex);
-            lists.add(subList);
+            int to = (i + size) > list.size() ? list.size() : i + size;
+            lists.add(list.subList(i, to));
         }
         return lists;
     }

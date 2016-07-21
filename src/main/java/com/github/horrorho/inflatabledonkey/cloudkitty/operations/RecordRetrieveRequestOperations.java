@@ -24,11 +24,13 @@
 package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.apache.http.client.HttpClient;
 
 /**
  * CloudKit M211 RecordRetrieveRequestOperation.
@@ -38,9 +40,14 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class RecordRetrieveRequestOperations {
 
-    public static final String OPERATION = "GetRecordsURLRequest";
+    public static List<RecordRetrieveResponse>
+            get(CloudKitty client, HttpClient httpClient, String zone, Collection<String> recordNames) {
+        List<RequestOperation> operations = operations(zone, recordNames, client.cloudKitUserId());
+        return client.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
+    }
 
-    public static List<RequestOperation> operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
+    public static List<RequestOperation>
+            operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
         return recordNames.stream()
                 .map(u -> operation(zone, u, cloudKitUserId))
                 .collect(Collectors.toList());
@@ -58,4 +65,6 @@ public final class RecordRetrieveRequestOperations {
                 .setRecordID(CKProto.recordIdentifier(zone, recordName, cloudKitUserId))
                 .build();
     }
+
+    private static final String OPERATION = "GetRecordsURLRequest";
 }

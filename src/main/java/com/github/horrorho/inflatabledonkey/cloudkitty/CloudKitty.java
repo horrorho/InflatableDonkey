@@ -23,50 +23,136 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
-import com.github.horrorho.inflatabledonkey.cloudkitty.operations.ZoneRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
+import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
+import com.github.horrorho.inflatabledonkey.responsehandler.DelimitedProtobufHandler;
+import com.github.horrorho.inflatabledonkey.util.ListUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Super basic CloudKit API.
+ * Super basic CloudKit client.
  *
  * @author Ahseya
  */
 @Immutable
 public final class CloudKitty {
 
-    private final CKClient client;
-    private final String cloudKitUserId;
-
-    public CloudKitty(CKClient client, String cloudKitUserId) {
-        this.client = client;
-        this.cloudKitUserId = cloudKitUserId;
+    static ResponseHandler<List<ResponseOperation>> responseHandler() {
+        IOFunction<InputStream, ResponseOperation> parser
+                = logger.isTraceEnabled()
+                        ? new ProtobufParser<>(ResponseOperation::parseFrom)
+                        : ResponseOperation::parseFrom;
+        return new DelimitedProtobufHandler<>(parser);
     }
 
-    public List<ZoneRetrieveResponse>
-            zoneRetrieveRequest(HttpClient httpClient, Collection<String> zones)
-            throws UncheckedIOException {
-        List<RequestOperation> requests = zones.stream()
-                .map(u -> ZoneRetrieveRequestOperations.operation(u, cloudKitUserId))
-                .collect(Collectors.toList());
-        return client.get(httpClient, ZoneRetrieveRequestOperations.OPERATION, requests,
-                ResponseOperation::getZoneRetrieveResponse);
+    private static final Logger logger = LoggerFactory.getLogger(CloudKitty.class);
+    private static final int LIMIT = 400;
+
+    private final ResponseHandler<List<ResponseOperation>> responseHandler;
+    private final Function<String, RequestOperationHeader> requestOperationHeaders;
+    private final ProtoBufsRequestFactory requestFactory;
+    private final int limit;
+
+    CloudKitty(ResponseHandler<List<ResponseOperation>> responseHandler,
+            Function<String, RequestOperationHeader> requestOperationHeaders,
+            ProtoBufsRequestFactory requestFactory,
+            int limit) {
+
+        this.responseHandler = Objects.requireNonNull(responseHandler, "responseHandler");
+        this.requestOperationHeaders = Objects.requireNonNull(requestOperationHeaders, "requestOperationHeaders");
+        this.requestFactory = Objects.requireNonNull(requestFactory, "requestFactory");
+        this.limit = limit;
     }
 
-    public List<RecordRetrieveResponse>
-            recordRetrieveRequest(HttpClient httpClient, String zone, Collection<String> recordNames)
+    CloudKitty(Function<String, RequestOperationHeader> requestOperationHeaders,
+            ProtoBufsRequestFactory requestFactory,
+            int limit) {
+        this(responseHandler(), requestOperationHeaders, requestFactory, limit);
+    }
+
+    CloudKitty(Function<String, RequestOperationHeader> requestOperationHeaders,
+            ProtoBufsRequestFactory requestFactory) {
+        this(requestOperationHeaders, requestFactory, LIMIT);
+    }
+
+    public List<ResponseOperation>
+            get(HttpClient httpClient, String operation, List<RequestOperation> requests)
             throws UncheckedIOException {
-        List<RequestOperation> requests = recordNames.stream()
-                .map(u -> RecordRetrieveRequestOperations.operation(zone, u, cloudKitUserId))
+        return get(httpClient, operation, requests, Function.identity());
+    }
+
+    public <T> List<T> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
+            Function<ResponseOperation, T> field) throws UncheckedIOException {
+        return doGet(httpClient, requestOperationHeaders.apply(operation), requests, field);
+    }
+
+    <T> List<T> doGet(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
+            Function<ResponseOperation, T> field) throws UncheckedIOException {
+        return ListUtils.split(requests, LIMIT)
+                .stream()
+                .map(u -> request(httpClient, header, u))
+                .flatMap(Collection::stream)
+                .map(field)
                 .collect(Collectors.toList());
-        return client.get(httpClient, RecordRetrieveRequestOperations.OPERATION, requests,
-                ResponseOperation::getRecordRetrieveResponse);
+    }
+
+    List<ResponseOperation>
+            request(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests)
+            throws UncheckedIOException {
+        logger.trace("<< request() - httpClient: {} header: {} requests: {}", httpClient, header, requests);
+
+        assert (!requests.isEmpty());
+        byte[] data = encode(header, requests.iterator());
+        List<ResponseOperation> responses = client(httpClient, data);
+
+        logger.trace(">> request() - responses: {}", responses);
+        return responses;
+    }
+
+    byte[] encode(RequestOperationHeader header, Iterator<RequestOperation> it) throws UncheckedIOException {
+        try {
+            assert (it.hasNext());
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            CKProto.requestOperationWithHeader(it.next(), header).writeDelimitedTo(os);
+            for (int i = 1; it.hasNext() && i < limit; i++) {
+                it.next().writeDelimitedTo(os);
+            }
+            return os.toByteArray();
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    List<ResponseOperation> client(HttpClient httpClient, byte[] data) {
+        try {
+            HttpUriRequest uriRequest = requestFactory.apply(UUID.randomUUID(), data);
+            return httpClient.execute(uriRequest, responseHandler);
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    public String cloudKitUserId() {
+        return requestFactory.cloudKitUserId();
     }
 }
-// TODO error response

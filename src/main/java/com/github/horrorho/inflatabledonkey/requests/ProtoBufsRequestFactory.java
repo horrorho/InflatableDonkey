@@ -92,4 +92,24 @@ public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], H
         post.setEntity(byteArrayEntity);
         return post;
     }
+
+    public String url() {
+        return url;
+    }
+
+    public String container() {
+        return container;
+    }
+
+    public String bundle() {
+        return bundle;
+    }
+
+    public String cloudKitUserId() {
+        return cloudKitUserId;
+    }
+
+    public String cloudKitToken() {
+        return cloudKitToken;
+    }
 }

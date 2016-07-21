@@ -27,10 +27,7 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
-import java.util.UUID;
-import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
-import org.apache.http.client.methods.HttpUriRequest;
 
 /**
  * CloudKitty factory.
@@ -53,8 +50,16 @@ public final class CloudKitties {
                 .map(url -> url + "/api/client")
                 .orElseGet(() -> ckInit.production().url());
 
-        CKClient client = client(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
-        return new CloudKitty(client, cloudKitUserId);
+        return create(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
+    }
+
+    static CloudKitty
+            create(String container, String bundle, String cloudKitUserId, String cloudKitToken, String baseUrl) {
+        String url = baseUrl + RECORD_RETRIEVE;
+        RequestOperationHeaders requestOperationHeaders = new RequestOperationHeaders(container, bundle);
+        ProtoBufsRequestFactory requestFactory
+                = new ProtoBufsRequestFactory(url, container, bundle, cloudKitUserId, cloudKitToken);
+        return new CloudKitty(requestOperationHeaders, requestFactory);
     }
 
     static CloudKitty test() {
@@ -63,17 +68,7 @@ public final class CloudKitties {
         String cloudKitToken = "CLOUDKIT_TOKEN";
         String cloudKitUserId = "CLOUDKIT_USERID";
         String baseUrl = "BASE_URL";
-        CKClient client = client(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
-        return new CloudKitty(client, cloudKitUserId);
-    }
-
-    static CKClient
-            client(String container, String bundle, String cloudKitUserId, String cloudKitToken, String baseUrl) {
-        String url = baseUrl + RECORD_RETRIEVE;
-        RequestOperationHeaders requestOperationHeaders = new RequestOperationHeaders(container, bundle);
-        BiFunction<UUID, byte[], HttpUriRequest> requestFactory
-                = new ProtoBufsRequestFactory(url, container, bundle, cloudKitUserId, cloudKitToken);
-        return new CKClient(requestOperationHeaders, requestFactory);
+        return create(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
     }
 
     private static final String RECORD_RETRIEVE = "/record/retrieve";
