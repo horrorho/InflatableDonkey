@@ -1,4 +1,4 @@
-/*
+/* 
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -21,42 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.clients;
+package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
-import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Devices;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
-import org.apache.http.client.HttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * DeviceClient.
+ * CloudKit M211 RecordRetrieveRequestOperation.
  *
  * @author Ahseya
  */
 @Immutable
-public final class DeviceClient {
+public final class RecordRetrieveRequestOperations {
 
-    private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
+    public static final String OPERATION = "GetRecordsURLRequest";
 
-    public static List<Device>
-            device(HttpClient httpClient, CloudKittyLegacy kitty, Collection<String> deviceID)
-            throws IOException {
-
-        List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", deviceID);
-        logger.debug("-- device() - responses: {}", responses);
-
-        return responses.stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(Devices::from)
+    public static List<RequestOperation> operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
+        return recordNames.stream()
+                .map(u -> operation(zone, u, cloudKitUserId))
                 .collect(Collectors.toList());
+    }
+
+    public static RequestOperation operation(String zone, String recordName, String cloudKitUserId) {
+        return RequestOperation.newBuilder()
+                .setOperation(CKProto.operation(211))
+                .setRecordRetrieveRequest(request(zone, recordName, cloudKitUserId))
+                .build();
+    }
+
+    static RecordRetrieveRequest request(String zone, String recordName, String cloudKitUserId) {
+        return RecordRetrieveRequest.newBuilder()
+                .setRecordID(CKProto.recordIdentifier(zone, recordName, cloudKitUserId))
+                .build();
     }
 }

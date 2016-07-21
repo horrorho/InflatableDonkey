@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
@@ -52,7 +52,7 @@ public final class SnapshotClient {
     private static final Logger logger = LoggerFactory.getLogger(SnapshotClient.class);
 
     public static List<Snapshot>
-            snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
+            snapshots(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
             throws IOException {
 
         if (snapshotIDs.isEmpty()) {

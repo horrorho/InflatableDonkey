@@ -23,212 +23,50 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
-import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
-import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
-import com.github.horrorho.inflatabledonkey.io.IOFunction;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
-import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
-import com.github.horrorho.inflatabledonkey.responsehandler.DelimitedProtobufHandler;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.ZoneRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * CloudKitty.
+ * Super basic CloudKit API.
  *
  * @author Ahseya
  */
 @Immutable
 public final class CloudKitty {
 
-    public static CloudKitty backupd(CKInit ckInit, Account account) {
-
-        String container = "com.apple.backup.ios";
-        String bundle = "com.apple.backupd";
-
-        String cloudKitUserId = ckInit.cloudKitUserId();
-
-        // Re-direct issues with ckInit baseUrl.
-        String baseUrl = account.mobileMe()
-                .optional("com.apple.Dataclass.CKDatabaseService", "url")
-                .map(url -> url + "/api/client")
-                .orElseGet(() -> ckInit.production().url());
-
-        String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
-
-        String deviceID = UUID.randomUUID().toString();
-        String deviceHardwareID = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
-
-        RequestOperationFactory factory
-                = new RequestOperationFactory(
-                        cloudKitUserId,
-                        container,
-                        bundle,
-                        deviceHardwareID,
-                        deviceID);
-
-        IOFunction<InputStream, CloudKit.ResponseOperation> parser
-                = logger.isDebugEnabled()
-                        ? new ProtobufParser<>(CloudKit.ResponseOperation::parseFrom)
-                        : CloudKit.ResponseOperation::parseFrom;
-        ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler
-                = new DelimitedProtobufHandler<>(parser);
-
-        return new CloudKitty(
-                factory,
-                container,
-                bundle,
-                cloudKitUserId,
-                cloudKitToken,
-                baseUrl,
-                responseHandler);
-    }
-
-    private static final Logger logger = LoggerFactory.getLogger(CloudKitty.class);
-
-    // TODO test limit
-    // TODO inject via Property
-    private static final int REQUEST_LIMIT = 400;
-
-    private final RequestOperationFactory factory;
-    private final String container;
-    private final String bundle;
+    private final CKClient client;
     private final String cloudKitUserId;
-    private final String cloudKitToken;
-    private final String baseUrl;
-    private final ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler;
 
-    public CloudKitty(
-            RequestOperationFactory factory,
-            String container,
-            String bundle,
-            String cloudKitUserId,
-            String cloudKitToken,
-            String baseUrl,
-            ResponseHandler<List<CloudKit.ResponseOperation>> responseHandler) {
-
-        this.factory = Objects.requireNonNull(factory, "factory");
-        this.container = Objects.requireNonNull(container, "container");
-        this.bundle = Objects.requireNonNull(bundle, "bundle");
-        this.cloudKitUserId = Objects.requireNonNull(cloudKitUserId, "cloudKitUserId");
-        this.cloudKitToken = Objects.requireNonNull(cloudKitToken, "cloudKitToken");
-        this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl");
-        this.responseHandler = Objects.requireNonNull(responseHandler, "responseHandler");
+    public CloudKitty(CKClient client, String cloudKitUserId) {
+        this.client = client;
+        this.cloudKitUserId = cloudKitUserId;
     }
 
-    public List<CloudKit.ZoneRetrieveResponse>
-            zoneRetrieveRequest(HttpClient httpClient, String... zones)
-            throws IOException {
-        return zoneRetrieveRequest(httpClient, Arrays.asList(zones));
-    }
-
-    public List<CloudKit.ZoneRetrieveResponse>
+    public List<ZoneRetrieveResponse>
             zoneRetrieveRequest(HttpClient httpClient, Collection<String> zones)
-            throws IOException {
-
-        // M201
-        List<CloudKit.RequestOperation> requestOperations = factory.zoneRetrieveRequestOperation(zones);
-        logger.debug("-- zoneRetrieveRequest() request operation: {}", requestOperations);
-
-        List<CloudKit.ResponseOperation> response = doRequest(httpClient, requestOperations);
-        logger.debug("-- zoneRetrieveRequest() response: {}", response);
-
-        return response.stream()
-                .map(CloudKit.ResponseOperation::getZoneRetrieveResponse)
+            throws UncheckedIOException {
+        List<RequestOperation> requests = zones.stream()
+                .map(u -> ZoneRetrieveRequestOperations.operation(u, cloudKitUserId))
                 .collect(Collectors.toList());
+        return client.get(httpClient, ZoneRetrieveRequestOperations.OPERATION, requests,
+                ResponseOperation::getZoneRetrieveResponse);
     }
 
-    public List<CloudKit.RecordRetrieveResponse>
-            recordRetrieveRequest(HttpClient httpClient, String zone, String... recordNames)
-            throws IOException {
-        return recordRetrieveRequest(httpClient, zone, Arrays.asList(recordNames));
-    }
-
-    public List<CloudKit.RecordRetrieveResponse>
+    public List<RecordRetrieveResponse>
             recordRetrieveRequest(HttpClient httpClient, String zone, Collection<String> recordNames)
-            throws IOException {
-
-        // M211
-        List<CloudKit.RequestOperation> requestOperations = factory.recordRetrieveRequestOperations(zone, recordNames);
-        List<CloudKit.ResponseOperation> response = doRequest(httpClient, requestOperations);
-
-        List<CloudKit.RecordRetrieveResponse> responses = response.stream()
-                .map(CloudKit.ResponseOperation::getRecordRetrieveResponse)
+            throws UncheckedIOException {
+        List<RequestOperation> requests = recordNames.stream()
+                .map(u -> RecordRetrieveRequestOperations.operation(zone, u, cloudKitUserId))
                 .collect(Collectors.toList());
-
-        return responses;
-    }
-
-    List<CloudKit.ResponseOperation>
-            doRequest(HttpClient httpClient, List<CloudKit.RequestOperation> operations) throws IOException {
-
-        if (operations.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        if (!operations.get(0).hasRequestOperationHeader()) {
-            throw new IllegalArgumentException("missing request operation header");
-        }
-        CloudKit.RequestOperationHeader requestOperationHeader = operations.get(0).getRequestOperationHeader();
-
-        ArrayList<CloudKit.ResponseOperation> responses = new ArrayList<>();
-
-        for (int i = 0; i < operations.size(); i += REQUEST_LIMIT) {
-            int fromIndex = i;
-            int toIndex = fromIndex + REQUEST_LIMIT;
-            toIndex = toIndex > operations.size()
-                    ? operations.size()
-                    : toIndex;
-
-            List<CloudKit.RequestOperation> subList = operations.subList(fromIndex, toIndex);
-            // Ensure we have a operations header.
-            if (!subList.get(0).hasRequestOperationHeader()) {
-                CloudKit.RequestOperation requestOperation = CloudKit.RequestOperation.newBuilder(subList.get(0))
-                        .setRequestOperationHeader(requestOperationHeader)
-                        .build();
-                subList.set(0, requestOperation);
-            }
-
-            List<CloudKit.ResponseOperation> subListResponses = doSubListRequest(httpClient, subList);
-            responses.addAll(subListResponses);
-        }
-        return responses;
-    }
-
-    List<CloudKit.ResponseOperation>
-            doSubListRequest(HttpClient httpClient, List<CloudKit.RequestOperation> operationsSubList)
-            throws IOException {
-
-        if (operationsSubList.size() > REQUEST_LIMIT) {
-            throw new IllegalArgumentException("sub list size over request limit: " + operationsSubList.size());
-        }
-
-        HttpUriRequest uriRequest = ProtoBufsRequestFactory.instance().newRequest(
-                baseUrl + "/record/retrieve",
-                container,
-                bundle,
-                cloudKitUserId,
-                cloudKitToken,
-                UUID.randomUUID().toString(),
-                operationsSubList);
-
-        return httpClient.execute(uriRequest, responseHandler);
+        return client.get(httpClient, RecordRetrieveRequestOperations.OPERATION, requests,
+                ResponseOperation::getRecordRetrieveResponse);
     }
 }
+// TODO error response

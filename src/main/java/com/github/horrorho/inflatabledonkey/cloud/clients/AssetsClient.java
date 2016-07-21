@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
-import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKittyLegacy;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
@@ -57,7 +57,7 @@ public final class AssetsClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetsClient.class);
 
     public static List<Assets>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
+            assets(HttpClient httpClient, CloudKittyLegacy kitty, ProtectionZone zone, Collection<Manifest> manifests)
             throws IOException {
 
         if (manifests.isEmpty()) {

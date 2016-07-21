@@ -44,9 +44,9 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class RequestOperationFactory {
+public final class RequestOperationFactoryLegacy {
 
-    private static final Logger logger = LoggerFactory.getLogger(RequestOperationFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(RequestOperationFactoryLegacy.class);
 
     public static final CloudKit.RequestOperationHeader baseRequestOperationHeader
             = CloudKit.RequestOperationHeader.newBuilder()
@@ -73,7 +73,7 @@ public final class RequestOperationFactory {
     private final String bundle;
 
     // TODO complete
-    public RequestOperationFactory(
+    public RequestOperationFactoryLegacy(
             String cloudKitUserId,
             String container,
             String bundle,
