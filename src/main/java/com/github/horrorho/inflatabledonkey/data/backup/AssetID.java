@@ -38,15 +38,24 @@ public final class AssetID {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetID.class);
 
-    public static Optional<AssetID> from(String formatted) {
-        String[] split = formatted.split(":");
+    public static Optional<AssetID> from(String id) {
+        Optional<AssetID> assetID = parse(id);
+        assetID.filter(u -> !u.toString().equals(id))
+                .ifPresent(u -> {
+                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                });
+        return assetID;
+    }
+
+    static Optional<AssetID> parse(String id) {
+        String[] split = id.split(":");
         switch (split.length) {
             case 5:
                 return Optional.of(file(split));
             case 4:
                 return Optional.of(directory(split));
             default:
-                logger.warn("-- from() - unexpected format: {}", formatted);
+                logger.warn("-- from() - unexpected format: {}", id);
                 return Optional.empty();
         }
     }

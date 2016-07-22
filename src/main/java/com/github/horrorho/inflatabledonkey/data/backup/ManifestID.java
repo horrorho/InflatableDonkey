@@ -38,12 +38,21 @@ public final class ManifestID {
 
     private static final Logger logger = LoggerFactory.getLogger(ManifestID.class);
 
-    public static Optional<ManifestID> from(String formatted) {
+    public static Optional<ManifestID> from(String id) {
+        Optional<ManifestID> manifestID = parse(id);
+        manifestID.filter(u -> !u.toString().equals(id))
+                .ifPresent(u -> {
+                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                });
+        return manifestID;
+    }
+
+    static Optional<ManifestID> parse(String id) {
         // Format: M:<uuid>:<base64 hash>
         // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
-        String[] split = formatted.split(":");
+        String[] split = id.split(":");
         if (split.length != 3) {
-            logger.warn("-- from() - unexpected format: {}", formatted);
+            logger.warn("-- from() - unexpected format: {}", id);
         }
         return split.length < 3
                 ? Optional.empty()
