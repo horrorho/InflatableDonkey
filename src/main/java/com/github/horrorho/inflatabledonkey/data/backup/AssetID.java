@@ -48,6 +48,9 @@ public final class AssetID {
     }
 
     static Optional<AssetID> parse(String id) {
+        if (!id.startsWith("F:")) {
+            logger.warn("-- parse() - unexpected format: {}", id);
+        }
         String[] split = id.split(":");
         switch (split.length) {
             case 5:

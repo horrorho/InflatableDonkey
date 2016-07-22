@@ -52,7 +52,7 @@ public final class DeviceFactory {
         return new Device(record, deviceID, snapshots(record.getRecordFieldList()));
     }
 
-    static List<SnapshotID> snapshots(List<CloudKit.RecordField> records) {
+    static List<SnapshotIDLegacy> snapshots(List<CloudKit.RecordField> records) {
         List<String> snapshotRecords = snapshotRecords(records);
         List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
         logger.debug("-- snapshots() - records: {}", snapshotRecords.size());
@@ -64,7 +64,7 @@ public final class DeviceFactory {
         int limit = Math.min(snapshotRecords.size(), snapshotCommittedDates.size());
         return IntStream.range(0, limit)
                 .mapToObj(i
-                        -> new SnapshotID(WKTimestamp.toInstant(snapshotCommittedDates.get(i)), snapshotRecords.get(i)))
+                        -> new SnapshotIDLegacy(WKTimestamp.toInstant(snapshotCommittedDates.get(i)), snapshotRecords.get(i)))
                 .collect(Collectors.toList());
     }
 

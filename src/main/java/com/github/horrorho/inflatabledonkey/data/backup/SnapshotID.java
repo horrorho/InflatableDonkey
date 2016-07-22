@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -23,39 +23,55 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * SnapshotID.
  *
  * @author Ahseya
  */
 @Immutable
 public final class SnapshotID {
 
-    private final Instant timestamp;
-    private final String id;
+    private static final Logger logger = LoggerFactory.getLogger(SnapshotID.class);
 
-    public SnapshotID(Instant timestamp, String id) {
-        this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
-        this.id = Objects.requireNonNull(id, "id");
+    public static Optional<SnapshotID> from(String id) {
+        Optional<SnapshotID> snapshotID = parse(id);
+        snapshotID.filter(u -> !u.toString().equals(id))
+                .ifPresent(u -> {
+                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                });
+        return snapshotID;
     }
 
-    public Instant timestamp() {
-        return timestamp;
+    static Optional<SnapshotID> parse(String id) {
+        // Format: S:<hash>
+        String[] split = id.split(":");
+        if (split.length != 2 || !split[0].equals("S")) {
+            logger.warn("-- parse() - unexpected format: {}", id);
+        }
+        return split.length < 2
+                ? Optional.empty()
+                : Optional.of(new SnapshotID(split[1]));
     }
 
-    public String id() {
-        return id;
+    private final String hash;
+
+    public SnapshotID(String hash) {
+        this.hash = Objects.requireNonNull(hash, "hash");
+    }
+
+    public String hash() {
+        return hash;
     }
 
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 37 * hash + Objects.hashCode(this.timestamp);
-        hash = 37 * hash + Objects.hashCode(this.id);
+        hash = 97 * hash + Objects.hashCode(this.hash);
         return hash;
     }
 
@@ -71,10 +87,7 @@ public final class SnapshotID {
             return false;
         }
         final SnapshotID other = (SnapshotID) obj;
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        if (!Objects.equals(this.timestamp, other.timestamp)) {
+        if (!Objects.equals(this.hash, other.hash)) {
             return false;
         }
         return true;
@@ -82,6 +95,6 @@ public final class SnapshotID {
 
     @Override
     public String toString() {
-        return "SnapshotID{" + "timestamp=" + timestamp + ", id=" + id + '}';
+        return "S:" + hash;
     }
 }

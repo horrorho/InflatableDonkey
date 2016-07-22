@@ -51,9 +51,9 @@ public final class Device extends AbstractRecord {
     public static final String KEYBAG_UUID = "currentKeybagUUID";
 
     private final DeviceID deviceID;
-    private final Collection<SnapshotID> snapshots;
+    private final Collection<SnapshotIDLegacy> snapshots;
 
-    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotID> snapshots) {
+    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotIDLegacy> snapshots) {
         super(record);
         this.deviceID = Objects.requireNonNull(deviceID, "deviceID");
         this.snapshots = new ArrayList<>(snapshots);
@@ -63,15 +63,15 @@ public final class Device extends AbstractRecord {
         return deviceID;
     }
 
-    public List<SnapshotID> snapshots() {
+    public List<SnapshotIDLegacy> snapshots() {
         return new ArrayList<>(snapshots);
     }
 
     public Map<String, Instant> snapshotTimestampMap() {
         return snapshots.stream()
                 .collect(Collectors.toMap(
-                        SnapshotID::id,
-                        SnapshotID::timestamp,
+                        SnapshotIDLegacy::id,
+                        SnapshotIDLegacy::timestamp,
                         (a, b) -> {
                             logger.warn("-- snapshotTimestampMap() - collision: {} {}", a, b);
                             return a;

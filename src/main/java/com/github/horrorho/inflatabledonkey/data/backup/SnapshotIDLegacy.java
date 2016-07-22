@@ -23,44 +23,39 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import java.time.Instant;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 /**
+ * SnapshotID.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Manifest {
+public final class SnapshotIDLegacy {
 
-    private final ManifestID id;
-    private final int count;
-    private final int checksum;
+    private final Instant timestamp;
+    private final String id;
 
-    public Manifest(ManifestID id, int count, int checksum) {
+    public SnapshotIDLegacy(Instant timestamp, String id) {
+        this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
         this.id = Objects.requireNonNull(id, "id");
-        this.count = count;
-        this.checksum = checksum;
     }
 
-    public int count() {
-        return count;
+    public Instant timestamp() {
+        return timestamp;
     }
 
-    public int checksum() {
-        return checksum;
-    }
-
-    public ManifestID id() {
+    public String id() {
         return id;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        int hash = 3;
+        hash = 37 * hash + Objects.hashCode(this.timestamp);
+        hash = 37 * hash + Objects.hashCode(this.id);
         return hash;
     }
 
@@ -75,14 +70,11 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
-            return false;
-        }
-        if (this.checksum != other.checksum) {
-            return false;
-        }
+        final SnapshotIDLegacy other = (SnapshotIDLegacy) obj;
         if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.timestamp, other.timestamp)) {
             return false;
         }
         return true;
@@ -90,6 +82,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "id=" + id + ", count=" + count + ", checksum=" + checksum + '}';
+        return "SnapshotID{" + "timestamp=" + timestamp + ", id=" + id + '}';
     }
 }

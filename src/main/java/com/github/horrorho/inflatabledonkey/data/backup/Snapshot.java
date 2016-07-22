@@ -45,17 +45,24 @@ public final class Snapshot extends AbstractRecord {
 
     private static final Logger logger = LoggerFactory.getLogger(Snapshot.class);
 
+    private final SnapshotID snapshotID;
     private final Optional<byte[]> backupProperties;
     private final List<Manifest> manifests;
 
     public Snapshot(
+            CloudKit.Record record,
+            SnapshotID snapshotID,
             Optional<byte[]> backupProperties,
-            List<Manifest> manifests,
-            CloudKit.Record record) {
+            List<Manifest> manifests) {
 
         super(record);
+        this.snapshotID = Objects.requireNonNull(snapshotID, "snapshotID");
         this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
         this.manifests = Objects.requireNonNull(manifests, "manifests");
+    }
+
+    public SnapshotID snapshotID() {
+        return snapshotID;
     }
 
     public Optional<NSDictionary> backupProperties() {
@@ -97,7 +104,8 @@ public final class Snapshot extends AbstractRecord {
 
     @Override
     public String toString() {
-        return "Snapshot{" + super.toString()
+        return "Snapshot{"
+                + "snapshotID=" + snapshotID
                 + ", backupProperties=" + backupProperties().map(NSObject::toXMLPropertyList).orElse("NULL")
                 + '}';
     }

@@ -42,7 +42,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotIDLegacy;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public final class BackupAssistant {
         return DeviceClient.device(httpClient, kitty, devices);
     }
 
-    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws IOException {
+    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotIDLegacy> snapshotIDs) throws IOException {
         return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs);
     }
 
@@ -107,8 +107,7 @@ public final class BackupAssistant {
                 .map(d -> d
                         .snapshots()
                         .stream()
-                        .collect(Collectors.toMap(
-                                SnapshotID::id,
+                        .collect(Collectors.toMap(SnapshotIDLegacy::id,
                                 s -> d,
                                 (a, b) -> {
                                     logger.warn("-- snapshotsForDevices() - collision: {} {}", a, b);
@@ -118,7 +117,7 @@ public final class BackupAssistant {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        List<SnapshotID> snapshotIDs = devices.stream()
+        List<SnapshotIDLegacy> snapshotIDs = devices.stream()
                 .map(Device::snapshots)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());

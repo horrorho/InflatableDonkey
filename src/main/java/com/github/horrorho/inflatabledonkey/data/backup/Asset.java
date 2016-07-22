@@ -61,7 +61,7 @@ public final class Asset extends AbstractRecord {
     private final Optional<NSDictionary> encryptedAttributes;
     private final Optional<CloudKit.Asset> asset;
 
-    public Asset(
+    Asset(
             CloudKit.Record record,
             Optional<AssetID> assetID,
             Optional<Integer> protectionClass,
