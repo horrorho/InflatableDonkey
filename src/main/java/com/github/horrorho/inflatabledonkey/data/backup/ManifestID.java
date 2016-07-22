@@ -51,7 +51,7 @@ public final class ManifestID {
         // Format: M:<uuid>:<base64 hash>
         // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
         String[] split = id.split(":");
-        if (split.length != 3 || !split[0].endsWith("M")) {
+        if (split.length != 3 || !split[0].equals("M")) {
             logger.warn("-- parse() - unexpected format: {}", id);
         }
         return split.length < 3

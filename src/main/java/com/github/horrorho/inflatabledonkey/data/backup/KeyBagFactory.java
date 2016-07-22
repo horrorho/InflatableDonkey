@@ -21,12 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.keybag;
+package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.PBKDF2;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -78,7 +79,6 @@ public final class KeyBagFactory {
         }
 
         List<Map<String, byte[]>> blocks = KeyBagFactory.block(iterator);
-
         Map<String, byte[]> header = blocks.get(0);
         byte[] uuid = header.get("UUID");
 //        byte[] hmck = header.get("HMCK");
@@ -92,13 +92,12 @@ public final class KeyBagFactory {
         Map<Integer, byte[]> privateKeys = new HashMap<>();
 
         blocks.forEach(b -> unlockBlock(kek, b, privateKeys, publicKeys));
-
         publicKeys.forEach((c, k) -> logger.debug("-- create() - protection class: {} public key: 0x{}",
                 c, Hex.toHexString(k)));
         privateKeys.forEach((c, k) -> logger.debug("-- create() - protection class: {} private key: 0x{}",
                 c, Hex.toHexString(k)));
 
-        return new KeyBag(keyBagType, uuid, publicKeys, privateKeys);
+        return new KeyBag(new KeyBagID(uuid), keyBagType, publicKeys, privateKeys);
     }
 
     static List<Map<String, byte[]>> block(Iterator<TagLengthValue> iterator) {
@@ -106,29 +105,24 @@ public final class KeyBagFactory {
         if (!uuid.tag().equals("UUID")) {
             throw new IllegalArgumentException("bad format");
         }
-
         List<Map<String, byte[]>> blocks = new ArrayList<>();
         block(uuid, iterator, blocks);
         return blocks;
     }
 
     static void block(
-            TagLengthValue uuid,
-            Iterator<TagLengthValue> iterator,
-            List<Map<String, byte[]>> blocks) {
+            TagLengthValue uuid, Iterator<TagLengthValue> iterator, List<Map<String, byte[]>> blocks) {
 
         Map<String, byte[]> tagValues = new HashMap<>();
         tagValues.put(uuid.tag(), uuid.value());
 
         while (iterator.hasNext()) {
             TagLengthValue tlv = iterator.next();
-
             if (tlv.tag().equals("UUID")) {
                 blocks.add(tagValues);
                 block(tlv, iterator, blocks);
                 return;
             }
-
             tagValues.put(tlv.tag(), tlv.value());
         }
         blocks.add(tagValues);
@@ -141,10 +135,7 @@ public final class KeyBagFactory {
     }
 
     static void unlockBlock(
-            byte[] kek,
-            Map<String, byte[]> block,
-            Map<Integer, byte[]> privateKeys,
-            Map<Integer, byte[]> publicKeys) {
+            byte[] kek, Map<String, byte[]> block, Map<Integer, byte[]> privateKeys, Map<Integer, byte[]> publicKeys) {
 
         if (!block.containsKey("CLAS")) {
             return;
@@ -155,9 +146,7 @@ public final class KeyBagFactory {
         byte[] wpky = block.get("WPKY");
         byte[] pbky = block.get("PBKY");
 
-        unwrap(wrap, kek, wpky)
-                .map(key -> privateKeys.put(clas, key));
-
+        unwrap(wrap, kek, wpky).map(key -> privateKeys.put(clas, key));
         publicKeys.put(clas, pbky);
     }
 
@@ -165,7 +154,6 @@ public final class KeyBagFactory {
         if ((wrap & WRAP_DEVICE) != 0 || (wrap & WRAP_PASSCODE) == 0) {
             return Optional.empty();
         }
-
         Optional<byte[]> key = RFC3394Wrap.unwrapAES(kek, wpky);
         logger.debug("-- unwrap() - unwrap kek: 0x{} wpky: 0x{} > key: 0x{}",
                 Hex.toHexString(kek), Hex.toHexString(wpky), key.map(Hex::toHexString).orElse("NULL"));

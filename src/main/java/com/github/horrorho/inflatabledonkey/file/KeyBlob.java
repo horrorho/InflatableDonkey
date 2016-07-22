@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.file;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.encoders.Hex;
@@ -103,6 +104,10 @@ public final class KeyBlob {
 
     public byte[] uuid() {
         return Arrays.copyOf(uuid, uuid.length);
+    }
+
+    public String uuidBase64() {
+        return Base64.getEncoder().encodeToString(uuid);
     }
 
     public byte[] publicKey() {

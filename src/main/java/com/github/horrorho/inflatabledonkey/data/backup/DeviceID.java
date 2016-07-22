@@ -48,9 +48,9 @@ public final class DeviceID {
     }
 
     static Optional<DeviceID> parse(String id) {
-        // Format: D:<hash>
+        // Format: D:<base64 hash>
         String[] split = id.split(":");
-        if (split.length != 2 || !split[0].endsWith("D")) {
+        if (split.length != 2 || !split[0].equals("D")) {
             logger.warn("-- parse() - unexpected format: {}", id);
         }
         return split.length < 2

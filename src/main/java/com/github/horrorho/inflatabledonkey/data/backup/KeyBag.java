@@ -21,16 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.keybag;
+package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  *
@@ -39,33 +37,29 @@ import org.bouncycastle.util.encoders.Hex;
 @Immutable
 public final class KeyBag {
 
+    private final KeyBagID keyBagID;
     private final KeyBagType type;
-    private final byte[] uuid;
-    private final String uuidBase64;
     private final Map<Integer, byte[]> publicKeys;
     private final Map<Integer, byte[]> privateKeys;
 
     public KeyBag(
+            KeyBagID keyBagID,
             KeyBagType type,
-            byte[] uuid,
             Map<Integer, byte[]> publicKeys,
             Map<Integer, byte[]> privateKeys) {
 
+        this.keyBagID = Objects.requireNonNull(keyBagID);
         this.type = Objects.requireNonNull(type, "type");
-        this.uuid = Objects.requireNonNull(uuid, "uuid");
-        this.uuidBase64 = Base64.getEncoder().encodeToString(uuid);
-
         this.publicKeys = publicKeys.entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         bs -> Arrays.copyOf(bs.getValue(), bs.getValue().length)));
-
         this.privateKeys = privateKeys.entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        bs -> Arrays.copyOf(bs.getValue(), bs.getValue().length)));
+                        u -> Arrays.copyOf(u.getValue(), u.getValue().length)));
     }
 
     public Optional<byte[]> publicKey(int protectionClass) {
@@ -82,19 +76,15 @@ public final class KeyBag {
         return type;
     }
 
-    public byte[] uuid() {
-        return Arrays.copyOf(uuid, uuid.length);
-    }
-
-    public String uuidBase64() {
-        return uuidBase64;
+    public KeyBagID keyBagID() {
+        return keyBagID;
     }
 
     @Override
     public String toString() {
         return "KeyBag{"
-                + "type=" + type
-                + ", uuid=0x" + Hex.toHexString(uuid)
+                + "keyBagID=" + keyBagID
+                + ", type=" + type
                 + ", publicKeys=" + publicKeys
                 + ", privateKeys=" + privateKeys
                 + '}';

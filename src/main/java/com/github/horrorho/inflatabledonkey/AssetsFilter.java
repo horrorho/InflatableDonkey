@@ -58,7 +58,6 @@ public final class AssetsFilter implements Predicate<Assets> {
                     logger.debug("-- filterDomain() - no domain: {}", asset);
                     return false;
                 });
-
     }
 
     @Override

@@ -85,7 +85,7 @@ public final class BackupAssistant {
     }
 
     public BackupAssistant(CloudKitty kitty, ProtectionZone mbksync) {
-        this(kitty, mbksync, KeyBagManager.create(kitty, mbksync));
+        this(kitty, mbksync, KeyBagManager.defaults(kitty, mbksync));
     }
 
     public Optional<BackupAccount> backupAccount(HttpClient httpClient) throws IOException {
@@ -141,6 +141,6 @@ public final class BackupAssistant {
     }
 
     public KeyBagManager newKeyBagManager() {
-        return KeyBagManager.create(kitty, mbksync);
+        return KeyBagManager.defaults(kitty, mbksync);
     }
 }
