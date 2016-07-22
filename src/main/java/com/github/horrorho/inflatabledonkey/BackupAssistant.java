@@ -136,8 +136,8 @@ public final class BackupAssistant {
         return AssetsClient.assets(httpClient, kitty, mbksync, manifests);
     }
 
-    public List<Asset> assets(HttpClient httpClient, List<String> files) throws IOException {
-        return AssetTokenClient.assets(httpClient, kitty, mbksync, files);
+    public List<Asset> assets(HttpClient httpClient, Collection<Assets> assets) throws IOException {
+        return AssetTokenClient.assets(httpClient, kitty, mbksync, assets);
     }
 
     public KeyBagManager newKeyBagManager() {

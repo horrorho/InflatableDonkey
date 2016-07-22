@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
@@ -116,9 +117,11 @@ public final class Backup {
         List<Assets> assetsList = backupAssistant.assetsList(httpClient, snapshot);
         logger.info("-- download() - assets count: {}", assetsList.size());
 
-        // Domain filter
-        List<String> files = Assets.files(assetsList, assetsFilter);
-        logger.info("-- download() - domain filtered file count: {}", files.size());
+        // Assets filter
+        List<Assets> assets = assetsList.stream()
+                .filter(assetsFilter)
+                .collect(Collectors.toList());
+        logger.info("-- download() - assets/ domain filtered file count: {}", assets.size());
 
         // Output folders.
         Path relativePath = deviceSnapshotDateSubPath(device, snapshot);
@@ -127,15 +130,15 @@ public final class Backup {
         // Filename extension filter.
         // Batch process files in groups of 100.
         // TODO group files into batches based on file size.
-        List<List<String>> batches = ListUtils.split(files, 100);
+        List<List<Assets>> batches = ListUtils.split(assets, 100);
 
-        for (List<String> batch : batches) {
-            List<Asset> assets = backupAssistant.assets(httpClient, batch)
+        for (List<Assets> batch : batches) {
+            List<Asset> assetList = backupAssistant.assets(httpClient, batch)
                     .stream()
                     .filter(assetFilter::test)
                     .collect(Collectors.toList());
-            logger.info("-- download() - filtered asset count: {}", assets.size());
-            downloadAssistant.download(httpClient, assets, relativePath);
+            logger.info("-- download() - filtered asset count: {}", assetList.size());
+            downloadAssistant.download(httpClient, assetList, relativePath);
         }
     }
 
@@ -186,7 +189,7 @@ public final class Backup {
         System.out.println("Domains / file count:");
 
         assetsList.stream()
-                .map(a -> a.domain() + " / " + a.files().size())
+                .map(a -> a.domain() + " / " + a.assets().size())
                 .sorted()
                 .forEach(System.out::println);
     }

@@ -39,35 +39,58 @@ public final class AssetID {
     private static final Logger logger = LoggerFactory.getLogger(AssetID.class);
 
     public static Optional<AssetID> from(String formatted) {
-        // Format: F:<uuid>:<base64 hash>:<size>:<tag>
         String[] split = formatted.split(":");
-        if (split.length != 5) {
-            logger.warn("-- from() - unexpected format: {}", formatted);
+        switch (split.length) {
+            case 5:
+                return Optional.of(file(split));
+            case 4:
+                return Optional.of(directory(split));
+            default:
+                logger.warn("-- from() - unexpected format: {}", formatted);
+                return Optional.empty();
         }
+    }
+
+    static AssetID file(String[] split) {
+        // Format: F:<uuid>:<base64 hash>:<size>:<tag>
+        // size = size in bytes
+        return new AssetID(split[1], split[2], split[3], split[4], size(split[3]));
+    }
+
+    static AssetID directory(String[] split) {
+        // Format: F:<uuid>:<base64 hash>:D
+        return new AssetID(split[1], split[2], split[3], "", 0);
+    }
+
+    static int size(String info) {
         try {
-            return split.length < 5
-                    ? Optional.empty()
-                    : Optional.of(new AssetID(split[1], split[2], split[4], Integer.parseInt(split[3])));
+            return Integer.parseInt(info);
         } catch (NumberFormatException ex) {
             logger.warn("-- from() - NumberFormatException: {}", ex.getMessage());
-            return Optional.empty();
+            return 0;
         }
     }
 
     private final String uuid;
     private final String hash;  // Base64
+    private final String info;
     private final String tag;
     private final int size;
 
-    public AssetID(String uuid, String hash, String tag, int size) {
+    public AssetID(String uuid, String hash, String info, String tag, int size) {
         this.uuid = Objects.requireNonNull(uuid, "uuid");
         this.hash = Objects.requireNonNull(hash, "hash");
+        this.info = Objects.requireNonNull(info, "info");
         this.tag = Objects.requireNonNull(tag, "tag");
         this.size = size;
     }
 
     public String uuid() {
         return uuid;
+    }
+
+    public String info() {
+        return info;
     }
 
     public String hash() {
@@ -85,10 +108,10 @@ public final class AssetID {
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 41 * hash + Objects.hashCode(this.uuid);
-        hash = 41 * hash + Objects.hashCode(this.hash);
-        hash = 41 * hash + Objects.hashCode(this.tag);
-        hash = 41 * hash + this.size;
+        hash = 59 * hash + Objects.hashCode(this.uuid);
+        hash = 59 * hash + Objects.hashCode(this.hash);
+        hash = 59 * hash + Objects.hashCode(this.info);
+        hash = 59 * hash + Objects.hashCode(this.tag);
         return hash;
     }
 
@@ -104,13 +127,13 @@ public final class AssetID {
             return false;
         }
         final AssetID other = (AssetID) obj;
-        if (this.size != other.size) {
-            return false;
-        }
         if (!Objects.equals(this.uuid, other.uuid)) {
             return false;
         }
         if (!Objects.equals(this.hash, other.hash)) {
+            return false;
+        }
+        if (!Objects.equals(this.info, other.info)) {
             return false;
         }
         if (!Objects.equals(this.tag, other.tag)) {
@@ -121,6 +144,6 @@ public final class AssetID {
 
     @Override
     public String toString() {
-        return "F:" + uuid + ":" + hash + ":" + size + ":" + tag;
+        return "F:" + uuid + ":" + hash + ":" + info + (tag.isEmpty() ? "" : ":" + tag);
     }
 }

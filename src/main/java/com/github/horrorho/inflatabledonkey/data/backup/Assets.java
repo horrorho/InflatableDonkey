@@ -41,64 +41,64 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class Assets {
 
-    public static List<String> files(List<Assets> assetsList, Predicate<Assets> filter) {
-        return assetsList
-                .stream()
-                .filter(assets -> filter.test(assets))
-                .map(Assets::files)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-    }
-
-    // TODO rationalize
-    public static boolean isNonEmpty(String asset) {
-        // F:UUID:token:length:x
-        String[] split = asset.split(":");
-        if (split.length < 4) {
-            logger.warn("-- isEmpty() - no file size field: {}", asset);
-            return true;
-        }
-        String x = split[3];
-        if (x.equals("D")) {
-            return false;
-        }
-
-        try {
-            int size = Integer.parseInt(x); 
-            return size != 0;
-        } catch (NumberFormatException ex) {
-            logger.warn("-- isEmpty() - failed to parse asset: {}", asset);
-            return false;
-        }
-    }
-
-    // TODO rationalize
-    public static int size(String asset) {
-        // F:UUID:token:length:x
-        String[] split = asset.split(":");
-        if (split.length < 4) {
-            logger.warn("-- isEmpty() - no file size field: {}", asset);
-            return 0;
-        }
-
-        try {
-            return Integer.parseInt(split[3]);
-        } catch (NumberFormatException ex) {
-            logger.warn("-- size() - failed to parse: {}", asset);
-            return 0;
-        }
-    }
+//    public static List<String> files(List<Assets> assetsList, Predicate<Assets> filter) {
+//        return assetsList
+//                .stream()
+//                .filter(assets -> filter.test(assets))
+//                .map(Assets::assets)
+//                .flatMap(Collection::stream)
+//                .collect(Collectors.toList());
+//    }
+//
+//    // TODO rationalize
+//    public static boolean isNonEmpty(String asset) {
+//        // F:UUID:token:length:x
+//        String[] split = asset.split(":");
+//        if (split.length < 4) {
+//            logger.warn("-- isEmpty() - no file size field: {}", asset);
+//            return true;
+//        }
+//        String x = split[3];
+//        if (x.equals("D")) {
+//            return false;
+//        }
+//
+//        try {
+//            int size = Integer.parseInt(x); 
+//            return size != 0;
+//        } catch (NumberFormatException ex) {
+//            logger.warn("-- isEmpty() - failed to parse asset: {}", asset);
+//            return false;
+//        }
+//    }
+//
+//    // TODO rationalize
+//    public static int size(String asset) {
+//        // F:UUID:token:length:x
+//        String[] split = asset.split(":");
+//        if (split.length < 4) {
+//            logger.warn("-- isEmpty() - no file size field: {}", asset);
+//            return 0;
+//        }
+//
+//        try {
+//            return Integer.parseInt(split[3]);
+//        } catch (NumberFormatException ex) {
+//            logger.warn("-- size() - failed to parse: {}", asset);
+//            return 0;
+//        }
+//    }
 
     private static final Logger logger = LoggerFactory.getLogger(Assets.class);
 
     private final ManifestID manifestID;
     private final String domain;
-    private final List<String> files;
+    private final List<AssetID> assets;
 
-    public Assets(ManifestID manifestID, String domain, List<String> files) {
+    public Assets(ManifestID manifestID, String domain, List<AssetID> assets) {
         this.manifestID = Objects.requireNonNull(manifestID, "manifestID");
         this.domain = Objects.requireNonNull(domain, "domain");
-        this.files = new ArrayList<>(files);
+        this.assets = new ArrayList<>(assets);
     }
 
     public String domain() {
@@ -109,22 +109,22 @@ public final class Assets {
         return manifestID;
     }
 
-    public List<String> files() {
-        return new ArrayList<>(files);
+    public List<AssetID> assets() {
+        return new ArrayList<>(assets);
     }
 
     public int count() {
-        return files.size();
+        return assets.size();
     }
 
-    public List<String> nonEmptyFiles() {
-        return files.stream()
-                .filter(Assets::isNonEmpty)
+    public List<AssetID> nonEmpty() {
+        return assets.stream()
+                .filter(u -> u.size() > 0)
                 .collect(Collectors.toList());
     }
 
     @Override
     public String toString() {
-        return "Assets{" + "manifestID=" + manifestID + ", domain=" + domain + ", files=" + files + '}';
+        return "Assets{" + "manifestID=" + manifestID + ", domain=" + domain + ", assets=" + assets + '}';
     }
 }

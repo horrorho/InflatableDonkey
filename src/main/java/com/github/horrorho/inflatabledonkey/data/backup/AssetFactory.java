@@ -99,8 +99,7 @@ public final class AssetFactory {
                 keyEncryptionKey,
                 encryptedAttributes,
                 asset);
-        logger.debug("-- from() - asset: {}", newAsset);
-
+        logger.debug("-- from() - asset: {}", newAsset); 
         return newAsset;
     }
 

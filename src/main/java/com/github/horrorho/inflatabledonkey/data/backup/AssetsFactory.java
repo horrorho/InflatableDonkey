@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import static com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory.from;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.Collection;
@@ -34,9 +35,9 @@ import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory.from;
 
 /**
- * AssetsFactory.
  *
  * @author Ahseya
  */
@@ -49,6 +50,7 @@ public final class AssetsFactory {
     private static final String FILES = "files";
 
     public static Optional<Assets> from(List<CloudKit.Record> records, ProtectionZone protectionZone) {
+        // records = ALL records that belong to a particular manifest.
         return records.isEmpty()
                 ? Optional.empty()
                 : manifestID(records).flatMap(id -> from(id, records, protectionZone));
@@ -60,7 +62,7 @@ public final class AssetsFactory {
     }
 
     static Assets from(ManifestID id, String domain, List<CloudKit.Record> records) {
-        List<String> files = files(records);
+        List<AssetID> files = files(records);
         Assets assets = new Assets(id, domain, files);
         logger.debug("-- from() - manifestID: {} domain: {} files: {}",
                 assets.manifestID(), assets.domain(), assets.count());
@@ -110,7 +112,7 @@ public final class AssetsFactory {
                 .findFirst();
     }
 
-    static List<String> files(List<CloudKit.Record> records) {
+    static List<AssetID> files(List<CloudKit.Record> records) {
         return records
                 .stream()
                 .map(CloudKit.Record::getRecordFieldList)
@@ -119,6 +121,9 @@ public final class AssetsFactory {
                 .map(u -> u.getValue().getRecordFieldValueList())
                 .flatMap(Collection::stream)
                 .map(u -> u.getReferenceValue().getRecordIdentifier().getValue().getName())
+                .map(AssetID::from)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 }

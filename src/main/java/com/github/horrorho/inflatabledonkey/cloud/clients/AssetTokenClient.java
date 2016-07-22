@@ -32,7 +32,6 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -53,26 +52,16 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            assetsFromAssetsList(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
+            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assets)
             throws UncheckedIOException {
-        List<String> fileList = assetsList.stream()
-                .map(Assets::nonEmptyFiles)
+        List<String> nonEmptyAssets = assets.stream()
+                .map(Assets::nonEmpty)
                 .flatMap(Collection::stream)
+                .map(Object::toString)
                 .collect(Collectors.toList());
-        return assets(httpClient, kitty, zone, fileList);
+        logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
 
-    }
-
-    public static List<Asset>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> fileList)
-            throws UncheckedIOException {
-
-        List<String> nonEmptyFileList = fileList.stream()
-                .filter(Assets::isNonEmpty)
-                .collect(Collectors.toList());
-        logger.debug("-- assets() - non-empty file list size: {}", nonEmptyFileList.size());
-
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyFileList)
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets)
                 .stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
