@@ -145,7 +145,7 @@ public final class AuthorizeAssets {
 
     boolean isDownloadable(Asset asset) {
         // TODO verify then simplify/ remove logging statements
-        if (asset.size() == 0) {
+        if (asset.size().map(u -> u <= 0).orElse(true)) {
             logger.debug("-- isDownloadable() - empty asset: {}", asset);
             return false;
         }

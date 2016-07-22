@@ -49,7 +49,8 @@ public abstract class AbstractRecord {
     static Map<String, CloudKit.RecordField> map(Collection<CloudKit.RecordField> recordFields) {
         return recordFields.stream()
                 .collect(Collectors.toMap(
-                        x -> x.getIdentifier().getName(), Function.identity(),
+                        u -> u.getIdentifier().getName(),
+                        Function.identity(),
                         (a, b) -> {
                             logger.warn("-- map() - collision: {} {}", a, b);
                             return a;

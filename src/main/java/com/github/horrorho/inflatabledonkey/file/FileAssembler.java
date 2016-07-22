@@ -103,20 +103,18 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
         return asset.encryptionKey()
                 .map(u -> decrypt(path, chunks, u, asset.fileChecksum()))
-                .orElseGet(() -> mutate(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .orElseGet(() -> write(path, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
     boolean decrypt(Path path, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
         return fileKeys.apply(encryptionKey)
-                .map(u -> mutate(path, chunks, Optional.of(u), signature))
+                .map(Optional::of)
+                .map(mutator)
+                .map(u -> write(path, chunks, u, signature))
                 .orElseGet(() -> {
                     logger.warn("-- decrypt() - failed to unwrap encryption key");
                     return false;
                 });
-    }
-
-    boolean mutate(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
-        return write(path, chunks, mutator.apply(keyCipher), signature);
     }
 
     boolean write(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
@@ -133,7 +131,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 logger.info("-- write() - written: {} status: {} mode: {} flags: 0x{}",
                         path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
             } else {
-                logger.info("-- write() - written: {} status:", path, status);
+                logger.info("-- write() - written: {} status: {}", path, status);
             }
             return status;
 
@@ -153,9 +151,11 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     boolean truncate(Path path, Asset asset) {
         try {
+            // Truncate if the final attribute size is different from the initial size (padded/ encrypted).
+            // Don't truncate if either optional is missing.
             asset.attributeSize()
-                    .filter(size -> size != asset.size())
-                    .ifPresent(size -> FileTruncater.truncate(path, size));
+                    .filter(u -> asset.size().map(t -> !Objects.equals(t, u)).orElse(false))
+                    .ifPresent(u -> FileTruncater.truncate(path, u));
             return true;
 
         } catch (UncheckedIOException ex) {

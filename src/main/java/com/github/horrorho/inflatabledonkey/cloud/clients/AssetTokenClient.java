@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,8 +54,7 @@ public final class AssetTokenClient {
 
     public static List<Asset>
             assetsFromAssetsList(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
-            throws IOException {
-
+            throws UncheckedIOException {
         List<String> fileList = assetsList.stream()
                 .map(Assets::nonEmptyFiles)
                 .flatMap(Collection::stream)
@@ -66,21 +65,15 @@ public final class AssetTokenClient {
 
     public static List<Asset>
             assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> fileList)
-            throws IOException {
+            throws UncheckedIOException {
 
         List<String> nonEmptyFileList = fileList.stream()
                 .filter(Assets::isNonEmpty)
                 .collect(Collectors.toList());
         logger.debug("-- assets() - non-empty file list size: {}", nonEmptyFileList.size());
 
-        if (nonEmptyFileList.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyFileList);
-
-        return responses.stream()
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyFileList)
+                .stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(r -> asset(r, zone))
@@ -91,7 +84,8 @@ public final class AssetTokenClient {
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
         logger.debug("-- asset() - record: {} zone: {}", record, zone);
-        return PZFactory.instance().create(zone, record.getProtectionInfo())
-                .map(z -> AssetFactory.from(record, z::decrypt, z::unwrapKey));
+        return PZFactory.instance()
+                .create(zone, record.getProtectionInfo())
+                .map(u -> AssetFactory.from(record, u));
     }
 }

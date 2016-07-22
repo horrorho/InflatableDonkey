@@ -48,11 +48,11 @@ import org.bouncycastle.util.encoders.Hex;
 @Immutable
 public final class Asset {
 
-    private final int protectionClass;
-    private final int size;
-    private final int fileType;
-    private final Instant downloadTokenExpiration;
-    private final String dsPrsID;
+    private final Optional<Integer> protectionClass;
+    private final Optional<Integer> size;
+    private final Optional<Integer> fileType;
+    private final Optional<Instant> downloadTokenExpiration;
+    private final Optional<String> dsPrsID;
     private final Optional<String> contentBaseURL;
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
@@ -61,22 +61,21 @@ public final class Asset {
     private final Optional<CloudKit.Asset> asset;
 
     public Asset(
-            int protectionClass,
-            int size,
-            int fileType,
-            Instant downloadTokenExpiration,
-            String dsPrsID,
+            Optional<Integer> protectionClass,
+            Optional<Integer> size,
+            Optional<Integer> fileType,
+            Optional<Instant> downloadTokenExpiration,
+            Optional<String> dsPrsID,
             Optional<String> contentBaseURL,
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
             Optional<NSDictionary> encryptedAttributes,
             Optional<CloudKit.Asset> asset) {
-
-        this.protectionClass = protectionClass;
-        this.size = size;
-        this.fileType = fileType;
-        this.downloadTokenExpiration = downloadTokenExpiration;
+        this.protectionClass = Objects.requireNonNull(protectionClass, "protectionClass");
+        this.size = Objects.requireNonNull(size, "size");
+        this.fileType = Objects.requireNonNull(fileType, "fileType");
+        this.downloadTokenExpiration = Objects.requireNonNull(downloadTokenExpiration, "downloadTokenExpiration");
         this.dsPrsID = Objects.requireNonNull(dsPrsID, "dsPrsID");
         this.contentBaseURL = Objects.requireNonNull(contentBaseURL, "contentBaseURL");
         this.fileChecksum = Objects.requireNonNull(fileChecksum, "fileChecksum");
@@ -86,23 +85,23 @@ public final class Asset {
         this.asset = Objects.requireNonNull(asset, "asset");
     }
 
-    public int protectionClass() {
+    public Optional<Integer> protectionClass() {
         return protectionClass;
     }
 
-    public int size() {
+    public Optional<Integer> size() {
         return size;
     }
 
-    public int fileType() {
+    public Optional<Integer> fileType() {
         return fileType;
     }
 
-    public Instant downloadTokenExpiration() {
+    public Optional<Instant> downloadTokenExpiration() {
         return downloadTokenExpiration;
     }
 
-    public String dsPrsID() {
+    public Optional<String> dsPrsID() {
         return dsPrsID;
     }
 
@@ -189,5 +188,3 @@ public final class Asset {
                 + '}';
     }
 }
-// TODO simplify
-// Optional fields
