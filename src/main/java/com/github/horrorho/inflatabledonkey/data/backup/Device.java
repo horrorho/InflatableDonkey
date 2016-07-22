@@ -23,13 +23,14 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -49,11 +50,17 @@ public final class Device extends AbstractRecord {
     public static final String DOMAIN_HMAC = "domainHMAC";
     public static final String KEYBAG_UUID = "currentKeybagUUID";
 
+    private final DeviceID deviceID;
     private final Collection<SnapshotID> snapshots;
 
-    public Device(Collection<SnapshotID> snapshots, CloudKit.Record record) {
+    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotID> snapshots) {
         super(record);
+        this.deviceID = Objects.requireNonNull(deviceID, "deviceID");
         this.snapshots = new ArrayList<>(snapshots);
+    }
+
+    public DeviceID deviceID() {
+        return deviceID;
     }
 
     public List<SnapshotID> snapshots() {
@@ -112,24 +119,14 @@ public final class Device extends AbstractRecord {
                 .orElse("");
     }
 
-    public String uuid() {
-        String[] split = name().split(":");
-        if (split.length < 2) {
-            logger.warn("-- main() - unsupported device name format: {}", name());
-            return name();
-        }
-        return split[1].toUpperCase(Property.locale())
-                .toUpperCase(Property.locale());
-    }
-
     public String info() {
-        return uuid() + " "
+        return deviceID.hash().toUpperCase(Locale.US) + " "
                 + productType() + " "
                 + hardwareModel();
     }
 
     @Override
     public String toString() {
-        return "Device{" + super.toString() + '}';
+        return "Device{" + "deviceID=" + deviceID + ", snapshots=" + snapshots + '}';
     }
 }

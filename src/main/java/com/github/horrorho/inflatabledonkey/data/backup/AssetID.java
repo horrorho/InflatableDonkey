@@ -55,7 +55,7 @@ public final class AssetID {
             case 4:
                 return Optional.of(directory(split));
             default:
-                logger.warn("-- from() - unexpected format: {}", id);
+                logger.warn("-- parse() - unexpected format: {}", id);
                 return Optional.empty();
         }
     }

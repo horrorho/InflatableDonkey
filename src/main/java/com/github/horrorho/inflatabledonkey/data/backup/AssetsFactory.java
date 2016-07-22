@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import static com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory.from;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.Collection;

@@ -34,41 +34,33 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class ManifestID {
+public final class DeviceID {
 
-    private static final Logger logger = LoggerFactory.getLogger(ManifestID.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeviceID.class);
 
-    public static Optional<ManifestID> from(String id) {
-        Optional<ManifestID> manifestID = parse(id);
-        manifestID.filter(u -> !u.toString().equals(id))
+    public static Optional<DeviceID> from(String id) {
+        Optional<DeviceID> deviceID = parse(id);
+        deviceID.filter(u -> !u.toString().equals(id))
                 .ifPresent(u -> {
                     logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
                 });
-        return manifestID;
+        return deviceID;
     }
 
-    static Optional<ManifestID> parse(String id) {
-        // Format: M:<uuid>:<base64 hash>
-        // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
+    static Optional<DeviceID> parse(String id) {
+        // Format: D:<hash>
         String[] split = id.split(":");
-        if (split.length != 3) {
+        if (split.length != 2) {
             logger.warn("-- parse() - unexpected format: {}", id);
         }
-        return split.length < 3
+        return split.length < 2
                 ? Optional.empty()
-                : Optional.of(new ManifestID(split[1], split[2]));
+                : Optional.of(new DeviceID(split[1]));
     }
+    private final String hash;
 
-    private final String uuid;
-    private final String hash;  // Base64
-
-    public ManifestID(String uuid, String hash) {
-        this.uuid = Objects.requireNonNull(uuid, "uuid");
+    public DeviceID(String hash) {
         this.hash = Objects.requireNonNull(hash, "hash");
-    }
-
-    public String uuid() {
-        return uuid;
     }
 
     public String hash() {
@@ -77,9 +69,8 @@ public final class ManifestID {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 41 * hash + Objects.hashCode(this.uuid);
-        hash = 41 * hash + Objects.hashCode(this.hash);
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.hash);
         return hash;
     }
 
@@ -94,10 +85,7 @@ public final class ManifestID {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ManifestID other = (ManifestID) obj;
-        if (!Objects.equals(this.uuid, other.uuid)) {
-            return false;
-        }
+        final DeviceID other = (DeviceID) obj;
         if (!Objects.equals(this.hash, other.hash)) {
             return false;
         }
@@ -106,6 +94,6 @@ public final class ManifestID {
 
     @Override
     public String toString() {
-        return "M:" + uuid + ":" + hash;
+        return "D:" + hash;
     }
 }

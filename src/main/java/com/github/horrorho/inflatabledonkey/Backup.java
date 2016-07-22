@@ -24,7 +24,6 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
@@ -41,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -163,7 +163,7 @@ public final class Backup {
         LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
         String date = DateTimeFormatter.BASIC_ISO_DATE.format(ldt);
 
-        return Paths.get(device.uuid()).resolve(date);
+        return Paths.get(device.deviceID().hash().toUpperCase(Locale.US)).resolve(date);
     }
 
     public void printDomainList(HttpClient httpClient, Map<Device, ? extends Collection<Snapshot>> snapshots)

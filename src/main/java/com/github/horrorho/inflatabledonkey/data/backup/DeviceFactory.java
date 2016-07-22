@@ -26,9 +26,9 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,61 +39,66 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class Devices {
+public final class DeviceFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(Devices.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeviceFactory.class);
 
-    public static Device from(CloudKit.Record record) {
+    public static Optional<Device> from(CloudKit.Record record) {
+        return DeviceID.from(record.getRecordIdentifier().getValue().getName())
+                .map(u -> from(u, record));
+    }
 
-        List<SnapshotID> snapshots = snapshots(record.getRecordFieldList());
-
-        return new Device(snapshots, record);
+    static Device from(DeviceID deviceID, CloudKit.Record record) {
+        return new Device(record, deviceID, snapshots(record.getRecordFieldList()));
     }
 
     static List<SnapshotID> snapshots(List<CloudKit.RecordField> records) {
         List<String> snapshotRecords = snapshotRecords(records);
         List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
-
         logger.debug("-- snapshots() - records: {}", snapshotRecords.size());
         logger.debug("-- snapshots() - dates: {}", snapshotCommittedDates.size());
-
         if (snapshotRecords.size() != snapshotCommittedDates.size()) {
             logger.warn("-- snapshots()() - mismatched snapshot data");
         }
 
-        int limit = Stream.<List<?>>of(snapshotRecords, snapshotCommittedDates)
-                .mapToInt(List::size)
-                .min()
-                .orElse(0);
-
+        int limit = Math.min(snapshotRecords.size(), snapshotCommittedDates.size());
         return IntStream.range(0, limit)
-                .mapToObj(i -> new SnapshotID(
-                        WKTimestamp.toInstant(snapshotCommittedDates.get(i)),
-                        snapshotRecords.get(i)))
+                .mapToObj(i
+                        -> new SnapshotID(WKTimestamp.toInstant(snapshotCommittedDates.get(i)), snapshotRecords.get(i)))
                 .collect(Collectors.toList());
     }
 
     static List<String> snapshotRecords(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("snapshots"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals("snapshots"))
+                .map(u -> u
+                        .getValue()
+                        .getRecordFieldValueList())
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getReferenceValue)
-                .map(CloudKit.RecordReference::getRecordIdentifier)
-                .map(CloudKit.RecordIdentifier::getValue)
-                .map(CloudKit.Identifier::getName)
+                .map(u -> u
+                        .getReferenceValue()
+                        .getRecordIdentifier()
+                        .getValue()
+                        .getName())
                 .collect(Collectors.toList());
     }
 
     static List<Double> snapshotCommittedDates(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("snapshotCommittedDates"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getRecordFieldValueList)
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals("snapshotCommittedDates"))
+                .map(u -> u
+                        .getValue()
+                        .getRecordFieldValueList())
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getDateValue)
-                .map(CloudKit.Date::getTime)
+                .map(u -> u
+                        .getDateValue()
+                        .getTime())
                 .collect(Collectors.toList());
     }
 }

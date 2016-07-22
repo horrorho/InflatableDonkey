@@ -39,6 +39,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
+import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
@@ -91,7 +92,7 @@ public final class BackupAssistant {
         return BackupAccountClient.backupAccount(httpClient, kitty, mbksync);
     }
 
-    public List<Device> devices(HttpClient httpClient, Collection<String> devices) throws IOException {
+    public List<Device> devices(HttpClient httpClient, Collection<DeviceID> devices) throws IOException {
         return DeviceClient.device(httpClient, kitty, devices);
     }
 

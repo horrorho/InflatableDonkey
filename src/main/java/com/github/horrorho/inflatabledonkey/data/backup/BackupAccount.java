@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,33 +33,32 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * BackupAccount.
  *
  * @author Ahseya
  */
 @Immutable
-public final class BackupAccount {
+public final class BackupAccount extends AbstractRecord {
 
     private final Optional<byte[]> hmacKey;
-    private final Collection<String> devices;
+    private final Collection<DeviceID> devices;
 
-    public BackupAccount(Optional<byte[]> hmacKey, Collection<String> devices) {
+    public BackupAccount(CloudKit.Record record, Optional<byte[]> hmacKey, Collection<DeviceID> devices) {
+        super(record);
         this.hmacKey = hmacKey.map(bs -> Arrays.copyOf(bs, bs.length));
         this.devices = new ArrayList<>(devices);
     }
 
-    public Optional<byte[]> getHmacKey() {
+    public Optional<byte[]> hmacKey() {
         return hmacKey.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    public List<String> devices() {
+    public List<DeviceID> devices() {
         return new ArrayList<>(devices);
     }
 
     @Override
     public String toString() {
         return "BackupAccount{"
-                + super.toString()
                 + ", hmacKey=" + hmacKey.map(Hex::toHexString)
                 + ", devices=" + devices
                 + '}';

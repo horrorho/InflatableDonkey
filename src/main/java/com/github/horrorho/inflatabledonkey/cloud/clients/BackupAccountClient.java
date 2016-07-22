@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * BackupAccountClient.
  *
  * @author Ahseya
  */
@@ -49,24 +48,22 @@ public final class BackupAccountClient {
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountClient.class);
 
     public static Optional<BackupAccount>
-            backupAccount(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws IOException {
+            backupAccount(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws UncheckedIOException {
 
         List<CloudKit.RecordRetrieveResponse> responses
                 = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount");
-
         if (responses.size() != 1) {
             logger.warn("-- backupAccount() - bad response list size: {}", responses);
             return Optional.empty();
         }
-
+        
         CloudKit.RecordRetrieveResponse response = responses.get(0);
         if (!response.hasRecord()) {
             logger.warn("-- backupAccount() - no BackupAccount record");
             return Optional.empty();
         }
-
+        
         CloudKit.ProtectionInfo protectionInfo = response.getRecord().getProtectionInfo();
-
         Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
         if (!optionalNewZone.isPresent()) {
             logger.warn("-- backupAccount() - failed to retrieve protection info");
@@ -74,8 +71,7 @@ public final class BackupAccountClient {
         }
         ProtectionZone newZone = optionalNewZone.get();
 
-        BackupAccount backupAccount
-                = BackupAccountFactory.from(responses.get(0).getRecord(), (bs, id) -> newZone.decrypt(bs, id).get());    // TODO rework BackupAccount
+        BackupAccount backupAccount = BackupAccountFactory.from(responses.get(0).getRecord(), newZone);
         logger.debug("-- backupAccount() - backup account: {}", backupAccount);
         return Optional.of(backupAccount);
     }
