@@ -23,10 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
 import java.time.Instant;
 import java.util.List;
@@ -36,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AssetFactory.
  *
  * @author Ahseya
  */
@@ -53,14 +50,17 @@ public final class AssetFactory {
     private static final long DEFAULT_EXPIRATION_SECONDS = 60 * 60; // 1 hour.
     private static final long GRACE_TIME_SECONDS = 15 * 60; // 15 minutes.
 
-    public static Asset from(CloudKit.Record record, ProtectionZone zone) {
+    public static Optional<Asset> from(CloudKit.Record record, ProtectionZone zone) {
+        return AssetID.from(record.getRecordIdentifier().getValue().getName())
+                .map(u -> from(u, record, zone));
+    }
+
+    static Asset from(AssetID assetID, CloudKit.Record record, ProtectionZone zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
-        Optional<AssetID> assetID = AssetID.from(record.getRecordIdentifier().getValue().getName());
         Optional<Integer> protectionClass = protectionClass(records);
         Optional<Integer> fileType = fileType(records);
-        Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
-                .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES))
-                .map(PLists::parseDictionary); // TOFIX cover the illegal argument exception.
+        Optional<byte[]> encryptedAttributes = encryptedAttributes(records)
+                .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES));
         Optional<CloudKit.Asset> asset = asset(records);
         Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasData)
                 .map(u -> u.getData().getValue().toByteArray())
@@ -99,14 +99,19 @@ public final class AssetFactory {
                 keyEncryptionKey,
                 encryptedAttributes,
                 asset);
-        logger.debug("-- from() - asset: {}", newAsset); 
+        logger.debug("-- from() - asset: {}", newAsset);
         return newAsset;
     }
 
     static Optional<Integer> protectionClass(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals(PROTECTION_CLASS))
-                .map(u -> u.getValue().getSignedValue())
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals(PROTECTION_CLASS))
+                .map(u -> u
+                        .getValue()
+                        .getSignedValue())
                 .map(Long::intValue)
                 .findFirst();
     }
@@ -114,22 +119,34 @@ public final class AssetFactory {
     static Optional<Integer> fileType(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals(FILE_TYPE))
-                .map(u -> u.getValue().getSignedValue())
+                .map(u -> u
+                        .getValue()
+                        .getSignedValue())
                 .map(Long::intValue)
                 .findFirst();
     }
 
     static Optional<CloudKit.Asset> asset(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals(CONTENTS))
-                .map(u -> u.getValue().getAssetValue())
+                .filter(value -> value
+                        .getIdentifier()
+                        .getName()
+                        .equals(CONTENTS))
+                .map(u -> u
+                        .getValue()
+                        .getAssetValue())
                 .findFirst();
     }
 
     static Optional<byte[]> encryptedAttributes(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(u -> u.getIdentifier().getName().equals(ENCRYPTED_ATTRIBUTES))
-                .map(u -> u.getValue().getBytesValue())
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals(ENCRYPTED_ATTRIBUTES))
+                .map(u -> u
+                        .getValue()
+                        .getBytesValue())
                 .map(ByteString::toByteArray)
                 .findFirst();
     }

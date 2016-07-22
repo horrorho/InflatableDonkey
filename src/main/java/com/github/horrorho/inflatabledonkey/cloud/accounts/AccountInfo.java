@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.cloud.accounts;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -52,11 +52,11 @@ public final class AccountInfo {
     }
 
     public AccountInfo(NSDictionary accountInfo) {
-        appleId = PLists.getAs(accountInfo, "appleId", NSString.class).getContent();
-        aDsID = PLists.getAs(accountInfo, "aDsID", NSString.class).getContent();
-        dsPrsID = PLists.getAs(accountInfo, "dsPrsID", NSString.class).getContent();
-        lastName = PLists.getAs(accountInfo, "lastName", NSString.class).getContent();
-        firstName = PLists.getAs(accountInfo, "firstName", NSString.class).getContent();
+        appleId = PListsLegacy.getAs(accountInfo, "appleId", NSString.class).getContent();
+        aDsID = PListsLegacy.getAs(accountInfo, "aDsID", NSString.class).getContent();
+        dsPrsID = PListsLegacy.getAs(accountInfo, "dsPrsID", NSString.class).getContent();
+        lastName = PListsLegacy.getAs(accountInfo, "lastName", NSString.class).getContent();
+        firstName = PListsLegacy.getAs(accountInfo, "firstName", NSString.class).getContent();
     }
 
     public String appleId() {

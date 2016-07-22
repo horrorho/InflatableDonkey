@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public class SnapshotFactory {
+public final class SnapshotFactory {
 
     private static final String BACKUP_PROPERTIES = "backupProperties";
     private static final String MANIFEST_CHECKSUMS = "manifestChecksums";
@@ -55,10 +55,8 @@ public class SnapshotFactory {
 
     static Snapshot from(SnapshotID snapshotID, CloudKit.Record record, ProtectionZone zone) {
         List<Manifest> manifests = manifests(record.getRecordFieldList());
-
         Optional<byte[]> backupProperties = backupProperties(record.getRecordFieldList())
-                .flatMap(k -> zone.decrypt(k, BACKUP_PROPERTIES));
-//         Optional<AssetID> assetID = AssetID.from(record.getRecordIdentifier().getValue().getName());
+                .flatMap(u -> zone.decrypt(u, BACKUP_PROPERTIES));
 
         Snapshot snapshot = new Snapshot(record, snapshotID, backupProperties, manifests);
         logger.debug("-- from() - snapshot: {}", snapshot);

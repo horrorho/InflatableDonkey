@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * KeyBagClient.
  *
  * @author Ahseya
  */
@@ -51,7 +50,8 @@ public final class KeyBagClient {
     private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
     public static Optional<KeyBag>
-            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String keyBagUUID) throws IOException {
+            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String keyBagUUID)
+            throws UncheckedIOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagUUID);
 
         List<CloudKit.RecordRetrieveResponse> responses
@@ -99,9 +99,13 @@ public final class KeyBagClient {
 
         return record.getRecordFieldList()
                 .stream()
-                .filter(value -> value.getIdentifier().getName().equals(label))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getBytesValue)
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals(label))
+                .map(u -> u
+                        .getValue()
+                        .getBytesValue())
                 .map(ByteString::toByteArray)
                 .map(bs -> decrypt.apply(bs, label))
                 .filter(Optional::isPresent)

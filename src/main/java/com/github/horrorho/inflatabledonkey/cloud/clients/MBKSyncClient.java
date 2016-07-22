@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * MBKSyncClient.
  *
  * @author Ahseya
  */
@@ -51,7 +50,8 @@ public final class MBKSyncClient {
     private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
     public static Optional<ProtectionZone>
-            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys) throws IOException {
+            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys)
+            throws UncheckedIOException {
 
         List<CloudKit.ZoneRetrieveResponse> responses
                 = ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync");
@@ -75,7 +75,6 @@ public final class MBKSyncClient {
         return response.stream()
                 .map(CloudKit.ZoneRetrieveResponse::getZoneSummarysList)
                 .flatMap(Collection::stream)
-                .filter(CloudKit.ZoneRetrieveResponseZoneSummary::hasTargetZone)
                 .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
                 .filter(CloudKit.Zone::hasProtectionInfo)
                 .map(CloudKit.Zone::getProtectionInfo)

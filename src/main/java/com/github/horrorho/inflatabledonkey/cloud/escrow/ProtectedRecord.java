@@ -38,7 +38,7 @@ import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZDataUnwrap;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Function;
@@ -61,7 +61,7 @@ public final class ProtectedRecord {
     public static byte[] unlockData(
             byte[] metadata, Function<KeyID, Optional<Key<ECPrivateKey>>> getMasterKey) {
 
-        NSDictionary dictionary = PLists.parseDictionary(metadata);
+        NSDictionary dictionary = PListsLegacy.parseDictionary(metadata);
 
         byte[] escrowedKeys = kPCSMetadataEscrowedKeys(dictionary);
 
@@ -75,12 +75,12 @@ public final class ProtectedRecord {
     }
 
     static byte[] kPCSMetadataEscrowedKeys(NSDictionary metadata) {
-        NSDictionary clientMetadata = PLists.getAs(metadata, "ClientMetadata", NSDictionary.class);
+        NSDictionary clientMetadata = PListsLegacy.getAs(metadata, "ClientMetadata", NSDictionary.class);
 
         NSDictionary secureBackupiCloudDataProtection
-                = PLists.getAs(clientMetadata, "SecureBackupiCloudDataProtection", NSDictionary.class);
+                = PListsLegacy.getAs(clientMetadata, "SecureBackupiCloudDataProtection", NSDictionary.class);
 
-        return PLists.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
+        return PListsLegacy.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
     }
 
     static BackupEscrow backupEscrow(byte[] kPCSMetadataEscrowedKeys) {
@@ -118,30 +118,30 @@ public final class ProtectedRecord {
     }
 
     static void diagnostic(byte[] metadata) {
-        NSDictionary dictionary = PLists.parseDictionary(metadata);
+        NSDictionary dictionary = PListsLegacy.parseDictionary(metadata);
         logger.debug("-- diagnostic() - dictionary: {}", dictionary.toXMLPropertyList());
 
-        byte[] backupKeybagDigest = PLists.getAs(dictionary, "BackupKeybagDigest", NSData.class).bytes();
+        byte[] backupKeybagDigest = PListsLegacy.getAs(dictionary, "BackupKeybagDigest", NSData.class).bytes();
         logger.debug("-- diagnostic() - BackupKeybagDigest: 0x{}", Hex.toHexString(backupKeybagDigest));
 
-        Optional<NSString> timestamp = PLists.optionalAs(dictionary, "com.apple.securebackup.timestamp", NSString.class);
+        Optional<NSString> timestamp = PListsLegacy.optionalAs(dictionary, "com.apple.securebackup.timestamp", NSString.class);
         logger.debug("-- diagnostic() - com.apple.securebackup.timestamp: {}",
                 timestamp.map(NSString::getContent));
 
-        NSDictionary clientMetadata = PLists.getAs(dictionary, "ClientMetadata", NSDictionary.class);
+        NSDictionary clientMetadata = PListsLegacy.getAs(dictionary, "ClientMetadata", NSDictionary.class);
 
         NSDictionary secureBackupiCloudDataProtection
-                = PLists.getAs(clientMetadata, "SecureBackupiCloudDataProtection", NSDictionary.class);
+                = PListsLegacy.getAs(clientMetadata, "SecureBackupiCloudDataProtection", NSDictionary.class);
 
         byte[] secureBackupiCloudIdentityPublicData
-                = PLists.getAs(clientMetadata, "SecureBackupiCloudIdentityPublicData", NSData.class).bytes();
+                = PListsLegacy.getAs(clientMetadata, "SecureBackupiCloudIdentityPublicData", NSData.class).bytes();
 
         Optional<PublicKeyInfo> optionalPublicKeyInfo
                 = DERUtils.parse(secureBackupiCloudIdentityPublicData, PublicKeyInfo::new);
         logger.debug("-- diagnostic() - publicKeyInfo: {}", optionalPublicKeyInfo);
 
         byte[] kPCSMetadataEscrowedKeys
-                = PLists.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
+                = PListsLegacy.getAs(secureBackupiCloudDataProtection, "kPCSMetadataEscrowedKeys", NSData.class).bytes();
         logger.debug("-- diagnostic() - kPCSMetadataEscrowedKeys: 0x{}", Hex.toHexString(kPCSMetadataEscrowedKeys));
     }
 }

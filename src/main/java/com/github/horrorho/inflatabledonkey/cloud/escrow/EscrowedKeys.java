@@ -36,7 +36,7 @@ import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
 import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestFactory;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.stream.Stream;
@@ -103,12 +103,12 @@ public final class EscrowedKeys {
     }
 
     static int remainingAttempts(NSDictionary record) {
-        String remainingAttempts = PLists.getAs(record, "remainingAttempts", NSString.class).getContent();
+        String remainingAttempts = PListsLegacy.getAs(record, "remainingAttempts", NSString.class).getContent();
         return Integer.parseInt(remainingAttempts);
     }
 
     static NSDictionary pcsRecord(NSDictionary records) {
-        NSArray metadataList = PLists.getAs(records, "metadataList", NSArray.class);
+        NSArray metadataList = PListsLegacy.getAs(records, "metadataList", NSArray.class);
         return Stream.of(metadataList.getArray())
                 .filter(EscrowedKeys::isPCSRecord)
                 .map(nsObject -> (NSDictionary) nsObject)
@@ -117,15 +117,15 @@ public final class EscrowedKeys {
     }
 
     static boolean isPCSRecord(NSObject metadata) {
-        return PLists.cast(metadata, NSDictionary.class)
-                .flatMap(d -> PLists.optionalAs(d, "label", NSString.class))
+        return PListsLegacy.cast(metadata, NSDictionary.class)
+                .flatMap(d -> PListsLegacy.optionalAs(d, "label", NSString.class))
                 .map(NSString::getContent)
                 .map(label -> label.equals("com.apple.protectedcloudstorage.record"))
                 .orElse(false);
     }
 
     static ServiceKeySet backupBagPassword(NSDictionary escrowedData) {
-        byte[] backupBagPassword = PLists.getAs(escrowedData, "BackupBagPassword", NSData.class).bytes();
+        byte[] backupBagPassword = PListsLegacy.getAs(escrowedData, "BackupBagPassword", NSData.class).bytes();
         logger.debug("-- backupBagPassword() - BackupBagPassword: 0x{}", Hex.toHexString(backupBagPassword));
 
         return DERUtils.parse(backupBagPassword, KeySet::new)
@@ -134,7 +134,7 @@ public final class EscrowedKeys {
     }
 
     static ServiceKeySet escrowedKeys(NSDictionary record, ServiceKeySet backupBagPassword) {
-        String metadataBase64 = PLists.getAs(record, "metadata", NSString.class).getContent();
+        String metadataBase64 = PListsLegacy.getAs(record, "metadata", NSString.class).getContent();
         byte[] metadata = Base64.getDecoder().decode(metadataBase64);
 
         byte[] data = ProtectedRecord.unlockData(metadata, backupBagPassword::key);

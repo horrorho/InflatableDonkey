@@ -35,7 +35,7 @@ import com.github.horrorho.inflatabledonkey.data.blob.BlobA4;
 import com.github.horrorho.inflatabledonkey.data.blob.BlobA6;
 import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -82,8 +82,8 @@ public final class EscrowOperationsRecover {
 
         validateSrpInitResponse(srpInitResponse);
 
-        String dsid = PLists.getAs(srpInitResponse, "dsid", NSString.class).getContent();
-        String respBlob = PLists.getAs(srpInitResponse, "respBlob", NSString.class).getContent();
+        String dsid = PListsLegacy.getAs(srpInitResponse, "dsid", NSString.class).getContent();
+        String respBlob = PListsLegacy.getAs(srpInitResponse, "respBlob", NSString.class).getContent();
 
         BlobA4 blob = blobA4(respBlob);
 
@@ -130,7 +130,7 @@ public final class EscrowOperationsRecover {
     }
 
     static void validateSrpInitResponse(NSDictionary srpInitResponseBlob) {
-        Integer version = PLists.optionalAs(srpInitResponseBlob, "version", NSNumber.class)
+        Integer version = PListsLegacy.optionalAs(srpInitResponseBlob, "version", NSNumber.class)
                 .map(NSNumber::intValue)
                 .orElse(null);
         if (!version.equals(1)) {
@@ -152,7 +152,7 @@ public final class EscrowOperationsRecover {
     }
 
     static NSDictionary decrypt(SRPClient srpClient, NSDictionary recoverResponse) {
-        String respBlob = PLists.getAs(recoverResponse, "respBlob", NSString.class).getContent();
+        String respBlob = PListsLegacy.getAs(recoverResponse, "respBlob", NSString.class).getContent();
         BlobA6 blob = blobA6(respBlob);
 
         byte[] key = sessionKey(srpClient, blob);
@@ -179,7 +179,7 @@ public final class EscrowOperationsRecover {
         byte[] dictionaryData = AESCBC.decryptAESCBC(derivedKey, saltIV, pcsBlob.data());
         logger.debug("-- decrypt() - dictionary data: 0x{}", Hex.toHexString(dictionaryData));
 
-        NSDictionary dictionary = PLists.parseDictionary(dictionaryData);
+        NSDictionary dictionary = PListsLegacy.parseDictionary(dictionaryData);
         logger.debug("-- decrypt() - dictionary: {}", dictionary.toXMLPropertyList());
         return dictionary;
     }

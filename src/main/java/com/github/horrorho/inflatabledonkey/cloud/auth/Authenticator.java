@@ -28,7 +28,7 @@ import com.dd.plist.NSNumber;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.requests.AuthenticationRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -59,11 +59,11 @@ public final class Authenticator {
             NSDictionary authentication = httpClient.execute(request, nsDictionaryResponseHandler);
             logger.debug("-- authenticate() - authentication: {}", authentication.toASCIIPropertyList());
 
-            NSDictionary appleAccountInfo = PLists.getAs(authentication, "appleAccountInfo", NSDictionary.class);
-            String dsPrsID = PLists.getAs(appleAccountInfo, "dsPrsID", NSNumber.class).toString();
+            NSDictionary appleAccountInfo = PListsLegacy.getAs(authentication, "appleAccountInfo", NSDictionary.class);
+            String dsPrsID = PListsLegacy.getAs(appleAccountInfo, "dsPrsID", NSNumber.class).toString();
 
-            NSDictionary tokens = PLists.getAs(authentication, "tokens", NSDictionary.class);
-            String mmeAuthToken = PLists.getAs(tokens, "mmeAuthToken", NSString.class).getContent();
+            NSDictionary tokens = PListsLegacy.getAs(authentication, "tokens", NSDictionary.class);
+            String mmeAuthToken = PListsLegacy.getAs(tokens, "mmeAuthToken", NSString.class).getContent();
 
             logger.debug("-- authenticate() -  dsPrsID: {}", dsPrsID);
             logger.debug("-- authenticate() -  mmeAuthToken: {}", mmeAuthToken);

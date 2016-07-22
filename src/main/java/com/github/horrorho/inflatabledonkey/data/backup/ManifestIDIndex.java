@@ -50,7 +50,7 @@ public final class ManifestIDIndex {
     static Optional<ManifestIDIndex> parse(String idIndex) {
         // Format: M:<uuid>:<base64 hash>:<index>
         String[] split = idIndex.split(":");
-        if (split.length != 4) {
+        if (split.length != 4 || !split[0].endsWith("M")) {
             logger.warn("-- parse() - unexpected format: {}", idIndex);
         }
         if (split.length < 4) {
@@ -61,7 +61,7 @@ public final class ManifestIDIndex {
         try {
             index = Integer.parseInt(split[3]);
         } catch (NumberFormatException ex) {
-            logger.warn("-- from() - input: {} NumberFormatException: {}", idIndex, ex.getMessage());
+            logger.warn("-- parse() - input: {} NumberFormatException: {}", idIndex, ex.getMessage());
             return Optional.empty();
         }
         return Optional.of(new ManifestIDIndex(split[1], split[2], index));

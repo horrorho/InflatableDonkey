@@ -75,6 +75,6 @@ public final class AssetTokenClient {
         logger.debug("-- asset() - record: {} zone: {}", record, zone);
         return PZFactory.instance()
                 .create(zone, record.getProtectionInfo())
-                .map(u -> AssetFactory.from(record, u));
+                .flatMap(u -> AssetFactory.from(record, u));
     }
 }

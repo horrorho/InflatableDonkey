@@ -113,7 +113,6 @@ public class Main {
             System.out.println("DsPrsID:mmeAuthToken " + auth.dsPrsID() + ":" + auth.mmeAuthToken());
             return;
         }
-
         logger.info("-- main() - Apple ID: {}", Property.AUTHENTICATION_APPLEID.value());
         logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value().map(s -> s.replaceAll(".", "*")));
         logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value().map(s -> s.replaceAll(".", "*")));

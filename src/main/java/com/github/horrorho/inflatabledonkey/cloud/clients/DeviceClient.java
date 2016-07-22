@@ -29,7 +29,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceFactory;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +50,7 @@ public final class DeviceClient {
 
     public static List<Device>
             device(HttpClient httpClient, CloudKitty kitty, Collection<DeviceID> devices)
-            throws IOException {
+            throws UncheckedIOException {
 
         List<String> deviceList = devices.stream()
                 .map(Object::toString)

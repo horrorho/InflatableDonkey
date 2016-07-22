@@ -25,8 +25,9 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +47,7 @@ public final class Snapshot extends AbstractRecord {
     private static final Logger logger = LoggerFactory.getLogger(Snapshot.class);
 
     private final SnapshotID snapshotID;
-    private final Optional<byte[]> backupProperties;
+    private final Optional<NSDictionary> backupProperties;
     private final List<Manifest> manifests;
 
     public Snapshot(
@@ -57,7 +58,7 @@ public final class Snapshot extends AbstractRecord {
 
         super(record);
         this.snapshotID = Objects.requireNonNull(snapshotID, "snapshotID");
-        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
+        this.backupProperties = backupProperties.flatMap(NSDictionaries::parse);
         this.manifests = Objects.requireNonNull(manifests, "manifests");
     }
 
@@ -65,8 +66,12 @@ public final class Snapshot extends AbstractRecord {
         return snapshotID;
     }
 
-    public Optional<NSDictionary> backupProperties() {
-        return backupProperties.map(bs -> PLists.<NSDictionary>parseLegacy(bs));
+    <T extends NSObject> Optional<T> backupProperty(String key, Class<T> to) {
+        return backupProperties.flatMap(u -> NSDictionaries.as(u, key, to));
+    }
+
+    public Optional<String> snapshotHMACKey() {
+        return backupProperty("SnapshotHMACKey", NSString.class).map(NSString::getContent);
     }
 
     public List<Manifest> manifests() {
@@ -106,8 +111,7 @@ public final class Snapshot extends AbstractRecord {
     public String toString() {
         return "Snapshot{"
                 + "snapshotID=" + snapshotID
-                + ", backupProperties=" + backupProperties().map(NSObject::toXMLPropertyList).orElse("NULL")
+                + ", backupProperties=" + backupProperties.map(NSObject::toXMLPropertyList)
                 + '}';
     }
 }
-// SnapshotHMACKey

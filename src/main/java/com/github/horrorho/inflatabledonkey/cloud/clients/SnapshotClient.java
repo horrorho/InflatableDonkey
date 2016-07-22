@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.SnapshotIDLegacy;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SnapshotClient.
  *
  * @author Ahseya
  */
@@ -54,7 +53,7 @@ public final class SnapshotClient {
 
     public static List<Snapshot>
             snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotIDLegacy> snapshotIDs)
-            throws IOException {
+            throws UncheckedIOException {
 
         if (snapshotIDs.isEmpty()) {
             return new ArrayList<>();

@@ -42,8 +42,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractRecord {
 
-    protected static final String NA = "N/A";
-
     private static final Logger logger = LoggerFactory.getLogger(AbstractRecord.class);
 
     static Map<String, CloudKit.RecordField> map(Collection<CloudKit.RecordField> recordFields) {
