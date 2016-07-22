@@ -55,7 +55,7 @@ public final class AssetFactory {
 
     public static Asset from(CloudKit.Record record, ProtectionZone zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
-
+        Optional<AssetID> assetID = AssetID.from(record.getRecordIdentifier().getValue().getName());
         Optional<Integer> protectionClass = protectionClass(records);
         Optional<Integer> fileType = fileType(records);
         Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
@@ -86,6 +86,8 @@ public final class AssetFactory {
 //                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
 //                : Instant.ofEpochSecond(tokenExpiration);
         Asset newAsset = new Asset(
+                record,
+                assetID,
                 protectionClass,
                 fileSize,
                 fileType,

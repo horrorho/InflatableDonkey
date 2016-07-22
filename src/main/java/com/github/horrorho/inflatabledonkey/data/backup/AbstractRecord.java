@@ -78,10 +78,7 @@ public abstract class AbstractRecord {
     }
 
     public String name() {
-        return record()
-                .getRecordIdentifier()
-                .getValue()
-                .getName();
+        return record().getRecordIdentifier().getValue().getName();
     }
 
     public final Instant creation() {

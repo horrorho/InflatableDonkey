@@ -46,8 +46,9 @@ import org.bouncycastle.util.encoders.Hex;
  * @author Ahseya
  */
 @Immutable
-public final class Asset {
+public final class Asset extends AbstractRecord {
 
+    private final Optional<AssetID> assetID;
     private final Optional<Integer> protectionClass;
     private final Optional<Integer> size;
     private final Optional<Integer> fileType;
@@ -61,6 +62,8 @@ public final class Asset {
     private final Optional<CloudKit.Asset> asset;
 
     public Asset(
+            CloudKit.Record record,
+            Optional<AssetID> assetID,
             Optional<Integer> protectionClass,
             Optional<Integer> size,
             Optional<Integer> fileType,
@@ -72,6 +75,8 @@ public final class Asset {
             Optional<byte[]> keyEncryptionKey,
             Optional<NSDictionary> encryptedAttributes,
             Optional<CloudKit.Asset> asset) {
+        super(record);
+        this.assetID = Objects.requireNonNull(assetID, "assetID");
         this.protectionClass = Objects.requireNonNull(protectionClass, "protectionClass");
         this.size = Objects.requireNonNull(size, "size");
         this.fileType = Objects.requireNonNull(fileType, "fileType");
@@ -83,6 +88,10 @@ public final class Asset {
         this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey, "keyEncryptionKey");
         this.encryptedAttributes = Objects.requireNonNull(encryptedAttributes, "encryptedAttributes");
         this.asset = Objects.requireNonNull(asset, "asset");
+    }
+
+    public Optional<AssetID> getAssetID() {
+        return assetID;
     }
 
     public Optional<Integer> protectionClass() {
@@ -175,6 +184,7 @@ public final class Asset {
     @Override
     public String toString() {
         return "Asset{"
+                + "assetID=" + assetID
                 + "protectionClass=" + protectionClass
                 + ", size=" + size
                 + ", fileType=" + fileType
