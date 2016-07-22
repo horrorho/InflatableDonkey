@@ -39,20 +39,20 @@ public final class KeyBagID {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBagID.class);
 
-    public static Optional<KeyBagID> parse(String string) {
-        Optional<KeyBagID> keyBagID = doParse(string);
+    public static Optional<KeyBagID> from(String string) {
+        Optional<KeyBagID> keyBagID = doFrom(string);
         keyBagID.filter(u -> !u.toString().equals(string))
                 .ifPresent(u -> {
-                    logger.warn("-- parse() - mismatch in: {} out: {}", string, u.toString());
+                    logger.warn("-- from() - mismatch in: {} out: {}", string, u.toString());
                 });
         return keyBagID;
     }
 
-    static Optional<KeyBagID> doParse(String id) {
+    static Optional<KeyBagID> doFrom(String id) {
         // Format: K:<base64 uuid>
         String[] split = id.split(":");
         if (split.length != 2 || !split[0].equals("K")) {
-            logger.warn("-- doParse() - bad format: {}", id);
+            logger.warn("-- doFrom() - bad format: {}", id);
             return Optional.empty();
         }
         return decode(split[1]).map(KeyBagID::new);

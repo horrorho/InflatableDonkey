@@ -31,7 +31,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.google.protobuf.ByteString;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
@@ -72,40 +71,6 @@ public final class KeyBagClient {
         }
         ProtectionZone newZone = optionalNewZone.get();
 
-        return keyBag(responses.get(0), newZone);
-    }
-
-    static Optional<KeyBag> keyBag(CloudKit.RecordRetrieveResponse response, ProtectionZone zone) {
-        Optional<byte[]> keyBagData = field(response.getRecord(), "keybagData", zone);
-        if (!keyBagData.isPresent()) {
-            logger.warn("-- keyBag() - failed to acquire key bag");
-            return Optional.empty();
-        }
-
-        Optional<byte[]> secret = field(response.getRecord(), "secret", zone);
-        if (!secret.isPresent()) {
-            logger.warn("-- keyBag() - failed to acquire key bag pass code");
-            return Optional.empty();
-        }
-
-        KeyBag keyBag = KeyBagFactory.create(keyBagData.get(), secret.get());
-        return Optional.of(keyBag);
-    }
-
-    static Optional<byte[]> field(CloudKit.Record record, String label, ProtectionZone zone) {
-        return record.getRecordFieldList()
-                .stream()
-                .filter(u -> u
-                        .getIdentifier()
-                        .getName()
-                        .equals(label))
-                .map(u -> u
-                        .getValue()
-                        .getBytesValue())
-                .map(ByteString::toByteArray)
-                .map(bs -> zone.decrypt(bs, label))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
+        return KeyBagFactory.from(responses.get(0), newZone);
     }
 }
