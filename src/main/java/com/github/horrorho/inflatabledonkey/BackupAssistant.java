@@ -42,15 +42,18 @@ import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotX;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotIDTimestamp;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -58,7 +61,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Backup.
  *
  * @author Ahseya
  */
@@ -95,34 +97,30 @@ public final class BackupAssistant {
         return DeviceClient.device(httpClient, kitty, devices);
     }
 
-    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotX> snapshotIDs) throws IOException {
+    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws IOException {
         return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs);
     }
 
-    public Map<Device, List<Snapshot>> snapshotsForDevices(HttpClient httpClient, Collection<Device> devices)
+    public Map<Device, List<Snapshot>> deviceSnapshots(HttpClient httpClient, Collection<Device> devices)
             throws IOException {
-        Map<String, Device> snapshotDevice = devices.stream()
-                .map(d -> d
-                        .snapshots()
+        Map<SnapshotID, Device> snapshotDevice = devices
+                .stream()
+                .distinct()
+                .flatMap(d -> d
+                        .snapshotIDs()
                         .stream()
-                        .collect(Collectors.toMap(SnapshotX::id,
-                                s -> d,
-                                (a, b) -> {
-                                    logger.warn("-- snapshotsForDevices() - collision: {} {}", a, b);
-                                    return a;
-                                })))
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
+                        .map(s -> new SimpleImmutableEntry<>(s, d)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        List<SnapshotX> snapshotIDs = devices.stream()
-                .map(Device::snapshots)
+        List<SnapshotID> snapshotIDs = devices
+                .stream()
+                .map(Device::snapshotIDs)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
         return snapshots(httpClient, snapshotIDs)
                 .stream()
-                .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.name())));
+                .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.snapshotID())));
     }
 
     public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws IOException {

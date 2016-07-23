@@ -28,7 +28,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotX;
 import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,6 +38,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -82,7 +82,7 @@ public final class Backup {
         List<Device> devices = backupAssistant.devices(httpClient, backupAccount.get().devices());
         logger.debug("-- snapshots() - device count: {}", devices.size());
 
-        Map<Device, List<Snapshot>> snapshots = backupAssistant.snapshotsForDevices(httpClient, devices);
+        Map<Device, List<Snapshot>> snapshots = backupAssistant.deviceSnapshots(httpClient, devices);
         logger.debug("-- snapshots() - snapshot count: {}", snapshots.values().size());
 
         return snapshots;
@@ -143,22 +143,13 @@ public final class Backup {
     }
 
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
-        Map<String, Instant> snapshotTimestamp = device.snapshots()
-                .stream()
-                .collect(Collectors.toMap(SnapshotX::id,
-                        SnapshotX::timestamp,
-                        (a, b) -> {
-                            logger.warn("-- deviceSnapshotDateSubPath() - collsion: {} {}", a, b);
-                            return a;
-                        }));
-
-        if (!snapshotTimestamp.containsKey(snapshot.name())) {
-            logger.warn("-- deviceSnapshotDateSubPath() - snapshot not found in device: {} {}", snapshot.name(), snapshotTimestamp);
+        // TODO if consistent can pull out device hash from snapshot backupProperties
+        if (!device.snapshotIDs().contains(snapshot.snapshotID())) {
+            logger.warn("-- deviceSnapshotDateSubPath() - snapshot not found in device: {} {}", snapshot.snapshotID());
         }
-
-        Instant timestamp = snapshotTimestamp.containsKey(snapshot.name())
-                ? snapshotTimestamp.get(snapshot.name())
-                : snapshot.modification();
+        Instant timestamp = snapshot.date()
+                .map(Date::toInstant)
+                .orElse(snapshot.modification());
         LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
         String date = DateTimeFormatter.BASIC_ISO_DATE.format(ldt);
 

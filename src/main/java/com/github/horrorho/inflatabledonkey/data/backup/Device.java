@@ -24,12 +24,10 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -50,32 +48,27 @@ public final class Device extends AbstractRecord {
     public static final String KEYBAG_UUID = "currentKeybagUUID";
 
     private final DeviceID deviceID;
-    private final Collection<SnapshotX> snapshots;
+    private final List<SnapshotIDTimestamp> snapshotIDTimestamps;
 
-    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotX> snapshots) {
+    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotIDTimestamp> snapshotIDTimestamps) {
         super(record);
         this.deviceID = Objects.requireNonNull(deviceID, "deviceID");
-        this.snapshots = new ArrayList<>(snapshots);
+        this.snapshotIDTimestamps = new ArrayList<>(snapshotIDTimestamps);
     }
 
     public DeviceID deviceID() {
         return deviceID;
     }
 
-    public List<SnapshotX> snapshots() {
-        return new ArrayList<>(snapshots);
+    public List<SnapshotIDTimestamp> snapshotIDTimestamps() {
+        return new ArrayList<>(snapshotIDTimestamps);
     }
 
-    public Map<String, Instant> snapshotTimestampMap() {
-        return snapshots.stream()
-                .collect(Collectors.toMap(
-                        SnapshotX::id,
-                        SnapshotX::timestamp,
-                        (a, b) -> {
-                            logger.warn("-- snapshotTimestampMap() - collision: {} {}", a, b);
-                            return a;
-                        }
-                ));
+    public List<SnapshotID> snapshotIDs() {
+        return snapshotIDTimestamps
+                .stream()
+                .map(SnapshotIDTimestamp::snapshotID)
+                .collect(Collectors.toList());
     }
 
     public Optional<String> domainHMAC() {
@@ -126,6 +119,6 @@ public final class Device extends AbstractRecord {
 
     @Override
     public String toString() {
-        return "Device{" + "deviceID=" + deviceID + ", snapshots=" + snapshots + '}';
+        return "Device{" + "deviceID=" + deviceID + ", snapshotIDTimestamps=" + snapshotIDTimestamps + '}';
     }
 }

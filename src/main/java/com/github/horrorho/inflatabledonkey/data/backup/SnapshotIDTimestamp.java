@@ -28,34 +28,34 @@ import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 /**
- * SnapshotID.
  *
  * @author Ahseya
  */
 @Immutable
-public final class SnapshotX {
+public final class SnapshotIDTimestamp {
 
+    private final SnapshotID snapshotID;
     private final Instant timestamp;
-    private final String id;
 
-    public SnapshotX(Instant timestamp, String id) {
+    public SnapshotIDTimestamp(SnapshotID snapshotID, Instant timestamp) {
+        this.snapshotID = Objects.requireNonNull(snapshotID, "snapshotID");
         this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
-        this.id = Objects.requireNonNull(id, "id");
+
     }
 
     public Instant timestamp() {
         return timestamp;
     }
 
-    public String id() {
-        return id;
+    public SnapshotID snapshotID() {
+        return snapshotID;
     }
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 37 * hash + Objects.hashCode(this.timestamp);
-        hash = 37 * hash + Objects.hashCode(this.id);
+        int hash = 7;
+        hash = 59 * hash + Objects.hashCode(this.snapshotID);
+        hash = 59 * hash + Objects.hashCode(this.timestamp);
         return hash;
     }
 
@@ -70,8 +70,8 @@ public final class SnapshotX {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final SnapshotX other = (SnapshotX) obj;
-        if (!Objects.equals(this.id, other.id)) {
+        final SnapshotIDTimestamp other = (SnapshotIDTimestamp) obj;
+        if (!Objects.equals(this.snapshotID, other.snapshotID)) {
             return false;
         }
         if (!Objects.equals(this.timestamp, other.timestamp)) {
@@ -82,6 +82,6 @@ public final class SnapshotX {
 
     @Override
     public String toString() {
-        return "SnapshotID{" + "timestamp=" + timestamp + ", id=" + id + '}';
+        return "SnapshotIDTimestamp{" + "snapshotID=" + snapshotID + ", timestamp=" + timestamp + '}';
     }
 }

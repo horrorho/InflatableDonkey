@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -51,9 +52,9 @@ public final class DeviceFactory {
         return new Device(record, deviceID, snapshots(record.getRecordFieldList()));
     }
 
-    static List<SnapshotX> snapshots(List<CloudKit.RecordField> records) {
-        List<String> snapshotRecords = snapshotRecords(records);
-        List<Double> snapshotCommittedDates = snapshotCommittedDates(records);
+    static List<SnapshotIDTimestamp> snapshots(List<CloudKit.RecordField> records) {
+        List<SnapshotID> snapshotRecords = snapshotRecords(records);
+        List<Instant> snapshotCommittedDates = snapshotCommittedDates(records);
         logger.debug("-- snapshots() - records: {}", snapshotRecords.size());
         logger.debug("-- snapshots() - dates: {}", snapshotCommittedDates.size());
         if (snapshotRecords.size() != snapshotCommittedDates.size()) {
@@ -62,12 +63,11 @@ public final class DeviceFactory {
 
         int limit = Math.min(snapshotRecords.size(), snapshotCommittedDates.size());
         return IntStream.range(0, limit)
-                .mapToObj(i
-                        -> new SnapshotX(WKTimestamp.toInstant(snapshotCommittedDates.get(i)), snapshotRecords.get(i)))
+                .mapToObj(i -> new SnapshotIDTimestamp(snapshotRecords.get(i), snapshotCommittedDates.get(i)))
                 .collect(Collectors.toList());
     }
 
-    static List<String> snapshotRecords(List<CloudKit.RecordField> records) {
+    static List<SnapshotID> snapshotRecords(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -82,10 +82,13 @@ public final class DeviceFactory {
                         .getRecordIdentifier()
                         .getValue()
                         .getName())
+                .map(SnapshotID::from)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
-    static List<Double> snapshotCommittedDates(List<CloudKit.RecordField> records) {
+    static List<Instant> snapshotCommittedDates(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -98,6 +101,7 @@ public final class DeviceFactory {
                 .map(u -> u
                         .getDateValue()
                         .getTime())
+                .map(WKTimestamp::toInstant)
                 .collect(Collectors.toList());
     }
 }

@@ -43,6 +43,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -157,10 +158,10 @@ public class Main {
         System.out.println("Devices/ snapshots:\n");
         deviceSnapshots.forEach((device, snapshotList) -> {
             System.out.println(device.info());
-            Map<String, Instant> timestamps = device.snapshotTimestampMap();
             for (int i = 0; i < snapshotList.size(); i++) {
                 Snapshot snapshot = snapshotList.get(i);
-                System.out.println("\t" + i + snapshot.info() + "   " + timestamps.get(snapshot.name()));
+                Instant date = snapshot.date().map(Date::toInstant).orElse(snapshot.modification());
+                System.out.println("\t" + i + snapshot.info() + "   " + date);
             }
             if (snapshotList.isEmpty()) {
                 System.out.println("\tNo snapshots.");
