@@ -218,8 +218,7 @@ public class Main {
         List<String> filterExtensions = Property.FILTER_EXTENSION.asList().orElseGet(() -> Collections.emptyList());
         Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
 
-        backup.download(httpClient, deviceSnapshots, domainFilter, assetFilter);
-
+        backup.download(httpClient, filtered, domainFilter, assetFilter);
 //      rodrimc@github
 //        boolean repeat = false;
 //        do {
