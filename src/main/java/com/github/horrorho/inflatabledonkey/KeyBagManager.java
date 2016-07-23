@@ -59,14 +59,8 @@ public final class KeyBagManager {
 
     public static KeyBagManager defaults(CloudKitty kitty, ProtectionZone mbksync) {
         BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient
-                = (httpClient, keyBagID) -> keyBag(httpClient, kitty, mbksync, keyBagID);
+                = (httpClient, keyBagID) -> KeyBagClient.keyBag(httpClient, kitty, mbksync, keyBagID);
         return new KeyBagManager(keyBagClient);
-    }
-
-    // TODO simplify
-    static Optional<KeyBag> keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone mbksync, KeyBagID keyBagID)
-            throws UncheckedIOException {
-        return KeyBagClient.keyBag(httpClient, kitty, mbksync, keyBagID);
     }
 
     private static final KeyBag FAIL

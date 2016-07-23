@@ -33,12 +33,12 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class SnapshotIDLegacy {
+public final class SnapshotX {
 
     private final Instant timestamp;
     private final String id;
 
-    public SnapshotIDLegacy(Instant timestamp, String id) {
+    public SnapshotX(Instant timestamp, String id) {
         this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
         this.id = Objects.requireNonNull(id, "id");
     }
@@ -70,7 +70,7 @@ public final class SnapshotIDLegacy {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final SnapshotIDLegacy other = (SnapshotIDLegacy) obj;
+        final SnapshotX other = (SnapshotX) obj;
         if (!Objects.equals(this.id, other.id)) {
             return false;
         }

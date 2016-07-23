@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotIDLegacy;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotX;
 import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -145,8 +145,8 @@ public final class Backup {
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
         Map<String, Instant> snapshotTimestamp = device.snapshots()
                 .stream()
-                .collect(Collectors.toMap(SnapshotIDLegacy::id,
-                        SnapshotIDLegacy::timestamp,
+                .collect(Collectors.toMap(SnapshotX::id,
+                        SnapshotX::timestamp,
                         (a, b) -> {
                             logger.warn("-- deviceSnapshotDateSubPath() - collsion: {} {}", a, b);
                             return a;

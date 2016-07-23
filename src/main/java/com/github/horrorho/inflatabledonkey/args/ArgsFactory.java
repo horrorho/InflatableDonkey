@@ -58,6 +58,7 @@ public final class ArgsFactory {
         args.add(filterDevice());
         args.add(filterSnapshot());
         args.add(filterDomain());
+        args.add(filterRelativePath());
         args.add(filterExtension());
         args.add(filterDateMin());
         args.add(filterDateMax());
@@ -117,6 +118,16 @@ public final class ArgsFactory {
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_ASSET_EXTENSION, option, ArgsFactory::parseLowerCase);
+    }
+
+    static Arg filterRelativePath() {
+        Option option = Option.builder()
+                .longOpt("relative-path")
+                .desc("Relative path filter/s, case insensitive.")
+                .argName("string")
+                .hasArgs()
+                .build();
+        return new Arg(Property.FILTER_ASSET_RELATIVE_PATH, option);
     }
 
     static Arg filterSnapshot() {
