@@ -21,52 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.file;
+package com.github.horrorho.inflatabledonkey.io;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
 /**
- * DirectoryAssistant.
  *
  * @author Ahseya
+ * @param <T> type
  */
-@Immutable
-public final class DirectoryAssistant {
+public interface IOConsumer<T> {
 
-    private static final Logger logger = LoggerFactory.getLogger(DirectoryAssistant.class);
+    void accept(T t) throws IOException;
 
-    public static boolean createParent(Path file) {
-        Path parent = file.getParent();
-        if (parent == null) {
-            return true;
-        }
-
-        return create(parent);
-    }
-
-    public static boolean create(Path directory) {
-        if (Files.exists(directory)) {
-            if (Files.isDirectory(directory)) {
-                return true;
-
-            } else {
-                logger.warn("-- create() - directory path exists but is not a directory: {}", directory);
-                return false;
-            }
-        }
-
-        try {
-            Files.createDirectories(directory);
-            return true;
-
-        } catch (IOException ex) {
-            logger.debug("-- create() - IOException: {}", ex);
-            return false;
-        }
+    default IOConsumer<T> andThen(IOConsumer<? super T> after) {
+        Objects.requireNonNull(after);
+        return t -> {
+            accept(t);
+            after.accept(t);
+        };
     }
 }

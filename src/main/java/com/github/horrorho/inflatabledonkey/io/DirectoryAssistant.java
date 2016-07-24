@@ -21,39 +21,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store;
+package com.github.horrorho.inflatabledonkey.io;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * ChunkBuilder.
+ * DirectoryAssistant.
  *
  * @author Ahseya
  */
-public interface ChunkBuilder {
+@Immutable
+public final class DirectoryAssistant {
 
-    /**
-     * Returns an OutputStream for the chunk data to be written to.
-     *
-     * @return OutputStream
-     * @throws IOException
-     * @throws IllegalStateException if the OutputStream is already in use
-     */
-    OutputStream outputStream() throws IOException;
+    private static final Logger logger = LoggerFactory.getLogger(DirectoryAssistant.class);
 
-    /**
-     * Builds the Chunk. The OutputStream is closed. The Chunk is placed into the managing ChunkStore.
-     *
-     * @return Chunk
-     * @throws IOException
-     * @throws IllegalStateException if no OutputStream
-     */
-    Chunk build() throws IOException;
+    public static boolean createParent(Path file) {
+        Path parent = file.getParent();
+        if (parent == null) {
+            return true;
+        }
 
-    default Chunk build(byte[] data) throws IOException {
-        outputStream().write(data);
-        return build();
+        return create(parent);
+    }
+
+    public static boolean create(Path directory) {
+        if (Files.exists(directory)) {
+            if (Files.isDirectory(directory)) {
+                return true;
+
+            } else {
+                logger.warn("-- create() - directory path exists but is not a directory: {}", directory);
+                return false;
+            }
+        }
+
+        try {
+            Files.createDirectories(directory);
+            return true;
+
+        } catch (IOException ex) {
+            logger.debug("-- create() - IOException: {}", ex);
+            return false;
+        }
     }
 }

@@ -80,7 +80,7 @@ public class Main {
 
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
-        
+
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
@@ -129,7 +129,8 @@ public class Main {
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
-        Path chunkOutputFolder = outputFolder.resolve("cache");
+        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property
+        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
         System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
@@ -139,7 +140,7 @@ public class Main {
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder);
+        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder, tempOutputFolder);
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();

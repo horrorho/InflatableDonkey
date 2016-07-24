@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
-import com.github.horrorho.inflatabledonkey.chunk.store.ChunkBuilder;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,15 +30,12 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
 import java.util.Objects;
-import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,8 +88,7 @@ public final class DiskChunk implements Chunk {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 53 * hash + java.util.Arrays.hashCode(this.checksum);
-        hash = 53 * hash + Objects.hashCode(this.file);
+        hash = 97 * hash + java.util.Arrays.hashCode(this.checksum);
         return hash;
     }
 
@@ -112,53 +107,14 @@ public final class DiskChunk implements Chunk {
         if (!java.util.Arrays.equals(this.checksum, other.checksum)) {
             return false;
         }
-        if (!Objects.equals(this.file, other.file)) {
-            return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "DiskChunk{" + "file=" + file + '}';
-    }
-
-    @NotThreadSafe
-    static class Builder implements ChunkBuilder {
-
-        private final byte[] checksum;
-        private final Path file;
-        private OutputStream outputStream;
-
-        Builder(byte[] checksum, Path file) {
-            this.checksum = Arrays.copyOf(checksum, checksum.length);
-            this.file = Objects.requireNonNull(file, "file");
-        }
-
-        @Override
-        public OutputStream outputStream() throws IOException {
-            if (outputStream != null) {
-                throw new IllegalStateException("output stream already open");
-            }
-
-            Path parent = file.getParent();
-            if (parent != null) {
-                // TODO more specific error for FileAlreadyExistsException in case of file blocking directory creation.
-                // Eg. a file name '0' in the path will block a directory '0' being created.
-                Files.createDirectories(parent);
-            }
-            outputStream = Files.newOutputStream(file, CREATE, WRITE, TRUNCATE_EXISTING);
-
-            return outputStream;
-        }
-
-        @Override
-        public Chunk build() throws IOException {
-            if (outputStream == null) {
-                throw new IllegalStateException("no output stream");
-            }
-            outputStream.close();
-            return new DiskChunk(checksum, file);
-        }
+        return "DiskChunk{"
+                + "checksum=" + Hex.toHexString(checksum)
+                + ", file=" + file
+                + '}';
     }
 }

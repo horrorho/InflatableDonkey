@@ -14,6 +14,10 @@
     <logger name="com.github.horrorho.inflatabledonkey.file.FileAssembler" level="info" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
+ 
+    <logger name="com.github.horrorho.inflatabledonkey.chunk.store.disk" level="trace" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
     
     <!-- Apache HttpClient loggers via JCL bridge. WILL log sensitive information. Use with caution. -->
     <logger name="org.apache.http" level="off" additivity="false">
