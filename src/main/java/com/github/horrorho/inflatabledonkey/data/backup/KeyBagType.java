@@ -1,7 +1,7 @@
-/*
+/* 
  * The MIT License
  *
- * Copyright 2016 Ahseya.
+ * Copyright 2015 Ahseya.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,44 +21,50 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.util;
+package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import net.jcip.annotations.Immutable;
 
 /**
- * ListUtils.
+ * KeybagType.
  *
- * @author Ahseya
+ * @author ahseya
  */
-public final class ListUtils {
+@Immutable
+public enum KeyBagType {
 
-    public static <T> List<List<T>> split(List<T> list, int size) {
-        if (size <= 0) {
-            throw new IllegalArgumentException("bad size: " + size);
+    SYSTEM("System"),
+    BACKUP("Backup"),
+    ESCROW("Escrow"),
+    OTA("OTA (icloud)");
+
+    private static final Map<Integer, KeyBagType> intToType
+            = Stream.of(KeyBagType.values()).collect(Collectors.toMap(KeyBagType::value, Function.identity()));
+
+    public static KeyBagType from(int value) {
+        KeyBagType type = intToType.get(value & 0x3FFFFFFF);
+        if (type == null) {
+            throw new IllegalArgumentException("unknown KeyBagType: " + value);
         }
-        List<List<T>> lists = new ArrayList<>();
-        for (int i = 0, listSize = list.size(); i < listSize; i += size) {
-            int to = (i + size) > listSize ? listSize : i + size;
-            lists.add(list.subList(i, to));
-        }
-        return lists;
+        return type;
     }
 
-    public static <T> List<List<T>> divide(List<T> list, int by) {
-        if (by <= 0) {
-            throw new IllegalArgumentException("bad denominator: " + by);
-        }
-        List<List<T>> lists = new ArrayList<>();
-        int listSize = list.size();
-        int d = listSize / by;
-        int m = listSize % by;
-        int i = 0;
-        while (i < listSize) {
-            int c = m-- > 0 ? 1 : 0;
-            lists.add(list.subList(i, i + d + c));
-            i += d + c;
-        }
-        return lists;
+    private final String toString;
+
+    private KeyBagType(String description) {
+        this.toString = description;
+    }
+
+    @Override
+    public String toString() {
+        return toString;
+    }
+
+    public int value() {
+        return ordinal();
     }
 }

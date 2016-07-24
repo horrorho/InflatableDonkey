@@ -24,14 +24,14 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
-import com.github.horrorho.inflatabledonkey.data.backup.Assets;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -52,37 +52,16 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            assetsFromAssetsList(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assetsList)
-            throws IOException {
-
-        List<String> fileList = assetsList.stream()
-                .map(Assets::nonEmptyFiles)
-                .flatMap(Collection::stream)
+            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
+            throws UncheckedIOException {
+        List<String> nonEmptyAssets = assetIDs.stream()
+                .filter(a -> a.size() > 0)
+                .map(Object::toString)
                 .collect(Collectors.toList());
-        return assets(httpClient, kitty, zone, fileList);
+        logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
 
-    }
-
-    public static List<Asset>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<String> fileList)
-            throws IOException {
-
-        List<String> nonEmptyFileList = fileList.stream()
-                .filter(Assets::isNonEmpty)
-                .collect(Collectors.toList());
-        logger.debug("-- assets() - non-empty file list size: {}", nonEmptyFileList.size());
-
-        if (nonEmptyFileList.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(
-                        httpClient,
-                        "_defaultZone",
-                        nonEmptyFileList);
-
-        return responses.stream()
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets)
+                .stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(r -> asset(r, zone))
@@ -93,7 +72,8 @@ public final class AssetTokenClient {
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
         logger.debug("-- asset() - record: {} zone: {}", record, zone);
-        return PZFactory.instance().create(zone, record.getProtectionInfo())
-                .map(z -> AssetFactory.from(record, z::decrypt, z::unwrapKey));
+        return PZFactory.instance()
+                .create(zone, record.getProtectionInfo())
+                .flatMap(u -> AssetFactory.from(record, u));
     }
 }

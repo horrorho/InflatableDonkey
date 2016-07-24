@@ -42,16 +42,9 @@ public enum PropertyDP {
     XTS,
     OFF;
 
+    @Deprecated
     public static Optional<PropertyDP> parse(String mode) {
         return Optional.ofNullable(map.get(mode.toUpperCase(Property.locale())));
-    }
-
-    public static String options() {
-        return Arrays.asList(PropertyDP.values())
-                .stream()
-                .map(PropertyDP::name)
-                .map(s -> s.toLowerCase(Property.locale()))
-                .collect(Collectors.joining(" "));
     }
 
     private static final Map<String, PropertyDP> map = Arrays.asList(PropertyDP.values())

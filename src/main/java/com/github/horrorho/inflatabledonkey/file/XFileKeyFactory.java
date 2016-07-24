@@ -24,7 +24,8 @@
 package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.dataprotection.DPCipherFactories;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,9 +41,9 @@ import org.bouncycastle.crypto.BlockCipher;
 @Immutable
 public final class XFileKeyFactory implements Function<byte[], Optional<XFileKey>> {
 
-    private final Function<byte[], Optional<KeyBag>> keyBags;
+    private final Function<KeyBagID, Optional<KeyBag>> keyBags;
 
-    public XFileKeyFactory(Function<byte[], Optional<KeyBag>> keyBags) {
+    public XFileKeyFactory(Function<KeyBagID, Optional<KeyBag>> keyBags) {
         this.keyBags = Objects.requireNonNull(keyBags, "keyBags");
     }
 

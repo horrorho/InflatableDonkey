@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
@@ -32,7 +33,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.ManifestIDIndex;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,17 +59,15 @@ public final class AssetsClient {
 
     public static List<Assets>
             assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
-            throws IOException {
+            throws UncheckedIOException {
 
         if (manifests.isEmpty()) {
             return new ArrayList<>();
         }
 
         List<String> manifestIDs = manifestIDs(manifests);
-
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "_defaultZone", manifestIDs);
-
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs);
         return assetsList(responses, zone);
     }
 

@@ -44,9 +44,9 @@ import org.xml.sax.SAXException;
  * @author Ahseya
  */
 @Immutable
-public final class PLists {
+public final class PListsLegacy {
 
-    private static final Logger logger = LoggerFactory.getLogger(PLists.class);
+    private static final Logger logger = LoggerFactory.getLogger(PListsLegacy.class);
 
     public static <T extends NSObject> Optional<T> cast(NSObject object, Class<T> to) {
         return (to.isAssignableFrom(object.getClass()))

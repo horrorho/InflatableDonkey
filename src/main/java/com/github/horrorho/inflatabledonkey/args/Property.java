@@ -23,7 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -51,9 +55,14 @@ public enum Property {
     DP_AESCBC_BLOCK_SIZE("4096"),
     DP_AESXTS_BLOCK_SIZE("4096"),
     DP_MODE("AUTO"),
-    FILTER_DEVICE(""),
-    FILTER_DOMAIN(""),
-    FILTER_EXTENSION(""),
+    FILTER_ASSET_STATUS_CHANGED_MAX(),
+    FILTER_ASSET_STATUS_CHANGED_MIN(),
+    FILTER_ASSET_DOMAIN(),
+    FILTER_ASSET_EXTENSION(),
+    FILTER_ASSET_RELATIVE_PATH(),
+    FILTER_ASSET_SIZE_MAX(),
+    FILTER_ASSET_SIZE_MIN(),
+    FILTER_DEVICE(),
     FILTER_SNAPSHOT(),
     FILE_WRITER_BUFFER_LENGTH("16384"),
     OUTPUT_FOLDER("backups"),
@@ -86,12 +95,9 @@ public enum Property {
         touched = true;
     }
 
+    @Deprecated
     public static Locale locale() {
         return Locale.US;
-    }
-
-    public static DateTimeFormatter commandLineInputDateTimeFormatter() {
-        return DateTimeFormatter.ISO_DATE;
     }
 
     public static DateTimeFormatter outputDateTimeFormatter() {
@@ -99,6 +105,8 @@ public enum Property {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(Property.class);
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE;
 
     private static volatile boolean touched = false;
 
@@ -129,12 +137,17 @@ public enum Property {
         return as(Boolean::parseBoolean);
     }
 
-    public Optional<Integer> asInteger() {
+    public Optional<Integer> asInteger() throws NumberFormatException {
         return as(Integer::parseInt);
     }
 
-    public Optional<Long> asLong() {
+    public Optional<Long> asLong() throws NumberFormatException {
         return as(Long::parseLong);
+    }
+
+    public Optional<ZonedDateTime> asDate() throws DateTimeParseException {
+        return as(u -> LocalDate.parse(u, DATE_TIME_FORMATTER)
+                .atStartOfDay(ZoneId.systemDefault()));
     }
 
     public Optional<List<String>> asList() {

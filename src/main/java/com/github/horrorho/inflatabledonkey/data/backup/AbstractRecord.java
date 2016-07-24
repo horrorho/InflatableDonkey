@@ -42,14 +42,13 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractRecord {
 
-    protected static final String NA = "N/A";
-
     private static final Logger logger = LoggerFactory.getLogger(AbstractRecord.class);
 
     static Map<String, CloudKit.RecordField> map(Collection<CloudKit.RecordField> recordFields) {
         return recordFields.stream()
                 .collect(Collectors.toMap(
-                        x -> x.getIdentifier().getName(), Function.identity(),
+                        u -> u.getIdentifier().getName(),
+                        Function.identity(),
                         (a, b) -> {
                             logger.warn("-- map() - collision: {} {}", a, b);
                             return a;
@@ -77,10 +76,7 @@ public abstract class AbstractRecord {
     }
 
     public String name() {
-        return record()
-                .getRecordIdentifier()
-                .getValue()
-                .getName();
+        return record().getRecordIdentifier().getValue().getName();
     }
 
     public final Instant creation() {
@@ -102,7 +98,7 @@ public abstract class AbstractRecord {
     }
 
     public final Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
-        return Optional.ofNullable(recordFields.get(name).getValue());
+        return Optional.ofNullable(recordFields.get(name)).map(CloudKit.RecordField::getValue);
     }
 
     @Override

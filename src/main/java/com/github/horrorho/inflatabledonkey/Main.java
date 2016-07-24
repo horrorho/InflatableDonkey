@@ -40,14 +40,11 @@ import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -78,6 +75,9 @@ public class Main {
             System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
         }
+
+        Arrays.asList(Property.values())
+                .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
 
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
@@ -114,10 +114,6 @@ public class Main {
             return;
         }
 
-        logger.info("-- main() - Apple ID: {}", Property.AUTHENTICATION_APPLEID.value());
-        logger.info("-- main() - password: {}", Property.AUTHENTICATION_PASSWORD.value().map(s -> s.replaceAll(".", "*")));
-        logger.info("-- main() - token: {}", Property.AUTHENTICATION_TOKEN.value().map(s -> s.replaceAll(".", "*")));
-
         // Account
         Account account = Accounts.account(httpClient, auth);
 
@@ -133,6 +129,9 @@ public class Main {
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
         System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
 
+        // TODO automatic decrypt mode
+        Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
+
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
         DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder);
@@ -140,13 +139,11 @@ public class Main {
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
-        // TODO automatic decrypt mode
-        Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
-
         DownloadAssistant downloadAssistant
                 = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
-
         Backup backup = new Backup(assistant, downloadAssistant);
+
+        // Retrieve snapshots.
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
 
         if (deviceSnapshots.isEmpty()) {
@@ -154,55 +151,37 @@ public class Main {
             return;
         }
 
-        // List.
-        System.out.println("Devices/ snapshots:\n");
-        deviceSnapshots.forEach((device, snapshotList) -> {
-            System.out.println(device.info());
-            Map<String, Instant> timestamps = device.snapshotTimestampMap();
-            for (int i = 0; i < snapshotList.size(); i++) {
-                Snapshot snapshot = snapshotList.get(i);
-                System.out.println("\t" + i + snapshot.info() + "   " + timestamps.get(snapshot.name()));
-            }
-            if (snapshotList.isEmpty()) {
-                System.out.println("\tNo snapshots.");
-            }
+        // Filter snapshots.
+        Map<Device, ? extends Collection<Snapshot>> filtered
+                = XFilter.apply(Property.FILTER_DEVICE.asList(), Property.FILTER_SNAPSHOT.asList(Integer::parseInt))
+                .apply(deviceSnapshots);
+
+        filtered.forEach((device, snapshots) -> {
+            logger.info("-- main() - selected device: {}", device.info());
+            snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {} backupType: {}",
+                    snapshot.info(), snapshot.backupType()));
         });
-        if (deviceSnapshots.isEmpty()) {
-            System.out.println("\tNo devices.");
-            return;
+
+        if (filtered.isEmpty()) {
+            System.out.println("Nothing selected.");
+            System.exit(0);
         }
+
+        System.out.println("\nSelection:");
+        filtered.entrySet()
+                .stream()
+                .map(u -> {
+                    System.out.println("DEVICE - " + u.getKey().info());
+                    return u.getValue();
+                })
+                .flatMap(Collection::stream)
+                .map(Snapshot::info)
+                .forEach(u -> System.out.println("  SNAPSHOT - " + u));
 
         // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
             return;
         }
-
-        // Filters.
-        Property.FILTER_DEVICE.asList().ifPresent(filter -> logger.info("-- main() - device filter: {}", filter));
-        List<String> filterDevices = Property.FILTER_DEVICE.asList().orElseGet(() -> Collections.emptyList());
-        Predicate<Device> deviceFilter = Filters.deviceFilter(filterDevices);
-
-        Property.FILTER_SNAPSHOT.asList().ifPresent(filter -> logger.info("-- main() - snapshot filter: {}", filter));
-        List<Integer> filterSnapshots = Property.FILTER_SNAPSHOT.asIntegerList().orElseGet(() -> Collections.emptyList());
-        UnaryOperator<List<Snapshot>> snapshotFilter = Filters.<Snapshot>listFilter(filterSnapshots);
-
-        Map<Device, List<Snapshot>> filtered = deviceSnapshots
-                .entrySet()
-                .stream()
-                .filter(e -> deviceFilter.test(e.getKey()))
-                .map(e -> new SimpleImmutableEntry<>(e.getKey(), snapshotFilter.apply(e.getValue())))
-                .filter(e -> !e.getValue().isEmpty())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        if (filtered.isEmpty()) {
-            System.out.println("Nothing selected.");
-            return;
-        }
-
-        filtered.forEach((device, snapshots) -> {
-            logger.info("-- main() - selected device: {}", device.info());
-            snapshots.forEach(snapshot -> logger.info("-- main() - selected snapshot: {} backupType: {}", snapshot.info(), snapshot.backupType()));
-        });
 
         // Print domain list option.
         if (Property.PRINT_DOMAIN_LIST.asBoolean().orElse(false)) {
@@ -210,63 +189,19 @@ public class Main {
             return;
         }
 
-        Property.FILTER_DOMAIN.asList().ifPresent(filter -> logger.info("-- main() - domain filter: {}", filter));
-        List<String> filterDomains = Property.FILTER_DOMAIN.asList().orElseGet(() -> Collections.emptyList());
-        Predicate<Assets> domainFilter = Filters.assetsFilter(filterDomains);
-
-        Property.FILTER_EXTENSION.asList().ifPresent(filter -> logger.info("-- main() - extension filter: {}", filter));
-        List<String> filterExtensions = Property.FILTER_EXTENSION.asList().orElseGet(() -> Collections.emptyList());
-        Predicate<Asset> assetFilter = Filters.assetFilter(filterExtensions);
-
-        backup.download(httpClient, filtered, domainFilter, assetFilter);
-//      rodrimc@github
-//        boolean repeat = false;
-//        do {
-//      rodrimc@github
-//        // Selection
-//        Scanner input = new Scanner(System.in);
-//
-//        int deviceIndex;
-//        int snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
-//
-//        if (devices.size() > 1) {
-//            System.out.printf("Select a device [0 - %d]: ", devices.size() - 1);
-//            deviceIndex = input.nextInt();
-//        } else {
-//            deviceIndex = Property.SELECT_DEVICE_INDEX.intValue().get();
-//        }
-//
-//        if (deviceIndex >= devices.size() || deviceIndex < 0) {
-//            System.out.println("No such device: " + deviceIndex);
-//            System.exit(-1);
-//        }
-//
-//        Device device = devices.get(deviceIndex);
-//        System.out.println("Selected device: " + deviceIndex + ", " + device.info());
-//
-//        if (device.snapshots().size() > 1) {
-//            System.out.printf("Select a snapshot [0 - %d]: ", device.snapshots().size() - 1);
-//            snapshotIndex = input.nextInt();
-//        } else {
-//            snapshotIndex = Property.SELECT_SNAPSHOT_INDEX.intValue().get();
-//        }
-//
-//        if (snapshotIndex >= devices.get(deviceIndex).snapshots().size() || snapshotIndex < 0) {
-//            System.out.println("No such snapshot for selected device: " + snapshotIndex);
-//            System.exit(-1);
-//        }
-//
-//        logger.info("-- main() - arg device index: {}", deviceIndex);
-//        logger.info("-- main() - arg snapshot index: {}", snapshotIndex);
-//      rodrimc@github
-//            System.out.print("Download other snapshot (Y/N)? ");
-//            repeat = input.next().toLowerCase(Locale.US).charAt(0) == 'y';
-//        } while (repeat == true);
+        Predicate<Assets> assetsFilter = new AssetsFilter(Property.FILTER_ASSET_DOMAIN.asList());
+        Predicate<Asset> assetFilter = new AssetFilter(
+                Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
+                Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong(),
+                Property.FILTER_ASSET_SIZE_MAX.asInteger(),
+                Property.FILTER_ASSET_SIZE_MIN.asInteger(),
+                Property.FILTER_ASSET_EXTENSION.asList(),
+                Property.FILTER_ASSET_RELATIVE_PATH.asList());
+        backup.download(httpClient, deviceSnapshots, assetsFilter, assetFilter);
     }
-
 }
 
-// TODO 0xFF System protectionInfo
+// TODO 0xFF System protectionInfo DONE
 // TODO file timestamps
 // TODO date filtering
 // TODO size filtering
@@ -277,4 +212,4 @@ public class Main {
 // TODO filtering
 // TODO concurrent downloads
 // TODO file asset cache
-// TODO 5000 limit?
+// TODO 5000 limit? FIXED

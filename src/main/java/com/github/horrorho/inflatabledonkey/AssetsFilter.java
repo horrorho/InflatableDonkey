@@ -1,7 +1,7 @@
-/* 
+/*
  * The MIT License
  *
- * Copyright 2015 Ahseya.
+ * Copyright 2016 Ahseya.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,50 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.keybag;
+package com.github.horrorho.inflatabledonkey;
 
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.github.horrorho.inflatabledonkey.data.backup.Assets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Predicate;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * KeybagType.
  *
- * @author ahseya
+ * @author Ahseya
  */
 @Immutable
-public enum KeyBagType {
+public final class AssetsFilter implements Predicate<Assets> {
 
-    SYSTEM("System"),
-    BACKUP("Backup"),
-    ESCROW("Escrow"),
-    OTA("OTA (icloud)");
+    private static final Logger logger = LoggerFactory.getLogger(AssetsFilter.class);
 
-    private static final Map<Integer, KeyBagType> intToType
-            = Stream.of(KeyBagType.values()).collect(Collectors.toMap(KeyBagType::value, Function.identity()));
+    private final Optional<List<String>> domain;
 
-    public static KeyBagType from(int value) {
-        KeyBagType type = intToType.get(value & 0x3FFFFFFF);
-        if (type == null) {
-            throw new IllegalArgumentException("unknown KeyBagType: " + value);
-        }
-        return type;
+    public AssetsFilter(Optional<? extends Collection<String>> domain) {
+        this.domain = domain.map(ArrayList::new);
     }
 
-    private final String toString;
-
-    private KeyBagType(String description) {
-        this.toString = description;
+    @Override
+    public boolean test(Assets asset) {
+        return Optional.of(asset.domain()) // TOFIX if Asset#domain() isn't altered to Optional
+                .map(t -> t.toLowerCase(Locale.US))
+                .map(t -> domain.map(us -> us.stream().anyMatch(u -> t.contains(u))).orElse(true))
+                .orElseGet(() -> {
+                    logger.debug("-- filterDomain() - no domain: {}", asset);
+                    return false;
+                });
     }
 
     @Override
     public String toString() {
-        return toString;
-    }
-
-    public int value() {
-        return ordinal();
+        return "AssetsFilter{" + "domain=" + domain + '}';
     }
 }

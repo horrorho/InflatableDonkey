@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -26,61 +26,53 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Ahseya
  */
 @Immutable
-public final class BackupAccountFactory {
+public final class KeyBagFactory {
 
-    private static final String HMAC_KEY = "HMACKey";
-    private static final String DEVICES = "devices";
+    private static final String KEYBAG_DATA = "keybagData";
+    private static final String SECRET = "secret";
 
-    public static BackupAccount from(CloudKit.Record record, ProtectionZone zone) {
-        List<CloudKit.RecordField> records = record.getRecordFieldList();
-        Optional<byte[]> hmacKey = hmacKey(records)
-                .flatMap(u -> zone.decrypt(u, HMAC_KEY));
-        Collection<DeviceID> devices = devices(records);
-        return new BackupAccount(record, hmacKey, devices);
+    private static final Logger logger = LoggerFactory.getLogger(KeyBagFactory.class);
+
+    public static Optional<KeyBag> from(CloudKit.RecordRetrieveResponse response, ProtectionZone zone) {
+        Optional<byte[]> keyBagData = field(response.getRecord(), KEYBAG_DATA, zone);
+        if (!keyBagData.isPresent()) {
+            logger.warn("-- from() - failed to acquire key bag");
+            return Optional.empty();
+        }
+
+        Optional<byte[]> secret = field(response.getRecord(), SECRET, zone);
+        if (!secret.isPresent()) {
+            logger.warn("-- from() - failed to acquire key bag pass code");
+            return Optional.empty();
+        }
+
+        return KeyBagDecoder.decode(keyBagData.get(), secret.get());
     }
 
-    public static Optional<byte[]> hmacKey(List<CloudKit.RecordField> records) {
-        return records.stream()
+    static Optional<byte[]> field(CloudKit.Record record, String label, ProtectionZone zone) {
+        return record.getRecordFieldList()
+                .stream()
                 .filter(u -> u
                         .getIdentifier()
                         .getName()
-                        .equals(HMAC_KEY))
+                        .equals(label))
                 .map(u -> u
                         .getValue()
                         .getBytesValue())
                 .map(ByteString::toByteArray)
-                .findFirst();
-    }
-
-    public static Collection<DeviceID> devices(List<CloudKit.RecordField> records) {
-        return records.stream()
-                .filter(u -> u
-                        .getIdentifier()
-                        .getName()
-                        .equals(DEVICES))
-                .map(u -> u
-                        .getValue()
-                        .getRecordFieldValueList())
-                .flatMap(Collection::stream)
-                .map(u -> u
-                        .getReferenceValue()
-                        .getRecordIdentifier()
-                        .getValue()
-                        .getName())
-                .map(DeviceID::from)
+                .map(bs -> zone.decrypt(bs, label))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .findFirst();
     }
 }

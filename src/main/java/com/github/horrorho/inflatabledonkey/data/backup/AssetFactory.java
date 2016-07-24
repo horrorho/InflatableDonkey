@@ -23,21 +23,17 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import com.dd.plist.NSDictionary;
+import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.PLists;
 import com.google.protobuf.ByteString;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AssetFactory.
  *
  * @author Ahseya
  */
@@ -48,69 +44,50 @@ public final class AssetFactory {
 
     private static final String CONTENTS = "contents";
     private static final String ENCRYPTED_ATTRIBUTES = "encryptedAttributes";
+    private static final String FILE_TYPE = "fileType";
+    private static final String PROTECTION_CLASS = "protectionClass";
 
     private static final long DEFAULT_EXPIRATION_SECONDS = 60 * 60; // 1 hour.
     private static final long GRACE_TIME_SECONDS = 15 * 60; // 15 minutes.
 
-    public static Asset from(
-            CloudKit.Record record,
-            BiFunction<byte[], String, Optional<byte[]>> decrypt,
-            Function<byte[], Optional<byte[]>> unwrapKey) {
+    public static Optional<Asset> from(CloudKit.Record record, ProtectionZone zone) {
+        return AssetID.from(record.getRecordIdentifier().getValue().getName())
+                .map(u -> from(u, record, zone));
+    }
+
+    static Asset from(AssetID assetID, CloudKit.Record record, ProtectionZone zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
-
-        int protectionClass = protectionClass(records);
-        int fileType = fileType(records);
-
-        Optional<NSDictionary> encryptedAttributes = encryptedAttributes(records)
-                .flatMap(bs -> decrypt.apply(bs, ENCRYPTED_ATTRIBUTES))
-                .map(PLists::parseDictionary); // TODO cover the illegal argument exception.
-
+        Optional<Integer> protectionClass = protectionClass(records);
+        Optional<Integer> fileType = fileType(records);
+        Optional<byte[]> encryptedAttributes = encryptedAttributes(records)
+                .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES));
         Optional<CloudKit.Asset> asset = asset(records);
+        Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasData)
+                .map(u -> u.getData().getValue().toByteArray())
+                .flatMap(zone::unwrapKey);
+        Optional<byte[]> fileChecksum = asset.filter(CloudKit.Asset::hasFileChecksum)
+                .map(u -> u.getFileChecksum().toByteArray());
+        Optional<byte[]> fileSignature = asset.filter(CloudKit.Asset::hasFileSignature)
+                .map(u -> u.getFileSignature().toByteArray());
+        Optional<String> contentBaseURL = asset.filter(CloudKit.Asset::hasContentBaseURL)
+                .map(CloudKit.Asset::getContentBaseURL);
+        Optional<String> dsPrsID = asset.filter(CloudKit.Asset::hasDsPrsID)
+                .map(CloudKit.Asset::getDsPrsID);
+        Optional<Integer> fileSize = asset.filter(CloudKit.Asset::hasSize)
+                .map(CloudKit.Asset::getSize)
+                .map(Long::intValue);
+        Optional<Instant> downloadTokenExpiration = asset.filter(CloudKit.Asset::hasDownloadTokenExpiration)
+                .map(CloudKit.Asset::getDownloadTokenExpiration)
+                .map(Instant::ofEpochSecond);
 
-        Optional<byte[]> data
-                = asset.flatMap(as -> as.hasData()
-                        ? Optional.of(as.getData().getValue().toByteArray())
-                        : Optional.empty());
-
-        Optional<byte[]> keyEncryptionKey = data.flatMap(unwrapKey::apply);
-
-        // TODO rework to getters in Asset.
-        Optional<byte[]> fileChecksum
-                = asset.flatMap(as -> as.hasFileChecksum()
-                        ? Optional.of(as.getFileChecksum().toByteArray())
-                        : Optional.empty());
-
-        Optional<byte[]> fileSignature
-                = asset.flatMap(as -> as.hasFileSignature()
-                        ? Optional.of(as.getFileSignature().toByteArray())
-                        : Optional.empty());
-
-        Optional<String> contentBaseURL
-                = asset.flatMap(as -> as.hasContentBaseURL()
-                        ? Optional.of(as.getContentBaseURL())
-                        : Optional.empty());
-
-        //TOFIX return to Optional, or use empty?
-        String dsPrsID
-                = asset.flatMap(as -> as.hasDsPrsID()
-                        ? Optional.of(as.getDsPrsID())
-                        : Optional.empty())
-                .orElseGet(() -> {
-                    logger.warn("-- from() - no dsPrsID");
-                    return "";
-                }); // TODO test, can always inject dsPrsID
-
-        int fileSize = asset.map(as -> as.getSize()).orElse(0L).intValue();
-        long tokenExpiration = asset.map(as -> as.getDownloadTokenExpiration()).orElse(0L);
-
-        long currentTimeSeconds = System.currentTimeMillis() / 1000;
-
-        // Adjust for bad system clocks.
-        Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
-                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
-                : Instant.ofEpochSecond(tokenExpiration);
-
+        // TODO Adjust for bad system clocks.
+//        long currentTimeSeconds = System.currentTimeMillis() / 1000;
+//        Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
+//                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
+//                : Instant.ofEpochSecond(tokenExpiration);
         Asset newAsset = new Asset(
+                record,
+                assetID,
                 protectionClass,
                 fileSize,
                 fileType,
@@ -123,49 +100,53 @@ public final class AssetFactory {
                 encryptedAttributes,
                 asset);
         logger.debug("-- from() - asset: {}", newAsset);
-
         return newAsset;
     }
 
-    static Optional<byte[]> optional(byte[] bytes) {
-        return bytes.length == 0
-                ? Optional.empty()
-                : Optional.of(bytes);
+    static Optional<Integer> protectionClass(List<CloudKit.RecordField> records) {
+        return records.stream()
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals(PROTECTION_CLASS))
+                .map(u -> u
+                        .getValue()
+                        .getSignedValue())
+                .map(Long::intValue)
+                .findFirst();
     }
 
-    static Integer protectionClass(List<CloudKit.RecordField> records) {
+    static Optional<Integer> fileType(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("protectionClass"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .filter(value -> value.getIdentifier().getName().equals(FILE_TYPE))
+                .map(u -> u
+                        .getValue()
+                        .getSignedValue())
                 .map(Long::intValue)
-                .findFirst()
-                .orElse(-1);
-    }
-
-    static Integer fileType(List<CloudKit.RecordField> records) {
-        return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals("fileType"))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getSignedValue)
-                .map(Long::intValue)
-                .findFirst()
-                .orElse(-1);
+                .findFirst();
     }
 
     static Optional<CloudKit.Asset> asset(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals(CONTENTS))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getAssetValue)
+                .filter(value -> value
+                        .getIdentifier()
+                        .getName()
+                        .equals(CONTENTS))
+                .map(u -> u
+                        .getValue()
+                        .getAssetValue())
                 .findFirst();
     }
 
-    public static Optional<byte[]> encryptedAttributes(List<CloudKit.RecordField> records) {
+    static Optional<byte[]> encryptedAttributes(List<CloudKit.RecordField> records) {
         return records.stream()
-                .filter(value -> value.getIdentifier().getName().equals(ENCRYPTED_ATTRIBUTES))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getBytesValue)
+                .filter(u -> u
+                        .getIdentifier()
+                        .getName()
+                        .equals(ENCRYPTED_ATTRIBUTES))
+                .map(u -> u
+                        .getValue()
+                        .getBytesValue())
                 .map(ByteString::toByteArray)
                 .findFirst();
     }

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -21,19 +21,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.data.backup;
+package com.github.horrorho.inflatabledonkey.args;
 
-import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
+import net.jcip.annotations.Immutable;
 
 /**
- * TimeStatistics.
  *
  * @author Ahseya
  */
-public interface TimeStatistics {
+@Immutable
+public final class Args {
 
-    Instant creation();
+    private final Supplier<List<Arg>> args;
 
-    Instant modification();
+    private final String cmdLineSyntax;
+    private final String header;
+    private final String footer;
 
+    public Args(Supplier<List<Arg>> args, String cmdLineSyntax, String header, String footer) {
+        this.args = Objects.requireNonNull(args, "args");
+        this.cmdLineSyntax = cmdLineSyntax;
+        this.header = header;
+        this.footer = footer;
+    }
+
+    public List<Arg> args() {
+        return args.get();
+    }
+
+    public String cmdLineSyntax() {
+        return cmdLineSyntax;
+    }
+
+    public String header() {
+        return header;
+    }
+
+    public String footer() {
+        return footer;
+    }
 }

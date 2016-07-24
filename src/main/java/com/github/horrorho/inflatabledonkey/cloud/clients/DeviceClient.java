@@ -24,12 +24,15 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Devices;
+import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
+import com.github.horrorho.inflatabledonkey.data.backup.DeviceFactory;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -37,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * DeviceClient.
  *
  * @author Ahseya
  */
@@ -47,16 +49,22 @@ public final class DeviceClient {
     private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
 
     public static List<Device>
-            device(HttpClient httpClient, CloudKitty kitty, Collection<String> deviceID)
-            throws IOException {
+            device(HttpClient httpClient, CloudKitty kitty, Collection<DeviceID> devices)
+            throws UncheckedIOException {
+
+        List<String> deviceList = devices.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", deviceID);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceList);
         logger.debug("-- device() - responses: {}", responses);
 
         return responses.stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(Devices::from)
+                .map(DeviceFactory::from)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 }

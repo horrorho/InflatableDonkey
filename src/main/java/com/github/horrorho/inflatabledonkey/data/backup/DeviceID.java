@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -24,43 +24,53 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Ahseya
  */
 @Immutable
-public final class Manifest {
+public final class DeviceID {
 
-    private final ManifestID id;
-    private final int count;
-    private final int checksum;
+    private static final Logger logger = LoggerFactory.getLogger(DeviceID.class);
 
-    public Manifest(ManifestID id, int count, int checksum) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.count = count;
-        this.checksum = checksum;
+    public static Optional<DeviceID> from(String id) {
+        Optional<DeviceID> deviceID = parse(id);
+        deviceID.filter(u -> !u.toString().equals(id))
+                .ifPresent(u -> {
+                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                });
+        return deviceID;
     }
 
-    public int count() {
-        return count;
+    static Optional<DeviceID> parse(String id) {
+        // Format: D:<base64 hash>
+        String[] split = id.split(":");
+        if (split.length != 2 || !split[0].equals("D")) {
+            logger.warn("-- parse() - unexpected format: {}", id);
+        }
+        return split.length < 2
+                ? Optional.empty()
+                : Optional.of(new DeviceID(split[1]));
+    }
+    private final String hash;
+
+    public DeviceID(String hash) {
+        this.hash = Objects.requireNonNull(hash, "hash");
     }
 
-    public int checksum() {
-        return checksum;
-    }
-
-    public ManifestID id() {
-        return id;
+    public String hash() {
+        return hash;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.hash);
         return hash;
     }
 
@@ -75,14 +85,8 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
-            return false;
-        }
-        if (this.checksum != other.checksum) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
+        final DeviceID other = (DeviceID) obj;
+        if (!Objects.equals(this.hash, other.hash)) {
             return false;
         }
         return true;
@@ -90,6 +94,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "id=" + id + ", count=" + count + ", checksum=" + checksum + '}';
+        return "D:" + hash;
     }
 }

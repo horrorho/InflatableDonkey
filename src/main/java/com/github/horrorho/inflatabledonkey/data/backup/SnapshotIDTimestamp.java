@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import java.time.Instant;
 import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
@@ -31,36 +32,30 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class Manifest {
+public final class SnapshotIDTimestamp {
 
-    private final ManifestID id;
-    private final int count;
-    private final int checksum;
+    private final SnapshotID snapshotID;
+    private final Instant timestamp;
 
-    public Manifest(ManifestID id, int count, int checksum) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.count = count;
-        this.checksum = checksum;
+    public SnapshotIDTimestamp(SnapshotID snapshotID, Instant timestamp) {
+        this.snapshotID = Objects.requireNonNull(snapshotID, "snapshotID");
+        this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
+
     }
 
-    public int count() {
-        return count;
+    public Instant timestamp() {
+        return timestamp;
     }
 
-    public int checksum() {
-        return checksum;
-    }
-
-    public ManifestID id() {
-        return id;
+    public SnapshotID snapshotID() {
+        return snapshotID;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        hash = 59 * hash + Objects.hashCode(this.snapshotID);
+        hash = 59 * hash + Objects.hashCode(this.timestamp);
         return hash;
     }
 
@@ -75,14 +70,11 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
+        final SnapshotIDTimestamp other = (SnapshotIDTimestamp) obj;
+        if (!Objects.equals(this.snapshotID, other.snapshotID)) {
             return false;
         }
-        if (this.checksum != other.checksum) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
+        if (!Objects.equals(this.timestamp, other.timestamp)) {
             return false;
         }
         return true;
@@ -90,6 +82,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "id=" + id + ", count=" + count + ", checksum=" + checksum + '}';
+        return "SnapshotIDTimestamp{" + "snapshotID=" + snapshotID + ", timestamp=" + timestamp + '}';
     }
 }

@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -61,9 +61,9 @@ public final class Accounts {
     public static Account account(NSDictionary settings) {
         logger.debug("-- account() - settings: {}", settings.toASCIIPropertyList());
 
-        NSDictionary accountInfoDict = PLists.getAs(settings, "appleAccountInfo", NSDictionary.class);
-        NSDictionary tokensDict = PLists.getAs(settings, "tokens", NSDictionary.class);
-        NSDictionary mobileMeDict = PLists.getAs(settings, "com.apple.mobileme", NSDictionary.class);
+        NSDictionary accountInfoDict = PListsLegacy.getAs(settings, "appleAccountInfo", NSDictionary.class);
+        NSDictionary tokensDict = PListsLegacy.getAs(settings, "tokens", NSDictionary.class);
+        NSDictionary mobileMeDict = PListsLegacy.getAs(settings, "com.apple.mobileme", NSDictionary.class);
 
         AccountInfo accountInfo = new AccountInfo(accountInfoDict);
         Tokens tokens = new Tokens(tokensDict);

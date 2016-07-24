@@ -30,29 +30,28 @@ import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * Asset.
  *
  * @author Ahseya
  */
 @Immutable
-public final class Asset {
+public final class Asset extends AbstractRecord {
 
-    private final int protectionClass;
-    private final int size;
-    private final int fileType;
-    private final Instant downloadTokenExpiration;
-    private final String dsPrsID;
+    private final AssetID assetID;
+    private final Optional<Integer> protectionClass;
+    private final Optional<Integer> size;
+    private final Optional<Integer> fileType;
+    private final Optional<Instant> downloadTokenExpiration;
+    private final Optional<String> dsPrsID;
     private final Optional<String> contentBaseURL;
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
@@ -60,49 +59,56 @@ public final class Asset {
     private final Optional<NSDictionary> encryptedAttributes;
     private final Optional<CloudKit.Asset> asset;
 
-    public Asset(
-            int protectionClass,
-            int size,
-            int fileType,
-            Instant downloadTokenExpiration,
-            String dsPrsID,
+    Asset(
+            CloudKit.Record record,
+            AssetID assetID,
+            Optional<Integer> protectionClass,
+            Optional<Integer> size,
+            Optional<Integer> fileType,
+            Optional<Instant> downloadTokenExpiration,
+            Optional<String> dsPrsID,
             Optional<String> contentBaseURL,
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
-            Optional<NSDictionary> encryptedAttributes,
+            Optional<byte[]> encryptedAttributes,
             Optional<CloudKit.Asset> asset) {
-
-        this.protectionClass = protectionClass;
-        this.size = size;
-        this.fileType = fileType;
-        this.downloadTokenExpiration = downloadTokenExpiration;
+        super(record);
+        this.assetID = Objects.requireNonNull(assetID, "assetID");
+        this.protectionClass = Objects.requireNonNull(protectionClass, "protectionClass");
+        this.size = Objects.requireNonNull(size, "size");
+        this.fileType = Objects.requireNonNull(fileType, "fileType");
+        this.downloadTokenExpiration = Objects.requireNonNull(downloadTokenExpiration, "downloadTokenExpiration");
         this.dsPrsID = Objects.requireNonNull(dsPrsID, "dsPrsID");
         this.contentBaseURL = Objects.requireNonNull(contentBaseURL, "contentBaseURL");
         this.fileChecksum = Objects.requireNonNull(fileChecksum, "fileChecksum");
         this.fileSignature = Objects.requireNonNull(fileSignature, "fileSignature");
         this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey, "keyEncryptionKey");
-        this.encryptedAttributes = Objects.requireNonNull(encryptedAttributes, "encryptedAttributes");
+        this.encryptedAttributes = encryptedAttributes.flatMap(NSDictionaries::parse);
         this.asset = Objects.requireNonNull(asset, "asset");
     }
 
-    public int protectionClass() {
+    public AssetID getAssetID() {
+        return assetID;
+    }
+
+    public Optional<Integer> protectionClass() {
         return protectionClass;
     }
 
-    public int size() {
+    public Optional<Integer> size() {
         return size;
     }
 
-    public int fileType() {
+    public Optional<Integer> fileType() {
         return fileType;
     }
 
-    public Instant downloadTokenExpiration() {
+    public Optional<Instant> downloadTokenExpiration() {
         return downloadTokenExpiration;
     }
 
-    public String dsPrsID() {
+    public Optional<String> dsPrsID() {
         return dsPrsID;
     }
 
@@ -122,51 +128,51 @@ public final class Asset {
         return keyEncryptionKey.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    <T extends NSObject, U> Optional<U> encryptedAttribute(String key, Class<T> to, Function<T, U> then) {
-        return encryptedAttributes.flatMap(e -> PLists.optionalAs(e, key, to)).map(then);
+    <T extends NSObject> Optional<T> encryptedAttribute(String key, Class<T> to) {
+        return encryptedAttributes.flatMap(e -> NSDictionaries.as(e, key, to));
     }
 
     public Optional<String> domain() {
-        return encryptedAttribute("domain", NSString.class, NSString::getContent);
+        return encryptedAttribute("domain", NSString.class).map(NSString::getContent);
     }
 
     public Optional<String> relativePath() {
-        return encryptedAttribute("relativePath", NSString.class, NSString::getContent);
+        return encryptedAttribute("relativePath", NSString.class).map(NSString::getContent);
     }
 
     public Optional<Instant> modified() {
-        return encryptedAttribute("domain", NSDate.class, NSDate::getDate)
+        return encryptedAttribute("domain", NSDate.class).map(NSDate::getDate)
                 .map(Date::toInstant);
     }
 
     public Optional<Instant> birth() {
-        return encryptedAttribute("birth", NSDate.class, NSDate::getDate)
+        return encryptedAttribute("birth", NSDate.class).map(NSDate::getDate)
                 .map(Date::toInstant);
     }
 
     public Optional<Instant> statusChanged() {
-        return encryptedAttribute("statusChanged", NSDate.class, NSDate::getDate)
+        return encryptedAttribute("statusChanged", NSDate.class).map(NSDate::getDate)
                 .map(Date::toInstant);
     }
 
     public Optional<Integer> userID() {
-        return encryptedAttribute("userID", NSNumber.class, NSNumber::intValue);
+        return encryptedAttribute("userID", NSNumber.class).map(NSNumber::intValue);
     }
 
     public Optional<Integer> groupID() {
-        return encryptedAttribute("groupID", NSNumber.class, NSNumber::intValue);
+        return encryptedAttribute("groupID", NSNumber.class).map(NSNumber::intValue);
     }
 
     public Optional<Integer> mode() {
-        return encryptedAttribute("mode", NSNumber.class, NSNumber::intValue);
+        return encryptedAttribute("mode", NSNumber.class).map(NSNumber::intValue);
     }
 
     public Optional<byte[]> encryptionKey() {
-        return encryptedAttribute("encryptionKey", NSData.class, NSData::bytes);
+        return encryptedAttribute("encryptionKey", NSData.class).map(NSData::bytes);
     }
 
     public Optional<Integer> attributeSize() {
-        return encryptedAttribute("size", NSNumber.class, NSNumber::intValue);
+        return encryptedAttribute("size", NSNumber.class).map(NSNumber::intValue);
     }
 
     public Optional<CloudKit.Asset> asset() {
@@ -176,6 +182,7 @@ public final class Asset {
     @Override
     public String toString() {
         return "Asset{"
+                + "assetID=" + assetID
                 + "protectionClass=" + protectionClass
                 + ", size=" + size
                 + ", fileType=" + fileType
@@ -189,4 +196,3 @@ public final class Asset {
                 + '}';
     }
 }
-// TODO simplify

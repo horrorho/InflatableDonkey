@@ -27,12 +27,11 @@ import com.github.horrorho.inflatabledonkey.cloud.clients.KeyBagClient;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.KeyBlob;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBagType;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagType;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
-import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -58,65 +57,29 @@ public final class KeyBagManager {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBagManager.class);
 
-    public static KeyBagManager create(CloudKitty kitty, ProtectionZone mbksync) {
-        BiFunction<HttpClient, String, Optional<KeyBag>> keyBagFactory
-                = (httpClient, uuid) -> keyBag(httpClient, kitty, mbksync, uuid);
-
-        return new KeyBagManager(keyBagFactory);
-    }
-
-    static Optional<KeyBag> keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone mbksync, String uuid) {
-        try {
-            return KeyBagClient.keyBag(httpClient, kitty, mbksync, uuid);
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+    public static KeyBagManager defaults(CloudKitty kitty, ProtectionZone mbksync) {
+        BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient
+                = (httpClient, keyBagID) -> KeyBagClient.keyBag(httpClient, kitty, mbksync, keyBagID);
+        return new KeyBagManager(keyBagClient);
     }
 
     private static final KeyBag FAIL
-            = new KeyBag(KeyBagType.BACKUP, new byte[]{}, Collections.emptyMap(), Collections.emptyMap());
+            = new KeyBag(new KeyBagID(new byte[]{0}), KeyBagType.BACKUP, Collections.emptyMap(), Collections.emptyMap());
 
-    private final BiFunction<HttpClient, String, Optional<KeyBag>> keyBagClient;
-    private final ConcurrentHashMap<String, KeyBag> keyBagMap;
+    private final BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient;
+    private final ConcurrentHashMap<KeyBagID, KeyBag> keyBagMap;
 
-    public KeyBagManager(BiFunction<HttpClient, String, Optional<KeyBag>> keyBagClient, Map<String, KeyBag> keyBagMap) {
+    public KeyBagManager(BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient, Map<KeyBagID, KeyBag> keyBagMap) {
         this.keyBagClient = Objects.requireNonNull(keyBagClient, "keyBagClient");
         this.keyBagMap = new ConcurrentHashMap<>(keyBagMap);
     }
 
-    public KeyBagManager(BiFunction<HttpClient, String, Optional<KeyBag>> keyBagFactory) {
-        this(keyBagFactory, Collections.emptyMap());
+    public KeyBagManager(BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient) {
+        this(keyBagClient, Collections.emptyMap());
     }
 
-    public KeyBagManager addKeyBags(KeyBag... keyBags) {
-        for (KeyBag keyBag : keyBags) {
-            keyBagMap.put(keyBag.uuidBase64(), keyBag);
-        }
-        return this;
-    }
-
-    public Collection<KeyBag> keyBags() {
-        return keyBagMap.values()
-                .stream()
-                .filter(keyBag -> keyBag != FAIL)
-                .collect(Collectors.toList());
-    }
-
-    public Optional<KeyBag> keyBag(byte[] uuid) {
-        String encoded = Base64.getEncoder().encodeToString(uuid);
-        return keyBag(encoded);
-    }
-
-    public Optional<KeyBag> keyBag(String uuid) {
-        KeyBag keyBag = keyBagMap.getOrDefault(uuid, FAIL);
-        if (keyBag == FAIL) {
-            logger.warn("-- keyBag() - no key bag for uuid: {}", uuid);
-        }
-
-        return keyBag == FAIL
-                ? Optional.empty()
-                : Optional.of(keyBag);
+    public Optional<KeyBag> keyBag(KeyBagID keyBagID) {
+        return Optional.ofNullable(keyBagMap.get(keyBagID));
     }
 
     public KeyBagManager update(HttpClient httpClient, List<Asset> assets) {
@@ -125,19 +88,20 @@ public final class KeyBagManager {
         return this;
     }
 
-    KeyBag fetchKeyBag(HttpClient httpClient, String uuid) {
-        return keyBagClient.apply(httpClient, uuid)
-                .orElse(FAIL);
-    }
-
-    Set<String> keyBagUUIDs(Collection<Asset> assets) {
+    Set<KeyBagID> keyBagUUIDs(Collection<Asset> assets) {
         return assets.stream()
                 .map(Asset::encryptionKey)
-                .map(key -> key.flatMap(KeyBlob::uuid))
+                .map(u -> u.flatMap(KeyBlob::uuid))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .map(uuid -> Base64.getEncoder().encodeToString(uuid))
+                .map(KeyBagID::new)
                 .collect(Collectors.toSet());
+    }
+
+    KeyBag fetchKeyBag(HttpClient httpClient, KeyBagID keyBagID) {
+        // FAIL used to limit recurrent fetches on unavailable key bags.
+        return keyBagClient.apply(httpClient, keyBagID)
+                .orElse(FAIL);
     }
 
     @Override

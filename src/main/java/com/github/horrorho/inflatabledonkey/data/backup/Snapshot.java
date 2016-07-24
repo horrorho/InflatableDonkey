@@ -23,11 +23,18 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
+import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.PLists;
+import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,21 +52,52 @@ public final class Snapshot extends AbstractRecord {
 
     private static final Logger logger = LoggerFactory.getLogger(Snapshot.class);
 
-    private final Optional<byte[]> backupProperties;
+    private final SnapshotID snapshotID;
+    private final Optional<NSDictionary> backupProperties;
     private final List<Manifest> manifests;
 
-    public Snapshot(
+    Snapshot(
+            CloudKit.Record record,
+            SnapshotID snapshotID,
             Optional<byte[]> backupProperties,
-            List<Manifest> manifests,
-            CloudKit.Record record) {
+            List<Manifest> manifests) {
 
         super(record);
-        this.backupProperties = Objects.requireNonNull(backupProperties, "backupProperties");
+        this.snapshotID = Objects.requireNonNull(snapshotID, "snapshotID");
+        this.backupProperties = backupProperties.flatMap(NSDictionaries::parse);
         this.manifests = Objects.requireNonNull(manifests, "manifests");
     }
 
-    public Optional<NSDictionary> backupProperties() {
-        return backupProperties.map(bs -> PLists.<NSDictionary>parseLegacy(bs));
+    public SnapshotID snapshotID() {
+        return snapshotID;
+    }
+
+    <T extends NSObject> Optional<T> backupProperty(String key, Class<T> to) {
+        return backupProperties.flatMap(u -> NSDictionaries.as(u, key, to));
+    }
+
+    public Optional<List<String>> appleIDs() {
+        return backupProperty("AppleIDs", NSDictionary.class).map(NSDictionary::allKeys).map(Arrays::asList);
+    }
+
+    public Optional<Date> date() {
+        return backupProperty("Date", NSDate.class).map(NSDate::getDate);
+    }
+
+    public Optional<String> snapshotHMACKey() {
+        return backupProperty("SnapshotHMACKey", NSString.class).map(NSString::getContent);
+    }
+
+    public Optional<String> systemDomainsVersion() {
+        return backupProperty("SystemDomainsVersion", NSString.class).map(NSString::getContent);
+    }
+
+    public Optional<String> version() {
+        return backupProperty("Version", NSString.class).map(NSString::getContent);
+    }
+
+    public Optional<Boolean> wasPasscodeSet() {
+        return backupProperty("WasPasscodeSet", NSNumber.class).map(NSNumber::boolValue);
     }
 
     public List<Manifest> manifests() {
@@ -91,15 +129,20 @@ public final class Snapshot extends AbstractRecord {
     }
 
     public String info() {
-        return String.format("%6s MB ", (quotaUsed() / 1048576))
-                + deviceName();
+        long quotaUsed = quotaUsed();
+        String quota = quotaUsed > 10737418240L
+                ? String.format("%4s GB ", (quotaUsed() / 1073741824))
+                : String.format("%4s MB ", (quotaUsed() / 1048576));
+        Instant timestamp = date().map(Date::toInstant).orElse(modification());
+        String version = version().map(u -> "iOS " + u).orElse("");
+        return quota + deviceName() + " (" + version + ")  " + timestamp;
     }
 
     @Override
     public String toString() {
-        return "Snapshot{" + super.toString()
-                + ", backupProperties=" + backupProperties().map(NSObject::toXMLPropertyList).orElse("NULL")
+        return "Snapshot{"
+                + "snapshotID=" + snapshotID
+                + ", backupProperties=" + backupProperties.map(NSObject::toXMLPropertyList)
                 + '}';
     }
 }
-// SnapshotHMACKey

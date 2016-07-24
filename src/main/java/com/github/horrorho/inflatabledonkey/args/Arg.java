@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2016 Ahseya.
@@ -21,46 +21,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.data.backup;
+package com.github.horrorho.inflatabledonkey.args;
 
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import java.util.function.UnaryOperator;
+import net.jcip.annotations.NotThreadSafe;
+import org.apache.commons.cli.Option;
 
 /**
  *
  * @author Ahseya
  */
-@Immutable
-public final class Manifest {
+@NotThreadSafe
+public class Arg {
 
-    private final ManifestID id;
-    private final int count;
-    private final int checksum;
+    private final Property property;
+    private final Option option;
+    private final UnaryOperator<String> mapper;
 
-    public Manifest(ManifestID id, int count, int checksum) {
-        this.id = Objects.requireNonNull(id, "id");
-        this.count = count;
-        this.checksum = checksum;
+    public Arg(Property property, Option option, UnaryOperator<String> mapper) {
+        this.property = property;
+        this.option = option;
+        this.mapper = mapper;
     }
 
-    public int count() {
-        return count;
+    public Arg(Property property, Option option) {
+        this(property, option, UnaryOperator.identity());
     }
 
-    public int checksum() {
-        return checksum;
+    public Option option() {
+        return option;
     }
 
-    public ManifestID id() {
-        return id;
+    public String map(String value) {
+        return mapper.apply(value);
+    }
+
+    public Property property() {
+        return property;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + this.count;
-        hash = 23 * hash + this.checksum;
-        hash = 23 * hash + Objects.hashCode(this.id);
+        hash = 41 * hash + Objects.hashCode(this.option);
+        hash = 41 * hash + Objects.hashCode(this.mapper);
+        hash = 41 * hash + Objects.hashCode(this.property);
         return hash;
     }
 
@@ -75,14 +81,14 @@ public final class Manifest {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Manifest other = (Manifest) obj;
-        if (this.count != other.count) {
+        final Arg other = (Arg) obj;
+        if (!Objects.equals(this.option, other.option)) {
             return false;
         }
-        if (this.checksum != other.checksum) {
+        if (!Objects.equals(this.mapper, other.mapper)) {
             return false;
         }
-        if (!Objects.equals(this.id, other.id)) {
+        if (this.property != other.property) {
             return false;
         }
         return true;
@@ -90,6 +96,6 @@ public final class Manifest {
 
     @Override
     public String toString() {
-        return "Manifest{" + "id=" + id + ", count=" + count + ", checksum=" + checksum + '}';
+        return "Arg{" + "property=" + property + ", option=" + option + ", parser=" + mapper + '}';
     }
 }

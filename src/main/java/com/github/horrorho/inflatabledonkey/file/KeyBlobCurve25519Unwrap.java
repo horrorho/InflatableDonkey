@@ -25,7 +25,8 @@ package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.Curve25519;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
@@ -44,38 +45,37 @@ public final class KeyBlobCurve25519Unwrap {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBlobCurve25519Unwrap.class);
 
-    public static Optional<byte[]> unwrap(KeyBlob fileMetaData, Function<byte[], Optional<KeyBag>> keyBags) {
-        return keyBags.apply(fileMetaData.uuid())
-                .map(keyBag -> unwrap(fileMetaData, keyBag))
+    public static Optional<byte[]> unwrap(KeyBlob blob, Function<KeyBagID, Optional<KeyBag>> keyBags) {
+        return keyBags.apply(new KeyBagID(blob.uuid()))
+                .map(keyBag -> doUnwrap(blob, keyBag))
                 .orElseGet(() -> {
-                    logger.warn("-- unwrap() - no keybag matching uuid: 0x{}", fileMetaData.uuid());
+                    logger.warn("-- unwrap() - no keybag matching uuid: 0x{}", blob.uuid());
                     return Optional.empty();
                 });
     }
 
-    public static Optional<byte[]> unwrap(KeyBlob fileMetaData, KeyBag keyBag) {
-        if (Arrays.equals(keyBag.uuid(), fileMetaData.uuid())) {
-            logger.debug("-- unwrap() - positive uuid match fileKey: 0x{} keybag: 0x{}",
-                    Hex.toHexString(fileMetaData.uuid()), Hex.toHexString(keyBag.uuid()));
-        } else {
-            logger.warn("-- unwrap() - negative uuid match fileKey: 0x{} keybag: 0x{}",
-                    Hex.toHexString(fileMetaData.uuid()), Hex.toHexString(keyBag.uuid()));
+    public static Optional<byte[]> unwrap(KeyBlob blob, KeyBag keyBag) {
+        if (!Arrays.equals(blob.uuid(), keyBag.keyBagID().uuid())) {
+            logger.warn("-- unwrap() - negative uuid match blob: 0x{} keybag: 0x{}",
+                    Hex.toHexString(blob.uuid()), Hex.toHexString(keyBag.keyBagID().uuid()));
             return Optional.empty();
         }
+        return doUnwrap(blob, keyBag);
+    }
 
-        Optional<byte[]> publicKey = keyBag.publicKey(fileMetaData.protectionClass());
+    static Optional<byte[]> doUnwrap(KeyBlob blob, KeyBag keyBag) {
+        Optional<byte[]> publicKey = keyBag.publicKey(blob.protectionClass());
         if (!publicKey.isPresent()) {
-            logger.warn("-- unwrap() - no public key for protection class: {}", fileMetaData.protectionClass());
+            logger.warn("-- doUnwrap() - no public key for protection class: {}", blob.protectionClass());
             return Optional.empty();
         }
 
-        Optional<byte[]> privateKey = keyBag.privateKey(fileMetaData.protectionClass());
+        Optional<byte[]> privateKey = keyBag.privateKey(blob.protectionClass());
         if (!privateKey.isPresent()) {
-            logger.warn("-- unwrap() - no private key for protection class: {}", fileMetaData.protectionClass());
+            logger.warn("-- doUnwrap() - no private key for protection class: {}", blob.protectionClass());
             return Optional.empty();
         }
-
-        return curve25519Unwrap(publicKey.get(), privateKey.get(), fileMetaData.publicKey(), fileMetaData.wrappedKey());
+        return curve25519Unwrap(publicKey.get(), privateKey.get(), blob.publicKey(), blob.wrappedKey());
     }
 
     public static Optional<byte[]> curve25519Unwrap(

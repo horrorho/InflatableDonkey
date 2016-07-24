@@ -33,17 +33,23 @@ import com.github.horrorho.inflatabledonkey.cloud.clients.SnapshotClient;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
 import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
+import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitties;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
+import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Backup.
  *
  * @author Ahseya
  */
@@ -65,10 +70,9 @@ public final class BackupAssistant {
 
     public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-        CloudKitty kitty = CloudKitty.backupd(ckInit, account);
+        CloudKitty kitty = CloudKitties.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
         ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
-
         return new BackupAssistant(kitty, mbksync);
     }
 
@@ -83,14 +87,14 @@ public final class BackupAssistant {
     }
 
     public BackupAssistant(CloudKitty kitty, ProtectionZone mbksync) {
-        this(kitty, mbksync, KeyBagManager.create(kitty, mbksync));
+        this(kitty, mbksync, KeyBagManager.defaults(kitty, mbksync));
     }
 
     public Optional<BackupAccount> backupAccount(HttpClient httpClient) throws IOException {
         return BackupAccountClient.backupAccount(httpClient, kitty, mbksync);
     }
 
-    public List<Device> devices(HttpClient httpClient, Collection<String> devices) throws IOException {
+    public List<Device> devices(HttpClient httpClient, Collection<DeviceID> devices) throws IOException {
         return DeviceClient.device(httpClient, kitty, devices);
     }
 
@@ -98,48 +102,41 @@ public final class BackupAssistant {
         return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs);
     }
 
-    public Map<Device, List<Snapshot>> snapshotsForDevices(HttpClient httpClient, Collection<Device> devices)
+    public Map<Device, List<Snapshot>> deviceSnapshots(HttpClient httpClient, Collection<Device> devices)
             throws IOException {
-
-        Map<String, Device> snapshotDevice = devices.stream()
-                .map(d -> d
-                        .snapshots()
+        Map<SnapshotID, Device> snapshotDevice = devices
+                .stream()
+                .distinct()
+                .flatMap(d -> d
+                        .snapshotIDs()
                         .stream()
-                        .collect(Collectors.toMap(
-                                SnapshotID::id,
-                                s -> d,
-                                (a, b) -> {
-                                    logger.warn("-- snapshotsForDevices() - collision: {} {}", a, b);
-                                    return a;
-                                })))
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
+                        .map(s -> new SimpleImmutableEntry<>(s, d)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        List<SnapshotID> snapshotIDs = devices.stream()
-                .map(Device::snapshots)
+        List<SnapshotID> snapshotIDs = devices
+                .stream()
+                .map(Device::snapshotIDs)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
         return snapshots(httpClient, snapshotIDs)
                 .stream()
-                .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.name())));
+                .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.snapshotID())));
     }
 
-    public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws IOException {
+    public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws UncheckedIOException {
         List<Manifest> manifests = snapshot.manifests()
                 .stream()
                 .filter(x -> x.count() != 0)
                 .collect(Collectors.toList());
-
         return AssetsClient.assets(httpClient, kitty, mbksync, manifests);
     }
 
-    public List<Asset> assets(HttpClient httpClient, List<String> files) throws IOException {
-        return AssetTokenClient.assets(httpClient, kitty, mbksync, files);
+    public List<Asset> assets(HttpClient httpClient, Collection<AssetID> assetIDs) throws IOException {
+        return AssetTokenClient.assets(httpClient, kitty, mbksync, assetIDs);
     }
 
     public KeyBagManager newKeyBagManager() {
-        return KeyBagManager.create(kitty, mbksync);
+        return KeyBagManager.defaults(kitty, mbksync);
     }
 }

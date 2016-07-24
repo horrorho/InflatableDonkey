@@ -24,23 +24,22 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBag;
-import com.github.horrorho.inflatabledonkey.keybag.KeyBagFactory;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagFactory;
+import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.google.protobuf.ByteString;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * KeyBagClient.
  *
  * @author Ahseya
  */
@@ -50,12 +49,12 @@ public final class KeyBagClient {
     private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
     public static Optional<KeyBag>
-            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, String keyBagUUID) throws IOException {
-        logger.debug("-- keyBag() - keybag UUID: {}", keyBagUUID);
+            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, KeyBagID keyBagID)
+            throws UncheckedIOException {
+        logger.debug("-- keyBag() - keybag UUID: {}", keyBagID);
 
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", "K:" + keyBagUUID);
-
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
         if (responses.size() != 1) {
             logger.warn("-- keyBag() - bad response list size: {}", responses);
             return Optional.empty();
@@ -72,40 +71,6 @@ public final class KeyBagClient {
         }
         ProtectionZone newZone = optionalNewZone.get();
 
-        return keyBag(responses.get(0), newZone);
-    }
-
-    static Optional<KeyBag> keyBag(CloudKit.RecordRetrieveResponse response, ProtectionZone zone) {
-        Optional<byte[]> keyBagData = field(response.getRecord(), "keybagData", zone::decrypt);
-        if (!keyBagData.isPresent()) {
-            logger.warn("-- keyBag() - failed to acquire key bag");
-            return Optional.empty();
-        }
-
-        Optional<byte[]> secret = field(response.getRecord(), "secret", zone::decrypt);
-        if (!secret.isPresent()) {
-            logger.warn("-- keyBag() - failed to acquire key bag pass code");
-            return Optional.empty();
-        }
-
-        KeyBag keyBag = KeyBagFactory.create(keyBagData.get(), secret.get());
-        return Optional.of(keyBag);
-    }
-
-    static Optional<byte[]> field(
-            CloudKit.Record record,
-            String label,
-            BiFunction<byte[], String, Optional<byte[]>> decrypt) {
-
-        return record.getRecordFieldList()
-                .stream()
-                .filter(value -> value.getIdentifier().getName().equals(label))
-                .map(CloudKit.RecordField::getValue)
-                .map(CloudKit.RecordFieldValue::getBytesValue)
-                .map(ByteString::toByteArray)
-                .map(bs -> decrypt.apply(bs, label))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
+        return KeyBagFactory.from(responses.get(0), newZone);
     }
 }

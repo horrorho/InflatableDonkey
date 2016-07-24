@@ -23,11 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.requests;
 
+import com.google.protobuf.GeneratedMessage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -43,73 +45,56 @@ import org.apache.http.entity.ByteArrayEntity;
  * @author Ahseya
  */
 @Immutable
-public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], HttpUriRequest> {
+public final class ProtoBufsRequestFactoryLegacy {
 
-    private static final Map<Headers, Header> HEADERS = new HashMap<>(CoreHeaders.headers());
-    private static final String ACCEPT = "application/x-protobuf";
-    private static final String CONTENT_TYPE
-            = "application/x-protobuf; "
-            + "desc=\"https://p33-ckdatabase.icloud.com:443/static/protobuf/CloudDB/CloudDBClient.desc\"; "
-            + "messageType=RequestOperation; delimited=true";
+    public static ProtoBufsRequestFactoryLegacy instance() {
+        return instance;
+    }
+
+    private static final ProtoBufsRequestFactoryLegacy instance = new ProtoBufsRequestFactoryLegacy(CoreHeaders.headers());
 
     private final Map<Headers, Header> headers;
-    private final String url;
-    private final String container;
-    private final String bundle;
-    private final String cloudKitUserId;
-    private final String cloudKitToken;
 
-    public ProtoBufsRequestFactory(
-            Map<Headers, Header> headers,
-            String url, String container, String bundle, String cloudKitUserId, String cloudKitToken) {
+    public ProtoBufsRequestFactoryLegacy(Map<Headers, Header> headers) {
         this.headers = new HashMap<>(headers);
-        this.url = Objects.requireNonNull(url, "url");
-        this.container = Objects.requireNonNull(container, "container");
-        this.bundle = Objects.requireNonNull(bundle, "bundle");
-        this.cloudKitUserId = Objects.requireNonNull(cloudKitUserId, "cloudKitUserId");
-        this.cloudKitToken = Objects.requireNonNull(cloudKitToken, "cloudKitToken");
     }
 
-    public ProtoBufsRequestFactory(
-            String url, String container, String bundle, String cloudKitUserId, String cloudKitToken) {
-        this(HEADERS, url, container, bundle, cloudKitUserId, cloudKitToken);
-    }
+    public <T extends GeneratedMessage> HttpUriRequest newRequest(
+            String url,
+            String container,
+            String bundle,
+            String cloudKitUserId,
+            String cloudKitToken,
+            String uuid,
+            List<T> protobufs
+    ) throws IOException {
 
-    @Override
-    public HttpUriRequest apply(UUID uuid, byte[] delimitedMessages) {
-        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(delimitedMessages);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        protobufs.forEach(message -> {
+            try {
+                message.writeDelimitedTo(baos);
+
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
+
+        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(baos.toByteArray());
+
         HttpPost post = new HttpPost(url);
-        post.setHeader(Headers.XAPPLEREQUESTUUID.header(uuid.toString()));
+        post.setHeader(Headers.XAPPLEREQUESTUUID.header(uuid));
         post.setHeader(Headers.XCLOUDKITUSERID.header(cloudKitUserId));
         post.setHeader(Headers.XCLOUDKITAUTHTOKEN.header(cloudKitToken));
         post.setHeader(Headers.XCLOUDKITCONTAINERID.header(container));
         post.setHeader(Headers.XCLOUDKITBUNDLEID.header(bundle));
-        post.setHeader(HttpHeaders.ACCEPT, ACCEPT);
-        post.setHeader(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
+        post.setHeader(HttpHeaders.ACCEPT, "application/x-protobuf");
+        post.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-protobuf; desc=\"https://p33-ckdatabase.icloud.com:443/static/protobuf/CloudDB/CloudDBClient.desc\"; messageType=RequestOperation; delimited=true");
         post.addHeader(headers.get(Headers.USERAGENT));
         post.addHeader(headers.get(Headers.XCLOUDKITPROTOCOLVERSION));
         post.addHeader(headers.get(Headers.XMMECLIENTINFO));
         post.setEntity(byteArrayEntity);
+
         return post;
     }
 
-    public String url() {
-        return url;
-    }
-
-    public String container() {
-        return container;
-    }
-
-    public String bundle() {
-        return bundle;
-    }
-
-    public String cloudKitUserId() {
-        return cloudKitUserId;
-    }
-
-    public String cloudKitToken() {
-        return cloudKitToken;
-    }
 }

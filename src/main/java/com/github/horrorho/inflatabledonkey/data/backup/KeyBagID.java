@@ -23,9 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import java.util.Objects;
+import java.util.Base64;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,44 +35,58 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class SnapshotID {
+public final class KeyBagID {
 
-    private static final Logger logger = LoggerFactory.getLogger(SnapshotID.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeyBagID.class);
 
-    public static Optional<SnapshotID> from(String id) {
-        Optional<SnapshotID> snapshotID = parse(id);
-        snapshotID.filter(u -> !u.toString().equals(id))
+    public static Optional<KeyBagID> from(String string) {
+        Optional<KeyBagID> keyBagID = doFrom(string);
+        keyBagID.filter(u -> !u.toString().equals(string))
                 .ifPresent(u -> {
-                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                    logger.warn("-- from() - mismatch in: {} out: {}", string, u.toString());
                 });
-        return snapshotID;
+        return keyBagID;
     }
 
-    static Optional<SnapshotID> parse(String id) {
-        // Format: S:<base64 hash>
+    static Optional<KeyBagID> doFrom(String id) {
+        // Format: K:<base64 uuid>
         String[] split = id.split(":");
-        if (split.length != 2 || !split[0].equals("S")) {
-            logger.warn("-- parse() - unexpected format: {}", id);
+        if (split.length != 2 || !split[0].equals("K")) {
+            logger.warn("-- doFrom() - bad format: {}", id);
+            return Optional.empty();
         }
-        return split.length < 2
-                ? Optional.empty()
-                : Optional.of(new SnapshotID(split[1]));
+        return decode(split[1]).map(KeyBagID::new);
     }
 
-    private final String hash;
-
-    public SnapshotID(String hash) {
-        this.hash = Objects.requireNonNull(hash, "hash");
+    static Optional<byte[]> decode(String base64) {
+        try {
+            return Optional.of(Base64.getDecoder().decode(base64));
+        } catch (IllegalArgumentException ex) {
+            logger.warn("-- decode() - IllegalArgumentException: {}", ex.getMessage());
+            return Optional.empty();
+        }
     }
 
-    public String hash() {
-        return hash;
+    private final byte[] uuid;
+    private final String uuidBase64;
+
+    public KeyBagID(byte[] uuid) {
+        this.uuid = Arrays.copyOf(uuid, uuid.length);
+        uuidBase64 = Base64.getEncoder().encodeToString(uuid);
+    }
+
+    public byte[] uuid() {
+        return Arrays.copyOf(uuid, uuid.length);
+    }
+
+    public String uuidBase64() {
+        return uuidBase64;
     }
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.hash);
+        int hash = 7;
+        hash = 71 * hash + java.util.Arrays.hashCode(this.uuid);
         return hash;
     }
 
@@ -86,8 +101,8 @@ public final class SnapshotID {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final SnapshotID other = (SnapshotID) obj;
-        if (!Objects.equals(this.hash, other.hash)) {
+        final KeyBagID other = (KeyBagID) obj;
+        if (!java.util.Arrays.equals(this.uuid, other.uuid)) {
             return false;
         }
         return true;
@@ -95,6 +110,6 @@ public final class SnapshotID {
 
     @Override
     public String toString() {
-        return "S:" + hash;
+        return "K:" + uuidBase64;
     }
 }

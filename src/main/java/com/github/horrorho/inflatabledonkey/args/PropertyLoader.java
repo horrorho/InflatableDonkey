@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -39,6 +36,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * PropertyLoader.
@@ -52,38 +51,27 @@ public final class PropertyLoader implements Predicate<String[]> {
         return INSTANCE;
     }
 
-    private static final PropertyLoader INSTANCE = new PropertyLoader(OptionsFactory::options);
+    private static final Logger logger = LoggerFactory.getLogger(PropertyLoader.class);
+    private static final PropertyLoader INSTANCE = new PropertyLoader(ArgsFactory.defaults());
 
-    private final Supplier<Map<Option, Property>> optionKeyMapSupplier;
+    private final Args args;
 
-    public PropertyLoader(Supplier<Map<Option, Property>> optionKeyMapSupplier) {
-        this.optionKeyMapSupplier = Objects.requireNonNull(optionKeyMapSupplier, "optionKeyMapSupplier");
+    public PropertyLoader(Args args) {
+        this.args = Objects.requireNonNull(args, "args");
     }
 
     @Override
-    public boolean test(String[] args) throws IllegalArgumentException {
+    public boolean test(String[] arguments) throws IllegalArgumentException {
         try {
-            Map<Option, Property> optionKeyMap = optionKeyMapSupplier.get();
-
-            Options options = new Options();
-            optionKeyMap.keySet().forEach(options::addOption);
-
+            ArgsManager manager = new ArgsManager(args.args());
+            Options options = manager.options();
             CommandLineParser parser = new DefaultParser();
-            CommandLine commandLine = parser.parse(options, args);
-
-            Map<Property, String> properties = Stream.of(commandLine.getOptions())
-                    .collect(Collectors.toMap(optionKeyMap::get, this::parse));
+            CommandLine commandLine = parser.parse(options, arguments);
+            Map<Property, String> properties = manager.process(commandLine.getOptions());
 
             if (properties.containsKey(Property.ARGS_HELP)) {
-                help(OptionsFactory.options().keySet());
+                help(manager.listOptions(), args.header(), args.footer(), args.cmdLineSyntax());
                 return false;
-            }
-
-            if (properties.containsKey(Property.DP_MODE)) {
-                String override = properties.get(Property.DP_MODE);
-                if (!PropertyDP.parse(override).isPresent()) {
-                    throw new IllegalArgumentException("bad Data Protection override mode: " + override);
-                }
             }
 
             List<String> operands = commandLine.getArgList();
@@ -105,8 +93,8 @@ public final class PropertyLoader implements Predicate<String[]> {
                     throw new IllegalArgumentException(
                             "too many non-optional arguments, expected appleid/ password or authentication token only");
             }
+            properties.forEach((u, v) -> logger.info("-- test() - {} = {}", u.name(), v));
             Property.setProperties(properties);
-
             return true;
 
         } catch (ParseException ex) {
@@ -114,48 +102,16 @@ public final class PropertyLoader implements Predicate<String[]> {
         }
     }
 
-    public void help(Collection<? extends Option> optionList) {
+    void help(Collection<? extends Option> optionList, String header, String footer, String cmdLineSyntax) {
         Options options = new Options();
         optionList.forEach(options::addOption);
 
         HelpFormatter helpFormatter = new HelpFormatter();
         helpFormatter.setOptionComparator(null);
         helpFormatter.printHelp(
-                Property.APP_NAME.value().orElse("") + " [OPTION]... (<token> | <appleid> <password>) ",
-                options);
-    }
-
-    String parse(Option option) {
-        testIntegers(option);
-
-        if (option.hasArgs()) {
-            // Array
-            return option.getValuesList()
-                    .stream()
-                    .collect(Collectors.joining(" "));
-        }
-        if (option.hasArg()) {
-            // Value
-            return option.getValue();
-        }
-        // Boolean
-        return Boolean.TRUE.toString();
-    }
-
-    void testIntegers(Option option) {
-        if (!"int".equals(option.getArgName())) {
-            return;
-        }
-        option.getValuesList()
-                .forEach(v -> testInteger(option.getLongOpt(), v));
-    }
-
-    void testInteger(String name, String integer) {
-        try {
-            Integer.parseInt(integer);
-
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(name + ", bad integer '" + integer + "'");
-        }
+                cmdLineSyntax,
+                header,
+                options,
+                footer);
     }
 }

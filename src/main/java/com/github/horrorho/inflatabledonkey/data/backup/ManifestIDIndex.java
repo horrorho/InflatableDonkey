@@ -38,11 +38,20 @@ public final class ManifestIDIndex {
 
     private static final Logger logger = LoggerFactory.getLogger(ManifestIDIndex.class);
 
-    public static Optional<ManifestIDIndex> from(String formatted) {
+    public static Optional<ManifestIDIndex> from(String id) {
+        Optional<ManifestIDIndex> manifestIDIndex = parse(id);
+        manifestIDIndex.filter(u -> !u.toString().equals(id))
+                .ifPresent(u -> {
+                    logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
+                });
+        return manifestIDIndex;
+    }
+
+    static Optional<ManifestIDIndex> parse(String idIndex) {
         // Format: M:<uuid>:<base64 hash>:<index>
-        String[] split = formatted.split(":");
-        if (split.length != 4) {
-            logger.warn("-- from() - unexpected format: {}", formatted);
+        String[] split = idIndex.split(":");
+        if (split.length != 4 || !split[0].endsWith("M")) {
+            logger.warn("-- parse() - unexpected format: {}", idIndex);
         }
         if (split.length < 4) {
             return Optional.empty();
@@ -52,10 +61,9 @@ public final class ManifestIDIndex {
         try {
             index = Integer.parseInt(split[3]);
         } catch (NumberFormatException ex) {
-            logger.warn("-- from() - input: {} NumberFormatException: {}", formatted, ex.getMessage());
+            logger.warn("-- parse() - input: {} NumberFormatException: {}", idIndex, ex.getMessage());
             return Optional.empty();
         }
-
         return Optional.of(new ManifestIDIndex(split[1], split[2], index));
     }
 

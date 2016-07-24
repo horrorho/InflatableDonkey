@@ -24,13 +24,14 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.Snapshots;
+import com.github.horrorho.inflatabledonkey.data.backup.SnapshotFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SnapshotClient.
  *
  * @author Ahseya
  */
@@ -53,18 +53,17 @@ public final class SnapshotClient {
 
     public static List<Snapshot>
             snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
-            throws IOException {
+            throws UncheckedIOException {
 
         if (snapshotIDs.isEmpty()) {
             return new ArrayList<>();
         }
 
         List<String> snapshots = snapshotIDs.stream()
-                .map(SnapshotID::id)
+                .map(Object::toString)
                 .collect(Collectors.toList());
-
         List<CloudKit.RecordRetrieveResponse> responses
-                = kitty.recordRetrieveRequest(httpClient, "mbksync", snapshots);
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots);
         logger.debug("-- manifests() - responses: {}", responses);
 
         return responses.stream()
@@ -78,6 +77,6 @@ public final class SnapshotClient {
 
     static Optional<Snapshot> manifests(CloudKit.Record record, ProtectionZone zone) {
         return PZFactory.instance().create(zone, record.getProtectionInfo())
-                .map(z -> Snapshots.from(record, (bs, id) -> z.decrypt(bs, id).get())); // TODO rework Manifests
+                .flatMap(u -> SnapshotFactory.from(record, u));
     }
 }

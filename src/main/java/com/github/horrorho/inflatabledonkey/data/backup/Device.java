@@ -23,13 +23,12 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -37,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Device.
  *
  * @author Ahseya
  */
@@ -49,27 +47,28 @@ public final class Device extends AbstractRecord {
     public static final String DOMAIN_HMAC = "domainHMAC";
     public static final String KEYBAG_UUID = "currentKeybagUUID";
 
-    private final Collection<SnapshotID> snapshots;
+    private final DeviceID deviceID;
+    private final List<SnapshotIDTimestamp> snapshotIDTimestamps;
 
-    public Device(Collection<SnapshotID> snapshots, CloudKit.Record record) {
+    Device(CloudKit.Record record, DeviceID deviceID, Collection<SnapshotIDTimestamp> snapshotIDTimestamps) {
         super(record);
-        this.snapshots = new ArrayList<>(snapshots);
+        this.deviceID = Objects.requireNonNull(deviceID, "deviceID");
+        this.snapshotIDTimestamps = new ArrayList<>(snapshotIDTimestamps);
     }
 
-    public List<SnapshotID> snapshots() {
-        return new ArrayList<>(snapshots);
+    public DeviceID deviceID() {
+        return deviceID;
     }
 
-    public Map<String, Instant> snapshotTimestampMap() {
-        return snapshots.stream()
-                .collect(Collectors.toMap(
-                        SnapshotID::id,
-                        SnapshotID::timestamp,
-                        (a, b) -> {
-                            logger.warn("-- snapshotTimestampMap() - collision: {} {}", a, b);
-                            return a;
-                        }
-                ));
+    public List<SnapshotIDTimestamp> snapshotIDTimestamps() {
+        return new ArrayList<>(snapshotIDTimestamps);
+    }
+
+    public List<SnapshotID> snapshotIDs() {
+        return snapshotIDTimestamps
+                .stream()
+                .map(SnapshotIDTimestamp::snapshotID)
+                .collect(Collectors.toList());
     }
 
     public Optional<String> domainHMAC() {
@@ -112,24 +111,12 @@ public final class Device extends AbstractRecord {
                 .orElse("");
     }
 
-    public String uuid() {
-        String[] split = name().split(":");
-        if (split.length < 2) {
-            logger.warn("-- main() - unsupported device name format: {}", name());
-            return name();
-        }
-        return split[1].toUpperCase(Property.locale())
-                .toUpperCase(Property.locale());
-    }
-
     public String info() {
-        return uuid() + " "
-                + productType() + " "
-                + hardwareModel();
+        return productType() + " " + hardwareModel() + " " + deviceID.hash().toUpperCase(Locale.US) + "";
     }
 
     @Override
     public String toString() {
-        return "Device{" + super.toString() + '}';
+        return "Device{" + "deviceID=" + deviceID + ", snapshotIDTimestamps=" + snapshotIDTimestamps + '}';
     }
 }

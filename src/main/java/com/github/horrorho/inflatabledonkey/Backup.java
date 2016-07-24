@@ -24,11 +24,11 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,9 +37,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,6 +63,7 @@ import org.slf4j.LoggerFactory;
 public final class Backup {
 
     private static final Logger logger = LoggerFactory.getLogger(Backup.class);
+    private static final long BATCH_SIZE = 32 * 1024 * 1024;
 
     private final BackupAssistant backupAssistant;
     private final DownloadAssistant downloadAssistant;
@@ -81,7 +86,7 @@ public final class Backup {
         List<Device> devices = backupAssistant.devices(httpClient, backupAccount.get().devices());
         logger.debug("-- snapshots() - device count: {}", devices.size());
 
-        Map<Device, List<Snapshot>> snapshots = backupAssistant.snapshotsForDevices(httpClient, devices);
+        Map<Device, List<Snapshot>> snapshots = backupAssistant.deviceSnapshots(httpClient, devices);
         logger.debug("-- snapshots() - snapshot count: {}", snapshots.values().size());
 
         return snapshots;
@@ -116,51 +121,63 @@ public final class Backup {
         List<Assets> assetsList = backupAssistant.assetsList(httpClient, snapshot);
         logger.info("-- download() - assets count: {}", assetsList.size());
 
-        // Domain filter
-        List<String> files = Assets.files(assetsList, assetsFilter);
-        logger.info("-- download() - domain filtered file count: {}", files.size());
+        // Assets filter
+        List<Assets> assets = assetsList.stream()
+                .filter(assetsFilter)
+                .collect(Collectors.toList());
+        logger.info("-- download() - assets/ domain filtered file count: {}", assets.size());
 
         // Output folders.
         Path relativePath = deviceSnapshotDateSubPath(device, snapshot);
         logger.info("-- download() - snapshot relative path: {}", relativePath);
 
-        // Filename extension filter.
-        // Batch process files in groups of 100.
-        // TODO group files into batches based on file size.
-        List<List<String>> batches = ListUtils.partition(files, 100);
+        // AssetIDs
+        List<AssetID> assetIDs = assets.stream()
+                .map(u -> u.nonEmpty()) // TODO handle empty assets at some point
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
 
-        for (List<String> batch : batches) {
-            List<Asset> assets = backupAssistant.assets(httpClient, batch)
+        List<List<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
+
+        for (List<AssetID> batch : batches) {
+            List<Asset> assetList = backupAssistant.assets(httpClient, batch)
                     .stream()
                     .filter(assetFilter::test)
                     .collect(Collectors.toList());
-            logger.info("-- download() - filtered asset count: {}", assets.size());
-            downloadAssistant.download(httpClient, assets, relativePath);
+            logger.info("-- download() - filtered asset count: {}", assetList.size());
+            downloadAssistant.download(httpClient, assetList, relativePath);
+            // TODO re-authorize time expired tokens.
         }
     }
 
-    public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
-        Map<String, Instant> snapshotTimestamp = device.snapshots()
-                .stream()
-                .collect(Collectors.toMap(
-                        SnapshotID::id,
-                        SnapshotID::timestamp,
-                        (a, b) -> {
-                            logger.warn("-- deviceSnapshotDateSubPath() - collsion: {} {}", a, b);
-                            return a;
-                        }));
-
-        if (!snapshotTimestamp.containsKey(snapshot.name())) {
-            logger.warn("-- deviceSnapshotDateSubPath() - snapshot not found in device: {} {}", snapshot.name(), snapshotTimestamp);
+    List<List<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
+        List<List<AssetID>> lists = new ArrayList<>();
+        Iterator<AssetID> it = assetIDs.iterator();
+        while (it.hasNext()) {
+            List<AssetID> list = new ArrayList<>();
+            long i = 0;
+            do {
+                AssetID assetID = it.next();
+                i += assetID.size();
+                list.add(assetID);
+            } while (it.hasNext() && i < batchSize);
+            lists.add(list);
         }
+        return lists;
+    }
 
-        Instant timestamp = snapshotTimestamp.containsKey(snapshot.name())
-                ? snapshotTimestamp.get(snapshot.name())
-                : snapshot.modification();
+    public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
+        // TODO if consistent can pull out device hash from snapshot backupProperties
+        if (!device.snapshotIDs().contains(snapshot.snapshotID())) {
+            logger.warn("-- deviceSnapshotDateSubPath() - snapshot not found in device: {} {}", snapshot.snapshotID());
+        }
+        Instant timestamp = snapshot.date()
+                .map(Date::toInstant)
+                .orElse(snapshot.modification());
         LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
         String date = DateTimeFormatter.BASIC_ISO_DATE.format(ldt);
 
-        return Paths.get(device.uuid()).resolve(date);
+        return Paths.get(device.deviceID().hash().toUpperCase(Locale.US)).resolve(date);
     }
 
     public void printDomainList(HttpClient httpClient, Map<Device, ? extends Collection<Snapshot>> snapshots)
@@ -186,7 +203,7 @@ public final class Backup {
         System.out.println("Domains / file count:");
 
         assetsList.stream()
-                .map(a -> a.domain() + " / " + a.files().size())
+                .map(a -> a.domain() + " / " + a.assets().size())
                 .sorted()
                 .forEach(System.out::println);
     }

@@ -34,52 +34,96 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class ManifestID {
+public final class AssetID {
 
-    private static final Logger logger = LoggerFactory.getLogger(ManifestID.class);
+    private static final Logger logger = LoggerFactory.getLogger(AssetID.class);
 
-    public static Optional<ManifestID> from(String id) {
-        Optional<ManifestID> manifestID = parse(id);
-        manifestID.filter(u -> !u.toString().equals(id))
+    public static Optional<AssetID> from(String id) {
+        Optional<AssetID> assetID = parse(id);
+        assetID.filter(u -> !u.toString().equals(id))
                 .ifPresent(u -> {
                     logger.warn("-- from() - mismatch in: {} out: {}", id, u.toString());
                 });
-        return manifestID;
+        return assetID;
     }
 
-    static Optional<ManifestID> parse(String id) {
-        // Format: M:<uuid>:<base64 hash>
-        // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
-        String[] split = id.split(":");
-        if (split.length != 3 || !split[0].equals("M")) {
+    static Optional<AssetID> parse(String id) {
+        if (!id.startsWith("F:")) {
             logger.warn("-- parse() - unexpected format: {}", id);
         }
-        return split.length < 3
-                ? Optional.empty()
-                : Optional.of(new ManifestID(split[1], split[2]));
+        String[] split = id.split(":");
+        switch (split.length) {
+            case 5:
+                return Optional.of(file(split));
+            case 4:
+                return Optional.of(directory(split));
+            default:
+                logger.warn("-- parse() - unexpected format: {}", id);
+                return Optional.empty();
+        }
+    }
+
+    static AssetID file(String[] split) {
+        // Format: F:<uuid>:<base64 hash>:<size>:<tag>
+        // size = size in bytes
+        return new AssetID(split[1], split[2], split[3], split[4], size(split[3]));
+    }
+
+    static AssetID directory(String[] split) {
+        // Format: F:<uuid>:<base64 hash>:D
+        return new AssetID(split[1], split[2], split[3], "", 0);
+    }
+
+    static long size(String info) {
+        try {
+            return Long.parseLong(info);
+        } catch (NumberFormatException ex) {
+            logger.warn("-- from() - NumberFormatException: {}", ex.getMessage());
+            return 0;
+        }
     }
 
     private final String uuid;
     private final String hash;  // Base64
+    private final String info;
+    private final String tag;
+    private final long size;
 
-    public ManifestID(String uuid, String hash) {
+    public AssetID(String uuid, String hash, String info, String tag, long size) {
         this.uuid = Objects.requireNonNull(uuid, "uuid");
         this.hash = Objects.requireNonNull(hash, "hash");
+        this.info = Objects.requireNonNull(info, "info");
+        this.tag = Objects.requireNonNull(tag, "tag");
+        this.size = size;
     }
 
     public String uuid() {
         return uuid;
     }
 
+    public String info() {
+        return info;
+    }
+
     public String hash() {
         return hash;
     }
 
+    public String tag() {
+        return tag;
+    }
+
+    public long size() {
+        return size;
+    }
+
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 41 * hash + Objects.hashCode(this.uuid);
-        hash = 41 * hash + Objects.hashCode(this.hash);
+        int hash = 3;
+        hash = 59 * hash + Objects.hashCode(this.uuid);
+        hash = 59 * hash + Objects.hashCode(this.hash);
+        hash = 59 * hash + Objects.hashCode(this.info);
+        hash = 59 * hash + Objects.hashCode(this.tag);
         return hash;
     }
 
@@ -94,11 +138,17 @@ public final class ManifestID {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ManifestID other = (ManifestID) obj;
+        final AssetID other = (AssetID) obj;
         if (!Objects.equals(this.uuid, other.uuid)) {
             return false;
         }
         if (!Objects.equals(this.hash, other.hash)) {
+            return false;
+        }
+        if (!Objects.equals(this.info, other.info)) {
+            return false;
+        }
+        if (!Objects.equals(this.tag, other.tag)) {
             return false;
         }
         return true;
@@ -106,6 +156,6 @@ public final class ManifestID {
 
     @Override
     public String toString() {
-        return "M:" + uuid + ":" + hash;
+        return "F:" + uuid + ":" + hash + ":" + info + (tag.isEmpty() ? "" : ":" + tag);
     }
 }
