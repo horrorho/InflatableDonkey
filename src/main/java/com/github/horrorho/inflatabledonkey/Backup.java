@@ -29,8 +29,8 @@ import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -47,6 +47,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -64,15 +66,23 @@ public final class Backup {
 
     private static final Logger logger = LoggerFactory.getLogger(Backup.class);
     private static final long BATCH_SIZE = 32 * 1024 * 1024;
+    private static final int DEFAULT_THREADS = 1;
 
     private final BackupAssistant backupAssistant;
     private final DownloadAssistant downloadAssistant;
-//    private final Predicate<Optional<String>> domainFilter;
-//    private final Predicate<Asset> assetFilter;
+    private final ForkJoinPool forkJoinPool;
 
-    public Backup(BackupAssistant backupAssistant, DownloadAssistant downloadAssistant) {
+    public Backup(
+            BackupAssistant backupAssistant,
+            DownloadAssistant downloadAssistant,
+            Optional<ForkJoinPool> forkJoinPool) {
         this.backupAssistant = Objects.requireNonNull(backupAssistant, "backupAssistant");
         this.downloadAssistant = Objects.requireNonNull(downloadAssistant, "downloadAssistant");
+        this.forkJoinPool = forkJoinPool.orElseGet(() -> new ForkJoinPool(DEFAULT_THREADS));
+    }
+
+    public Backup(BackupAssistant backupAssistant, DownloadAssistant downloadAssistant) {
+        this(backupAssistant, downloadAssistant, Optional.empty());
     }
 
     public Map<Device, List<Snapshot>> snapshots(HttpClient httpClient) throws IOException {
@@ -119,13 +129,13 @@ public final class Backup {
 
         // Asset list.
         List<Assets> assetsList = backupAssistant.assetsList(httpClient, snapshot);
-        logger.info("-- download() - assets count: {}", assetsList.size());
+        logger.debug("-- download() - assets count: {}", assetsList.size());
 
         // Assets filter
         List<Assets> assets = assetsList.stream()
                 .filter(assetsFilter)
                 .collect(Collectors.toList());
-        logger.info("-- download() - assets/ domain filtered file count: {}", assets.size());
+        logger.debug("-- download() - assets/ domain filtered count: {}", assets.size());
 
         // Output folders.
         Path relativePath = deviceSnapshotDateSubPath(device, snapshot);
@@ -138,16 +148,42 @@ public final class Backup {
                 .collect(Collectors.toList());
 
         List<List<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
+        doDownloads(httpClient, batches, assetFilter, relativePath);
+    }
 
-        for (List<AssetID> batch : batches) {
-            List<Asset> assetList = backupAssistant.assets(httpClient, batch)
-                    .stream()
-                    .filter(assetFilter::test)
-                    .collect(Collectors.toList());
-            logger.info("-- download() - filtered asset count: {}", assetList.size());
-            downloadAssistant.download(httpClient, assetList, relativePath);
-            // TODO re-authorize time expired tokens.
+    void doDownloads(HttpClient httpClient, List<List<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
+            throws UncheckedIOException {
+        try {
+            forkJoinPool
+                    .submit(() -> batches
+                            .parallelStream()
+                            .forEach(u -> doDownload(httpClient, u, assetFilter, relativePath)))
+                    .get();
+
+        } catch (InterruptedException ex) {
+            logger.warn("-- doDownloads() - InterruptedException: {}", ex.getMessage());
+            Thread.currentThread().interrupt();
+
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof UncheckedIOException) {
+                throw (UncheckedIOException) cause;
+            }
+            throw new RuntimeException(ex);
         }
+    }
+
+    void doDownload(HttpClient httpClient, List<AssetID> batch, Predicate<Asset> assetFilter, Path relativePath)
+            throws UncheckedIOException {
+        logger.trace("<< doDownload() - batch: {}", batch);
+        // TODO re-authorize time expired tokens.
+        List<Asset> assetList = backupAssistant.assets(httpClient, batch)
+                .stream()
+                .filter(assetFilter::test)
+                .collect(Collectors.toList());
+        logger.debug("-- doDownload() - filtered asset count: {}", assetList.size());
+        downloadAssistant.download(httpClient, assetList, relativePath);
+        logger.trace(">> doDownload()");
     }
 
     List<List<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
@@ -161,6 +197,7 @@ public final class Backup {
                 i += assetID.size();
                 list.add(assetID);
             } while (it.hasNext() && i < batchSize);
+            logger.debug("-- batch() - batch list: {} bytes: {}", list.size(), i);
             lists.add(list);
         }
         return lists;

@@ -80,7 +80,7 @@ public class Main {
 
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
-
+        
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
@@ -98,6 +98,7 @@ public class Main {
                 .build();
         // TODO manage
         Optional<ForkJoinPool> forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new);
+        logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.map(ForkJoinPool::getParallelism));
 
         // Auth
         // TODO rework when we have UncheckedIOException for Authenticator
@@ -122,7 +123,7 @@ public class Main {
         Account account = Accounts.account(httpClient, auth);
 
         // Backup
-        BackupAssistant assistant = BackupAssistant.create(httpClient, account, forkJoinPool);
+        BackupAssistant assistant = BackupAssistant.create(httpClient, account);
 
         // Output folders.
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
@@ -145,7 +146,7 @@ public class Main {
 
         DownloadAssistant downloadAssistant
                 = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
-        Backup backup = new Backup(assistant, downloadAssistant);
+        Backup backup = new Backup(assistant, downloadAssistant, forkJoinPool);
 
         // Retrieve snapshots.
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);

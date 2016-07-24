@@ -70,7 +70,7 @@ import org.slf4j.LoggerFactory;
 public final class BackupAssistant {
 
     public static BackupAssistant
-            create(HttpClient httpClient, Account account, Optional<ForkJoinPool> forkJoinPool) throws IOException {
+            create(HttpClient httpClient, Account account) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
         CloudKitty kitty = CloudKitties.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);

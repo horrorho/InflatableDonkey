@@ -30,6 +30,7 @@ import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,7 @@ public final class AuthorizeAssets {
         this(container, "_defaultZone");
     }
 
-    public AuthorizedAssets authorize(HttpClient httpClient, Collection<Asset> assets) throws IOException {
+    public AuthorizedAssets authorize(HttpClient httpClient, Collection<Asset> assets) throws UncheckedIOException {
         Map<ByteString, List<Asset>> downloadables = downloadables(assets);
 
         // Duplicate file signatures indicate duplicate files.
@@ -102,17 +103,22 @@ public final class AuthorizeAssets {
             HttpClient httpClient,
             String dsPrsID,
             String contentBaseUrl,
-            CloudKit.FileTokens fileTokens) throws IOException {
+            CloudKit.FileTokens fileTokens) throws UncheckedIOException {
+        try {
+            // TODO tidy
+            Optional<HttpUriRequest> fileGroups = AuthorizeGetRequestFactory.instance()
+                    .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens);
 
-        Optional<HttpUriRequest> fileGroups = AuthorizeGetRequestFactory.instance()
-                .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens);
+            if (!fileGroups.isPresent()) {
+                logger.warn("-- authorizeGet() - no file groups");
+                return ChunkServer.FileGroups.newBuilder().build();
+            }
 
-        if (!fileGroups.isPresent()) {
-            logger.warn("-- authorizeGet() - no file groups");
-            return ChunkServer.FileGroups.newBuilder().build();
+            return httpClient.execute(fileGroups.get(), RESPONSE_HANDLER);
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
-
-        return httpClient.execute(fileGroups.get(), RESPONSE_HANDLER);
     }
 
     List<CloudKit.Asset> ckAssets(Collection<Asset> assets) {
