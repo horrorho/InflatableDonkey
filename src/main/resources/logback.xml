@@ -7,7 +7,7 @@
     </appender>
     
     <!-- DEBUG/ TRACE switches WILL log sensitive information. Use with caution. -->
-    <logger name="com.github.horrorho.inflatabledonkey" level="info" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
  
