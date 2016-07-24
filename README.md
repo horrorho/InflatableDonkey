@@ -1,3 +1,11 @@
+**Update**, 24 July 2016. 
+
+I've ported over the [LiquidDonkey](https://github.com/horrorho/LiquidDonkey) selection/ filtering code. I haven't had a chance to fully test all of the parameters.
+
+Concurrent downloads have been enabled, but the thread count is set to one until I've had a chance to test it. You can change the THREADS [Property](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/args/Property.java) if you want to play with it. Concurrency can be a nightmare, but from day one I've written the code with concurrency in mind. I'm sure some of you have noticed the heavy functional style and immutability. So hopefully any bugs will be relatively minor.
+
+The error output probably needs attention. I know what the various errors mean but for more normal people it's probably an issue. However, at it's heart it's still a development tool that's aided me in unravelling the recovery process. With full trace [logging](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) enabled, it doesn't just download files, it shows you how it's downloading those files.
+
 **Update**, 20 July 2016. 
 
 I've pushed the new XTS code. I'm not really convinced I have the AES-CBC/ AES-XTS switching fully worked out so please set the mode manually if you have corrupted files (--mode XTS or --mode CBC). The FileAssembler logger output tells you which mode is being used, so try the opposite. 
