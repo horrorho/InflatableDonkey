@@ -29,6 +29,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -41,12 +42,12 @@ import org.apache.http.client.HttpClient;
 @Immutable
 public final class RecordRetrieveRequestOperations {
 
-    public static List<RecordRetrieveResponse>
+    public static Optional<List<RecordRetrieveResponse>>
             get(CloudKitty kitty, HttpClient httpClient, String zone, String... recordNames) {
         return get(kitty, httpClient, zone, Arrays.asList(recordNames));
     }
 
-    public static List<RecordRetrieveResponse>
+    public static Optional<List<RecordRetrieveResponse>>
             get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames) {
         List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
         return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);

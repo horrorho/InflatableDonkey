@@ -51,22 +51,26 @@ public final class SnapshotClient {
 
     private static final Logger logger = LoggerFactory.getLogger(SnapshotClient.class);
 
-    public static List<Snapshot>
+    public static Optional<List<Snapshot>>
             snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
             throws UncheckedIOException {
 
         if (snapshotIDs.isEmpty()) {
-            return new ArrayList<>();
+            return Optional.of(new ArrayList<>());
         }
 
         List<String> snapshots = snapshotIDs.stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots);
-        logger.debug("-- manifests() - responses: {}", responses);
+        
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots)
+                .map(r -> snapshots(r, zone));
+    }
 
-        return responses.stream()
+    static List<Snapshot> snapshots(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+        logger.debug("-- snapshots() - responses: {}", responses);
+        return responses
+                .stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(r -> manifests(r, zone))

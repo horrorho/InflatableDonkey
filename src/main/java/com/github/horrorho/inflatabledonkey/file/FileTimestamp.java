@@ -28,53 +28,44 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import static java.nio.file.StandardOpenOption.WRITE;
-import java.util.Objects;
+import java.nio.file.attribute.FileTime;
+import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * FileTruncater.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileTruncater {
+public final class FileTimestamp {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileTruncater.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileTimestamp.class);
 
-    public static boolean truncate(Path path, Asset asset) {
+    public static boolean set(Path path, Asset asset) {
         try {
-            // Truncate if the final attribute size is different from the initial size (padded/ encrypted).
-            // Don't truncate if either optional is missing.
-            asset.attributeSize()
-                    .filter(u -> asset.size().map(t -> !Objects.equals(t, u)).orElse(false))
-                    .ifPresent(u -> FileTruncater.truncate(path, u));
+            asset.statusChanged()
+                    .map(FileTime::from)
+                    .ifPresent(u -> FileTimestamp.set(path, u));
             return true;
 
         } catch (UncheckedIOException ex) {
-            logger.warn("-- truncate() - UncheckedIOException: ", ex);
+            logger.warn("-- set() - UncheckedIOException: ", ex);
             return false;
         }
     }
 
-    public static void truncate(Path file, long to) throws UncheckedIOException {
+    public static boolean set(Path path, long timestamp) throws UncheckedIOException {
+        FileTime fileTime = FileTime.from(timestamp, TimeUnit.SECONDS);
+        return FileTimestamp.set(path, fileTime);
+    }
+
+    public static boolean set(Path path, FileTime fileTime) throws UncheckedIOException {
         try {
-            if (to <= 0) {  // TODO consider:  to < 0
-                return;
-            }
-
-            long size = Files.size(file);
-            if (size > to) {
-                Files.newByteChannel(file, WRITE)
-                        .truncate(to)
-                        .close();
-                logger.debug("-- truncate() - truncated: {}, {} > {}", file, size, to);
-
-            } else if (size < to) {
-                logger.warn("-- truncate() - cannot truncate: {}, {} > {}", file, size, to);
-            }
+            Files.setLastModifiedTime(path, fileTime);
+            logger.debug("-- set() - set: {}", fileTime);
+            return true;
 
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

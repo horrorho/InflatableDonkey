@@ -44,9 +44,9 @@ import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
+import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
-import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -68,11 +69,12 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class BackupAssistant {
 
-    public static BackupAssistant create(HttpClient httpClient, Account account) throws IOException {
+    public static BackupAssistant
+            create(HttpClient httpClient, Account account) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
         CloudKitty kitty = CloudKitties.backupd(ckInit, account);
         ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
-        ProtectionZone mbksync = MBKSyncClient.mbksync(httpClient, kitty, escrowServiceKeySet.keys()).get();
+        ProtectionZone mbksync = MBKSyncClient.apply(httpClient, kitty, escrowServiceKeySet.keys()).get();
         return new BackupAssistant(kitty, mbksync);
     }
 
@@ -90,20 +92,25 @@ public final class BackupAssistant {
         this(kitty, mbksync, KeyBagManager.defaults(kitty, mbksync));
     }
 
-    public Optional<BackupAccount> backupAccount(HttpClient httpClient) throws IOException {
-        return BackupAccountClient.backupAccount(httpClient, kitty, mbksync);
+    public Optional<BackupAccount> backupAccount(HttpClient httpClient) throws UncheckedIOException {
+        return BackupAccountClient.apply(httpClient, kitty, mbksync);
     }
 
-    public List<Device> devices(HttpClient httpClient, Collection<DeviceID> devices) throws IOException {
-        return DeviceClient.device(httpClient, kitty, devices);
+    public List<Device> devices(HttpClient httpClient, Collection<DeviceID> devices) {
+        // TODO retry
+        return DeviceClient.apply(httpClient, kitty, devices)
+                .orElseThrow(() -> new UncheckedIOException(new BadDataException("failed to get devices")));
     }
 
-    public List<Snapshot> snapshots(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws IOException {
-        return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs);
+    public List<Snapshot>
+            snapshots(HttpClient httpClient, Collection<SnapshotID> snapshotIDs) throws UncheckedIOException {
+        // TODO retry
+        return SnapshotClient.snapshots(httpClient, kitty, mbksync, snapshotIDs)
+                .orElseThrow(() -> new UncheckedIOException(new BadDataException("failed to get snapshots")));
     }
 
     public Map<Device, List<Snapshot>> deviceSnapshots(HttpClient httpClient, Collection<Device> devices)
-            throws IOException {
+            throws UncheckedIOException {
         Map<SnapshotID, Device> snapshotDevice = devices
                 .stream()
                 .distinct()
@@ -127,16 +134,21 @@ public final class BackupAssistant {
     public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws UncheckedIOException {
         List<Manifest> manifests = snapshot.manifests()
                 .stream()
-                .filter(x -> x.count() != 0)
+                .filter(u -> u.count() != 0)
                 .collect(Collectors.toList());
-        return AssetsClient.assets(httpClient, kitty, mbksync, manifests);
+        // TODO retry
+        return AssetsClient.apply(httpClient, kitty, mbksync, manifests)
+                .orElseThrow(() -> new UncheckedIOException(new BadDataException("failed to get assetsList")));
     }
 
-    public List<Asset> assets(HttpClient httpClient, Collection<AssetID> assetIDs) throws IOException {
-        return AssetTokenClient.assets(httpClient, kitty, mbksync, assetIDs);
+    public List<Asset> assets(HttpClient httpClient, Collection<AssetID> assetIDs) throws UncheckedIOException {
+        // TODO retry
+        return AssetTokenClient.apply(httpClient, kitty, mbksync, assetIDs)
+                .orElseThrow(() -> new UncheckedIOException(new BadDataException("failed to get assets")));
     }
 
     public KeyBagManager newKeyBagManager() {
+        // TODO probably doesn't belong here
         return KeyBagManager.defaults(kitty, mbksync);
     }
 }

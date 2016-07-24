@@ -41,7 +41,8 @@ public final class CloudKitties {
         return create(ckInit, account, "com.apple.backup.ios", "com.apple.backupd");
     }
 
-    public static CloudKitty create(CKInit ckInit, Account account, String container, String bundle) {
+    public static CloudKitty
+            create(CKInit ckInit, Account account, String container, String bundle) {
         String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
         String cloudKitUserId = ckInit.cloudKitUserId();
         // Re-direct issues with ckInit baseUrl.

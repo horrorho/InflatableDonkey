@@ -27,19 +27,14 @@ import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.file.KeyBlobCurve25519Unwrap;
-import com.github.horrorho.inflatabledonkey.file.KeyBlob;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
-import org.bouncycastle.crypto.BlockCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +65,7 @@ public final class DownloadAssistant {
         this.folder = Objects.requireNonNull(folder, "folder");
     }
 
-    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) throws IOException {
+    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) throws UncheckedIOException {
         Path outputFolder = folder.resolve(relativePath);
 
         keyBagManager.update(httpClient, assets);

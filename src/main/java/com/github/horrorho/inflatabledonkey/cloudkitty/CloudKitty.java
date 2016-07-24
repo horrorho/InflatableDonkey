@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -71,37 +72,45 @@ public final class CloudKitty {
     private final ProtoBufsRequestFactory requestFactory;
     private final int limit;
 
-    CloudKitty(ResponseHandler<List<ResponseOperation>> responseHandler,
+    CloudKitty(
+            ResponseHandler<List<ResponseOperation>> responseHandler,
             Function<String, RequestOperationHeader> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
             int limit) {
-
         this.responseHandler = Objects.requireNonNull(responseHandler, "responseHandler");
         this.requestOperationHeaders = Objects.requireNonNull(requestOperationHeaders, "requestOperationHeaders");
         this.requestFactory = Objects.requireNonNull(requestFactory, "requestFactory");
         this.limit = limit;
     }
 
-    CloudKitty(Function<String, RequestOperationHeader> requestOperationHeaders,
+    CloudKitty(
+            Function<String, RequestOperationHeader> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
             int limit) {
         this(responseHandler(), requestOperationHeaders, requestFactory, limit);
     }
 
-    CloudKitty(Function<String, RequestOperationHeader> requestOperationHeaders,
+    CloudKitty(
+            Function<String, RequestOperationHeader> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory) {
         this(requestOperationHeaders, requestFactory, LIMIT);
     }
 
-    public List<ResponseOperation>
+    public Optional<List<ResponseOperation>>
             get(HttpClient httpClient, String operation, List<RequestOperation> requests)
             throws UncheckedIOException {
         return get(httpClient, operation, requests, Function.identity());
     }
 
-    public <T> List<T> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
+    public <T> Optional<List<T>> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws UncheckedIOException {
-        return doGet(httpClient, requestOperationHeaders.apply(operation), requests, field);
+        List<T> responses = doGet(httpClient, requestOperationHeaders.apply(operation), requests, field);
+        if (responses.size() != requests.size()) {
+            // TODO consider retry
+            logger.warn("-- get() - mismatch request: {} response: {}", requests.size(), responses.size());
+            return Optional.empty();
+        }
+        return Optional.of(responses);
     }
 
     <T> List<T> doGet(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,

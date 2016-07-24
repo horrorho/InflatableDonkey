@@ -51,8 +51,8 @@ public final class AssetTokenClient {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
-    public static List<Asset>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
+    public static Optional<List<Asset>>
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
             throws UncheckedIOException {
         List<String> nonEmptyAssets = assetIDs.stream()
                 .filter(a -> a.size() > 0)
@@ -61,6 +61,11 @@ public final class AssetTokenClient {
         logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
 
         return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets)
+                .map(r -> assets(r, zone));
+    }
+
+    static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+        return responses
                 .stream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)

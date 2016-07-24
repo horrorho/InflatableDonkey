@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -96,7 +95,8 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
         return filePath.apply(asset)
                 .filter(DirectoryAssistant::createParent)
                 .filter(path -> assemble(path, asset, chunks))
-                .map(path -> truncate(path, asset))
+                .filter(path -> FileTruncater.truncate(path, asset))
+                .map(path -> FileTimestamp.set(path, asset))
                 .orElse(false);
     }
 
@@ -147,21 +147,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 .collect(Collectors.toList());
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
         return new SequenceInputStream(enumeration);
-    }
-
-    boolean truncate(Path path, Asset asset) {
-        try {
-            // Truncate if the final attribute size is different from the initial size (padded/ encrypted).
-            // Don't truncate if either optional is missing.
-            asset.attributeSize()
-                    .filter(u -> asset.size().map(t -> !Objects.equals(t, u)).orElse(false))
-                    .ifPresent(u -> FileTruncater.truncate(path, u));
-            return true;
-
-        } catch (UncheckedIOException ex) {
-            logger.warn("-- truncate() - UncheckedIOException: ", ex);
-            return false;
-        }
     }
 
     @Override
