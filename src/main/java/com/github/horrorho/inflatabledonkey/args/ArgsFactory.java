@@ -48,7 +48,8 @@ public final class ArgsFactory {
 
     public static Args defaults() {
         String header = "iOS9 iCloud backup retrieval proof of concept tool.\n\n";
-        String footer = "\nDates are ISO format e.g. 2000-12-31. Filters are case insensitive.";
+        String footer = "\nDates are ISO format e.g. 2000-12-31. Filters are case insensitive."
+                + "\nPass multiple argument values separated by spaces e.g. --extension png jpg";
         String cmdLineSyntax = Property.APP_NAME.peek().orElse("") + " (<token> | <appleid> <password>) [OPTION]...";
         return new Args(ArgsFactory::defaultArgList, cmdLineSyntax, header, footer);
     }
@@ -61,6 +62,8 @@ public final class ArgsFactory {
         args.add(filterDomain());
         args.add(filterRelativePath());
         args.add(filterExtension());
+        args.add(filterSizeMax());
+        args.add(filterSizeMin());
         args.add(filterBirthMin());
         args.add(filterBirthMax());
         args.add(filterStatusMin());
@@ -97,7 +100,7 @@ public final class ArgsFactory {
         Option option = Option.builder("d")
                 .longOpt("device")
                 .desc("Device filter/s. Leave empty to select all devices/ disable user selection.")
-                .argName("string")
+                .argName("id")
                 .hasArgs()
                 .optionalArg(true)
                 .build();
@@ -108,7 +111,7 @@ public final class ArgsFactory {
         Option option = Option.builder()
                 .longOpt("domain")
                 .desc("Domain filter/s.")
-                .argName("string")
+                .argName("string/s")
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_ASSET_DOMAIN, option, ArgsFactory::mapToLowerCase);
@@ -118,7 +121,7 @@ public final class ArgsFactory {
         Option option = Option.builder()
                 .longOpt("extension")
                 .desc("File extension filter/s.")
-                .argName("string")
+                .argName("string/s")
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_ASSET_EXTENSION, option, ArgsFactory::mapToLowerCase);
@@ -128,7 +131,7 @@ public final class ArgsFactory {
         Option option = Option.builder()
                 .longOpt("relative-path")
                 .desc("Relative path filter/s.")
-                .argName("string")
+                .argName("string/s")
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_ASSET_RELATIVE_PATH, option, ArgsFactory::mapToLowerCase);
@@ -143,6 +146,26 @@ public final class ArgsFactory {
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_SNAPSHOT, option, ArgsFactory::mapNumber);
+    }
+
+    static Arg filterSizeMax() {
+        Option option = Option.builder()
+                .longOpt("size-max")
+                .desc("Maximum file size.")
+                .argName("kB")
+                .hasArg()
+                .build();
+        return new Arg(Property.FILTER_ASSET_SIZE_MAX, option, ArgsFactory::mapNumber);
+    }
+
+    static Arg filterSizeMin() {
+        Option option = Option.builder()
+                .longOpt("size-min")
+                .desc("Minimum file size.")
+                .argName("kB")
+                .hasArg()
+                .build();
+        return new Arg(Property.FILTER_ASSET_SIZE_MIN, option, ArgsFactory::mapNumber);
     }
 
     static Arg filterStatusMax() {
