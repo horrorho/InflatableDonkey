@@ -23,8 +23,9 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.voodoo;
 
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.*;
 import com.google.protobuf.ByteString;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,62 +33,86 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Voodoo.
+ * FileGroup assistant.
  *
  * @author Ahseya
  */
 @Immutable
 public final class Voodoo {
 
-    private final Map<ChunkServer.ChunkReference, StorageHostChunkListContainer> chunkReferenceToStorageHostChunkListContainer;
-    private final Map<ByteString, List<ChunkServer.ChunkReference>> fileSignatureToChunkReferenceList;
-    private final Map<ChunkServer.ChunkReference, ByteString> chunkReferenceToFileSignature;
+    private static final Logger logger = LoggerFactory.getLogger(Voodoo.class);
 
-    public Voodoo(ChunkServer.FileChecksumStorageHostChunkLists fileGroup) {
-        List<ChunkServer.StorageHostChunkList> storageHostChunkListList = fileGroup.getStorageHostChunkListList();
+    private final Map<ChunkReference, SHCLContainer> chunkRefToSHCLContainer;
+    private final Map<ByteString, List<ChunkReference>> fileSigToChunkRefList;
+    private final Map<ChunkReference, ByteString> chunkRefToFileSig;
 
-        Map<StorageHostChunkListContainer, List<ChunkServer.ChunkReference>> storageHostChunkListContainerToChunkReferenceList
-                = StorageHostChunkListContainers.storageHostChunkListContainerToChunkReferenceList(storageHostChunkListList);
+    public Voodoo(FileChecksumStorageHostChunkLists fileGroup) {
+        List<StorageHostChunkList> shclList = fileGroup.getStorageHostChunkListList();
 
-        chunkReferenceToStorageHostChunkListContainer
-                = MapAssistant.invertMapList(storageHostChunkListContainerToChunkReferenceList);
+        Map<SHCLContainer, List<ChunkReference>> shclContainerToChunkRefList
+                = SHCLContainers.shclContainerToChunkRefList(shclList);
 
-        fileSignatureToChunkReferenceList
-                = FileChecksumChunkReferences.fileSignatureToChunkReferenceList(
-                        fileGroup.getFileChecksumChunkReferencesList());
+        chunkRefToSHCLContainer = invert(shclContainerToChunkRefList);
 
-        chunkReferenceToFileSignature = MapAssistant.invertMapList(fileSignatureToChunkReferenceList);
+        fileSigToChunkRefList = FileChecksumChunkReferences
+                .fileSignatureToChunkReferenceList(fileGroup.getFileChecksumChunkReferencesList());
+
+        chunkRefToFileSig = invert(fileSigToChunkRefList);
     }
 
-    public List<ChunkServer.ChunkReference> chunkReferenceList(ByteString fileSignature) {
-        return fileSignatureToChunkReferenceList.get(fileSignature);
+    public <K, V> Map<V, K> invert(Map<K, List<V>> map) {
+        return map.entrySet()
+                .stream()
+                .flatMap(e -> e.getValue().stream()
+                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(v, e.getKey())))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (u, v) -> {
+                            logger.warn("-- invert() - duplicates: {} {}", u, v);
+                            return u;
+                        }));
     }
 
-    public Optional<ByteString> fileSignature(ChunkServer.ChunkReference chunkReference) {
-        return chunkReferenceToFileSignature.containsKey(chunkReference)
-                ? Optional.of(chunkReferenceToFileSignature.get(chunkReference))
+    /**
+     * Returns the ordered ChunkReferences required for the specified file signature.
+     *
+     * @param fileSignature
+     * @return list of ChunkReferences or empty if the signature is unreferenced
+     */
+    public Optional<List<ChunkReference>> chunkReferenceList(ByteString fileSignature) {
+        return Optional.ofNullable(fileSigToChunkRefList.get(fileSignature));
+    }
+
+    /**
+     * Returns the file signature associated with the specified ChunkReference.
+     *
+     * @param chunkReference
+     * @return the associated file signature or empty
+     */
+    public Optional<ByteString> fileSignature(ChunkReference chunkReference) {
+        return chunkRefToFileSig.containsKey(chunkReference)
+                ? Optional.of(chunkRefToFileSig.get(chunkReference))
                 : Optional.empty();
     }
 
-    public Set<StorageHostChunkListContainer> storageHostChunkListContainer(ByteString fileSignature) {
-        List<ChunkServer.ChunkReference> chunkReferenceList = fileSignatureToChunkReferenceList.get(fileSignature);
+    /**
+     * Returns the SHCLContainers required for the specified file signature.
+     *
+     * @param fileSignature
+     * @return the SHCLContainers
+     */
+    public Set<SHCLContainer> storageHostChunkListContainers(ByteString fileSignature) {
+        List<ChunkReference> chunkReferenceList = fileSigToChunkRefList.get(fileSignature);
         if (chunkReferenceList == null) {
             return Collections.emptySet();
         }
-
         return chunkReferenceList.stream()
-                .map(chunkReferenceToStorageHostChunkListContainer::get)
+                .map(chunkRefToSHCLContainer::get)
                 .collect(Collectors.toSet());
-    }
-
-    @Override
-    public String toString() {
-        return "Voodoo{"
-                + "chunkReferenceToStorageHostChunkListContainer=" + chunkReferenceToStorageHostChunkListContainer
-                + ", fileSignatureToChunkReferenceList=" + fileSignatureToChunkReferenceList
-                + ", chunkReferenceToFileSignature=" + chunkReferenceToFileSignature
-                + '}';
     }
 }

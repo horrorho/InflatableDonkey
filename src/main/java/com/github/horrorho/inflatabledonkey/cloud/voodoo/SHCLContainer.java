@@ -28,23 +28,22 @@ import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 /**
- * StorageHostChunkListContainer.
  *
  * @author Ahseya
  */
 @Immutable
-public final class StorageHostChunkListContainer {
+public final class SHCLContainer {
 
-    private final ChunkServer.StorageHostChunkList storageHostChunkList;
+    private final ChunkServer.StorageHostChunkList shcl;
     private final int container;
 
-    public StorageHostChunkListContainer(ChunkServer.StorageHostChunkList storageHostChunkList, int container) {
-        this.storageHostChunkList = Objects.requireNonNull(storageHostChunkList, "storageHostChunkList");
+    public SHCLContainer(ChunkServer.StorageHostChunkList shcl, int container) {
+        this.shcl = Objects.requireNonNull(shcl, "shcl");
         this.container = container;
     }
 
     public ChunkServer.StorageHostChunkList storageHostChunkList() {
-        return storageHostChunkList;
+        return shcl;
     }
 
     public int container() {
@@ -54,7 +53,7 @@ public final class StorageHostChunkListContainer {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 67 * hash + Objects.hashCode(this.storageHostChunkList);
+        hash = 67 * hash + Objects.hashCode(this.shcl);
         hash = 67 * hash + this.container;
         return hash;
     }
@@ -70,11 +69,11 @@ public final class StorageHostChunkListContainer {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final StorageHostChunkListContainer other = (StorageHostChunkListContainer) obj;
+        final SHCLContainer other = (SHCLContainer) obj;
         if (this.container != other.container) {
             return false;
         }
-        if (!Objects.equals(this.storageHostChunkList, other.storageHostChunkList)) {
+        if (!Objects.equals(this.shcl, other.shcl)) {
             return false;
         }
         return true;
@@ -82,6 +81,6 @@ public final class StorageHostChunkListContainer {
 
     @Override
     public String toString() {
-        return "StorageHostChunkListContainer{" + "storageHostChunkList=" + storageHostChunkList + ", container=" + container + '}';
+        return "SHCLContainer{" + "shcl=" + shcl + ", container=" + container + '}';
     }
 }

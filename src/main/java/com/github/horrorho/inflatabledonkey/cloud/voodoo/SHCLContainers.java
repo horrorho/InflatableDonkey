@@ -23,35 +23,39 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.voodoo;
 
-import java.util.AbstractMap;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * MapAssistant.
  *
  * @author Ahseya
  */
 @Immutable
-public final class MapAssistant {
+public final class SHCLContainers {
 
-    private static final Logger logger = LoggerFactory.getLogger(MapAssistant.class);
+    public static Map<SHCLContainer, List<ChunkReference>>
+            shclContainerToChunkRefList(List<StorageHostChunkList> list) {
 
-    public static <K, V> Map<V, K> invertMapList(Map<K, List<V>> map) {
-        return map.entrySet()
-                .stream()
-                .flatMap(e -> e.getValue().stream()
-                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(v, e.getKey())))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (a, b) -> {
-                            logger.warn("-- invertMapList() - duplicates: {} {}", a, b);
-                            return a;
-                        }));
+        return IntStream.range(0, list.size())
+                .mapToObj(i -> shclContainerChunkRefList(list.get(i), i))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    static Map.Entry<SHCLContainer, List<ChunkReference>>
+            shclContainerChunkRefList(StorageHostChunkList list, int container) {
+
+        int chunkCount = list.getChunkInfoCount();
+        List<ChunkReference> chunkReferenceList = IntStream.range(0, chunkCount)
+                .mapToObj(i -> ChunkReferences.chunkReference(container, i))
+                .collect(Collectors.toList());
+
+        SHCLContainer shclContainer = new SHCLContainer(list, container);
+
+        return new SimpleImmutableEntry<>(shclContainer, chunkReferenceList);
     }
 }

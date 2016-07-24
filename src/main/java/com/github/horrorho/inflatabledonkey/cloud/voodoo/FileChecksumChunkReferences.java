@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * FileChecksumChunkReferences.
  *
  * @author Ahseya
  */
@@ -47,18 +46,13 @@ public final class FileChecksumChunkReferences {
             fileSignatureToChunkReferenceList(List<ChunkServer.FileChecksumChunkReferences> referencesList) {
 
         return referencesList.stream()
-                .map(FileChecksumChunkReferences::fileSignatureToChunkReferenceList)
+                .map(u -> new SimpleImmutableEntry<>(u.getFileSignature(), u.getChunkReferencesList()))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (a, b) -> {
-                            logger.warn("-- fileSignatureToChunkReferenceList() - duplicates: {} {}", a, b);
-                            return a;
+                        (u, v) -> {
+                            logger.warn("-- fileSignatureToChunkReferenceList() - duplicates: {} {}", u, v);
+                            return u;
                         }));
-    }
-
-    static Map.Entry<ByteString, List<ChunkServer.ChunkReference>>
-            fileSignatureToChunkReferenceList(ChunkServer.FileChecksumChunkReferences references) {
-        return new SimpleImmutableEntry<>(references.getFileSignature(), references.getChunkReferencesList());
     }
 }

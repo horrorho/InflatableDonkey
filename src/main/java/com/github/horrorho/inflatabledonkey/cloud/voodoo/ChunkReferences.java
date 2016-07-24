@@ -27,7 +27,6 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import net.jcip.annotations.Immutable;
 
 /**
- * ChunkReferences
  *
  * @author Ahseya
  */
