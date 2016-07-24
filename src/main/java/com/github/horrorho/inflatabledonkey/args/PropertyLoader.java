@@ -63,14 +63,14 @@ public final class PropertyLoader implements Predicate<String[]> {
     @Override
     public boolean test(String[] arguments) throws IllegalArgumentException {
         try {
-            ArgsAssistant assistant = new ArgsAssistant(args.args());
-            Options options = assistant.options();
+            ArgsManager manager = new ArgsManager(args.args());
+            Options options = manager.options();
             CommandLineParser parser = new DefaultParser();
             CommandLine commandLine = parser.parse(options, arguments);
-            Map<Property, String> properties = assistant.process(commandLine.getOptions());
+            Map<Property, String> properties = manager.process(commandLine.getOptions());
 
             if (properties.containsKey(Property.ARGS_HELP)) {
-                help(assistant.listOptions(), args.header(), args.footer(), args.cmdLineSyntax());
+                help(manager.listOptions(), args.header(), args.footer(), args.cmdLineSyntax());
                 return false;
             }
 
@@ -93,9 +93,8 @@ public final class PropertyLoader implements Predicate<String[]> {
                     throw new IllegalArgumentException(
                             "too many non-optional arguments, expected appleid/ password or authentication token only");
             }
+            properties.forEach((u, v) -> logger.info("-- test() - {} = {}", u.name(), v));
             Property.setProperties(properties);
-            System.out.println("p: " + properties);
-
             return true;
 
         } catch (ParseException ex) {

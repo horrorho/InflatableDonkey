@@ -74,9 +74,9 @@ public final class AssetID {
         return new AssetID(split[1], split[2], split[3], "", 0);
     }
 
-    static int size(String info) {
+    static long size(String info) {
         try {
-            return Integer.parseInt(info);
+            return Long.parseLong(info);
         } catch (NumberFormatException ex) {
             logger.warn("-- from() - NumberFormatException: {}", ex.getMessage());
             return 0;
@@ -87,9 +87,9 @@ public final class AssetID {
     private final String hash;  // Base64
     private final String info;
     private final String tag;
-    private final int size;
+    private final long size;
 
-    public AssetID(String uuid, String hash, String info, String tag, int size) {
+    public AssetID(String uuid, String hash, String info, String tag, long size) {
         this.uuid = Objects.requireNonNull(uuid, "uuid");
         this.hash = Objects.requireNonNull(hash, "hash");
         this.info = Objects.requireNonNull(info, "info");
@@ -113,7 +113,7 @@ public final class AssetID {
         return tag;
     }
 
-    public int size() {
+    public long size() {
         return size;
     }
 

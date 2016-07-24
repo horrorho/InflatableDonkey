@@ -30,6 +30,8 @@ import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -54,7 +56,7 @@ public final class Snapshot extends AbstractRecord {
     private final Optional<NSDictionary> backupProperties;
     private final List<Manifest> manifests;
 
-    public Snapshot(
+    Snapshot(
             CloudKit.Record record,
             SnapshotID snapshotID,
             Optional<byte[]> backupProperties,
@@ -81,7 +83,7 @@ public final class Snapshot extends AbstractRecord {
     public Optional<Date> date() {
         return backupProperty("Date", NSDate.class).map(NSDate::getDate);
     }
- 
+
     public Optional<String> snapshotHMACKey() {
         return backupProperty("SnapshotHMACKey", NSString.class).map(NSString::getContent);
     }
@@ -127,8 +129,13 @@ public final class Snapshot extends AbstractRecord {
     }
 
     public String info() {
-        return String.format("%6s MB ", (quotaUsed() / 1048576))
-                + deviceName();
+        long quotaUsed = quotaUsed();
+        String quota = quotaUsed > 10737418240L
+                ? String.format("%4s GB ", (quotaUsed() / 1073741824))
+                : String.format("%4s MB ", (quotaUsed() / 1048576));
+        Instant timestamp = date().map(Date::toInstant).orElse(modification());
+        String version = version().map(u -> "iOS " + u).orElse("");
+        return quota + deviceName() + " (" + version + ")  " + timestamp;
     }
 
     @Override

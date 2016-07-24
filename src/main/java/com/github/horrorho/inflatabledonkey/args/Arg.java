@@ -37,12 +37,12 @@ public class Arg {
 
     private final Property property;
     private final Option option;
-    private final UnaryOperator<String> parser;
+    private final UnaryOperator<String> mapper;
 
-    public Arg(Property property, Option option, UnaryOperator<String> parser) {
+    public Arg(Property property, Option option, UnaryOperator<String> mapper) {
         this.property = property;
         this.option = option;
-        this.parser = parser;
+        this.mapper = mapper;
     }
 
     public Arg(Property property, Option option) {
@@ -53,8 +53,8 @@ public class Arg {
         return option;
     }
 
-    public String parse(String value) {
-        return parser.apply(value);
+    public String map(String value) {
+        return mapper.apply(value);
     }
 
     public Property property() {
@@ -65,7 +65,7 @@ public class Arg {
     public int hashCode() {
         int hash = 7;
         hash = 41 * hash + Objects.hashCode(this.option);
-        hash = 41 * hash + Objects.hashCode(this.parser);
+        hash = 41 * hash + Objects.hashCode(this.mapper);
         hash = 41 * hash + Objects.hashCode(this.property);
         return hash;
     }
@@ -85,7 +85,7 @@ public class Arg {
         if (!Objects.equals(this.option, other.option)) {
             return false;
         }
-        if (!Objects.equals(this.parser, other.parser)) {
+        if (!Objects.equals(this.mapper, other.mapper)) {
             return false;
         }
         if (this.property != other.property) {
@@ -96,6 +96,6 @@ public class Arg {
 
     @Override
     public String toString() {
-        return "Arg{" + "property=" + property + ", option=" + option + ", parser=" + parser + '}';
+        return "Arg{" + "property=" + property + ", option=" + option + ", parser=" + mapper + '}';
     }
 }

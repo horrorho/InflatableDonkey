@@ -43,9 +43,9 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @NotThreadSafe
-public class ArgsAssistant {
+public class ArgsManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(ArgsAssistant.class);
+    private static final Logger logger = LoggerFactory.getLogger(ArgsManager.class);
 
     static Arg merge(Arg a, Arg b) {
         throw new IllegalArgumentException("option collision");
@@ -53,10 +53,10 @@ public class ArgsAssistant {
 
     private final Map<Option, Arg> args;
 
-    public ArgsAssistant(Collection<Arg> args) {
+    public ArgsManager(Collection<Arg> args) {
         this.args = args
                 .stream()
-                .collect(Collectors.toMap(Arg::option, Function.identity(), ArgsAssistant::merge, LinkedHashMap::new));
+                .collect(Collectors.toMap(Arg::option, Function.identity(), ArgsManager::merge, LinkedHashMap::new));
     }
 
     public Set<Option> listOptions() {
@@ -86,7 +86,7 @@ public class ArgsAssistant {
             throw new IllegalArgumentException("unreferenced option");
         }
 
-        String value = parse(option, arg::parse);
+        String value = parse(option, arg::map);
         return new SimpleImmutableEntry<>(arg.property(), value);
     }
 

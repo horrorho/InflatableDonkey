@@ -62,7 +62,7 @@ public enum Property {
     FILTER_ASSET_RELATIVE_PATH(),
     FILTER_ASSET_SIZE_MAX(),
     FILTER_ASSET_SIZE_MIN(),
-    FILTER_DEVICE(""),
+    FILTER_DEVICE(),
     FILTER_SNAPSHOT(),
     FILE_WRITER_BUFFER_LENGTH("16384"),
     OUTPUT_FOLDER("backups"),
@@ -95,6 +95,7 @@ public enum Property {
         touched = true;
     }
 
+    @Deprecated
     public static Locale locale() {
         return Locale.US;
     }

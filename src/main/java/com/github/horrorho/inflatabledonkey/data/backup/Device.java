@@ -112,9 +112,7 @@ public final class Device extends AbstractRecord {
     }
 
     public String info() {
-        return deviceID.hash().toUpperCase(Locale.US) + " "
-                + productType() + " "
-                + hardwareModel();
+        return productType() + " " + hardwareModel() + " " + deviceID.hash().toUpperCase(Locale.US) + "";
     }
 
     @Override

@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public final class ArgsFactory {
 
     public static Args defaults() {
         String header = "iOS9 iCloud backup retrieval proof of concept tool.\n\n";
-        String footer = null;
+        String footer = "\nDates are ISO format e.g. 2000-12-31. Filters are case insensitive.";
         String cmdLineSyntax = Property.APP_NAME.peek().orElse("") + " (<token> | <appleid> <password>) [OPTION]...";
         return new Args(ArgsFactory::defaultArgList, cmdLineSyntax, header, footer);
     }
@@ -73,71 +74,72 @@ public final class ArgsFactory {
     static Arg filterDateMin() {
         Option option = Option.builder()
                 .longOpt("min-date")
-                .desc("Minimum last-modified timestamp, ISO format date. E.g. 2000-12-31.")
+                .desc("Minimum last-modified timestamp.")
                 .argName("date")
                 .hasArg()
                 .build();
-        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MIN, option, ArgsFactory::parseTimestamp);
+        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MIN, option, ArgsFactory::mapTimestamp);
     }
 
     static Arg filterDateMax() {
         Option option = Option.builder()
                 .longOpt("max-date")
-                .desc("Maximum last-modified timestamp, ISO format date. E.g. 2000-12-31.")
+                .desc("Maximum last-modified timestamp.")
                 .argName("date")
                 .hasArg()
                 .build();
-        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MAX, option, ArgsFactory::parseTimestamp);
+        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MAX, option, ArgsFactory::mapTimestamp);
     }
 
     static Arg filterDevice() {
         Option option = Option.builder("d")
                 .longOpt("device")
-                .desc("Device filter/s, case insensitive.")
+                .desc("Device filter/s. Leave empty to select all devices/ disable user selection.")
                 .argName("string")
                 .hasArgs()
+                .optionalArg(true)
                 .build();
-        return new Arg(Property.FILTER_DEVICE, option);
+        return new Arg(Property.FILTER_DEVICE, option, ArgsFactory::mapToLowerCase);
     }
 
     static Arg filterDomain() {
         Option option = Option.builder()
                 .longOpt("domain")
-                .desc("Domain filter/s, case insensitive.")
+                .desc("Domain filter/s.")
                 .argName("string")
                 .hasArgs()
                 .build();
-        return new Arg(Property.FILTER_ASSET_DOMAIN, option, ArgsFactory::parseLowerCase);
+        return new Arg(Property.FILTER_ASSET_DOMAIN, option, ArgsFactory::mapToLowerCase);
     }
 
     static Arg filterExtension() {
         Option option = Option.builder()
                 .longOpt("extension")
-                .desc("File extension filter/s, case insensitive.")
+                .desc("File extension filter/s.")
                 .argName("string")
                 .hasArgs()
                 .build();
-        return new Arg(Property.FILTER_ASSET_EXTENSION, option, ArgsFactory::parseLowerCase);
+        return new Arg(Property.FILTER_ASSET_EXTENSION, option, ArgsFactory::mapToLowerCase);
     }
 
     static Arg filterRelativePath() {
         Option option = Option.builder()
                 .longOpt("relative-path")
-                .desc("Relative path filter/s, case insensitive.")
+                .desc("Relative path filter/s.")
                 .argName("string")
                 .hasArgs()
                 .build();
-        return new Arg(Property.FILTER_ASSET_RELATIVE_PATH, option);
+        return new Arg(Property.FILTER_ASSET_RELATIVE_PATH, option, ArgsFactory::mapToLowerCase);
     }
 
     static Arg filterSnapshot() {
         Option option = Option.builder("s")
                 .longOpt("snapshot")
-                .desc("Snapshot filter/s, default: 0 = first snapshot.")
+                .desc("Snapshot filter/s, 0 = first snapshot. Reverse selection with -1 = last snapshot.")
                 .argName("int")
                 .hasArgs()
                 .build();
-        return new Arg(Property.FILTER_SNAPSHOT, option);
+        return new Arg(Property.FILTER_SNAPSHOT, option, ArgsFactory::mapNumber);
     }
 
     static Arg help() {
@@ -156,7 +158,7 @@ public final class ArgsFactory {
                 .argName("mode")
                 .hasArg()
                 .build();
-        return new Arg(Property.DP_MODE, option, enumParser(PropertyDP::valueOf));
+        return new Arg(Property.DP_MODE, option, mapEnum(PropertyDP::valueOf));
     }
 
     static Arg outputFolder() {
@@ -184,7 +186,7 @@ public final class ArgsFactory {
                 .desc("List domains/ file count for the selected snapshot/s and exit.")
                 .hasArg(false)
                 .build();
-        return new Arg(Property.PRINT_DOMAIN_LIST, option, ArgsFactory::parseLowerCase);
+        return new Arg(Property.PRINT_DOMAIN_LIST, option, ArgsFactory::mapToLowerCase);
     }
 
     static Arg token() {
@@ -220,19 +222,19 @@ public final class ArgsFactory {
                 .collect(Collectors.joining(" "));
     }
 
-    static <E extends Enum<E>> UnaryOperator<String> enumParser(Function<String, E> valueOf) {
-        return u -> valueOf.apply(u.toUpperCase(Property.locale())).name();
+    static <E extends Enum<E>> UnaryOperator<String> mapEnum(Function<String, E> valueOf) {
+        return u -> valueOf.apply(u.toUpperCase(Locale.US)).name();
     }
 
-    static String parseLowerCase(String string) {
-        return string.toLowerCase(Property.locale());
+    static String mapToLowerCase(String string) {
+        return string.toLowerCase(Locale.US);
     }
 
-    static String parseNumber(String number) {
+    static String mapNumber(String number) {
         return "" + Long.parseLong(number);
     }
 
-    static String parseTimestamp(String date) {
+    static String mapTimestamp(String date) {
         return "" + LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
                 .atStartOfDay(ZoneId.systemDefault())
                 .toEpochSecond();
