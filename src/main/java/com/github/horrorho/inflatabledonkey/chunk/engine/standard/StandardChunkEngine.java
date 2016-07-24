@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypters;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
@@ -63,7 +63,7 @@ public class StandardChunkEngine implements ChunkEngine {
     @Override
     public Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            StorageHostChunkListContainer storageHostChunkListContainer,
+            SHCLContainer storageHostChunkListContainer,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
         Optional<Map<ChunkServer.ChunkReference, Chunk>> chunkStoreChunks
@@ -78,7 +78,7 @@ public class StandardChunkEngine implements ChunkEngine {
 
     Map<ChunkServer.ChunkReference, Chunk> fetchChunks(
             HttpClient httpClient,
-            StorageHostChunkListContainer storageHostChunkListContainer,
+            SHCLContainer storageHostChunkListContainer,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
         ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
@@ -100,7 +100,7 @@ public class StandardChunkEngine implements ChunkEngine {
     }
 
     Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            chunkStoreChunks(StorageHostChunkListContainer storageHostChunkListContainer) {
+            chunkStoreChunks(SHCLContainer storageHostChunkListContainer) {
 
         ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
         int container = storageHostChunkListContainer.container();

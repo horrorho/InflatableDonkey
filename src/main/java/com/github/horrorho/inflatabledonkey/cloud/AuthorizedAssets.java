@@ -59,13 +59,7 @@ public final class AuthorizedAssets {
     static Map<ByteString, List<Asset>> copy(Map<ByteString, List<Asset>> assets) {
         return assets.entrySet()
                 .stream()
-                .filter(e -> {
-                    if (e.getValue().isEmpty()) {
-                        logger.error("-- copy() - empty asset list: {}", e);
-                        return false;
-                    }
-                    return true;
-                })
+                .filter(e -> !e.getValue().isEmpty())
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> new ArrayList<>(e.getValue())));
@@ -74,10 +68,7 @@ public final class AuthorizedAssets {
     private final ChunkServer.FileGroups fileGroups;
     private final Map<ByteString, List<Asset>> assets;
 
-    public AuthorizedAssets(
-            ChunkServer.FileGroups fileGroups,
-            Map<ByteString, List<Asset>> assets) {
-
+    public AuthorizedAssets(ChunkServer.FileGroups fileGroups, Map<ByteString, List<Asset>> assets) {
         this.fileGroups = Objects.requireNonNull(fileGroups);
         this.assets = copy(assets);
     }

@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
+import com.github.horrorho.inflatabledonkey.cloud.voodoo.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.util.Collection;
@@ -45,12 +45,12 @@ public interface ChunkEngine {
 
     Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            StorageHostChunkListContainer storageHostChunkListContainer,
+            SHCLContainer storageHostChunkListContainer,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey);
 
     default Map<ChunkServer.ChunkReference, Chunk> fetch(
             HttpClient httpClient,
-            Set<StorageHostChunkListContainer> storageHostChunkListContainerList,
+            Set<SHCLContainer> storageHostChunkListContainerList,
             Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
 
         return storageHostChunkListContainerList.stream()
