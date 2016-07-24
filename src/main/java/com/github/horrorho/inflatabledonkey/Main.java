@@ -79,7 +79,6 @@ public class Main {
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
 
-        System.exit(0);
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
@@ -172,12 +171,12 @@ public class Main {
         filtered.entrySet()
                 .stream()
                 .map(u -> {
-                    System.out.println(u.getKey().info());
+                    System.out.println("DEVICE - " + u.getKey().info());
                     return u.getValue();
                 })
                 .flatMap(Collection::stream)
                 .map(Snapshot::info)
-                .forEach(u -> System.out.println("\t" + u));
+                .forEach(u -> System.out.println("  SNAPSHOT - " + u));
 
         // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {

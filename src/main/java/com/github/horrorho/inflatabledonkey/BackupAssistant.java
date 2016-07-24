@@ -36,6 +36,7 @@ import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitties;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
@@ -45,7 +46,9 @@ import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
+import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
@@ -121,17 +124,16 @@ public final class BackupAssistant {
                 .collect(Collectors.groupingBy(s -> snapshotDevice.get(s.snapshotID())));
     }
 
-    public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws IOException {
+    public List<Assets> assetsList(HttpClient httpClient, Snapshot snapshot) throws UncheckedIOException {
         List<Manifest> manifests = snapshot.manifests()
                 .stream()
                 .filter(x -> x.count() != 0)
                 .collect(Collectors.toList());
-
         return AssetsClient.assets(httpClient, kitty, mbksync, manifests);
     }
 
-    public List<Asset> assets(HttpClient httpClient, Collection<Assets> assets) throws IOException {
-        return AssetTokenClient.assets(httpClient, kitty, mbksync, assets);
+    public List<Asset> assets(HttpClient httpClient, Collection<AssetID> assetIDs) throws IOException {
+        return AssetTokenClient.assets(httpClient, kitty, mbksync, assetIDs);
     }
 
     public KeyBagManager newKeyBagManager() {

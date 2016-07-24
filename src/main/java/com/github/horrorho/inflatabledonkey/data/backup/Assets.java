@@ -68,7 +68,7 @@ public final class Assets {
 
     public List<AssetID> nonEmpty() {
         return assets.stream()
-                .filter(u -> u.size() > 0)
+                .filter(a -> a.size() > 0)
                 .collect(Collectors.toList());
     }
 

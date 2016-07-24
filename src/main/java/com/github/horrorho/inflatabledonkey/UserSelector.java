@@ -138,7 +138,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, ? extends C
                 return this;
             }
             String token = deviceTokens.next();
-            System.out.println(pad(token, 2) + ": " + device.info());
+            System.out.println(pad(token, 2) + ": DEVICE - " + device.info());
             putChoice(token, device, snapshots);
             return this;
         }

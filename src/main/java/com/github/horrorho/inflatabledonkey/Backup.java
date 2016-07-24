@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
@@ -36,9 +37,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,6 +63,7 @@ import org.slf4j.LoggerFactory;
 public final class Backup {
 
     private static final Logger logger = LoggerFactory.getLogger(Backup.class);
+    private static final long BATCH_SIZE = 32 * 1024 * 1024;
 
     private final BackupAssistant backupAssistant;
     private final DownloadAssistant downloadAssistant;
@@ -127,19 +131,39 @@ public final class Backup {
         Path relativePath = deviceSnapshotDateSubPath(device, snapshot);
         logger.info("-- download() - snapshot relative path: {}", relativePath);
 
-        // Filename extension filter.
-        // Batch process files in groups of 100.
-        // TODO group files into batches based on file size.
-        List<List<Assets>> batches = ListUtils.split(assets, 100);
+        // AssetIDs
+        List<AssetID> assetIDs = assets.stream()
+                .map(u -> u.nonEmpty()) // TODO handle empty assets at some point
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
 
-        for (List<Assets> batch : batches) {
+        List<List<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
+
+        for (List<AssetID> batch : batches) {
             List<Asset> assetList = backupAssistant.assets(httpClient, batch)
                     .stream()
                     .filter(assetFilter::test)
                     .collect(Collectors.toList());
             logger.info("-- download() - filtered asset count: {}", assetList.size());
             downloadAssistant.download(httpClient, assetList, relativePath);
+            // TODO re-authorize time expired tokens.
         }
+    }
+
+    List<List<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
+        List<List<AssetID>> lists = new ArrayList<>();
+        Iterator<AssetID> it = assetIDs.iterator();
+        while (it.hasNext()) {
+            List<AssetID> list = new ArrayList<>();
+            long i = 0;
+            do {
+                AssetID assetID = it.next();
+                i += assetID.size();
+                list.add(assetID);
+            } while (it.hasNext() && i < batchSize);
+            lists.add(list);
+        }
+        return lists;
     }
 
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {

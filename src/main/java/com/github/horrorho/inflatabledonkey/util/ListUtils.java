@@ -38,9 +38,26 @@ public final class ListUtils {
             throw new IllegalArgumentException("bad size: " + size);
         }
         List<List<T>> lists = new ArrayList<>();
-        for (int i = 0; i < list.size(); i += size) {
-            int to = (i + size) > list.size() ? list.size() : i + size;
+        for (int i = 0, listSize = list.size(); i < listSize; i += size) {
+            int to = (i + size) > listSize ? listSize : i + size;
             lists.add(list.subList(i, to));
+        }
+        return lists;
+    }
+
+    public static <T> List<List<T>> divide(List<T> list, int by) {
+        if (by <= 0) {
+            throw new IllegalArgumentException("bad denominator: " + by);
+        }
+        List<List<T>> lists = new ArrayList<>();
+        int listSize = list.size();
+        int d = listSize / by;
+        int m = listSize % by;
+        int i = 0;
+        while (i < listSize) {
+            int c = m-- > 0 ? 1 : 0;
+            lists.add(list.subList(i, i + d + c));
+            i += d + c;
         }
         return lists;
     }

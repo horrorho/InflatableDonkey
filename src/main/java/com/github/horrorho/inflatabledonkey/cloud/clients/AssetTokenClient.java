@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
-import com.github.horrorho.inflatabledonkey.data.backup.Assets;
+import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
@@ -52,11 +52,10 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Assets> assets)
+            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
             throws UncheckedIOException {
-        List<String> nonEmptyAssets = assets.stream()
-                .map(Assets::nonEmpty)
-                .flatMap(Collection::stream)
+        List<String> nonEmptyAssets = assetIDs.stream()
+                .filter(a -> a.size() > 0)
                 .map(Object::toString)
                 .collect(Collectors.toList());
         logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
