@@ -21,40 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store;
+package com.github.horrorho.inflatabledonkey.io;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import net.jcip.annotations.ThreadSafe;
+import java.util.Objects;
 
 /**
- * ChunkStore.
  *
  * @author Ahseya
+ * @param <T> first type
+ * @param <U> second type
  */
-@ThreadSafe
-public interface ChunkStore {
+public interface IOBiConsumer<T, U> {
 
-    Optional<Chunk> chunk(byte[] checksum);
+    void accept(T t, U u) throws IOException;
 
-    /**
-     * Returns an OutputStream to write chunk data into. On closing this stream the chunk data is committed to the
-     * store, assuming that the chunk hasn't been committed in the interim by a competing thread.
-     *
-     * @param checksum
-     * @return OutputStream if the checksum referenced chunk is not already in the store.
-     * @throws IOException
-     */
-    Optional<OutputStream> write(byte[] checksum) throws IOException;
-
-    default List<Optional<Chunk>> chunks(Collection<byte[]> checksums) {
-        return checksums.stream()
-                .map(this::chunk)
-                .collect(Collectors.toList());
+    default IOBiConsumer<T, U> andThen(IOBiConsumer<? super T, ? super U> after) {
+        Objects.requireNonNull(after);
+        return (l, r) -> {
+            accept(l, r);
+            after.accept(l, r);
+        };
     }
 }

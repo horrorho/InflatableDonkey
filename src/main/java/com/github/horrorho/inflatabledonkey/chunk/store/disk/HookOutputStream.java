@@ -21,76 +21,59 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.io;
+package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
+import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * InputReferenceStream.
+ * ChunkBuilder.
  *
  * @author Ahseya
- * @param <T>
  */
 @NotThreadSafe
-public class InputReferenceStream<T> extends InputStream {
+public class HookOutputStream extends OutputStream {
 
-    private final InputStream inputStream;
-    private final T reference;
+    private final OutputStream outputStream;
+    private final IOConsumer<Boolean> hook;
 
-    public InputReferenceStream(InputStream inputStream, T reference) {
-        this.inputStream = Objects.requireNonNull(inputStream, "inputStream");
-        this.reference = Objects.requireNonNull(reference, "reference");
-    }
-
-    public T reference() {
-        return reference;
+    public HookOutputStream(OutputStream outputStream, IOConsumer<Boolean> hook) {
+        this.outputStream = Objects.requireNonNull(outputStream, "outputStream");
+        this.hook = Objects.requireNonNull(hook, "consumer");
     }
 
     @Override
-    public int read() throws IOException {
-        return inputStream.read();
+    public void write(int b) throws IOException {
+        outputStream.write(b);
     }
 
     @Override
-    public boolean markSupported() {
-        return inputStream.markSupported();
+    public void flush() throws IOException {
+        outputStream.flush();
     }
 
     @Override
-    public synchronized void reset() throws IOException {
-        inputStream.reset();
+    public void write(byte[] b, int off, int len) throws IOException {
+        outputStream.write(b, off, len);
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
-        inputStream.mark(readlimit);
+    public void write(byte[] b) throws IOException {
+        outputStream.write(b);
     }
 
     @Override
     public void close() throws IOException {
-        inputStream.close();
-    }
+        try {
+            outputStream.close();
+            hook.accept(true);
 
-    @Override
-    public int available() throws IOException {
-        return inputStream.available();
-    }
-
-    @Override
-    public long skip(long n) throws IOException {
-        return inputStream.skip(n);
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        return inputStream.read(b, off, len);
-    }
-
-    @Override
-    public int read(byte[] b) throws IOException {
-        return inputStream.read(b);
+        } catch (IOException ex) {
+            hook.accept(false);
+            throw ex;
+        }
     }
 }

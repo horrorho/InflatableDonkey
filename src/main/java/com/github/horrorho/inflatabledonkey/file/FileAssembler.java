@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.file;
 
+import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;

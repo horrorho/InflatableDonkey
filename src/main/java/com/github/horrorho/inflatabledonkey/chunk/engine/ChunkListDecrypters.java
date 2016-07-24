@@ -28,12 +28,14 @@ import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,20 +103,18 @@ public final class ChunkListDecrypters {
         byte[] chunkData = optionalChunkData.get();
 
         return validate(chunkInfo, chunkData)
-                .flatMap(checksum -> chunk(chunkStore, checksum, chunkData));
+                .flatMap(checksum -> copy(chunkStore, checksum, chunkData));
     }
 
-    static Optional<Chunk> chunk(ChunkStore chunkStore, byte[] checksum, byte[] data) {
-        try {
-            // TODO rework with ChunkDecrypters for direct decryption to Chunk OutputStream.
-            Chunk chunk = chunkStore.chunkBuilder(checksum)
-                    .build(data);
-            return Optional.of(chunk);
-
+    static Optional<Chunk> copy(ChunkStore chunkStore, byte[] checksum, byte[] data) {
+        try (OutputStream outputStream = chunkStore.write(checksum).orElse(null)) {
+            if (outputStream != null) {
+                outputStream.write(data);
+            }
         } catch (IOException ex) {
-            logger.warn("-- chunk() - IOException: {}", ex);
-            return Optional.empty();
+            logger.warn("-- copy() - failed to copy chunk data: {} ex: {}", Hex.toHexString(checksum), ex);
         }
+        return chunkStore.chunk(checksum);
     }
 
     static Optional<byte[]> validate(ChunkServer.ChunkInfo chunkInfo, byte[] data) {

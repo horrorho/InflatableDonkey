@@ -61,8 +61,10 @@ public final class ArgsFactory {
         args.add(filterDomain());
         args.add(filterRelativePath());
         args.add(filterExtension());
-        args.add(filterDateMin());
-        args.add(filterDateMax());
+        args.add(filterBirthMin());
+        args.add(filterBirthMax());
+        args.add(filterStatusMin());
+        args.add(filterStatusMax());
         args.add(mode());
         args.add(snapshots());
         args.add(domains());
@@ -71,24 +73,24 @@ public final class ArgsFactory {
         return args;
     }
 
-    static Arg filterDateMin() {
+    static Arg filterBirthMax() {
         Option option = Option.builder()
-                .longOpt("min-date")
-                .desc("Minimum last-modified timestamp.")
+                .longOpt("date-max")
+                .desc("Maximum created timestamp.")
                 .argName("date")
                 .hasArg()
                 .build();
-        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MIN, option, ArgsFactory::mapTimestamp);
+        return new Arg(Property.FILTER_ASSET_BIRTH_MAX, option, ArgsFactory::mapTimestamp);
     }
 
-    static Arg filterDateMax() {
+    static Arg filterBirthMin() {
         Option option = Option.builder()
-                .longOpt("max-date")
-                .desc("Maximum last-modified timestamp.")
+                .longOpt("date-min")
+                .desc("Minimum created timestamp.")
                 .argName("date")
                 .hasArg()
                 .build();
-        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MAX, option, ArgsFactory::mapTimestamp);
+        return new Arg(Property.FILTER_ASSET_BIRTH_MIN, option, ArgsFactory::mapTimestamp);
     }
 
     static Arg filterDevice() {
@@ -135,11 +137,32 @@ public final class ArgsFactory {
     static Arg filterSnapshot() {
         Option option = Option.builder("s")
                 .longOpt("snapshot")
-                .desc("Snapshot filter/s, 0 = first snapshot. Reverse selection with -1 = last snapshot.")
+                .desc("Snapshot filter/s, 0 = first, 1 = next etc. "
+                        + "Reverse selection with -1 = last, -2 = previous etc.")
                 .argName("int")
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_SNAPSHOT, option, ArgsFactory::mapNumber);
+    }
+
+    static Arg filterStatusMax() {
+        Option option = Option.builder()
+                .longOpt("mod-max")
+                .desc("Maximum last-modified timestamp.")
+                .argName("date")
+                .hasArg()
+                .build();
+        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MAX, option, ArgsFactory::mapTimestamp);
+    }
+
+    static Arg filterStatusMin() {
+        Option option = Option.builder()
+                .longOpt("mod-min")
+                .desc("Minimum last-modified timestamp.")
+                .argName("date")
+                .hasArg()
+                .build();
+        return new Arg(Property.FILTER_ASSET_STATUS_CHANGED_MIN, option, ArgsFactory::mapTimestamp);
     }
 
     static Arg help() {

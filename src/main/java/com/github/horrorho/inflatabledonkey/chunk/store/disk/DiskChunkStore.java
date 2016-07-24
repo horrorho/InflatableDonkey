@@ -24,13 +24,19 @@
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import com.github.horrorho.inflatabledonkey.chunk.store.ChunkBuilder;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
+import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
+import com.github.horrorho.inflatabledonkey.io.IOConsumer;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import org.bouncycastle.util.encoders.Hex;
+import java.util.concurrent.ThreadLocalRandom;
+import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,45 +45,101 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
-//@ThreadSafe - collisions issues
+//@ThreadSafe
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
+    private static final int RETRY = 3;
 
+    private final Object lock;
     private final Path chunkFolder;
+    private final Path tempFolder;
 
-    public DiskChunkStore(Path chunkFolder) {
+    public DiskChunkStore(Object lock, Path chunkFolder, Path tempFolder) {
+        this.lock = Objects.requireNonNull(lock, "lock");
         this.chunkFolder = Objects.requireNonNull(chunkFolder, "chunkFolder");
+        this.tempFolder = Objects.requireNonNull(tempFolder, "tempFolder");
     }
 
-    Path file(byte[] checksum) {
+    public DiskChunkStore(Path chunkFolder, Path tempFolder) {
+        this(new Object(), chunkFolder, tempFolder);
+    }
+
+    @Override
+    public Optional<Chunk> chunk(byte[] checksum) {
+        synchronized (lock) {
+            Path file = path(checksum);
+            // DiskChunk instances are lightweight, not cached.
+            return Files.exists(file)
+                    ? Optional.of(new DiskChunk(checksum, file))
+                    : Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<OutputStream> write(byte[] checksum) throws IOException {
+        synchronized (lock) {
+            Path path = path(checksum);
+            return Files.exists(path)
+                    ? Optional.empty()
+                    : write(path);
+        }
+    }
+
+    @GuardedBy("lock")
+    Optional<OutputStream> write(Path to) throws IOException {
+        Path temp = tempFile(RETRY);
+        if (!DirectoryAssistant.createParent(temp)) {
+            return Optional.empty();
+        }
+        HookOutputStream outputStream = new HookOutputStream(Files.newOutputStream(temp), hook(temp, to));
+        return Optional.of(outputStream);
+    }
+
+    IOConsumer<Boolean> hook(Path temp, Path to) {
+        return b -> copy(b, temp, to);
+    }
+
+    void copy(boolean success, Path temp, Path to) throws IOException {
+        synchronized (lock) {
+            if (success == false) {
+                logger.warn("-- copy() - failed to write to temporary file: {} chunk: {}", temp, to);
+                return;
+            }
+            if (Files.exists(to)) {
+                logger.debug("-- copy() - duplicate chunk ignored: {}", to);
+                return;
+            }
+            if (!Files.exists(temp)) {
+                logger.warn("-- copy() - temporary file missing: {}", temp);
+                return;
+            }
+            Files.move(temp, to);
+            logger.debug("-- copy() - chunk created: {}", to);
+        }
+    }
+
+    @GuardedBy("lock")
+    Path tempFile(int retry) throws IOException {
+        if (retry == 0) {
+            throw new IOException("failed to create temporary file");
+        }
+        String random = new BigInteger(64, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
+        String filename = random + ".tmp";
+        Path path = tempFolder.resolve(filename);
+        return Files.exists(path)
+                ? tempFile(--retry)
+                : path;
+    }
+
+    Path path(byte[] checksum) {
         Path filename = DiskChunkFiles.filename(checksum);
         return chunkFolder.resolve(filename);
     }
 
     @Override
-    public Optional<Chunk> chunk(byte[] checksum) {
-        Path file = file(checksum);
-
-        // DiskChunk instances are lightweight, not cached.
-        return Files.exists(file)
-                ? Optional.of(new DiskChunk(checksum, file))
-                : Optional.empty();
-    }
-
-    @Override
-    public ChunkBuilder chunkBuilder(byte[] checksum) {
-        Path file = file(checksum);
-        if (Files.exists(file)) {
-            logger.debug("chunk overwritten: {}", Hex.toHexString(checksum));
-        }
-
-        return new DiskChunk.Builder(checksum, file);
-    }
-
-    @Override
     public String toString() {
-        return "DiskChunkStore{" + "chunkFolder=" + chunkFolder + '}';
+        return "DiskChunkStore{" + "lock=" + lock + ", chunkFolder=" + chunkFolder + ", tempFolder=" + tempFolder + '}';
     }
 }
-// TODO collisions
+// TODO checksum verification

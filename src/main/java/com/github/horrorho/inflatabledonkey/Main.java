@@ -50,6 +50,7 @@ import java.util.function.Predicate;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,7 @@ public class Main {
 
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
-        
+
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
@@ -91,11 +92,23 @@ public class Main {
 
         // SystemDefault HttpClient.
         // TODO concurrent, close
+//        CloseableHttpClient httpClient = HttpClients.custom()
+//                .setUserAgent("CloudKit/479 (13A404)")
+//                .setRedirectStrategy(new LaxRedirectStrategy())
+//                .useSystemProperties()
+//                .build();
+        int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX.asInteger().orElse(32);
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal(maxConnections);
+        connManager.setDefaultMaxPerRoute(maxConnections);
+
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setUserAgent("CloudKit/479 (13A404)")
                 .setRedirectStrategy(new LaxRedirectStrategy())
+                .setConnectionManager(connManager)
                 .useSystemProperties()
                 .build();
+
         // TODO manage
         Optional<ForkJoinPool> forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new);
         logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.map(ForkJoinPool::getParallelism));
@@ -129,7 +142,8 @@ public class Main {
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
-        Path chunkOutputFolder = outputFolder.resolve("cache");
+        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property
+        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
         System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
@@ -139,7 +153,7 @@ public class Main {
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder);
+        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder, tempOutputFolder);
         StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
         AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
@@ -195,26 +209,29 @@ public class Main {
         }
 
         Predicate<Assets> assetsFilter = new AssetsFilter(Property.FILTER_ASSET_DOMAIN.asList());
+
         Predicate<Asset> assetFilter = new AssetFilter(
-                Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
-                Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong(),
+                Property.FILTER_ASSET_BIRTH_MAX.asLong(),
+                Property.FILTER_ASSET_BIRTH_MIN.asLong(),
+                Property.FILTER_ASSET_EXTENSION.asList(),
+                Property.FILTER_ASSET_RELATIVE_PATH.asList(),
                 Property.FILTER_ASSET_SIZE_MAX.asInteger(),
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
-                Property.FILTER_ASSET_EXTENSION.asList(),
-                Property.FILTER_ASSET_RELATIVE_PATH.asList());
+                Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
+                Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
         backup.download(httpClient, filtered, assetsFilter, assetFilter);
     }
 }
 
 // TODO 0xFF System protectionInfo DONE
-// TODO file timestamps
-// TODO date filtering
-// TODO size filtering
+// TODO file timestamps DONE
+// TODO date filtering DONE
+// TODO size filtering DONE
 // TODO time expired tokens / badly adjusted system clocks.
-// TODO handle D in files
+// TODO handle D in files DONE
 // TODO reconstruct empty files/ empty directories
-// TODO file timestamp
-// TODO filtering
-// TODO concurrent downloads
+// TODO file timestamp DONE
+// TODO filtering DONE
+// TODO concurrent downloads DONE
 // TODO file asset cache
 // TODO 5000 limit? FIXED
