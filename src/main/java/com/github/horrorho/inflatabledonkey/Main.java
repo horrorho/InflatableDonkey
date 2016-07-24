@@ -196,26 +196,29 @@ public class Main {
         }
 
         Predicate<Assets> assetsFilter = new AssetsFilter(Property.FILTER_ASSET_DOMAIN.asList());
+
         Predicate<Asset> assetFilter = new AssetFilter(
-                Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
-                Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong(),
+                Property.FILTER_ASSET_BIRTH_MAX.asLong(),
+                Property.FILTER_ASSET_BIRTH_MIN.asLong(),
+                Property.FILTER_ASSET_EXTENSION.asList(),
+                Property.FILTER_ASSET_RELATIVE_PATH.asList(),
                 Property.FILTER_ASSET_SIZE_MAX.asInteger(),
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
-                Property.FILTER_ASSET_EXTENSION.asList(),
-                Property.FILTER_ASSET_RELATIVE_PATH.asList());
+                Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
+                Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
         backup.download(httpClient, filtered, assetsFilter, assetFilter);
     }
 }
 
 // TODO 0xFF System protectionInfo DONE
-// TODO file timestamps
-// TODO date filtering
-// TODO size filtering
+// TODO file timestamps DONE
+// TODO date filtering DONE
+// TODO size filtering DONE
 // TODO time expired tokens / badly adjusted system clocks.
-// TODO handle D in files
+// TODO handle D in files DONE
 // TODO reconstruct empty files/ empty directories
-// TODO file timestamp
-// TODO filtering
-// TODO concurrent downloads
+// TODO file timestamp DONE
+// TODO filtering DONE
+// TODO concurrent downloads DONE
 // TODO file asset cache
 // TODO 5000 limit? FIXED

@@ -45,21 +45,27 @@ public final class AssetFilter implements Predicate<Asset> {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetFilter.class);
 
-    private final Optional<Long> statusChangedMax;
-    private final Optional<Long> statusChangedMin;
-    private final Optional<Integer> sizeMax;
-    private final Optional<Integer> sizeMin;
+    private final Optional<Long> birthMax;
+    private final Optional<Long> birthMin;
     private final Optional<List<String>> extension;
     private final Optional<List<String>> relativePath;
+    private final Optional<Integer> sizeMax;
+    private final Optional<Integer> sizeMin;
+    private final Optional<Long> statusChangedMax;
+    private final Optional<Long> statusChangedMin;
 
     public AssetFilter(
-            Optional<Long> statusChangedMax,
-            Optional<Long> statusChangedMin,
+            Optional<Long> birthMax,
+            Optional<Long> birthMin,
+            Optional<? extends Collection<String>> extension,
+            Optional<? extends Collection<String>> relativePath,
             Optional<Integer> sizeMax,
             Optional<Integer> sizeMin,
-            Optional<? extends Collection<String>> extension,
-            Optional<? extends Collection<String>> relativePath) {
+            Optional<Long> statusChangedMax,
+            Optional<Long> statusChangedMin) {
 
+        this.birthMax = Objects.requireNonNull(birthMax, "birthMax");
+        this.birthMin = Objects.requireNonNull(birthMin, "birthMin");
         this.statusChangedMax = Objects.requireNonNull(statusChangedMax, "statusChangedMax");
         this.statusChangedMin = Objects.requireNonNull(statusChangedMin, "statusChangedMin");
         this.sizeMax = Objects.requireNonNull(sizeMax, "sizeMax");
@@ -70,28 +76,28 @@ public final class AssetFilter implements Predicate<Asset> {
 
     @Override
     public boolean test(Asset asset) {
-        return filterStatusChanged(asset)
-                && filterAttributeSize(asset)
-                && filterRelativePath(asset);
-    }
-
-    boolean filterStatusChanged(Asset asset) {
-        return asset.statusChanged()
-                .map(Instant::getEpochSecond)
-                .filter(t -> statusChangedMax.map(u -> t < u).orElse(true))
-                .map(t -> statusChangedMin.map(u -> t > u).orElse(true))
-                .orElseGet(() -> {
-                    logger.debug("-- filterStatusChanged() - no statusChanged: {}", asset);
-                    return true;
-                });
+        return filterAttributeSize(asset)
+                && filterBirth(asset)
+                && filterRelativePath(asset)
+                && filterStatusChanged(asset);
     }
 
     boolean filterAttributeSize(Asset asset) {
         return asset.attributeSize()
-                .filter(t -> sizeMax.map(u -> t < u).orElse(true))
-                .map(t -> sizeMin.map(u -> t > u).orElse(true))
+                .filter(t -> sizeMax.map(u -> t < u * 1024).orElse(true))
+                .map(t -> sizeMin.map(u -> t > u * 1024).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterAttributeSize() - no attributeSize: {}", asset);
+                    return true;
+                });
+    }
+
+    boolean filterBirth(Asset asset) {
+        return asset.birth().map(Instant::getEpochSecond)
+                .filter(t -> birthMax.map(u -> t < u).orElse(true))
+                .map(t -> birthMin.map(u -> t > u).orElse(true))
+                .orElseGet(() -> {
+                    logger.debug("-- filterBirth() - no filterBirth: {}", asset);
                     return true;
                 });
     }
@@ -104,6 +110,17 @@ public final class AssetFilter implements Predicate<Asset> {
                 .orElseGet(() -> {
                     logger.debug("-- filterRelativePath() - no relativePath: {}", asset);
                     return false;
+                });
+    }
+
+    boolean filterStatusChanged(Asset asset) {
+        return asset.statusChanged()
+                .map(Instant::getEpochSecond)
+                .filter(t -> statusChangedMax.map(u -> t < u).orElse(true))
+                .map(t -> statusChangedMin.map(u -> t > u).orElse(true))
+                .orElseGet(() -> {
+                    logger.debug("-- filterStatusChanged() - no statusChanged: {}", asset);
+                    return true;
                 });
     }
 

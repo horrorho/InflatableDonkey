@@ -108,7 +108,6 @@ public final class ChunkListDecrypters {
 
     static Optional<Chunk> copy(ChunkStore chunkStore, byte[] checksum, byte[] data) {
         try (OutputStream outputStream = chunkStore.write(checksum).orElse(null)) {
-            logger.info("-- copy() - outputStream: {}", outputStream);
             if (outputStream != null) {
                 outputStream.write(data);
             }

@@ -55,13 +55,15 @@ public enum Property {
     DP_AESCBC_BLOCK_SIZE("4096"),
     DP_AESXTS_BLOCK_SIZE("4096"),
     DP_MODE("AUTO"),
-    FILTER_ASSET_STATUS_CHANGED_MAX(),
-    FILTER_ASSET_STATUS_CHANGED_MIN(),
+    FILTER_ASSET_BIRTH_MAX(),
+    FILTER_ASSET_BIRTH_MIN(),
     FILTER_ASSET_DOMAIN(),
     FILTER_ASSET_EXTENSION(),
     FILTER_ASSET_RELATIVE_PATH(),
     FILTER_ASSET_SIZE_MAX(),
     FILTER_ASSET_SIZE_MIN(),
+    FILTER_ASSET_STATUS_CHANGED_MAX(),
+    FILTER_ASSET_STATUS_CHANGED_MIN(),
     FILTER_DEVICE(),
     FILTER_SNAPSHOT(),
     FILE_WRITER_BUFFER_LENGTH("16384"),
@@ -74,7 +76,7 @@ public enum Property {
     PROTOC_PATH("protoc"),
     PROTOC_TIMEOUT_MS("15000"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
-    THREADS("4"),
+    THREADS("1"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     static synchronized void setProperties(Map<Property, String> properties) {
