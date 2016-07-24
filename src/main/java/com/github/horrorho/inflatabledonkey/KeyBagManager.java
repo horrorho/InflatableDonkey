@@ -59,7 +59,7 @@ public final class KeyBagManager {
 
     public static KeyBagManager defaults(CloudKitty kitty, ProtectionZone mbksync) {
         BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient
-                = (httpClient, keyBagID) -> KeyBagClient.keyBag(httpClient, kitty, mbksync, keyBagID);
+                = (httpClient, keyBagID) -> KeyBagClient.apply(httpClient, kitty, mbksync, keyBagID);
         return new KeyBagManager(keyBagClient);
     }
 

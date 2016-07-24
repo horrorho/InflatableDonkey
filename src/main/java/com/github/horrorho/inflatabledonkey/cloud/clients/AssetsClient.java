@@ -57,18 +57,17 @@ public final class AssetsClient {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetsClient.class);
 
-    public static List<Assets>
-            assets(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
+    public static Optional<List<Assets>>
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
             throws UncheckedIOException {
 
         if (manifests.isEmpty()) {
-            return new ArrayList<>();
+            return Optional.of(new ArrayList<>());
         }
 
         List<String> manifestIDs = manifestIDs(manifests);
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs);
-        return assetsList(responses, zone);
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs)
+                .map(r -> assetsList(r, zone));
     }
 
     static List<String> manifestIDs(Collection<Manifest> manifests) {

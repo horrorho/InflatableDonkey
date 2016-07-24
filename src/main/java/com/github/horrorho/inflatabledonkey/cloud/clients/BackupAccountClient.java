@@ -48,21 +48,20 @@ public final class BackupAccountClient {
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountClient.class);
 
     public static Optional<BackupAccount>
-            backupAccount(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws UncheckedIOException {
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws UncheckedIOException {
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount");
-        if (responses.size() != 1) {
-            logger.warn("-- backupAccount() - bad response list size: {}", responses);
-            return Optional.empty();
-        }
-        
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount")
+                .flatMap(r -> backupAccount(r, zone));
+    }
+
+    static Optional<BackupAccount> backupAccount(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+        logger.debug("-- backupAccount() - responses: {}", responses);
         CloudKit.RecordRetrieveResponse response = responses.get(0);
         if (!response.hasRecord()) {
             logger.warn("-- backupAccount() - no BackupAccount record");
             return Optional.empty();
         }
-        
+
         CloudKit.ProtectionInfo protectionInfo = response.getRecord().getProtectionInfo();
         Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
         if (!optionalNewZone.isPresent()) {

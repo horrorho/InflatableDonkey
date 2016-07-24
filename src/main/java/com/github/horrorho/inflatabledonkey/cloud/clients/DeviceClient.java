@@ -48,19 +48,22 @@ public final class DeviceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
 
-    public static List<Device>
-            device(HttpClient httpClient, CloudKitty kitty, Collection<DeviceID> devices)
+    public static Optional<List<Device>>
+            apply(HttpClient httpClient, CloudKitty kitty, Collection<DeviceID> devices)
             throws UncheckedIOException {
 
         List<String> deviceList = devices.stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceList);
-        logger.debug("-- device() - responses: {}", responses);
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceList)
+                .map(DeviceClient::devices);
+    }
 
-        return responses.stream()
+    static List<Device> devices(List<CloudKit.RecordRetrieveResponse> responses) {
+        logger.debug("-- devices() - responses: {}", responses);
+        return responses
+                .stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(DeviceFactory::from)
                 .filter(Optional::isPresent)

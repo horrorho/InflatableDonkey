@@ -50,29 +50,30 @@ public final class MBKSyncClient {
     private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
     public static Optional<ProtectionZone>
-            mbksync(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys)
+            apply(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys)
             throws UncheckedIOException {
 
-        List<CloudKit.ZoneRetrieveResponse> responses
-                = ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync");
-        logger.debug("-- baseZones() - responses: {}", responses);
-        if (responses.size() != 2) {
-            logger.warn("-- baseZones() - bad response list size: {}", responses);
-            return Optional.empty();
-        }
+        return ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync")
+                .map(r -> zone(r, keys));
+    }
 
+    static ProtectionZone
+            zone(List<CloudKit.ZoneRetrieveResponse> responses, Collection<Key<ECPrivateKey>> keys) {
+        logger.debug("-- zone() - responses: {}", responses);
         ProtectionZone zone = PZFactory.instance().create(keys);
 
-        List<CloudKit.ProtectionInfo> protectionInfoList = zone(responses, zone);
+        List<CloudKit.ProtectionInfo> protectionInfoList = protectionInfo(responses, zone);
         for (CloudKit.ProtectionInfo protectionInfo : protectionInfoList) {
             zone = PZFactory.instance().create(zone, protectionInfo)
                     .orElse(zone);
         }
-        return Optional.of(zone);
+        return zone;
     }
 
-    static List<CloudKit.ProtectionInfo> zone(List<CloudKit.ZoneRetrieveResponse> response, ProtectionZone zone) {
-        return response.stream()
+    static List<CloudKit.ProtectionInfo>
+            protectionInfo(List<CloudKit.ZoneRetrieveResponse> response, ProtectionZone zone) {
+        return response
+                .stream()
                 .map(CloudKit.ZoneRetrieveResponse::getZoneSummarysList)
                 .flatMap(Collection::stream)
                 .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
@@ -81,3 +82,4 @@ public final class MBKSyncClient {
                 .collect(Collectors.toList());
     }
 }
+// TOFIX rework to pull out zones individually

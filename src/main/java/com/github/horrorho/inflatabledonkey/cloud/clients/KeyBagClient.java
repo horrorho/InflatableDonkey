@@ -49,17 +49,16 @@ public final class KeyBagClient {
     private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
     public static Optional<KeyBag>
-            keyBag(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, KeyBagID keyBagID)
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, KeyBagID keyBagID)
             throws UncheckedIOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagID);
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
-        if (responses.size() != 1) {
-            logger.warn("-- keyBag() - bad response list size: {}", responses);
-            return Optional.empty();
-        }
+        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString())
+                .flatMap(r -> keyBag(r, zone));
+    }
 
+    static Optional<KeyBag> keyBag(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+        logger.debug("-- keyBag() - responses: {}", responses);
         CloudKit.ProtectionInfo protectionInfo = responses.get(0)
                 .getRecord()
                 .getProtectionInfo();
@@ -73,4 +72,5 @@ public final class KeyBagClient {
 
         return KeyBagFactory.from(responses.get(0), newZone);
     }
+
 }

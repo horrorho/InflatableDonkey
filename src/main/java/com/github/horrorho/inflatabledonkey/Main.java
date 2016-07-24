@@ -44,6 +44,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -88,12 +90,14 @@ public class Main {
         System.out.println("");
 
         // SystemDefault HttpClient.
-        // TODO concurrent
+        // TODO concurrent, close
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setUserAgent("CloudKit/479 (13A404)")
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .useSystemProperties()
                 .build();
+        // TODO manage
+        Optional<ForkJoinPool> forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new);
 
         // Auth
         // TODO rework when we have UncheckedIOException for Authenticator
@@ -118,7 +122,7 @@ public class Main {
         Account account = Accounts.account(httpClient, auth);
 
         // Backup
-        BackupAssistant assistant = BackupAssistant.create(httpClient, account);
+        BackupAssistant assistant = BackupAssistant.create(httpClient, account, forkJoinPool);
 
         // Output folders.
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
@@ -197,7 +201,7 @@ public class Main {
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
                 Property.FILTER_ASSET_EXTENSION.asList(),
                 Property.FILTER_ASSET_RELATIVE_PATH.asList());
-        backup.download(httpClient, deviceSnapshots, assetsFilter, assetFilter);
+        backup.download(httpClient, filtered, assetsFilter, assetFilter);
     }
 }
 
