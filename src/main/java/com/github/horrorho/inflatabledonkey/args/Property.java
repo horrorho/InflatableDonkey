@@ -67,6 +67,7 @@ public enum Property {
     FILTER_DEVICE(),
     FILTER_SNAPSHOT(),
     FILE_WRITER_BUFFER_LENGTH("16384"),
+    HTTP_CLIENT_CONNECTIONS_MAX("32"),
     OUTPUT_FOLDER("backups"),
     PRINT_DOMAIN_LIST("false"),
     PRINT_SNAPSHOTS("false"),

@@ -50,6 +50,7 @@ import java.util.function.Predicate;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,11 +92,23 @@ public class Main {
 
         // SystemDefault HttpClient.
         // TODO concurrent, close
+//        CloseableHttpClient httpClient = HttpClients.custom()
+//                .setUserAgent("CloudKit/479 (13A404)")
+//                .setRedirectStrategy(new LaxRedirectStrategy())
+//                .useSystemProperties()
+//                .build();
+        int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX.asInteger().orElse(32);
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal(maxConnections);
+        connManager.setDefaultMaxPerRoute(maxConnections);
+
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setUserAgent("CloudKit/479 (13A404)")
                 .setRedirectStrategy(new LaxRedirectStrategy())
+                .setConnectionManager(connManager)
                 .useSystemProperties()
                 .build();
+
         // TODO manage
         Optional<ForkJoinPool> forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new);
         logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.map(ForkJoinPool::getParallelism));
