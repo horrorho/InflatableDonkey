@@ -92,6 +92,9 @@ public final class DiskChunkStore implements ChunkStore {
         if (!DirectoryAssistant.createParent(temp)) {
             return Optional.empty();
         }
+        if (!DirectoryAssistant.createParent(to)) {
+            return Optional.empty();
+        }
         HookOutputStream outputStream = new HookOutputStream(Files.newOutputStream(temp), hook(temp, to));
         return Optional.of(outputStream);
     }
