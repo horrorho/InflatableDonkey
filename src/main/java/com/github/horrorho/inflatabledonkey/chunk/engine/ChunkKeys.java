@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2016 Ahseya.
+ * Copyright 2015 Ahseya.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.voodoo;
+package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import com.google.protobuf.ByteString;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * ChunkEncryptionKeys.
  *
  * @author Ahseya
  */
 @Immutable
-public final class FileChecksumChunkReferences {
+public final class ChunkKeys {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileChecksumChunkReferences.class);
+    // 447E254DA96F1A75C8FB:10007C60
+    private static final Logger logger = LoggerFactory.getLogger(ChunkKeys.class);
 
-    public static Map<ByteString, List<ChunkServer.ChunkReference>>
-            fileSignatureToChunkReferenceList(List<ChunkServer.FileChecksumChunkReferences> referencesList) {
+    private ChunkKeys() {
+    }
 
-        return referencesList.stream()
-                .map(u -> new SimpleImmutableEntry<>(u.getFileSignature(), u.getChunkReferencesList()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (u, v) -> {
-                            logger.warn("-- fileSignatureToChunkReferenceList() - duplicate signatures: {} {}", u, v);
-                            return u;
-                        }));
+    public static Optional<byte[]> unwrap(byte[] key, byte[] kek) {
+        logger.trace("-- unwrap() - key: 0x{} kek: 0x{}", Hex.toHexString(key), Hex.toHexString(kek));
+        if (key.length != 0x19) {
+            logger.warn("-- unwrap() - key too short: 0x{}", Hex.toHexString(key));
+        }
+
+        int keyType = key[0];
+        if (keyType != 2) {
+            logger.warn("-- unwrap() - unsupported key type: {}", keyType);
+        }
+
+        byte[] wrappedKey = Arrays.copyOfRange(key, 0x01, 0x19);
+        Optional<byte[]> unwrappedKey = RFC3394Wrap.unwrapAES(kek, wrappedKey);
+
+        logger.trace("-- unwrap() - unwrapped key: 0x{}", unwrappedKey.map(Hex::toHexString).orElse("NULL"));
+        return unwrappedKey;
     }
 }

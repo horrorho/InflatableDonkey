@@ -23,15 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 
@@ -43,22 +39,20 @@ import org.apache.http.client.HttpClient;
 @ThreadSafe
 public interface ChunkEngine {
 
-    Map<ChunkServer.ChunkReference, Chunk> fetch(
-            HttpClient httpClient,
-            SHCLContainer storageHostChunkListContainer,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey);
+    Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            fetch(HttpClient client, SHCLContainer container, byte[] keyEncryptionKey);
 
-    default Map<ChunkServer.ChunkReference, Chunk> fetch(
-            HttpClient httpClient,
-            Set<SHCLContainer> storageHostChunkListContainerList,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
-
-        return storageHostChunkListContainerList.stream()
-                .map(storageHostChunkList -> fetch(httpClient, storageHostChunkList, getKeyEncryptionKey))
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue));
+    default Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            fetch(HttpClient client, Map<SHCLContainer, byte[]> containersKeyEncryptionKeys) {
+        Map<ChunkServer.ChunkReference, Chunk> chunks = new HashMap<>();
+        for (Map.Entry<SHCLContainer, byte[]> entry : containersKeyEncryptionKeys.entrySet()) {
+            Optional<Map<ChunkServer.ChunkReference, Chunk>> chunk = fetch(client, entry.getKey(), entry.getValue());
+            if (chunk.isPresent()) {
+                chunks.putAll(chunk.get());
+            } else {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(chunks);
     }
 }

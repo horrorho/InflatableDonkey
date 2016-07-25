@@ -25,18 +25,14 @@ package com.github.horrorho.inflatabledonkey.chunk.engine.standard;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypters;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.SHCLContainer;
+import com.github.horrorho.inflatabledonkey.chunk.engine.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.ChunkReferences;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.ThreadSafe;
@@ -45,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * StandardChunkEngine.
  *
  * @author Ahseya
  */
@@ -55,89 +50,42 @@ public class StandardChunkEngine implements ChunkEngine {
     private static final Logger logger = LoggerFactory.getLogger(StandardChunkEngine.class);
 
     private final ChunkStore chunkStore;
+    private final ChunkClient chunkClient;
+
+    public StandardChunkEngine(ChunkStore chunkStore, ChunkClient chunkClient) {
+        this.chunkStore = Objects.requireNonNull(chunkStore);
+        this.chunkClient = Objects.requireNonNull(chunkClient);
+    }
 
     public StandardChunkEngine(ChunkStore chunkStore) {
-        this.chunkStore = Objects.requireNonNull(chunkStore, "chunkStore");
+        this(chunkStore, ChunkClient.defaultInstance());
     }
 
     @Override
-    public Map<ChunkServer.ChunkReference, Chunk> fetch(
-            HttpClient httpClient,
-            SHCLContainer storageHostChunkListContainer,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
+    public Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            fetch(HttpClient client, SHCLContainer container, byte[] keyEncryptionKey) {
 
-        Optional<Map<ChunkServer.ChunkReference, Chunk>> chunkStoreChunks
-                = chunkStoreChunks(storageHostChunkListContainer);
+        return fromStore(container)
+                .map(Optional::of)
+                .orElseGet(() -> chunkClient.apply(client, container, keyEncryptionKey, chunkStore));
 
-        if (chunkStoreChunks.isPresent()) {
-            return chunkStoreChunks.get();
-        }
-
-        return fetchChunks(httpClient, storageHostChunkListContainer, getKeyEncryptionKey);
     }
 
-    Map<ChunkServer.ChunkReference, Chunk> fetchChunks(
-            HttpClient httpClient,
-            SHCLContainer storageHostChunkListContainer,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey) {
-
-        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
-        int container = storageHostChunkListContainer.container();
-
-        byte[] chunkData = fetchChunkData(httpClient, storageHostChunkList);
-
-        return ChunkListDecrypters.decrypt(
-                container,
-                storageHostChunkList.getChunkInfoList(),
-                chunkStore,
-                chunkData,
-                getKeyEncryptionKey);
+    Optional<Map<ChunkServer.ChunkReference, Chunk>> fromStore(SHCLContainer container) {
+        return chunkStore.chunks(container.chunkChecksums())
+                .map(u -> toMap(container.index(), u));
     }
 
-    byte[] fetchChunkData(HttpClient httpClient, ChunkServer.StorageHostChunkList chunkList) {
-        return ChunkClient.fetch(httpClient, chunkList)
-                .orElseGet(() -> new byte[]{});
-    }
-
-    Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            chunkStoreChunks(SHCLContainer storageHostChunkListContainer) {
-
-        ChunkServer.StorageHostChunkList storageHostChunkList = storageHostChunkListContainer.storageHostChunkList();
-        int container = storageHostChunkListContainer.container();
-
-        List<byte[]> checksumList = checksumList(storageHostChunkList.getChunkInfoList());
-        List<Optional<Chunk>> chunkList = chunkStore.chunks(checksumList);
-
-        return chunks(container, chunkList);
-    }
-
-    Optional<Map<ChunkServer.ChunkReference, Chunk>> chunks(int container, List<Optional<Chunk>> chunkList) {
-        if (chunkList.contains(Optional.<Chunk>empty())) {
-            return Optional.empty();
-        }
-
-        Map<ChunkServer.ChunkReference, Chunk> chunks = IntStream.range(0, chunkList.size())
-                .filter(i -> chunkList.get(i).isPresent())
+    Map<ChunkServer.ChunkReference, Chunk> toMap(int index, List<Chunk> chunks) {
+        return IntStream.range(0, chunks.size())
                 .mapToObj(Integer::valueOf)
-                .collect(Collectors.toMap(
-                        i -> ChunkReferences.chunkReference(container, i),
-                        i -> chunkList.get(i).get()));
-
-        return Optional.of(chunks);
+                .collect(Collectors.toMap(i -> chunkReference(index, i), chunks::get));
     }
 
-    List<byte[]> checksumList(List<ChunkServer.ChunkInfo> list) {
-        return list.stream()
-                .filter(chunkInfo -> {
-                    if (!chunkInfo.hasChunkChecksum()) {
-                        logger.warn("-- checksumList() - no checksum: {}", chunkInfo);
-                        return false;
-                    }
-                    return true;
-                })
-                .map(ChunkServer.ChunkInfo::getChunkChecksum)
-                .map(ByteString::toByteArray)
-                .collect(Collectors.toList());
+    ChunkServer.ChunkReference chunkReference(int containerIndex, int chunkIndex) {
+        return ChunkServer.ChunkReference.newBuilder()
+                .setContainerIndex(containerIndex)
+                .setChunkIndex(chunkIndex)
+                .build();
     }
-
 }

@@ -75,7 +75,7 @@ public final class DownloadAssistant {
 
         AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
 
-        assetDownloader.get(httpClient, authorizedAssets, fileAssembler);
+        assetDownloader.accept(httpClient, authorizedAssets, fileAssembler);
     }
 }
 // TODO time expiration tokens

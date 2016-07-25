@@ -52,9 +52,11 @@ public interface ChunkStore {
      */
     Optional<OutputStream> write(byte[] checksum) throws IOException;
 
-    default List<Optional<Chunk>> chunks(Collection<byte[]> checksums) {
-        return checksums.stream()
+    default Optional<List<Chunk>> chunks(Collection<byte[]> checksums) {
+        List<Chunk> chunks = checksums.stream()
                 .map(this::chunk)
+                .map(u -> u.orElse(null))
                 .collect(Collectors.toList());
+        return (chunks.contains(null)) ? Optional.empty() : Optional.of(chunks);
     }
 }

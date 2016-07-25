@@ -23,46 +23,22 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import java.util.Optional;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.StreamBlockCipher;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CFBBlockCipher;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * ChunkDecrypters.
  *
  * @author Ahseya
  */
 @Immutable
-public final class ChunkDecrypters {
+public final class ChunkCiphers {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChunkDecrypters.class);
-
-    private ChunkDecrypters() {
+    private ChunkCiphers() {
     }
 
-    public static Optional<byte[]> decrypt(byte[] key, byte[] data, int offset, int length) {
-        StreamBlockCipher cipher = new CFBBlockCipher(new AESFastEngine(), 128);
-        return decrypt(key, cipher, data, offset, length);
-    }
-
-    public static Optional<byte[]> decrypt(byte[] key, StreamBlockCipher cipher, byte[] data, int offset, int length) {
-        try {
-            KeyParameter keyParameter = new KeyParameter(key);
-            cipher.init(false, keyParameter);
-            byte[] decrypted = new byte[length];
-            cipher.processBytes(data, offset, length, decrypted, 0);
-            return Optional.of(decrypted);
-
-        } catch (DataLengthException ex) {
-            logger.warn("-- decrypt() - exception: ", ex);
-            return Optional.empty();
-        }
+    public static StreamBlockCipher cipher() {
+        return new CFBBlockCipher(new AESFastEngine(), 128);
     }
 }
-// TODO OutputStream

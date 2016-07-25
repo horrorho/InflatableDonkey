@@ -23,59 +23,65 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
+import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
-import com.github.horrorho.inflatabledonkey.responsehandler.ByteArrayResponseHandler;
+import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ChunkListsClient.
  *
  * @author Ahseya
  */
 @Immutable
 public final class ChunkClient {
 
+    public static ChunkClient defaultInstance() {
+        return DEFAULT_INSTANCE;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(ChunkClient.class);
 
-    private ChunkClient() {
+    private static final ChunkClient DEFAULT_INSTANCE = new ChunkClient();
+
+    private final ChunkListDecrypterFactory chunkDecrypterFactory;
+    private final Function<ChunkServer.StorageHostChunkList, HttpUriRequest> requestFactory;
+
+    public ChunkClient(
+            ChunkListDecrypterFactory chunkDecrypterFactory,
+            Function<ChunkServer.StorageHostChunkList, HttpUriRequest> requestFactory) {
+        this.chunkDecrypterFactory = Objects.requireNonNull(chunkDecrypterFactory, "chunkDecrypterFactory");
+        this.requestFactory = Objects.requireNonNull(requestFactory, "requestFactory");
     }
 
-    public static Optional<byte[]> fetch(HttpClient httpClient, ChunkServer.StorageHostChunkList chunkList) {
-        ChunkListRequestFactory chunkListRequestFactory = ChunkListRequestFactory.instance();
-        return fetch(httpClient, chunkList, chunkListRequestFactory);
+    ChunkClient() {
+        this(ChunkListDecrypterFactory.defaults(), ChunkListRequestFactory.instance());
     }
 
-    public static Optional<byte[]> fetch(
-            HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory) {
-
-        ByteArrayResponseHandler responseHandler = ByteArrayResponseHandler.instance();
-        return fetch(httpClient, chunkList, chunkListRequestFactory, responseHandler);
-    }
-
-    public static <T> Optional<T> fetch(
-            HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory,
-            ResponseHandler<T> responseHandler) {
-
+    public Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            apply(HttpClient client, SHCLContainer container, byte[] keyEncryptionKey, ChunkStore store) {
         try {
-            HttpUriRequest request = chunkListRequestFactory.apply(chunkList);
-            T data = httpClient.execute(request, responseHandler);
-            return Optional.of(data);
+            ChunkListDecrypter decrypter = chunkDecrypterFactory.apply(store, container, keyEncryptionKey);
+            InputStreamResponseHandler<Map<ChunkServer.ChunkReference, Chunk>> handler
+                    = new InputStreamResponseHandler<>(decrypter);
+
+            HttpUriRequest request = requestFactory.apply(container.storageHostChunkList());
+
+            Map<ChunkServer.ChunkReference, Chunk> chunks = client.execute(request, handler);
+            return Optional.of(chunks);
 
         } catch (IOException ex) {
-            logger.warn("-- fetch() - IOException: {}", ex);
+            logger.warn("-- apply() - IOException: {}", ex.getMessage());
             return Optional.empty();
         }
     }
