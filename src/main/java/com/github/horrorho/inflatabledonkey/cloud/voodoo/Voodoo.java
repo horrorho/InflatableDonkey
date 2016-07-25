@@ -37,12 +37,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * FileGroup assistant.
+ * FileGroup assistant. Undefined behaviour for duplicate file signatures.
  *
  * @author Ahseya
  */
 @Immutable
 public final class Voodoo {
+
+    static <K, V> Map<V, K> invert(Map<K, List<V>> map) {
+        return map.entrySet()
+                .stream()
+                .flatMap(e -> e.getValue().stream()
+                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(v, e.getKey())))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (u, v) -> {
+                            logger.warn("-- invert() - duplicates: {} {}", u, v);
+                            return u;
+                        }));
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(Voodoo.class);
 
@@ -64,22 +78,8 @@ public final class Voodoo {
         chunkRefToFileSig = invert(fileSigToChunkRefList);
     }
 
-    public <K, V> Map<V, K> invert(Map<K, List<V>> map) {
-        return map.entrySet()
-                .stream()
-                .flatMap(e -> e.getValue().stream()
-                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(v, e.getKey())))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (u, v) -> {
-                            logger.warn("-- invert() - duplicates: {} {}", u, v);
-                            return u;
-                        }));
-    }
-
     /**
-     * Returns the ordered ChunkReferences required for the specified file signature.
+     * Returns ChunkReferences in the correct construction order for the specified file signature.
      *
      * @param fileSignature
      * @return list of ChunkReferences or empty if the signature is unreferenced

@@ -88,7 +88,7 @@ public final class Asset extends AbstractRecord {
         this.asset = Objects.requireNonNull(asset, "asset");
     }
 
-    public AssetID getAssetID() {
+    public AssetID assetID() {
         return assetID;
     }
 

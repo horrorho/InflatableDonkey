@@ -51,7 +51,7 @@ public final class FileChecksumChunkReferences {
                         Map.Entry::getKey,
                         Map.Entry::getValue,
                         (u, v) -> {
-                            logger.warn("-- fileSignatureToChunkReferenceList() - duplicates: {} {}", u, v);
+                            logger.warn("-- fileSignatureToChunkReferenceList() - duplicate signatures: {} {}", u, v);
                             return u;
                         }));
     }

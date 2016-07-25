@@ -30,7 +30,7 @@ import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * ChunkBuilder.
+ * OutputStream wrapper with a hook on close.
  *
  * @author Ahseya
  */

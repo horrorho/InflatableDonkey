@@ -461,7 +461,7 @@ message Asset {
   optional string contentBaseURL = 8;
   optional string dsid = 9;
   optional RecordIdentifier recordId = 10;
-  optional Data data = 15; // 192 bit something or other -> wrapped key, is it really repeated?
+  optional Data data = 15; // key encryption key
   optional bytes fileSignature = 17; // 90% certain of this
   optional uint64 downloadTokenExpiration = 18;
 
