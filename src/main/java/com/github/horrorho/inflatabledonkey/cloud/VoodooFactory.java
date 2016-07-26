@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.engine.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.FileChecksumChunkReferences;
@@ -33,9 +32,11 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChun
 import com.google.protobuf.ByteString;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
@@ -59,28 +60,33 @@ public final class VoodooFactory {
                 .forEach(u -> logger.warn("-- from() - server file chunk error: {}", u));
         // TODO do we need to filter error assets out, or is already done server side?
 
-        return fileGroups.getFileGroupsList()
+        List<Voodoo> voodoos = fileGroups.getFileGroupsList()
                 .stream()
                 .map(u -> from(assets, u))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
+        if (voodoos.size() != assets.size()) {
+            logger.warn("-- from() - missing assets in: {} out: {}", assets.size(), voodoos.size());
+        }
+        return voodoos;
     }
 
     static final List<Voodoo> from(AuthorizedAssets assets, FileChecksumStorageHostChunkLists fileGroup) {
-        List<SHCLContainer> containers = shclContainers(fileGroup.getStorageHostChunkListList());
+        Map<Integer, StorageHostChunkList> containers = containers(fileGroup.getStorageHostChunkListList());
         List<FileChecksumChunkReferences> fileChecksumChunkReferencesList
                 = fileGroup.getFileChecksumChunkReferencesList();
         return voodoos(assets, containers, fileChecksumChunkReferencesList);
     }
 
-    static List<SHCLContainer> shclContainers(List<StorageHostChunkList> list) {
+    static Map<Integer, StorageHostChunkList> containers(List<StorageHostChunkList> list) {
         return IntStream.range(0, list.size())
-                .mapToObj(i -> new SHCLContainer(list.get(i), i))
-                .collect(Collectors.toList());
+                .mapToObj(Integer::valueOf)
+                .collect(Collectors.toMap(Function.identity(), list::get));
     }
 
     static List<Voodoo>
-            voodoos(AuthorizedAssets assets, List<SHCLContainer> containers, List<FileChecksumChunkReferences> references) {
+            voodoos(AuthorizedAssets assets, Map<Integer, StorageHostChunkList> containers,
+                    List<FileChecksumChunkReferences> references) {
         return references
                 .stream()
                 .map(u -> voodoo(assets, containers, u))
@@ -90,54 +96,54 @@ public final class VoodooFactory {
     }
 
     static Optional<Voodoo>
-            voodoo(AuthorizedAssets assets, List<SHCLContainer> containers, FileChecksumChunkReferences references) {
-
+            voodoo(AuthorizedAssets assets, Map<Integer, StorageHostChunkList> containers,
+                    FileChecksumChunkReferences references) {
         ByteString fileSignature = references.getFileSignature();
-        ByteString fileChecksum = references.getFileChecksum();
-
-        Optional<Asset> asset = assets.asset(fileSignature);
-        if (!asset.isPresent()) {
-            logger.warn("-- voodoo() - no Asset for file signature: {}", fileSignature);
-            return Optional.empty();
-        }
-
-        List<Optional<Map.Entry<ChunkReference, SHCLContainer>>> optionals
-                = references.getChunkReferencesList()
-                .stream()
-                .map(u -> map(containers, u))
-                .collect(Collectors.toList());
-
-        if (optionals.contains(Optional.<Map.Entry<ChunkReference, SHCLContainer>>empty())) {
-            return Optional.empty();
-        }
-
-        List<ChunkReference> chunkReferences = optionals.stream()
-                .map(Optional::get)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        List<SHCLContainer> assetContainers = optionals.stream()
-                .map(Optional::get)
-                .map(Map.Entry::getValue)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Voodoo voodoo = new Voodoo(fileSignature, fileChecksum, asset.get(), assetContainers, chunkReferences);
-        return Optional.of(voodoo);
+        return assets.asset(fileSignature)
+                .map(u -> voodoo(u, containers, references))
+                .orElseGet(() -> {
+                    logger.warn("-- voodoo() - no Asset for file signature: {}", fileSignature);
+                    return Optional.empty();
+                });
     }
 
-    static Optional<Map.Entry<ChunkReference, SHCLContainer>>
-            map(List<SHCLContainer> containers, ChunkReference reference) {
-        if (containers.size() < reference.getContainerIndex()) {
-            logger.warn("-- map() - container index out of bounds: {}", reference.getContainerIndex());
+    static Optional<Voodoo>
+            voodoo(Asset asset, Map<Integer, StorageHostChunkList> containers, FileChecksumChunkReferences references) {
+        try {
+            return Optional.of(new Voodoo(asset, chunkReferences(containers, references)));
+
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            logger.warn("-- voodoo() - failed: {}", ex.getMessage());
             return Optional.empty();
         }
-        SHCLContainer container = containers.get((int) reference.getContainerIndex());
-        if (container.count() < reference.getChunkIndex()) {
-            logger.warn("-- map() - chunk index out of bounds: {}", reference.getChunkIndex());
-            return Optional.empty();
+    }
+
+    static LinkedHashMap<ChunkReference, StorageHostChunkList>
+            chunkReferences(Map<Integer, StorageHostChunkList> containers, FileChecksumChunkReferences references) {
+        return references.getChunkReferencesList()
+                .stream()
+                .map(u -> chunkReferenceEntry(containers, u))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (u, v) -> {
+                            throw new IllegalStateException("ChunkReference collision");
+                        },
+                        LinkedHashMap::new));
+    }
+
+    static Map.Entry<ChunkReference, StorageHostChunkList>
+            chunkReferenceEntry(Map<Integer, StorageHostChunkList> containers, ChunkReference reference) {
+        int containerIndex = (int) reference.getContainerIndex();
+        int chunkIndex = (int) reference.getChunkIndex();
+
+        StorageHostChunkList shcl = containers.get((int) reference.getContainerIndex());
+        if (shcl == null) {
+            throw new IllegalArgumentException("container index out of bounds: " + containerIndex);
         }
-        return Optional.of((new SimpleImmutableEntry<>(reference, container)));
+        if (shcl.getChunkInfoCount() < chunkIndex) {
+            throw new IllegalArgumentException("chunk index out of bounds: " + chunkIndex);
+        }
+        return new SimpleImmutableEntry<>(reference, shcl);
     }
 }
-// TODO tidy

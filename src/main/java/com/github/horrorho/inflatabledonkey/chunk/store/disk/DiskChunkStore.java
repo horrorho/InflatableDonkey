@@ -89,9 +89,11 @@ public final class DiskChunkStore implements ChunkStore {
     @GuardedBy("lock")
     Optional<OutputStream> write(Path to) throws IOException {
         Path temp = tempFile(RETRY);
-        if (!DirectoryAssistant.createParent(temp)) {
+        if (!DirectoryAssistant.create(tempFolder)) {
+            logger.debug("-- copy() - failed to create temporary file directory: {}", tempFolder);
             return Optional.empty();
         }
+
         HookOutputStream outputStream = new HookOutputStream(Files.newOutputStream(temp), hook(temp, to));
         return Optional.of(outputStream);
     }
@@ -114,6 +116,10 @@ public final class DiskChunkStore implements ChunkStore {
                 logger.warn("-- copy() - temporary file missing: {}", temp);
                 return;
             }
+            if (!DirectoryAssistant.createParent(to)) {
+                logger.debug("-- copy() - failed to create cache directory: {}", to);
+            }
+
             Files.move(temp, to);
             logger.debug("-- copy() - chunk created: {}", to);
         }

@@ -54,30 +54,34 @@ public final class AuthorizedAssets {
     private static final Logger logger = LoggerFactory.getLogger(AuthorizedAssets.class);
 
     private final ChunkServer.FileGroups fileGroups;
-    private final Map<ByteString, Asset> fileSignatureToAssets;
+    private final Map<ByteString, Asset> fileSignatureToAsset;
 
     public AuthorizedAssets(ChunkServer.FileGroups fileGroups, Map<ByteString, Asset> fileSignatureToAssets) {
         this.fileGroups = Objects.requireNonNull(fileGroups);
-        this.fileSignatureToAssets = new HashMap<>(fileSignatureToAssets);
+        this.fileSignatureToAsset = new HashMap<>(fileSignatureToAssets);
     }
 
     public Optional<Asset> asset(ByteString fileSignature) {
-        return Optional.ofNullable(fileSignatureToAssets.get(fileSignature));
+        return Optional.ofNullable(fileSignatureToAsset.get(fileSignature));
     }
 
-    public Map<ByteString, Asset> fileSignatureToAssets() {
-        return new HashMap<>(fileSignatureToAssets);
+    public Map<ByteString, Asset> fileSignatureToAsset() {
+        return new HashMap<>(fileSignatureToAsset);
     }
 
     public ChunkServer.FileGroups fileGroups() {
         return fileGroups;
     }
 
+    public int size() {
+        return fileSignatureToAsset.size();
+    }
+
     @Override
     public String toString() {
         return "AuthorizedAssets{"
                 + "fileGroups=" + fileGroups
-                + ", fileSignatureToAssets=" + fileSignatureToAssets
+                + ", fileSignatureToAsset=" + fileSignatureToAsset
                 + '}';
     }
 }

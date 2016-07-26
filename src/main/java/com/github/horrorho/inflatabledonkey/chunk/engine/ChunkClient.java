@@ -60,8 +60,8 @@ public final class ChunkClient {
     public ChunkClient(
             ChunkListDecrypterFactory chunkDecrypterFactory,
             Function<ChunkServer.StorageHostChunkList, HttpUriRequest> requestFactory) {
-        this.chunkDecrypterFactory = Objects.requireNonNull(chunkDecrypterFactory, "chunkDecrypterFactory");
-        this.requestFactory = Objects.requireNonNull(requestFactory, "requestFactory");
+        this.chunkDecrypterFactory = Objects.requireNonNull(chunkDecrypterFactory);
+        this.requestFactory = Objects.requireNonNull(requestFactory);
     }
 
     ChunkClient() {
@@ -69,9 +69,9 @@ public final class ChunkClient {
     }
 
     public Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            apply(HttpClient client, SHCLContainer container, byte[] keyEncryptionKey, ChunkStore store) {
+            apply(HttpClient client, SHCLContainer container, ChunkStore store) {
         try {
-            ChunkListDecrypter decrypter = chunkDecrypterFactory.apply(store, container, keyEncryptionKey);
+            ChunkListDecrypter decrypter = chunkDecrypterFactory.apply(store, container);
             InputStreamResponseHandler<Map<ChunkServer.ChunkReference, Chunk>> handler
                     = new InputStreamResponseHandler<>(decrypter);
 
@@ -81,7 +81,7 @@ public final class ChunkClient {
             return Optional.of(chunks);
 
         } catch (IOException ex) {
-            logger.warn("-- apply() - IOException: {}", ex.getMessage());
+            logger.warn("-- apply() - IOException: ", ex);
             return Optional.empty();
         }
     }

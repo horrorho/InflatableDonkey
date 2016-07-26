@@ -23,13 +23,22 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.engine.SHCLContainer;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.google.protobuf.ByteString;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -39,53 +48,63 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class Voodoo {
 
-    private final ByteString fileSignature;
-    private final ByteString fileChecksum;
+    public static KeyEncryptionKeys
+            keyEncryptionKeys(Collection<Voodoo> voodoos) {
+        Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keks = voodoos.stream()
+                .map(Voodoo::keyEncryptionKeys)
+                .collect(HashMap::new, Map::putAll, Map::putAll);
+        return container -> Optional.ofNullable(keks.get(container))
+                .map(u -> index -> Optional.ofNullable(u.get(index)));
+    }
+
     private final Asset asset;
-    private final List<SHCLContainer> containers;
-    private final List<ChunkServer.ChunkReference> chunkReferences;
+    private final LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferences;
 
     public Voodoo(
-            ByteString fileSignature,
-            ByteString fileChecksum,
             Asset asset,
-            List<SHCLContainer> containers,
-            List<ChunkServer.ChunkReference> chunkReferences) {
+            LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferences) {
 
-        this.fileSignature = Objects.requireNonNull(fileSignature);
-        this.fileChecksum = Objects.requireNonNull(fileChecksum);
         this.asset = Objects.requireNonNull(asset);
-        this.containers = new ArrayList<>(containers);
-        this.chunkReferences = new ArrayList<>(chunkReferences);
+        this.chunkReferences = new LinkedHashMap<>(chunkReferences);
+        asset.fileSignature()
+                .map(ByteString::copyFrom)
+                .orElseThrow(() -> new IllegalArgumentException("asset missing file signature"));
     }
 
     public Asset asset() {
         return asset;
     }
 
-    public ByteString fileSignature() {
-        return fileSignature;
+    public Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keyEncryptionKeys() {
+        return asset.keyEncryptionKey()
+                .map(this::keyEncryptionKeys)
+                .orElseGet(Collections::emptyMap);
     }
 
-    public ByteString fileChecksum() {
-        return fileChecksum;
+    Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keyEncryptionKeys(byte[] kek) {
+        return chunkReferences
+                .entrySet()
+                .stream()
+                .map(e -> new SimpleImmutableEntry<>(e.getValue(), (int) e.getKey().getChunkIndex()))
+                .collect(Collectors.groupingBy(e -> e.getKey(),
+                        Collectors.toMap(Map.Entry::getValue, e -> kek, (u, v) -> u)));
     }
 
-    public List<SHCLContainer> containers() {
-        return new ArrayList<>(containers);
+    public Map<Integer, ChunkServer.StorageHostChunkList> containers() {
+        return chunkReferences.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> (int) e.getKey().getContainerIndex(), Map.Entry::getValue));
     }
 
     public List<ChunkServer.ChunkReference> chunkReferences() {
-        return new ArrayList<>(chunkReferences);
+        return new ArrayList<>(chunkReferences.keySet());
     }
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 37 * hash + Objects.hashCode(this.fileSignature);
-        hash = 37 * hash + Objects.hashCode(this.fileChecksum);
-        hash = 37 * hash + Objects.hashCode(this.containers);
-        hash = 37 * hash + Objects.hashCode(this.chunkReferences);
+        int hash = 5;
+        hash = 41 * hash + Objects.hashCode(this.asset);
+        hash = 41 * hash + Objects.hashCode(this.chunkReferences);
         return hash;
     }
 
@@ -101,16 +120,7 @@ public final class Voodoo {
             return false;
         }
         final Voodoo other = (Voodoo) obj;
-        if (!Objects.equals(this.fileSignature, other.fileSignature)) {
-            return false;
-        }
-        if (!Objects.equals(this.fileChecksum, other.fileChecksum)) {
-            return false;
-        }
         if (!Objects.equals(this.asset, other.asset)) {
-            return false;
-        }
-        if (!Objects.equals(this.containers, other.containers)) {
             return false;
         }
         if (!Objects.equals(this.chunkReferences, other.chunkReferences)) {
@@ -122,10 +132,7 @@ public final class Voodoo {
     @Override
     public String toString() {
         return "Voodoo{"
-                + "fileSignature=" + fileSignature
-                + ", fileChecksum=" + fileChecksum
                 + ", asset=" + asset
-                + ", containers=" + containers
                 + ", chunkReferences=" + chunkReferences
                 + '}';
     }

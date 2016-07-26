@@ -23,12 +23,15 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
 import com.github.horrorho.inflatabledonkey.chunk.engine.SHCLContainer;
+import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,10 +53,16 @@ public final class AssetDownloader {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetDownloader.class);
 
-    private final ChunkEngine engine;
+    private final ChunkClient chunkClient;
+    private final ChunkStore store;
 
-    public AssetDownloader(ChunkEngine engine) {
-        this.engine = Objects.requireNonNull(engine);
+    public AssetDownloader(ChunkClient chunkClient, ChunkStore store) {
+        this.chunkClient = Objects.requireNonNull(chunkClient);
+        this.store = Objects.requireNonNull(store);
+    }
+
+    public AssetDownloader(ChunkStore store) {
+        this(ChunkClient.defaultInstance(), store);
     }
 
     public void accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
@@ -61,35 +70,49 @@ public final class AssetDownloader {
     }
 
     public void accept(HttpClient httpClient, Collection<Voodoo> voodoos, BiConsumer<Asset, List<Chunk>> consumer) {
-        voodoos.forEach(v -> accept(httpClient, v, consumer));
+        KeyEncryptionKeys keks = Voodoo.keyEncryptionKeys(voodoos);
+        voodoos.forEach(v -> accept(httpClient, v, keks, consumer));
     }
 
-    public void accept(HttpClient httpClient, Voodoo voodoo, BiConsumer<Asset, List<Chunk>> consumer) {
-        doAccept(httpClient, voodoo.containers(), voodoo.asset())
+    public boolean
+            accept(HttpClient httpClient, Voodoo voodoo, KeyEncryptionKeys keks, BiConsumer<Asset, List<Chunk>> consumer) {
+        return fetch(httpClient, keks, voodoo.containers(), voodoo.asset())
                 .flatMap(u -> assemble(u, voodoo.chunkReferences()))
-                .ifPresent(u -> consumer.accept(voodoo.asset(), u));
-    }
-
-    Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            doAccept(HttpClient httpClient, List<SHCLContainer> containers, Asset asset) {
-        return asset.keyEncryptionKey()
-                .filter(u -> !containers.isEmpty())
-                .map(u -> fetch(httpClient, containers, u))
+                .map(u -> {
+                    consumer.accept(voodoo.asset(), u);
+                    return true;
+                })
                 .orElseGet(() -> {
-                    logger.warn("-- doAccept() - failed to fetch asset: {}", asset.assetID());
-                    return Optional.empty();
+                    Asset asset = voodoo.asset();
+                    String path = asset.domain().orElse("NULL") + asset.relativePath().orElse("NULL");
+                    logger.warn("-- accept() - failed to download asset: {}", path);
+                    return false;
                 });
     }
 
-    Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            fetch(HttpClient httpClient, List<SHCLContainer> containers, byte[] kek) {
-        Map<SHCLContainer, byte[]> containersKeyEncryptionKeys
-                = containers.stream().collect(Collectors.toMap(Function.identity(), u -> kek));
-        return engine.fetch(httpClient, containersKeyEncryptionKeys);
+    Optional<Map<ChunkReference, Chunk>>
+            fetch(HttpClient httpClient, KeyEncryptionKeys keks, Map<Integer, StorageHostChunkList> containers,
+                    Asset asset) {
+        Map<ChunkReference, Chunk> map = new HashMap<>();
+        for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
+            Optional<Map<ChunkReference, Chunk>> chunks = keks.apply(entry.getValue())
+                    .flatMap(kek -> fetch(httpClient, kek, entry.getValue(), entry.getKey()));
+            if (!chunks.isPresent()) {
+                return Optional.empty();
+            }
+            map.putAll(chunks.get());
+        }
+        return Optional.of(map);
+    }
+
+    Optional<Map<ChunkReference, Chunk>>
+            fetch(HttpClient httpClient, Function<Integer, Optional<byte[]>> kek, StorageHostChunkList container, int index) {
+        SHCLContainer shclContainer = new SHCLContainer(container, kek, index);
+        return chunkClient.apply(httpClient, shclContainer, store);
     }
 
     Optional<List<Chunk>>
-            assemble(Map<ChunkServer.ChunkReference, Chunk> map, List<ChunkServer.ChunkReference> references) {
+            assemble(Map<ChunkReference, Chunk> map, List<ChunkReference> references) {
         if (map.keySet().containsAll(references)) {
             logger.warn("-- assemble() - missing chunks");
             return Optional.empty();

@@ -24,10 +24,11 @@
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import com.google.protobuf.ByteString;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
@@ -40,10 +41,12 @@ import net.jcip.annotations.Immutable;
 public final class SHCLContainer {
 
     private final ChunkServer.StorageHostChunkList shcl;
+    private final Function<Integer, Optional<byte[]>> kek;
     private final int index;
 
-    public SHCLContainer(ChunkServer.StorageHostChunkList shcl, int index) {
-        this.shcl = Objects.requireNonNull(shcl, "shcl");
+    public SHCLContainer(ChunkServer.StorageHostChunkList shcl, Function<Integer, Optional<byte[]>> kek, int index) {
+        this.shcl = Objects.requireNonNull(shcl);
+        this.kek = Objects.requireNonNull(kek);
         this.index = index;
     }
 
@@ -59,13 +62,8 @@ public final class SHCLContainer {
         return shcl.getChunkInfoCount();
     }
 
-    public List<byte[]> chunkChecksums() {
-        return shcl
-                .getChunkInfoList()
-                .stream()
-                .map(ChunkServer.ChunkInfo::getChunkChecksum)
-                .map(ByteString::toByteArray)
-                .collect(Collectors.toList());
+    public Optional<byte[]> keyEncryptionKey(int index) {
+        return kek.apply(index);
     }
 
     public LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.ChunkInfo> chunkInfos() {
@@ -84,39 +82,5 @@ public final class SHCLContainer {
                 .setContainerIndex(containerIndex)
                 .setChunkIndex(chunkIndex)
                 .build();
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 67 * hash + Objects.hashCode(this.shcl);
-        hash = 67 * hash + this.index;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final SHCLContainer other = (SHCLContainer) obj;
-        if (this.index != other.index) {
-            return false;
-        }
-        if (!Objects.equals(this.shcl, other.shcl)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "SHCLContainer{" + "shcl=" + shcl + ", index=" + index + '}';
     }
 }

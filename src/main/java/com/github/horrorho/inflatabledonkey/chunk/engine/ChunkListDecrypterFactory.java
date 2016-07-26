@@ -62,11 +62,11 @@ public final class ChunkListDecrypterFactory {
     public ChunkListDecrypterFactory(
             BiFunction<byte[], InputStream, CipherInputStream> cipherInputStreams,
             BiFunction<byte[], byte[], Optional<byte[]>> keyUnwrap) {
-        this.cipherInputStreams = Objects.requireNonNull(cipherInputStreams, "cipherInputStreams");
-        this.keyUnwrap = Objects.requireNonNull(keyUnwrap, "keyUnwrap");
+        this.cipherInputStreams = Objects.requireNonNull(cipherInputStreams);
+        this.keyUnwrap = Objects.requireNonNull(keyUnwrap);
     }
 
-    public ChunkListDecrypter apply(ChunkStore store, SHCLContainer container, byte[] keyEncryptionKey) {
-        return new ChunkListDecrypter(cipherInputStreams, keyUnwrap, store, container, keyEncryptionKey);
+    public ChunkListDecrypter apply(ChunkStore store, SHCLContainer container) {
+        return new ChunkListDecrypter(cipherInputStreams, keyUnwrap, store, container);
     }
 }

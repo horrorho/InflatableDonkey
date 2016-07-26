@@ -77,7 +77,7 @@ public enum Property {
     PROTOC_PATH("protoc"),
     PROTOC_TIMEOUT_MS("15000"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
-    THREADS("4"),
+    THREADS("1"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     static synchronized void setProperties(Map<Property, String> properties) {

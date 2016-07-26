@@ -21,38 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.engine;
+package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import net.jcip.annotations.ThreadSafe;
-import org.apache.http.client.HttpClient;
+import java.util.function.Function;
+import net.jcip.annotations.Immutable;
 
 /**
- * ChunkEngine.
  *
  * @author Ahseya
  */
-@ThreadSafe
-public interface ChunkEngine {
+@Immutable
+@FunctionalInterface
+public interface KeyEncryptionKeys {
 
-    Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            fetch(HttpClient client, SHCLContainer container, byte[] keyEncryptionKey);
-
-    default Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            fetch(HttpClient client, Map<SHCLContainer, byte[]> containersKeyEncryptionKeys) {
-        Map<ChunkServer.ChunkReference, Chunk> chunks = new HashMap<>();
-        for (Map.Entry<SHCLContainer, byte[]> entry : containersKeyEncryptionKeys.entrySet()) {
-            Optional<Map<ChunkServer.ChunkReference, Chunk>> chunk = fetch(client, entry.getKey(), entry.getValue());
-            if (chunk.isPresent()) {
-                chunks.putAll(chunk.get());
-            } else {
-                return Optional.empty();
-            }
-        }
-        return Optional.of(chunks);
-    }
+    Optional<Function<Integer, Optional<byte[]>>> apply(ChunkServer.StorageHostChunkList container);
 }

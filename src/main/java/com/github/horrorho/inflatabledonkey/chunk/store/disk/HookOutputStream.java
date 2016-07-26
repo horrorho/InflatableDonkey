@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OutputStream wrapper with a hook on close.
@@ -37,41 +39,45 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public class HookOutputStream extends OutputStream {
 
+    private static final Logger logger = LoggerFactory.getLogger(HookOutputStream.class);
+    
     private final OutputStream outputStream;
     private final IOConsumer<Boolean> hook;
-
+    
     public HookOutputStream(OutputStream outputStream, IOConsumer<Boolean> hook) {
         this.outputStream = Objects.requireNonNull(outputStream, "outputStream");
         this.hook = Objects.requireNonNull(hook, "consumer");
     }
-
+    
     @Override
     public void write(int b) throws IOException {
         outputStream.write(b);
     }
-
+    
     @Override
     public void flush() throws IOException {
         outputStream.flush();
     }
-
+    
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         outputStream.write(b, off, len);
     }
-
+    
     @Override
     public void write(byte[] b) throws IOException {
         outputStream.write(b);
     }
-
+    
     @Override
     public void close() throws IOException {
         try {
             outputStream.close();
+            logger.info("-- close() - closed");
             hook.accept(true);
-
+            
         } catch (IOException ex) {
+            logger.warn("-- close() - ex: ", ex);
             hook.accept(false);
             throw ex;
         }
