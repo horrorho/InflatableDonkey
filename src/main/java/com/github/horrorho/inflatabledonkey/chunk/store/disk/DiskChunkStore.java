@@ -115,7 +115,7 @@ public final class DiskChunkStore implements ChunkStore {
                 return;
             }
             if (!DirectoryAssistant.createParent(to)) {
-                logger.debug("-- copy() - failed to create cache directory: {}", to);
+                logger.warn("-- copy() - failed to create cache directory: {}", to);
             }
             Files.move(temp, to);
             logger.debug("-- copy() - chunk created: {}", to);
