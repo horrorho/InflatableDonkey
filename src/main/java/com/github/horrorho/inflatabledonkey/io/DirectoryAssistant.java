@@ -52,8 +52,8 @@ public final class DirectoryAssistant {
     public static boolean create(Path directory) {
         if (Files.exists(directory)) {
             if (Files.isDirectory(directory)) {
+                logger.debug("-- create() - directory already exists: {}", directory);
                 return true;
-
             } else {
                 logger.warn("-- create() - directory path exists but is not a directory: {}", directory);
                 return false;
@@ -64,7 +64,6 @@ public final class DirectoryAssistant {
             Files.createDirectories(directory);
             logger.debug("-- create() - directory created: {}", directory);
             return true;
-
         } catch (IOException ex) {
             logger.debug("-- create() - IOException: {}", ex);
             return false;

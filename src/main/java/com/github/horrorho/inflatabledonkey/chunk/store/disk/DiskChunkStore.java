@@ -37,7 +37,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
@@ -57,20 +56,28 @@ import org.slf4j.LoggerFactory;
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
-    private static final int RETRY = 3;
+    private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 4 threads
     private final Object lock;
     private final Supplier<Digest> digests;
     private final Path chunkFolder;
     private final Path tempFolder;
 
-    public DiskChunkStore(Object lock, Supplier<Digest> digests, Path chunkFolder, Path tempFolder) {
+    public DiskChunkStore(Object lock, Supplier<Digest> digests, Path chunkFolder, Path tempFolder) throws IOException {
+        if (!DirectoryAssistant.create(chunkFolder)) {
+            throw new IOException("DiskChunkStore failed to create chunk folder: "
+                    + chunkFolder.normalize().toAbsolutePath());
+        }
+        if (!DirectoryAssistant.create(tempFolder)) {
+            throw new IOException("DiskChunkStore failed to create temp folder: "
+                    + tempFolder.normalize().toAbsolutePath());
+        }
         this.lock = Objects.requireNonNull(lock);
         this.digests = Objects.requireNonNull(digests);
-        this.chunkFolder = Objects.requireNonNull(chunkFolder);
-        this.tempFolder = Objects.requireNonNull(tempFolder);
+        this.chunkFolder = Objects.requireNonNull(chunkFolder.normalize().toAbsolutePath());
+        this.tempFolder = Objects.requireNonNull(tempFolder.normalize().toAbsolutePath());
     }
 
-    public DiskChunkStore(Supplier<Digest> digests, Path chunkFolder, Path tempFolder) {
+    public DiskChunkStore(Supplier<Digest> digests, Path chunkFolder, Path tempFolder) throws IOException {
         this(new Object(), digests, chunkFolder, tempFolder);
     }
 
@@ -97,9 +104,9 @@ public final class DiskChunkStore implements ChunkStore {
 
     @GuardedBy("lock")
     Optional<OutputStream> getOutputStream(byte[] checksum, Path to) throws IOException {
-        Path temp = tempFile(RETRY);
+        Path temp = tempFile(TEMP_FILE_RETRY);
         if (!DirectoryAssistant.create(tempFolder)) {
-            logger.debug("-- getOutputStream() - failed to create temporary file directory: {}", tempFolder);
+            logger.warn("-- getOutputStream() - failed to create temporary file directory: {}", tempFolder);
             return Optional.empty();
         }
 
@@ -196,3 +203,5 @@ public final class DiskChunkStore implements ChunkStore {
                 + '}';
     }
 }
+// TODO consider interruptable ReentrantLock methods.
+
