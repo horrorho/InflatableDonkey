@@ -23,56 +23,23 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store;
 
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.digests.SHA256Digest;
+import java.util.Arrays;
+import net.jcip.annotations.Immutable;
 
 /**
  *
  * @author Ahseya
  */
-public class ChunkChecksumDigest implements Digest {
+@Immutable
+public final class ChunkDigests {
 
-    private static final int SIZE = 21;
-
-    private final Digest digest;
-
-    public ChunkChecksumDigest() {
-        this.digest = new SHA256Digest();
-    }
-
-    @Override
-    public String getAlgorithmName() {
-        return "ChunkChecksumDigest";
-    }
-
-    @Override
-    public int getDigestSize() {
-        return SIZE;
-    }
-
-    @Override
-    public void update(byte in) {
-        digest.update(in);
-    }
-
-    @Override
-    public void update(byte[] in, int inOff, int len) {
-        digest.update(in, inOff, len);
-    }
-
-    @Override
-    public int doFinal(byte[] out, int outOff) {
-        byte[] hash = new byte[digest.getDigestSize()];
-        digest.doFinal(hash, 0);
-        digest.update(hash, 0, hash.length);
-        digest.doFinal(hash, 0);
-        out[outOff] = 0x01;
-        System.arraycopy(hash, 0, out, outOff + 1, SIZE - 1);
-        return SIZE;
-    }
-
-    @Override
-    public void reset() {
-        digest.reset();
+    public static boolean test(byte[] a, byte[] b) {
+        if (a.length < 1 || b.length < 1) {
+            return false;
+        }
+        if ((a[0] & 0x7F) != (b[0] & 0x7F)) {
+            return false;
+        }
+        return Arrays.equals(Arrays.copyOfRange(a, 1, a.length), Arrays.copyOfRange(b, 1, b.length));
     }
 }

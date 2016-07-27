@@ -32,11 +32,11 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
@@ -59,10 +59,12 @@ public final class DiskChunkStore implements ChunkStore {
     private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 4 threads
     private final Object lock;
     private final Supplier<Digest> digests;
+    private final BiPredicate<byte[], byte[]> testDigest;
     private final Path chunkFolder;
     private final Path tempFolder;
 
-    public DiskChunkStore(Object lock, Supplier<Digest> digests, Path chunkFolder, Path tempFolder) throws IOException {
+    public DiskChunkStore(Object lock, Supplier<Digest> digests, BiPredicate<byte[], byte[]> testDigest,
+            Path chunkFolder, Path tempFolder) throws IOException {
         if (!DirectoryAssistant.create(chunkFolder)) {
             throw new IOException("DiskChunkStore failed to create chunk folder: "
                     + chunkFolder.normalize().toAbsolutePath());
@@ -73,12 +75,14 @@ public final class DiskChunkStore implements ChunkStore {
         }
         this.lock = Objects.requireNonNull(lock);
         this.digests = Objects.requireNonNull(digests);
+        this.testDigest = Objects.requireNonNull(testDigest);
         this.chunkFolder = Objects.requireNonNull(chunkFolder.normalize().toAbsolutePath());
         this.tempFolder = Objects.requireNonNull(tempFolder.normalize().toAbsolutePath());
     }
 
-    public DiskChunkStore(Supplier<Digest> digests, Path chunkFolder, Path tempFolder) throws IOException {
-        this(new Object(), digests, chunkFolder, tempFolder);
+    public DiskChunkStore(Supplier<Digest> digests, BiPredicate<byte[], byte[]> testDigest, Path chunkFolder,
+            Path tempFolder) throws IOException {
+        this(new Object(), digests, testDigest, chunkFolder, tempFolder);
     }
 
     @Override
@@ -125,7 +129,7 @@ public final class DiskChunkStore implements ChunkStore {
     void copy(byte[] checksum, DigestOutputStream dos, OutputStream os, Path temp, Path to) throws IOException {
         synchronized (lock) {
             byte[] digest = dos.getDigest();
-            if (Arrays.equals(digest, checksum)) {
+            if (testDigest.test(digest, checksum)) {
                 logger.debug("-- copy() - positive checksum match: {}", Hex.toHexString(digest));
             } else {
                 Files.deleteIfExists(temp);

@@ -24,9 +24,11 @@
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,8 +57,12 @@ public class DiskChunkStoreTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        DirectoryAssistant.deleteEmptyTree(BASE, TEMP);
-        DirectoryAssistant.deleteEmptyTree(BASE, CACHE);
+        if (Files.exists(TEMP)) {
+            DirectoryAssistant.deleteEmptyTree(BASE, TEMP);
+        }
+        if (Files.exists(CACHE)) {
+            DirectoryAssistant.deleteEmptyTree(BASE, CACHE);
+        }
     }
 
     private static byte[] digest(Supplier<Digest> digests, byte[] data) {
@@ -72,14 +78,14 @@ public class DiskChunkStoreTest {
     private static final Path BASE = Paths.get("");
     private static final Path TEMP = BASE.resolve("testDiskChunkStore").resolve("temp");
     private static final Path CACHE = BASE.resolve("testDiskChunkStore").resolve("cache");
+    private static final Supplier<Digest> DIGESTS = SHA1Digest::new;
 
     @Test
     @Parameters
     public void test(byte[] data) throws IOException {
-        Supplier<Digest> digests = SHA1Digest::new;
-        DiskChunkStore store = new DiskChunkStore(digests, CACHE, TEMP);
+        DiskChunkStore store = new DiskChunkStore(DIGESTS, ChunkDigests::test, CACHE, TEMP);
 
-        byte[] checksum = digest(digests, data);
+        byte[] checksum = digest(DIGESTS, data);
         Optional<OutputStream> oos = store.outputStream(checksum);
         assertTrue("OutputStream present", oos.isPresent());
         try (OutputStream os = oos.get()) {
@@ -93,7 +99,9 @@ public class DiskChunkStoreTest {
         assertArrayEquals("checksum match", checksum, chunk.checksum());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        IOUtils.copy(chunk.inputStream(), baos);
+        try (InputStream is = chunk.inputStream()) {
+            IOUtils.copy(is, baos);
+        }
         assertArrayEquals("data match", data, baos.toByteArray());
 
         boolean deleted = store.delete(checksum);
@@ -106,14 +114,6 @@ public class DiskChunkStoreTest {
     }
 
     public static Object[] parametersForTest() {
-        if (Files.exists(TEMP)) {
-            logger.warn("-- test() - skipping test, temporary folder already present: {}", TEMP.toAbsolutePath());
-            return new Object[]{};
-        }
-        if (Files.exists(CACHE)) {
-            logger.warn("-- test() - skipping test, chunk folder already present: {}", CACHE.toAbsolutePath());
-            return new Object[]{};
-        }
         return new Object[]{
             new Object[]{"".getBytes(StandardCharsets.UTF_8)},
             new Object[]{"0123456789".getBytes(StandardCharsets.UTF_8)},
