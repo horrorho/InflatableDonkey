@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -41,7 +42,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.util.encoders.Hex;
@@ -142,10 +142,11 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
         }
     }
 
-    InputStream chunkStream(List<Chunk> chunks) {
-        List<InputStream> inputStreams = chunks.stream()
-                .map(Chunk::inputStream)
-                .collect(Collectors.toList());
+    InputStream chunkStream(List<Chunk> chunks) throws IOException {
+        List<InputStream> inputStreams = new ArrayList<>();
+        for (Chunk chunk : chunks) {
+            inputStreams.add(chunk.inputStream());
+        }
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
         return new SequenceInputStream(enumeration);
     }

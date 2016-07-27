@@ -23,9 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -38,9 +37,5 @@ public interface Chunk {
 
     byte[] checksum();
 
-    InputStream inputStream() throws UncheckedIOException;
-
-    @Deprecated
-    long copyTo(OutputStream output) throws UncheckedIOException;
+    InputStream inputStream() throws IOException;
 }
-// TODO Consider closeable, at present undestructable.

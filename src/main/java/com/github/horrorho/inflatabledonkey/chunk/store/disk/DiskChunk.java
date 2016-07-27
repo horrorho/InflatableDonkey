@@ -26,14 +26,11 @@ package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.READ;
 import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;
-import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
@@ -63,26 +60,8 @@ public final class DiskChunk implements Chunk {
     }
 
     @Override
-    public InputStream inputStream() throws UncheckedIOException {
-        try {
-            return Files.newInputStream(file, READ);
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-    }
-
-    @Override
-    public long copyTo(OutputStream output) throws UncheckedIOException {
-        try (InputStream input = Files.newInputStream(file, READ)) {
-            long bytes = IOUtils.copyLarge(input, output);
-
-            logger.debug("-- copyTo() - written (bytes): {}", bytes);
-            return bytes;
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+    public InputStream inputStream() throws IOException {
+        return Files.newInputStream(file, READ);
     }
 
     @Override
