@@ -156,8 +156,8 @@ public class ChunkListDecrypterTest {
             assertArrayEquals("ciphertext: " + vector.id(), chunk.checksum(), vector.chunkChecksum());
         };
 
-        for (Chunk c : chunks.values()) {
-            store.delete(c.checksum());
+        for (Chunk chunk : chunks.values()) {
+            store.delete(chunk.checksum());
         }
     }
 

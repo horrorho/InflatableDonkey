@@ -26,8 +26,6 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
-import com.github.horrorho.inflatabledonkey.io.IORunnable;
-import com.github.horrorho.inflatabledonkey.io.IOSupplier;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,32 +97,26 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
 
     Optional<Chunk> chunk(BoundedInputStream bis, ChunkServer.ChunkInfo chunkInfo, int index) throws IOException {
         byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
-        return store.chunk(checksum)
-                .<IOSupplier<Optional<Chunk>>>map(u -> () -> {
-                    logger.debug("-- chunk() - chunk present in store: 0x:{}", Hex.toHexString(checksum));
-                    return Optional.of(u);
-                })
-                .orElseGet(() -> () -> {
-                    logger.debug("-- chunk() - chunk not present in store: 0x:{}", Hex.toHexString(checksum));
-                    byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
-                    return decrypt(bis, chunkEncryptionKey, checksum, index);
-                })
-                .get();
+        Optional<Chunk> chunk = store.chunk(checksum);
+        if (chunk.isPresent()) {
+            logger.debug("-- chunk() - chunk present in store: 0x:{}", Hex.toHexString(checksum));
+            return chunk;
+        }
+        logger.debug("-- chunk() - chunk not present in store: 0x:{}", Hex.toHexString(checksum));
+        byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
+        return decrypt(bis, chunkEncryptionKey, checksum, index);
     }
 
     Optional<Chunk>
             decrypt(BoundedInputStream bis, byte[] chunkEncryptionKey, byte[] checksum, int index) throws IOException {
-        unwrapKey(chunkEncryptionKey, index)
-                .map(u -> {
-                    logger.debug("-- decrypt() - key unwrapped: 0x{} chunk: 0x{}",
-                            Hex.toHexString(u), Hex.toHexString(checksum));
-                    return cipherInputStreams.apply(u, bis);
-                })
-                .<IORunnable>map(u -> () -> store(u, checksum))
-                .orElse(() -> {
-                    logger.warn("-- decrypt() - key unwrap failed chunk: 0x{}", Hex.toHexString(checksum));
-                })
-                .run();
+        Optional<byte[]> key = unwrapKey(chunkEncryptionKey, index);
+        if (key.isPresent()) {
+            byte[] k = key.get();
+            logger.debug("-- decrypt() - key: 0x{} chunk: 0x{}", Hex.toHexString(k), Hex.toHexString(checksum));
+            store(cipherInputStreams.apply(k, bis), checksum);
+        } else {
+            logger.warn("-- decrypt() - key unwrap failed chunk: 0x{}", Hex.toHexString(checksum));
+        }
         return store.chunk(checksum);
     }
 
@@ -134,15 +126,13 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
     }
 
     void store(CipherInputStream is, byte[] checksum) throws IOException {
-        store.outputStream(checksum)
-                .<IORunnable>map(u -> () -> {
-                    logger.debug("-- store() - copying chunk into store: 0x{}", Hex.toHexString(checksum));
-                    copy(is, u);
-                })
-                .orElse(() -> {
-                    logger.debug("-- store() - store now contains chunk: 0x{}", Hex.toHexString(checksum));
-                })
-                .run();
+        Optional<OutputStream> os = store.outputStream(checksum);
+        if (os.isPresent()) {
+            logger.debug("-- store() - copying chunk into store: 0x{}", Hex.toHexString(checksum));
+            copy(is, os.get());
+        } else {
+            logger.debug("-- store() - store now already contains chunk: 0x{}", Hex.toHexString(checksum));
+        }
     }
 
     void consume(InputStream is) throws IOException {
