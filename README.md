@@ -1,3 +1,9 @@
+**Update**, 27 July 2016. 
+
+Oooops! Sorry I stuffed up and pushed a broken build, issues [17](https://github.com/horrorho/InflatableDonkey/issues/17#issuecomment-234953968) and [20](https://github.com/horrorho/InflatableDonkey/issues/20). I've updated the working tree. I was testing on a cached backup, so I missed it and I now feel like a rather silly cow.
+
+I'm currently re-coding the download engine which is a mess to be honest and difficult to test. I'm about 90% of the way through, but I won't be able to finish it until next week or so when I have more free time.
+
 **Update**, 24 July 2016. 
 
 I've ported over the [LiquidDonkey](https://github.com/horrorho/LiquidDonkey) selection/ filtering code. I haven't had a chance to fully test all of the parameters.
@@ -5,21 +11,6 @@ I've ported over the [LiquidDonkey](https://github.com/horrorho/LiquidDonkey) se
 Concurrent downloads have been enabled, but the thread count is set to one until I've had a chance to test it. You can change the THREADS [Property](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/args/Property.java) if you want to play with it. Concurrency can be a nightmare, but from day one I've written the code with concurrency in mind. I'm sure some of you have noticed the heavy functional style and immutability. So hopefully any bugs will be relatively minor.
 
 The error output probably needs attention. I know what the various errors mean but for more normal people it's probably an issue. However, at it's heart it's still a development tool that's aided me in unravelling the recovery process. With full trace [logging](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) enabled, it doesn't just download files, it shows you how it's downloading those files.
-
-**Update**, 20 July 2016. 
-
-I've pushed the new XTS code. I'm not really convinced I have the AES-CBC/ AES-XTS switching fully worked out so please set the mode manually if you have corrupted files (--mode XTS or --mode CBC). The FileAssembler logger output tells you which mode is being used, so try the opposite. 
-
-Please ticket any instances where you've had to manually set the mode along with a couple of lines of the FileAssembler output (please edit out your Apple ID and the 40 character length device hash immediately after it).
-
-Now that the core functionality appears to be largely there, fingers crossed, I'll work on improving the user experience. I have various filters/ user interactive selection code I fully intend to ninja from [LiquidDonkey](https://github.com/horrorho/LiquidDonkey).
-
-
-**Update**, 16 July 2016. 
-
-Ok. So AES-XTS is a thing. It's also a thing that's been preventing InflatableDonkey from decrypting certain files ([issue 9](https://github.com/horrorho/InflatableDonkey/issues/9)). Newer devices upload files that are AES-XTS encrypted for which we have lacked decryption code.
-
-To remedy this I've coded an [XTS-AES engine](https://github.com/horrorho/Java-XTS-AES) that I've inserted in the appropriate orifice of InflatableDonkey. Initial tests suggest that it works. Once I figure out where the AES-CBC/ AES-XTS switches live I'll go ahead a push the new code.
 
 
 ### What is it?
