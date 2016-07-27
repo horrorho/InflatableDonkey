@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkChecksumDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
@@ -153,10 +154,7 @@ public class Main {
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
 
-        logger.error("-- main() - FIXME");
-        System.exit(0);
-
-        DiskChunkStore chunkStore = new DiskChunkStore(null, null, chunkOutputFolder, tempOutputFolder);
+        DiskChunkStore chunkStore = new DiskChunkStore(ChunkChecksumDigest::new, chunkOutputFolder, tempOutputFolder);
         AssetDownloader assetDownloader = new AssetDownloader(chunkStore);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
