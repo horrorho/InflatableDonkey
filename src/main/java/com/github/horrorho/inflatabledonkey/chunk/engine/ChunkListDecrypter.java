@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
+import com.github.horrorho.inflatabledonkey.io.IORunnable;
 import com.github.horrorho.inflatabledonkey.io.IOSupplier;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.output.NullOutputStream;
 import org.bouncycastle.crypto.io.CipherInputStream;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +53,6 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public final class ChunkListDecrypter implements IOFunction<InputStream, Map<ChunkServer.ChunkReference, Chunk>> {
 
-    /*
-        Unclear if a ChunkServer.StorageHostChunkList can have more than one asset/ key encryption key.
-        We'll assume it can for now, although it complicates our coding.
-     */
     private static final Logger logger = LoggerFactory.getLogger(ChunkListDecrypter.class);
 
     private final BiFunction<byte[], InputStream, CipherInputStream> cipherInputStreams;
@@ -93,6 +91,7 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
         BoundedInputStream bis = new BoundedInputStream(inputStream, chunkInfo.getChunkLength());
         bis.setPropagateClose(false);
         Optional<Chunk> chunk = chunk(bis, chunkInfo, index);
+        consume(bis);
 
         logger.trace(">> chunk() - chunk: {}", chunk);
         return chunk;
@@ -100,32 +99,54 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
 
     Optional<Chunk> chunk(BoundedInputStream bis, ChunkServer.ChunkInfo chunkInfo, int index) throws IOException {
         byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
-        return unwrapKey(chunkInfo, index)
-                .map(u -> cipherInputStreams.apply(u, bis))
-                .<IOSupplier<Optional<Chunk>>>map(u -> () -> store(u, checksum))
-                .orElse(() -> consume(bis))
-                .get();
-    }
-
-    Optional<byte[]> unwrapKey(ChunkServer.ChunkInfo chunkInfo, int index) {
-        byte[] chunkKey = chunkInfo.getChunkEncryptionKey().toByteArray();
-        return container.keyEncryptionKey(index)
-                .flatMap(kek -> keyUnwrap.apply(chunkKey, kek));
-    }
-
-    Optional<Chunk> store(CipherInputStream is, byte[] checksum) throws IOException {
-        return store.outputStream(checksum)
+        return store.chunk(checksum)
                 .<IOSupplier<Optional<Chunk>>>map(u -> () -> {
-                    copy(is, u);
-                    return store.chunk(checksum);
+                    logger.debug("-- chunk() - chunk present in store: 0x:{}", Hex.toHexString(checksum));
+                    return Optional.of(u);
                 })
-                .orElse(() -> consume(is))
+                .orElseGet(() -> () -> {
+                    logger.debug("-- chunk() - chunk not present in store: 0x:{}", Hex.toHexString(checksum));
+                    byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
+                    return decrypt(bis, chunkEncryptionKey, checksum, index);
+                })
                 .get();
     }
 
-    Optional<Chunk> consume(InputStream is) throws IOException {
+    Optional<Chunk>
+            decrypt(BoundedInputStream bis, byte[] chunkEncryptionKey, byte[] checksum, int index) throws IOException {
+        unwrapKey(chunkEncryptionKey, index)
+                .map(u -> {
+                    logger.debug("-- decrypt() - key unwrapped: 0x{} chunk: 0x{}",
+                            Hex.toHexString(u), Hex.toHexString(checksum));
+                    return cipherInputStreams.apply(u, bis);
+                })
+                .<IORunnable>map(u -> () -> store(u, checksum))
+                .orElse(() -> {
+                    logger.warn("-- decrypt() - key unwrap failed chunk: 0x{}", Hex.toHexString(checksum));
+                })
+                .run();
+        return store.chunk(checksum);
+    }
+
+    Optional<byte[]> unwrapKey(byte[] chunkEncryptionKey, int index) {
+        return container.keyEncryptionKey(index)
+                .flatMap(kek -> keyUnwrap.apply(chunkEncryptionKey, kek));
+    }
+
+    void store(CipherInputStream is, byte[] checksum) throws IOException {
+        store.outputStream(checksum)
+                .<IORunnable>map(u -> () -> {
+                    logger.debug("-- store() - copying chunk into store: 0x{}", Hex.toHexString(checksum));
+                    copy(is, u);
+                })
+                .orElse(() -> {
+                    logger.debug("-- store() - store now contains chunk: 0x{}", Hex.toHexString(checksum));
+                })
+                .run();
+    }
+
+    void consume(InputStream is) throws IOException {
         copy(is, new NullOutputStream());
-        return Optional.empty();
     }
 
     void copy(InputStream is, OutputStream os) throws IOException {
