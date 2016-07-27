@@ -27,9 +27,11 @@ import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.READ;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
@@ -60,8 +62,19 @@ public final class DiskChunk implements Chunk {
     }
 
     @Override
-    public InputStream inputStream() throws IOException {
-        return Files.newInputStream(file, READ);
+    public Optional<InputStream> inputStream() throws IOException {
+        return Files.exists(file)
+                ? doInputStream()
+                : Optional.empty();
+    }
+
+    Optional<InputStream> doInputStream() throws IOException {
+        try {
+            return Optional.of(Files.newInputStream(file, READ));
+        } catch (NoSuchFileException ex) {
+            logger.warn("-- doInputStream() - file was just deleted: {}", ex);
+            return Optional.empty();
+        }
     }
 
     @Override

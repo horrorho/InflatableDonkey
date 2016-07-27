@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.chunk;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -37,5 +38,5 @@ public interface Chunk {
 
     byte[] checksum();
 
-    InputStream inputStream() throws IOException;
+    Optional<InputStream> inputStream() throws IOException;
 }

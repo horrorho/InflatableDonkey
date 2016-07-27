@@ -145,7 +145,10 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     InputStream chunkStream(List<Chunk> chunks) throws IOException {
         List<InputStream> inputStreams = new ArrayList<>();
         for (Chunk chunk : chunks) {
-            inputStreams.add(chunk.inputStream());
+            InputStream is = chunk.inputStream()
+                    .orElseThrow(()
+                            -> new IllegalStateException("chunk deleted: 0x" + Hex.toHexString(chunk.checksum())));
+            inputStreams.add(is);
         }
         Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
         return new SequenceInputStream(enumeration);

@@ -99,7 +99,8 @@ public class DiskChunkStoreTest {
         assertArrayEquals("checksum match", checksum, chunk.checksum());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (InputStream is = chunk.inputStream()) {
+        try (InputStream is = chunk.inputStream()
+                .orElseThrow(() -> new IllegalStateException("chunk deleted"))) {
             IOUtils.copy(is, baos);
         }
         assertArrayEquals("data match", data, baos.toByteArray());

@@ -148,7 +148,8 @@ public class ChunkListDecrypterTest {
             int index = (int) reference.getChunkIndex();
 
             ByteArrayOutputStream chunkOs = new ByteArrayOutputStream();
-            try (InputStream chunkIs = chunk.inputStream()) {
+            try (InputStream chunkIs = chunk.inputStream()
+                    .orElseThrow(() -> new IllegalStateException("chunk deleted"))) {
                 IOUtils.copy(chunkIs, chunkOs);
             }
 
