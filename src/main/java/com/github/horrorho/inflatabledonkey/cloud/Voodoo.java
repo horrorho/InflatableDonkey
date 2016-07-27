@@ -39,6 +39,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Asset with it's ChunkServer.StorageHostChunkList/ ChunkServer.Reference data.
@@ -47,6 +49,8 @@ import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKeys;
  */
 @Immutable
 public final class Voodoo {
+
+    private static final Logger logger = LoggerFactory.getLogger(Voodoo.class);
 
     public static ChunkKeyEncryptionKeys
             keyEncryptionKeys(Collection<Voodoo> voodoos) {
@@ -69,6 +73,9 @@ public final class Voodoo {
         asset.fileSignature()
                 .map(ByteString::copyFrom)
                 .orElseThrow(() -> new IllegalArgumentException("asset missing file signature"));
+
+        logger.trace("** Voodoo() - asset: {}", asset);
+        logger.trace("** Voodoo() - chunkReferences: {}", chunkReferences);
     }
 
     public Asset asset() {
@@ -93,7 +100,15 @@ public final class Voodoo {
     public Map<Integer, ChunkServer.StorageHostChunkList> containers() {
         return chunkReferences.entrySet()
                 .stream()
-                .collect(Collectors.toMap(e -> (int) e.getKey().getContainerIndex(), Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                        e -> (int) e.getKey().getContainerIndex(),
+                        Map.Entry::getValue,
+                        (t, u) -> {
+                            if (!t.equals(u)) {
+                                logger.warn("-- containers() - collision: {} {}", t, u);
+                            }
+                            return t;
+                        }));
     }
 
     public List<ChunkServer.ChunkReference> chunkReferences() {
