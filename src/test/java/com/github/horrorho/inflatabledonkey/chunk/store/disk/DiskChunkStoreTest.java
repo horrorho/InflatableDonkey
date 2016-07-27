@@ -78,14 +78,14 @@ public class DiskChunkStoreTest {
     private static final Path BASE = Paths.get("");
     private static final Path TEMP = BASE.resolve("testDiskChunkStore").resolve("temp");
     private static final Path CACHE = BASE.resolve("testDiskChunkStore").resolve("cache");
-    private static final Supplier<Digest> DIGESTS = SHA1Digest::new;
 
     @Test
     @Parameters
     public void test(byte[] data) throws IOException {
-        DiskChunkStore store = new DiskChunkStore(DIGESTS, ChunkDigests::test, CACHE, TEMP);
+        Supplier<Digest> digests = SHA1Digest::new;
+        DiskChunkStore store = new DiskChunkStore(digests, ChunkDigests::test, CACHE, TEMP);
 
-        byte[] checksum = digest(DIGESTS, data);
+        byte[] checksum = digest(digests, data);
         Optional<OutputStream> chunkOutputStream = store.outputStream(checksum);
         assertTrue("OutputStream present", chunkOutputStream.isPresent());
 
@@ -96,7 +96,7 @@ public class DiskChunkStoreTest {
         assertTrue("Chunk present", chunkData.isPresent());
 
         Chunk chunk = chunkData.get();
-        assertArrayEquals("checksum match", checksum, chunk.checksum());
+        assertArrayEquals("checksum match", chunk.checksum(), checksum);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (InputStream is = chunk.inputStream()

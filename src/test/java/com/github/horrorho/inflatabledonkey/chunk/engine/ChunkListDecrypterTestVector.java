@@ -39,6 +39,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_1
             = new ChunkListDecrypterTestVector(
                     "Vector 1",
+                    false,
                     "023092c9f9ab92a9841efca0fb431a0ce73d7be5722e1a21c2",
                     "f65aa507381b30f40df155f972fe450e",
                     "01a81db3319113dc2158167fa9f1eb8db45cd6593d",
@@ -68,6 +69,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_2
             = new ChunkListDecrypterTestVector(
                     "Vector 2",
+                    false,
                     "0244c3a921e2f7583c518cba007e14c9903ec9c1bb1f3af74d",
                     "b630ea66fa8145c3190c57a829613556",
                     "81d67f1759a4b139d37587b0ff6a5105b6738dd285",
@@ -98,6 +100,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_3
             = new ChunkListDecrypterTestVector(
                     "Vector 3",
+                    false,
                     "02b84a72c64b6d9f664c6f1370f0a40714aba62382765a1b8f",
                     "d356c6f7d08e6d3394cc03b0660a0297",
                     "0109f7139bee724aba95729a13e6733efd3c2671ed",
@@ -149,6 +152,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_4
             = new ChunkListDecrypterTestVector(
                     "Vector 4",
+                    false,
                     "0278186cd110aa09e6735b0a28eba84b06a9969dbec4fdbc51",
                     "604810ae2ac5bf7d58a40b59fcee86fb",
                     "81d4665136ee5a0c139abf84885e3f8243eee149ac",
@@ -201,6 +205,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_5
             = new ChunkListDecrypterTestVector(
                     "Vector 5",
+                    false,
                     "020e5dd712ebb16576bc5c7b04a765ec2057ab13122dced0de",
                     "672d3a229c5388e612ff1f219e8f7836",
                     "01ab763344d26327011932d8ab655466cff6cca022",
@@ -230,6 +235,7 @@ public class ChunkListDecrypterTestVector {
     public static final ChunkListDecrypterTestVector VECTOR_6
             = new ChunkListDecrypterTestVector(
                     "Vector 6",
+                    false,
                     "02030ce21f8c1a04f12eb1a2d125bfde374a1513a16772ddd8",
                     "8dfe48080d3432b7ee5ac0dc08a73542",
                     "81ab763344d26327011932d8ab655466cff6cca022",
@@ -256,7 +262,99 @@ public class ChunkListDecrypterTestVector {
                     + "2GjpwqmpMO6b5N8ZZUXSlSA7aZzIi7GcAArG0Vmsr/DGiFlAjwbZAau8ywGLClvr"
                     + "lEC+v4FEL5XyLMqNKG0OZ55xnpDDo1rm2XA0h2ACw/Q=");
 
+    // Bad vectors
+    public static final ChunkListDecrypterTestVector VECTOR_FAIL_KEK
+            = new ChunkListDecrypterTestVector(
+                    "Vector fail KEK",
+                    true,
+                    "029fb70825074b363b59cc7d2953bd9088c7a4c65819e7e0bc",
+                    "00000000000000000000000000000000",
+                    "0107c44326c081d785d2448f5861863103b7e3f00b",
+                    "ffQ4srLP5WCAZ+5k8qqu/zRmKLlSIw0MzitoO3zkrPgVF2iQ30NAJthZfu1YpAvV"
+                    + "43Ul4XIAa0jDJ4wMI7G6B0jR7HhxByA6LMQuhT41fg6fPPtAppjxZ3y2OKSkdIDc"
+                    + "cmv3bwRqvymXgFx+d3bKQw2p1gxjrAthlp7bjz4QZuJ8EYFiMIqVIsMP7tzz3O5q"
+                    + "yPtGUMPfPaiTH0xVvF1P/aetNtUtIfVU1ZDJc5Os63xdZ+hBGESDmOcuu27HXOvP"
+                    + "sQH72ghyutmMsD2lbt1/Sh1Xmxs2/0A7ZHlcjt2AaDnqrQ6gT4vYXghZFkqYK4KZ"
+                    + "ryVq1wfPTan2AAtiiwoiVjxyKcDAqGfL8TJEWQhxx26UFaVzeJhd4C3Z5SLrBjy4"
+                    + "IwtnwYvIGS+BxG7KuexJX6ZdaV7QArBsr7vnZADzuL7rU5PFkeCDX3Mov1N2gZhR"
+                    + "FrcsVe+rsRPzp34FGBIkTAQ8fDGQagMEQ9gaYpp9CU6UFVYV6LHfvhhOxBvF/WYU"
+                    + "HOIXX+fUhCAFUd5nHZ/+ixr8JFZ8Cv6i7KJi/1nqVl4UqLmPGzPYdSOLa7rrj+9d"
+                    + "bvkyZ/EneYnaJ0JjIqysulF9gyy0jElgP04z5YcavK9fqoQlypLoV1OTuBsVLHkW"
+                    + "dNaOdtqLoh+1VYZreGQSizSByvja8LWdxCZFH+DVs0c=",
+                    "bljxflUOrTHlSngmA+4CwHdpcN5OHgTzl6It8R67+7VxlNKPudypuZrJbeom3gCm"
+                    + "ptMzwqsJ4Bp6wAgmWriv1kKPyrTkDvK0PxtcEy+PO2tGvzK2bJxqDp2RAoaPPl2/"
+                    + "L1C/XJsI97bcsN32sRTvelR0CWsEzdo+XGkv58CjmPoc2wqc0156pq+i84YyzE3L"
+                    + "1JdRP695nL0gk0hvJedal5MHYhQBcCAge7J31msgrXwuABGbQeEzNKeCimJueQU3"
+                    + "a/4XlvHKvKx96MrFVy7nuniKLm9Gby/dPcyqJ2huC+ORTjqX95/4gebaxHTl2VXS"
+                    + "HuKMgmhPNjGF/L7UgE0A4L2G+qmwNSCEnR58qy6mkQ9+YEpD7mmBvZWf8sX580IH"
+                    + "5kHn+3AfgA9Kd8My9oIlb3c4qvo+nn0o+cUby2hxlkKpU3VbdRdtnFNVAiJLHySG"
+                    + "zhoSvu3vuomWdrWopF5UuOH1J8YUpZysAIrigF8ZcAHtEZ5L765HSieTIcBQz06l"
+                    + "5Tk+ao2delQmPrz2ZP/vJvoA3JEJFnzAfs/7GixIfm1hQsmoWzwuCpJ8SU7fZdZG"
+                    + "ajf8dW1WaVtztJebOEQL1nIODMgQ7sqEZlQuswXcA161ZFPAqF3CtZfDezlQpS3o"
+                    + "3AeQBhpCPCRP71Te7ibnoCNU8bcxZLpWdJpP8O4QZIA=");
+
+    public static final ChunkListDecrypterTestVector VECTOR_FAIL_KEY
+            = new ChunkListDecrypterTestVector(
+                    "Vector fail key",
+                    true,
+                    "02a9e8c32ee6f8bf8fcb4c419d672441b6595bb962307e7c70",
+                    "85aa67ba738a9c411b3c3d89d5e8eab9",
+                    "0107c44326c081d785d2448f5861863103b7e3f00b",
+                    "ffQ4srLP5WCAZ+5k8qqu/zRmKLlSIw0MzitoO3zkrPgVF2iQ30NAJthZfu1YpAvV"
+                    + "43Ul4XIAa0jDJ4wMI7G6B0jR7HhxByA6LMQuhT41fg6fPPtAppjxZ3y2OKSkdIDc"
+                    + "cmv3bwRqvymXgFx+d3bKQw2p1gxjrAthlp7bjz4QZuJ8EYFiMIqVIsMP7tzz3O5q"
+                    + "yPtGUMPfPaiTH0xVvF1P/aetNtUtIfVU1ZDJc5Os63xdZ+hBGESDmOcuu27HXOvP"
+                    + "sQH72ghyutmMsD2lbt1/Sh1Xmxs2/0A7ZHlcjt2AaDnqrQ6gT4vYXghZFkqYK4KZ"
+                    + "ryVq1wfPTan2AAtiiwoiVjxyKcDAqGfL8TJEWQhxx26UFaVzeJhd4C3Z5SLrBjy4"
+                    + "IwtnwYvIGS+BxG7KuexJX6ZdaV7QArBsr7vnZADzuL7rU5PFkeCDX3Mov1N2gZhR"
+                    + "FrcsVe+rsRPzp34FGBIkTAQ8fDGQagMEQ9gaYpp9CU6UFVYV6LHfvhhOxBvF/WYU"
+                    + "HOIXX+fUhCAFUd5nHZ/+ixr8JFZ8Cv6i7KJi/1nqVl4UqLmPGzPYdSOLa7rrj+9d"
+                    + "bvkyZ/EneYnaJ0JjIqysulF9gyy0jElgP04z5YcavK9fqoQlypLoV1OTuBsVLHkW"
+                    + "dNaOdtqLoh+1VYZreGQSizSByvja8LWdxCZFH+DVs0c=",
+                    "bljxflUOrTHlSngmA+4CwHdpcN5OHgTzl6It8R67+7VxlNKPudypuZrJbeom3gCm"
+                    + "ptMzwqsJ4Bp6wAgmWriv1kKPyrTkDvK0PxtcEy+PO2tGvzK2bJxqDp2RAoaPPl2/"
+                    + "L1C/XJsI97bcsN32sRTvelR0CWsEzdo+XGkv58CjmPoc2wqc0156pq+i84YyzE3L"
+                    + "1JdRP695nL0gk0hvJedal5MHYhQBcCAge7J31msgrXwuABGbQeEzNKeCimJueQU3"
+                    + "a/4XlvHKvKx96MrFVy7nuniKLm9Gby/dPcyqJ2huC+ORTjqX95/4gebaxHTl2VXS"
+                    + "HuKMgmhPNjGF/L7UgE0A4L2G+qmwNSCEnR58qy6mkQ9+YEpD7mmBvZWf8sX580IH"
+                    + "5kHn+3AfgA9Kd8My9oIlb3c4qvo+nn0o+cUby2hxlkKpU3VbdRdtnFNVAiJLHySG"
+                    + "zhoSvu3vuomWdrWopF5UuOH1J8YUpZysAIrigF8ZcAHtEZ5L765HSieTIcBQz06l"
+                    + "5Tk+ao2delQmPrz2ZP/vJvoA3JEJFnzAfs/7GixIfm1hQsmoWzwuCpJ8SU7fZdZG"
+                    + "ajf8dW1WaVtztJebOEQL1nIODMgQ7sqEZlQuswXcA161ZFPAqF3CtZfDezlQpS3o"
+                    + "3AeQBhpCPCRP71Te7ibnoCNU8bcxZLpWdJpP8O4QZIA=");
+
+    public static final ChunkListDecrypterTestVector VECTOR_FAIL_CHECKSUM
+            = new ChunkListDecrypterTestVector(
+                    "Vector fail checksum",
+                    true,
+                    "029fb70825074b363b59cc7d2953bd9088c7a4c65819e7e0bc",
+                    "282b2d9abf3419eaf06a8e93a791bfdd",
+                    "010000000000000000000000000000000000000000",
+                    "ffQ4srLP5WCAZ+5k8qqu/zRmKLlSIw0MzitoO3zkrPgVF2iQ30NAJthZfu1YpAvV"
+                    + "43Ul4XIAa0jDJ4wMI7G6B0jR7HhxByA6LMQuhT41fg6fPPtAppjxZ3y2OKSkdIDc"
+                    + "cmv3bwRqvymXgFx+d3bKQw2p1gxjrAthlp7bjz4QZuJ8EYFiMIqVIsMP7tzz3O5q"
+                    + "yPtGUMPfPaiTH0xVvF1P/aetNtUtIfVU1ZDJc5Os63xdZ+hBGESDmOcuu27HXOvP"
+                    + "sQH72ghyutmMsD2lbt1/Sh1Xmxs2/0A7ZHlcjt2AaDnqrQ6gT4vYXghZFkqYK4KZ"
+                    + "ryVq1wfPTan2AAtiiwoiVjxyKcDAqGfL8TJEWQhxx26UFaVzeJhd4C3Z5SLrBjy4"
+                    + "IwtnwYvIGS+BxG7KuexJX6ZdaV7QArBsr7vnZADzuL7rU5PFkeCDX3Mov1N2gZhR"
+                    + "FrcsVe+rsRPzp34FGBIkTAQ8fDGQagMEQ9gaYpp9CU6UFVYV6LHfvhhOxBvF/WYU"
+                    + "HOIXX+fUhCAFUd5nHZ/+ixr8JFZ8Cv6i7KJi/1nqVl4UqLmPGzPYdSOLa7rrj+9d"
+                    + "bvkyZ/EneYnaJ0JjIqysulF9gyy0jElgP04z5YcavK9fqoQlypLoV1OTuBsVLHkW"
+                    + "dNaOdtqLoh+1VYZreGQSizSByvja8LWdxCZFH+DVs0c=",
+                    "bljxflUOrTHlSngmA+4CwHdpcN5OHgTzl6It8R67+7VxlNKPudypuZrJbeom3gCm"
+                    + "ptMzwqsJ4Bp6wAgmWriv1kKPyrTkDvK0PxtcEy+PO2tGvzK2bJxqDp2RAoaPPl2/"
+                    + "L1C/XJsI97bcsN32sRTvelR0CWsEzdo+XGkv58CjmPoc2wqc0156pq+i84YyzE3L"
+                    + "1JdRP695nL0gk0hvJedal5MHYhQBcCAge7J31msgrXwuABGbQeEzNKeCimJueQU3"
+                    + "a/4XlvHKvKx96MrFVy7nuniKLm9Gby/dPcyqJ2huC+ORTjqX95/4gebaxHTl2VXS"
+                    + "HuKMgmhPNjGF/L7UgE0A4L2G+qmwNSCEnR58qy6mkQ9+YEpD7mmBvZWf8sX580IH"
+                    + "5kHn+3AfgA9Kd8My9oIlb3c4qvo+nn0o+cUby2hxlkKpU3VbdRdtnFNVAiJLHySG"
+                    + "zhoSvu3vuomWdrWopF5UuOH1J8YUpZysAIrigF8ZcAHtEZ5L765HSieTIcBQz06l"
+                    + "5Tk+ao2delQmPrz2ZP/vJvoA3JEJFnzAfs/7GixIfm1hQsmoWzwuCpJ8SU7fZdZG"
+                    + "ajf8dW1WaVtztJebOEQL1nIODMgQ7sqEZlQuswXcA161ZFPAqF3CtZfDezlQpS3o"
+                    + "3AeQBhpCPCRP71Te7ibnoCNU8bcxZLpWdJpP8O4QZIA=");
+
     private final String id;
+    private final boolean bad;
     private final byte[] chunkEncryptionKey;
     private final byte[] kek;
     private final byte[] checksum;
@@ -264,8 +362,9 @@ public class ChunkListDecrypterTestVector {
     private final byte[] ciphertext;
 
     public ChunkListDecrypterTestVector(
-            String id, String chunkEncryptionKey, String kek, String checksum, String plaintext, String ciphertext) {
+            String id, boolean bad, String chunkEncryptionKey, String kek, String checksum, String plaintext, String ciphertext) {
         this.id = Objects.requireNonNull(id);
+        this.bad = bad;
         this.chunkEncryptionKey = Hex.decode(chunkEncryptionKey);
         this.kek = Hex.decode(kek);
         this.checksum = Hex.decode(checksum);
@@ -275,6 +374,10 @@ public class ChunkListDecrypterTestVector {
 
     public String id() {
         return id;
+    }
+
+    public boolean bad() {
+        return bad;
     }
 
     public byte[] chunkEncryptionKey() {

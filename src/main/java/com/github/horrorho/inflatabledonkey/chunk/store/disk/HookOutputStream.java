@@ -77,7 +77,7 @@ public class HookOutputStream<T extends OutputStream> extends OutputStream {
             callback.accept(outputStream);
 
         } catch (IOException ex) {
-            logger.warn("-- close() - ex: ", ex);
+            logger.warn("-- close() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
             throw ex;
         }
     }
