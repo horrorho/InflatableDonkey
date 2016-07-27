@@ -112,7 +112,7 @@ public final class AuthorizeAssets {
         return assets.stream()
                 .filter(u -> u.fileSignature().isPresent())
                 .filter(u -> u.size().map(s -> s > 0).orElse(false))
-                .filter(u -> u.encryptionKey().isPresent())
+                .filter(u -> u.keyEncryptionKey().isPresent())
                 .filter(u -> u.domain().isPresent())
                 .filter(u -> u.relativePath().isPresent())
                 .collect(Collectors.toMap(
