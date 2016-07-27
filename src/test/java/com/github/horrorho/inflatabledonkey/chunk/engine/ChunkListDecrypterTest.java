@@ -25,9 +25,13 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_1;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_2;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_3;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_4;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_5;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_6;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
-import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
@@ -97,12 +101,6 @@ public class ChunkListDecrypterTest {
             .setScheme("http")
             .build();
 
-    private final ChunkStore store;
-
-    public ChunkListDecrypterTest() throws IOException {
-        this.store = new DiskChunkStore(DIGESTS, ChunkDigests::test, CACHE, TEMP);
-    }
-
     @Test
     @Parameters
     public void test(List<ChunkListDecrypterTestVector> vectors) throws IOException {
@@ -166,6 +164,16 @@ public class ChunkListDecrypterTest {
     public static Object[] parametersForTest() {
         return new Object[]{
             Arrays.asList(VECTOR_1),
-            Arrays.asList(VECTOR_1, VECTOR_1),};
+            Arrays.asList(VECTOR_2),
+            Arrays.asList(VECTOR_3),
+            Arrays.asList(VECTOR_4),
+            Arrays.asList(VECTOR_5),
+            Arrays.asList(VECTOR_6),
+            Arrays.asList(VECTOR_1, VECTOR_1),
+            Arrays.asList(VECTOR_5, VECTOR_6),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_3, VECTOR_4),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_3, VECTOR_4, VECTOR_5, VECTOR_6),
+            Arrays.asList(VECTOR_1, VECTOR_5, VECTOR_6, VECTOR_6, VECTOR_5, VECTOR_1)
+        };
     }
 }

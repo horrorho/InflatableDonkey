@@ -29,7 +29,7 @@ import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Chunk. Must implement hashcode/ equals methods.
+ * Chunk. Must implement hashcode/ equals methods. Not immutable, the underlying data may be deleted from the store.
  *
  * @author Ahseya
  */
