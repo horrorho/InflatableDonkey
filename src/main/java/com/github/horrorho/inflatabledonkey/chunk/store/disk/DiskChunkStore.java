@@ -186,7 +186,7 @@ public final class DiskChunkStore implements ChunkStore {
         boolean deleted = Files.deleteIfExists(to);
         if (deleted) {
             logger.debug("-- doDelete() - deleted: {}", to);
-            DirectoryAssistant.deleteEmptyTree(chunkFolder, to.getParent());
+            DirectoryAssistant.deleteEmptyBranch(chunkFolder, to.getParent());
         }
         logger.trace("-- doDelete() - deleted: {}", deleted);
         return deleted;

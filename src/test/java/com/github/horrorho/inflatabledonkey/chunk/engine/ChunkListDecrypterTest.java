@@ -77,10 +77,10 @@ public class ChunkListDecrypterTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (Files.exists(TEMP)) {
-            DirectoryAssistant.deleteEmptyTree(BASE, TEMP);
+            DirectoryAssistant.deleteEmptyBranch(BASE, TEMP);
         }
         if (Files.exists(CACHE)) {
-            DirectoryAssistant.deleteEmptyTree(BASE, CACHE);
+            DirectoryAssistant.deleteEmptyBranch(BASE, CACHE);
         }
     }
 

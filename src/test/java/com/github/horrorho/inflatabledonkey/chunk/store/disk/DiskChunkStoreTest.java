@@ -58,10 +58,10 @@ public class DiskChunkStoreTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (Files.exists(TEMP)) {
-            DirectoryAssistant.deleteEmptyTree(BASE, TEMP);
+            DirectoryAssistant.deleteEmptyBranch(BASE, TEMP);
         }
         if (Files.exists(CACHE)) {
-            DirectoryAssistant.deleteEmptyTree(BASE, CACHE);
+            DirectoryAssistant.deleteEmptyBranch(BASE, CACHE);
         }
     }
 
@@ -86,16 +86,16 @@ public class DiskChunkStoreTest {
         DiskChunkStore store = new DiskChunkStore(DIGESTS, ChunkDigests::test, CACHE, TEMP);
 
         byte[] checksum = digest(DIGESTS, data);
-        Optional<OutputStream> oos = store.outputStream(checksum);
-        assertTrue("OutputStream present", oos.isPresent());
-        try (OutputStream os = oos.get()) {
+        Optional<OutputStream> chunkOutputStream = store.outputStream(checksum);
+        assertTrue("OutputStream present", chunkOutputStream.isPresent());
+
+        try (OutputStream os = chunkOutputStream.get()) {
             os.write(data);
         }
+        Optional<Chunk> chunkData = store.chunk(checksum);
+        assertTrue("Chunk present", chunkData.isPresent());
 
-        Optional<Chunk> oc = store.chunk(checksum);
-        assertTrue("Chunk present", oc.isPresent());
-
-        Chunk chunk = oc.get();
+        Chunk chunk = chunkData.get();
         assertArrayEquals("checksum match", checksum, chunk.checksum());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -105,11 +105,14 @@ public class DiskChunkStoreTest {
         }
         assertArrayEquals("data match", data, baos.toByteArray());
 
-        boolean deleted = store.delete(checksum);
-        assertTrue("was deleted", deleted);
+        Optional<OutputStream> duplicateOutputStream = store.outputStream(checksum);
+        assertFalse("duplicate OutputStream not present", duplicateOutputStream.isPresent());
 
-        Optional<Chunk> odc = store.chunk(checksum);
-        assertFalse(odc.isPresent());
+        boolean isDeleted = store.delete(checksum);
+        assertTrue("was deleted", isDeleted);
+
+        Optional<Chunk> deleted = store.chunk(checksum);
+        assertFalse(deleted.isPresent());
 
         assertFalse("temp folder is empty", Files.list(TEMP).findFirst().isPresent());
     }
