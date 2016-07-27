@@ -32,37 +32,46 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Supplier;
 import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.io.DigestOutputStream;
+import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.io.TeeOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * DiskChunkStore.
+ * Thread safe disk based chunk store.
  *
  * @author Ahseya
  */
-//@ThreadSafe
+@ThreadSafe
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
     private static final int RETRY = 3;
-
     private final Object lock;
+    private final Supplier<Digest> digests;
     private final Path chunkFolder;
     private final Path tempFolder;
 
-    public DiskChunkStore(Object lock, Path chunkFolder, Path tempFolder) {
-        this.lock = Objects.requireNonNull(lock, "lock");
-        this.chunkFolder = Objects.requireNonNull(chunkFolder, "chunkFolder");
-        this.tempFolder = Objects.requireNonNull(tempFolder, "tempFolder");
+    public DiskChunkStore(Object lock, Supplier<Digest> digests, Path chunkFolder, Path tempFolder) {
+        this.lock = Objects.requireNonNull(lock);
+        this.digests = Objects.requireNonNull(digests);
+        this.chunkFolder = Objects.requireNonNull(chunkFolder);
+        this.tempFolder = Objects.requireNonNull(tempFolder);
     }
 
-    public DiskChunkStore(Path chunkFolder, Path tempFolder) {
-        this(new Object(), chunkFolder, tempFolder);
+    public DiskChunkStore(Supplier<Digest> digests, Path chunkFolder, Path tempFolder) {
+        this(new Object(), digests, chunkFolder, tempFolder);
     }
 
     @Override
@@ -77,50 +86,62 @@ public final class DiskChunkStore implements ChunkStore {
     }
 
     @Override
-    public Optional<OutputStream> write(byte[] checksum) throws IOException {
+    public Optional<OutputStream> outputStream(byte[] checksum) throws IOException {
         synchronized (lock) {
-            Path path = path(checksum);
-            return Files.exists(path)
+            Path to = path(checksum);
+            return Files.exists(to)
                     ? Optional.empty()
-                    : write(path);
+                    : getOutputStream(checksum, to);
         }
     }
 
     @GuardedBy("lock")
-    Optional<OutputStream> write(Path to) throws IOException {
+    Optional<OutputStream> getOutputStream(byte[] checksum, Path to) throws IOException {
         Path temp = tempFile(RETRY);
         if (!DirectoryAssistant.create(tempFolder)) {
-            logger.debug("-- copy() - failed to create temporary file directory: {}", tempFolder);
+            logger.debug("-- getOutputStream() - failed to create temporary file directory: {}", tempFolder);
             return Optional.empty();
         }
 
-        HookOutputStream outputStream = new HookOutputStream(Files.newOutputStream(temp), hook(temp, to));
-        return Optional.of(outputStream);
+        OutputStream os = Files.newOutputStream(temp);
+        DigestOutputStream dos = new DigestOutputStream(digests.get());
+        TeeOutputStream tos = new TeeOutputStream(os, dos);
+
+        HookOutputStream<OutputStream> hos = new HookOutputStream<>(tos, callback(checksum, dos, temp, to));
+        return Optional.of(hos);
     }
 
-    IOConsumer<Boolean> hook(Path temp, Path to) {
-        return b -> copy(b, temp, to);
+    IOConsumer<OutputStream> callback(byte[] checksum, DigestOutputStream dos, Path temp, Path to) {
+        return os -> copy(checksum, dos, os, temp, to);
     }
 
-    void copy(boolean success, Path temp, Path to) throws IOException {
+    void copy(byte[] checksum, DigestOutputStream dos, OutputStream os, Path temp, Path to) throws IOException {
         synchronized (lock) {
-            if (success == false) {
-                logger.warn("-- copy() - failed to write to temporary file: {} chunk: {}", temp, to);
-                return;
+            byte[] digest = dos.getDigest();
+            if (Arrays.equals(digest, checksum)) {
+                logger.debug("-- copy() - positive checksum match: {}", Hex.toHexString(digest));
+            } else {
+                Files.deleteIfExists(temp);
+                throw new IOException("DiskChunkStore copy, bad digest: " + Hex.toHexString(digest));
             }
+
             if (Files.exists(to)) {
                 logger.debug("-- copy() - duplicate chunk ignored: {}", to);
                 return;
             }
             if (!Files.exists(temp)) {
-                logger.warn("-- copy() - temporary file missing: {}", temp);
-                return;
+                throw new IOException("DiskChunkStore copy, temporary file missing: " + temp);
             }
             if (!DirectoryAssistant.createParent(to)) {
-                logger.debug("-- copy() - failed to create cache directory: {}", to);
+                throw new IOException("DiskChunkStore copy, failed to create cache directory: " + to);
             }
 
-            Files.move(temp, to);
+            try {
+                Files.move(temp, to);
+            } catch (IOException ex) {
+                logger.warn("-- copy() - IOException: {}", ex);
+                throw new IOException("DiskChunkStore copy, failed", ex);
+            }
             logger.debug("-- copy() - chunk created: {}", to);
         }
     }
@@ -138,6 +159,28 @@ public final class DiskChunkStore implements ChunkStore {
                 : path;
     }
 
+    @Override
+    public boolean delete(byte[] checksum) throws IOException {
+        synchronized (lock) {
+            Path to = path(checksum);
+            return Files.exists(to)
+                    ? doDelete(to)
+                    : false;
+        }
+    }
+
+    @GuardedBy("lock")
+    public boolean doDelete(Path to) throws IOException {
+        logger.trace("-- doDelete() - to: {}", to);
+        boolean deleted = Files.deleteIfExists(to);
+        if (deleted) {
+            logger.debug("-- doDelete() - deleted: {}", to);
+            DirectoryAssistant.deleteEmptyTree(chunkFolder, to.getParent());
+        }
+        logger.trace("-- doDelete() - deleted: {}", deleted);
+        return deleted;
+    }
+
     Path path(byte[] checksum) {
         Path filename = DiskChunkFiles.filename(checksum);
         return chunkFolder.resolve(filename);
@@ -145,7 +188,11 @@ public final class DiskChunkStore implements ChunkStore {
 
     @Override
     public String toString() {
-        return "DiskChunkStore{" + "lock=" + lock + ", chunkFolder=" + chunkFolder + ", tempFolder=" + tempFolder + '}';
+        return "DiskChunkStore{"
+                + "lock=" + lock
+                + ", digests=" + digests
+                + ", chunkFolder=" + chunkFolder
+                + ", tempFolder=" + tempFolder
+                + '}';
     }
 }
-// TODO checksum verification

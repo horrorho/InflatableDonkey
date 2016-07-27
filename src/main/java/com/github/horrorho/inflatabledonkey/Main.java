@@ -138,11 +138,11 @@ public class Main {
         BackupAssistant assistant = BackupAssistant.create(httpClient, account);
 
         // Output folders.
-        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
+        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups")).normalize()
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
-        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property
-        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property
+        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property normalize()
+        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
         System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
@@ -152,7 +152,11 @@ public class Main {
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder, tempOutputFolder);
+
+        logger.error("-- main() - FIXME");
+        System.exit(0);
+
+        DiskChunkStore chunkStore = new DiskChunkStore(null, null, chunkOutputFolder, tempOutputFolder);
         AssetDownloader assetDownloader = new AssetDownloader(chunkStore);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 

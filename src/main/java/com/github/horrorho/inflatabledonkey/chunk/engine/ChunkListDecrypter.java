@@ -114,7 +114,7 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
     }
 
     Optional<Chunk> store(CipherInputStream is, byte[] checksum) throws IOException {
-        return store.write(checksum)
+        return store.outputStream(checksum)
                 .<IOSupplier<Optional<Chunk>>>map(u -> () -> {
                     copy(is, u);
                     return store.chunk(checksum);

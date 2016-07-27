@@ -41,7 +41,7 @@ public final class DirectoryAssistant {
     private static final Logger logger = LoggerFactory.getLogger(DirectoryAssistant.class);
 
     public static boolean createParent(Path file) {
-        Path parent = file.getParent();
+        Path parent = file.toAbsolutePath().normalize().getParent();
         if (parent == null) {
             return true;
         }
@@ -62,11 +62,50 @@ public final class DirectoryAssistant {
 
         try {
             Files.createDirectories(directory);
+            logger.debug("-- create() - directory created: {}", directory);
             return true;
 
         } catch (IOException ex) {
             logger.debug("-- create() - IOException: {}", ex);
             return false;
         }
+    }
+
+    public static boolean deleteEmptyTree(Path base, Path folder) {
+        return doDeleteEmptyTree(base.normalize().toAbsolutePath(), folder.normalize().toAbsolutePath());
+    }
+
+    private static boolean doDeleteEmptyTree(Path base, Path directory) {
+        if (!directory.startsWith(base)) {
+            logger.warn("-- doDeleteEmptyTree() - path not in base directory, base: {} directory: {}", base, directory);
+            return false;
+        }
+        if (!Files.exists(directory)) {
+            logger.warn("-- doDeleteEmptyTree() - directory doesn't exist: {}", directory);
+            return false;
+        }
+
+        boolean deleted = false;
+        try {
+            while (!directory.equals(base)) {
+                if (!Files.isDirectory(directory)) {
+                    logger.warn("-- doDeleteEmptyTree() - not a directory: {}", directory);
+                    break;
+                }
+                if (Files.list(directory).findFirst().isPresent()) {
+                    logger.debug("-- doDeleteEmptyTree() - directory not empty: {}", directory);
+                    break;
+                }
+
+                Files.delete(directory);
+                logger.debug(" --doDeleteEmptyTree() - deleted: {}", directory);
+                deleted = true;
+
+                directory = directory.getParent();
+            }
+        } catch (IOException ex) {
+            logger.warn("-- doDeleteEmptyTree() - IOException: ", ex);
+        }
+        return deleted;
     }
 }
