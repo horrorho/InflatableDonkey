@@ -75,7 +75,7 @@ public final class Voodoo {
                 .orElseThrow(() -> new IllegalArgumentException("asset missing file signature"));
 
         logger.trace("** Voodoo() - asset: {}", asset);
-        logger.trace("** Voodoo() - chunkReferences: {}", chunkReferences);
+        logger.trace("** Voodoo() - chunkReferences: {}", chunkReferences.size());
     }
 
     public Asset asset() {
