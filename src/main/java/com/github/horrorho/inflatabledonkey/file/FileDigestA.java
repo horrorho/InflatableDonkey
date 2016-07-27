@@ -68,7 +68,7 @@ public class FileDigestA implements Digest {
 
     @Override
     public int doFinal(byte[] out, int outOff) {
-        out[0] = 0x01;
+        out[outOff] = 0x01;
         digest.doFinal(out, outOff + 1);
         reset();
         return getDigestSize();
