@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
-    private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 4 threads
+    private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 3 threads
     private final Object lock;
     private final Supplier<Digest> digests;
     private final BiPredicate<byte[], byte[]> testDigest;
@@ -109,8 +109,9 @@ public final class DiskChunkStore implements ChunkStore {
     @GuardedBy("lock")
     Optional<OutputStream> getOutputStream(byte[] checksum, Path to) throws IOException {
         Path temp = tempFile(TEMP_FILE_RETRY);
+        // Possibly superfluous. Is user likely to delete the temp folder whilst a backup is in progress?
         if (!DirectoryAssistant.create(tempFolder)) {
-            logger.warn("-- getOutputStream() - failed to create temporary file directory: {}", tempFolder);
+            logger.warn("-- getOutputStream() - failed to create temp folder: {}", tempFolder);
             return Optional.empty();
         }
 

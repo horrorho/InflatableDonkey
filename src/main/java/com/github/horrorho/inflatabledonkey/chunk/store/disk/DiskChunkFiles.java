@@ -29,7 +29,6 @@ import java.nio.file.Paths;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
- * DiskChunkFiles.
  *
  * @author Ahseya
  */

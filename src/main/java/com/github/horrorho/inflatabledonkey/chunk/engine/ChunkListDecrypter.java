@@ -143,6 +143,7 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
         try {
             IOUtils.copy(is, os);
         } finally {
+            // ChunkStore errors are lost.
             IOUtils.closeQuietly(is);
             IOUtils.closeQuietly(os);
         }

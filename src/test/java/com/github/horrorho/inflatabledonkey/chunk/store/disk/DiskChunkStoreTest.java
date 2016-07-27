@@ -96,7 +96,7 @@ public class DiskChunkStoreTest {
         assertTrue("Chunk present", chunkData.isPresent());
 
         Chunk chunk = chunkData.get();
-        assertArrayEquals("checksum match", chunk.checksum(), checksum);
+        assertArrayEquals("checksum match", checksum, chunk.checksum());
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (InputStream is = chunk.inputStream()
