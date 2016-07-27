@@ -31,24 +31,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKeys;
 
 /**
+ * Asset with it's ChunkServer.StorageHostChunkList/ ChunkServer.Reference data.
  *
  * @author Ahseya
  */
 @Immutable
 public final class Voodoo {
 
-    public static KeyEncryptionKeys
+    public static ChunkKeyEncryptionKeys
             keyEncryptionKeys(Collection<Voodoo> voodoos) {
         Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keks = voodoos.stream()
                 .map(Voodoo::keyEncryptionKeys)

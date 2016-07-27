@@ -56,13 +56,13 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
     private final BiFunction<byte[], InputStream, CipherInputStream> cipherInputStreams;
     private final BiFunction<byte[], byte[], Optional<byte[]>> keyUnwrap;
     private final ChunkStore store;
-    private final SHCLContainer container;
+    private final ChunksContainer container;
 
     public ChunkListDecrypter(
             BiFunction< byte[], InputStream, CipherInputStream> cipherInputStreams,
             BiFunction<byte[], byte[], Optional<byte[]>> keyUnwrap,
             ChunkStore store,
-            SHCLContainer container) {
+            ChunksContainer container) {
 
         this.cipherInputStreams = Objects.requireNonNull(cipherInputStreams);
         this.keyUnwrap = Objects.requireNonNull(keyUnwrap);

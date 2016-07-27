@@ -66,7 +66,7 @@ public final class ChunkListDecrypterFactory {
         this.keyUnwrap = Objects.requireNonNull(keyUnwrap);
     }
 
-    public ChunkListDecrypter apply(ChunkStore store, SHCLContainer container) {
+    public ChunkListDecrypter apply(ChunkStore store, ChunksContainer container) {
         return new ChunkListDecrypter(cipherInputStreams, keyUnwrap, store, container);
     }
 }

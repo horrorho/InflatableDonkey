@@ -53,20 +53,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -111,7 +108,7 @@ public class ChunkListDecrypterTest {
         DiskChunkStore store = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, CACHE, TEMP);
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
-        SHCLContainer container = shcl(vectors, data);
+        ChunksContainer container = container(vectors, data);
         ChunkListDecrypter decrypter = ChunkListDecrypterFactory.defaults().apply(store, container);
         ByteArrayInputStream dataIs = new ByteArrayInputStream(data.toByteArray());
         Map<ChunkServer.ChunkReference, Chunk> chunks = decrypter.apply(dataIs);
@@ -163,11 +160,11 @@ public class ChunkListDecrypterTest {
             Arrays.asList(VECTOR_FAIL_KEY, VECTOR_1),
             Arrays.asList(VECTOR_FAIL_CHECKSUM, VECTOR_1),
             Arrays.asList(VECTOR_1, VECTOR_FAIL_KEK, VECTOR_5, VECTOR_FAIL_KEY, VECTOR_6, VECTOR_6,
-                VECTOR_FAIL_CHECKSUM, VECTOR_5, VECTOR_1)
+            VECTOR_FAIL_CHECKSUM, VECTOR_5, VECTOR_1)
         };
     }
 
-    public SHCLContainer shcl(List<ChunkListDecrypterTestVector> vectors, OutputStream data) throws IOException {
+    public ChunksContainer container(List<ChunkListDecrypterTestVector> vectors, OutputStream data) throws IOException {
         Map<Integer, byte[]> keyEncryptionKeys = new HashMap<>();
         List<ChunkServer.ChunkInfo> chunkInfos = new ArrayList<>();
         int offset = 0;
@@ -194,7 +191,7 @@ public class ChunkListDecrypterTest {
                 .addAllChunkInfo(chunkInfos)
                 .build();
 
-        Function<Integer, Optional<byte[]>> keks = i -> Optional.ofNullable(keyEncryptionKeys.get(i));
-        return new SHCLContainer(shcl, keks, 0);
+        ChunkKeyEncryptionKey kek = i -> Optional.ofNullable(keyEncryptionKeys.get(i));
+        return new ChunksContainer(shcl, kek, 0);
     }
 }

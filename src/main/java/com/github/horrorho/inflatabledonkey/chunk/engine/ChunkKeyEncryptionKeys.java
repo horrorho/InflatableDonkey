@@ -21,11 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud;
+package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.util.Optional;
-import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -34,7 +33,7 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 @FunctionalInterface
-public interface KeyEncryptionKeys {
+public interface ChunkKeyEncryptionKeys {
 
-    Optional<Function<Integer, Optional<byte[]>>> apply(ChunkServer.StorageHostChunkList container);
+    Optional<ChunkKeyEncryptionKey> apply(ChunkServer.StorageHostChunkList container);
 }

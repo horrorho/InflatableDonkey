@@ -69,7 +69,7 @@ public final class ChunkClient {
     }
 
     public Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            apply(HttpClient client, SHCLContainer container, ChunkStore store) {
+            apply(HttpClient client, ChunksContainer container, ChunkStore store) {
         try {
             ChunkListDecrypter decrypter = chunkDecrypterFactory.apply(store, container);
             InputStreamResponseHandler<Map<ChunkServer.ChunkReference, Chunk>> handler

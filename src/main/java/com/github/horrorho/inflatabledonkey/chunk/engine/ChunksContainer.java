@@ -28,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
@@ -38,13 +37,13 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class SHCLContainer {
+public final class ChunksContainer {
 
     private final ChunkServer.StorageHostChunkList shcl;
-    private final Function<Integer, Optional<byte[]>> kek;
+    private final ChunkKeyEncryptionKey kek;
     private final int index;
 
-    public SHCLContainer(ChunkServer.StorageHostChunkList shcl, Function<Integer, Optional<byte[]>> kek, int index) {
+    public ChunksContainer(ChunkServer.StorageHostChunkList shcl, ChunkKeyEncryptionKey kek, int index) {
         this.shcl = Objects.requireNonNull(shcl);
         this.kek = Objects.requireNonNull(kek);
         this.index = index;
