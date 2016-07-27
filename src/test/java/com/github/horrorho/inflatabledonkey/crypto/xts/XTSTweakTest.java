@@ -52,7 +52,7 @@ public class XTSTweakTest {
             byte[] value = tweak.value();
             byte[] expected = Arrays.copyOfRange(twk, i, i + BLOCK_LENGTH);
 
-            assertArrayEquals(testVector.id(), value, expected);
+            assertArrayEquals(testVector.id(), expected, value);
             tweak.next();
         }
     }
