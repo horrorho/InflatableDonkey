@@ -372,7 +372,8 @@ public class ChunkListDecrypterTestVector {
     private final byte[] ciphertext;
 
     public ChunkListDecrypterTestVector(
-            String id, boolean bad, String keyTypeOne, String keyTypeTwo, String kek, String checksum, String plaintext, String ciphertext) {
+            String id, boolean bad, String keyTypeOne, String keyTypeTwo, String kek, String checksum,
+            String plaintext, String ciphertext) {
         this.id = Objects.requireNonNull(id);
         this.bad = bad;
         this.keyTypeOne = Hex.decode(keyTypeOne);

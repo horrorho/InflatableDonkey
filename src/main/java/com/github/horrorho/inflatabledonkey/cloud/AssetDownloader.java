@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeys;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
 
@@ -122,17 +123,24 @@ public final class AssetDownloader {
 
     Optional<Map<ChunkReference, Chunk>>
             fetch(HttpClient httpClient, Map<Integer, StorageHostChunkList> containers) {
-        Map<ChunkReference, Chunk> map = new HashMap<>();
-        for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
-            StorageHostChunkList container = entry.getValue();
-            int containerIndex = entry.getKey();
-            Optional<Map<ChunkReference, Chunk>> chunks
-                    = chunkClient.apply(httpClient, store, container, containerIndex);
-            if (!chunks.isPresent()) {
-                return Optional.empty();
+        try {
+            Map<ChunkReference, Chunk> map = new HashMap<>();
+            for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
+                StorageHostChunkList container = entry.getValue();
+                int containerIndex = entry.getKey();
+                Optional<Map<ChunkReference, Chunk>> chunks
+                        = chunkClient.apply(httpClient, store, container, containerIndex);
+                if (!chunks.isPresent()) {
+                    return Optional.empty();
+                }
+                map.putAll(chunks.get());
             }
-            map.putAll(chunks.get());
+            return Optional.of(map);
+
+        } catch (IOException ex) {
+            logger.warn("-- fetch() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            logger.trace("-- fetch() - IOException: ", ex);
+            return Optional.empty();
         }
-        return Optional.of(map);
     }
 }

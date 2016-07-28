@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.io;
 
-import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;

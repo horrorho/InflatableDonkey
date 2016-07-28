@@ -74,9 +74,8 @@ public final class DiskChunk implements Chunk {
             InputStream is = Files.newInputStream(file, READ);
             if (logger.isTraceEnabled()) {
                 logger.trace("-- doInputStream() - open: {}", Hex.toHexString(checksum()));
-                IOConsumer<InputStream> callback = i -> {
-                    logger.trace("-- doInputStream() - close: {}", Hex.toHexString(checksum()));
-                };
+                IOConsumer<InputStream> callback = u
+                        -> logger.trace("-- doInputStream() - callback close: {}", Hex.toHexString(checksum()));
                 is = new HookInputStream(is, callback);
             }
             return Optional.of(is);

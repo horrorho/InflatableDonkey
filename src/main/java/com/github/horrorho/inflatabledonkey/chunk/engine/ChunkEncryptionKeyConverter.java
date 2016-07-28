@@ -32,6 +32,7 @@ import net.jcip.annotations.Immutable;
  * unaltered.
  *
  * @author Ahseya
+ * @param <T> metadata type
  */
 @Immutable
 @FunctionalInterface

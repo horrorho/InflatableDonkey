@@ -57,7 +57,10 @@ import org.slf4j.LoggerFactory;
 public final class DiskChunkStore implements ChunkStore {
 
     private static final Logger logger = LoggerFactory.getLogger(DiskChunkStore.class);
-    private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 3 threads
+
+    private static final int TEMP_FILE_RETRY = 3;   // ~ 2^190 collision risk with 4 threads
+    private static final String TEMP_SUFFIX = ".tmp";
+
     private final Object lock;
     private final Supplier<Digest> digests;
     private final BiPredicate<byte[], byte[]> testDigest;
@@ -172,8 +175,8 @@ public final class DiskChunkStore implements ChunkStore {
         if (retry == 0) {
             throw new IOException("failed to create temporary file");
         }
-        String random = new BigInteger(64, ThreadLocalRandom.current()).toString(16).toUpperCase(Locale.US);
-        String filename = random + ".tmp";
+        String random = new BigInteger(64, ThreadLocalRandom.current()).toString(16).toLowerCase(Locale.US);
+        String filename = random + TEMP_SUFFIX;
         Path path = tempFolder.resolve(filename);
         return Files.exists(path)
                 ? tempFile(--retry)
