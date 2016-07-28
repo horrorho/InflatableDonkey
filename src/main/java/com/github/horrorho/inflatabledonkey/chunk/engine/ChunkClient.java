@@ -29,6 +29,8 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactoryLegacy;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,6 +70,13 @@ public final class ChunkClient {
     public Optional<Map<ChunkServer.ChunkReference, Chunk>>
             apply(HttpClient client, ChunkStore store, ChunkServer.StorageHostChunkList container, int containerIndex) {
         try {
+
+            Optional<Map<ChunkServer.ChunkReference, Chunk>> stored = stored(store, container, containerIndex);
+            if (stored.isPresent()) {
+                logger.debug("-- apply() - not downloading, all chunks are available in the store");
+                return stored;
+            }
+
             ChunkListDecrypter decrypter = new ChunkListDecrypter(store, container, containerIndex);
             InputStreamResponseHandler<Map<ChunkServer.ChunkReference, Chunk>> handler
                     = new InputStreamResponseHandler<>(decrypter);
@@ -82,5 +91,21 @@ public final class ChunkClient {
             logger.warn("-- apply() - IOException: ", ex);
             return Optional.empty();
         }
+    }
+
+    Optional<Map<ChunkServer.ChunkReference, Chunk>>
+            stored(ChunkStore store, ChunkServer.StorageHostChunkList container, int containerIndex) {
+        List<ChunkServer.ChunkInfo> list = container.getChunkInfoList();
+        Map<ChunkServer.ChunkReference, Chunk> map = new HashMap<>();
+        for (int i = 0, n = list.size(); i < n; i++) {
+            Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
+            if (!chunk.isPresent()) {
+                logger.debug("-- stored() - not all chunk present in the store");
+                return Optional.empty();
+            }
+            ChunkServer.ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
+            map.put(chunkReference, chunk.get());
+        }
+        return Optional.of(map);
     }
 }

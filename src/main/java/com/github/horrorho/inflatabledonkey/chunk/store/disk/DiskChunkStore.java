@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
+import com.github.horrorho.inflatabledonkey.io.HookOutputStream;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;

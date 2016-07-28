@@ -23,7 +23,9 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
+import com.github.horrorho.inflatabledonkey.io.HookInputStream;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -69,13 +71,30 @@ public final class DiskChunk implements Chunk {
 
     Optional<InputStream> doInputStream() throws IOException {
         try {
-            return Optional.of(Files.newInputStream(file, READ));
+            InputStream is = Files.newInputStream(file, READ);
+            if (logger.isTraceEnabled()) {
+                logger.trace("-- doInputStream() - open: {}", Hex.toHexString(checksum()));
+                IOConsumer<InputStream> callback = i -> {
+                    logger.trace("-- doInputStream() - close: {}", Hex.toHexString(checksum()));
+                };
+                is = new HookInputStream(is, callback);
+            }
+            return Optional.of(is);
+
         } catch (NoSuchFileException ex) {
             logger.warn("-- doInputStream() - file was just deleted: {}", ex);
             return Optional.empty();
         }
     }
 
+//    Optional<InputStream> doInputStream() throws IOException {
+//        try {
+//            return Optional.of(Files.newInputStream(file, READ));
+//        } catch (NoSuchFileException ex) {
+//            logger.warn("-- doInputStream() - file was just deleted: {}", ex);
+//            return Optional.empty();
+//        }
+//    }
     @Override
     public int hashCode() {
         int hash = 5;

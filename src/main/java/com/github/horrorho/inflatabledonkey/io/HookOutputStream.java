@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.io;
 
 import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;

@@ -26,6 +26,8 @@ package com.github.horrorho.inflatabledonkey.file;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.io.IOSupplier;
+import com.github.horrorho.inflatabledonkey.io.IOSupplierSequenceStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -124,7 +126,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
         try (OutputStream out = Files.newOutputStream(path);
                 InputStream in = chunkStream(chunks)) {
-
             boolean status = FileStreamWriter.copy(in, out, keyCipher, signature);
 
             if (keyCipher.isPresent()) {
@@ -143,6 +144,19 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     InputStream chunkStream(List<Chunk> chunks) throws IOException {
+        // Changed from java.io.SequenceInputStream which required open InputStreams as this was causing 'Too many open 
+        // files' exceptions on assets with huge numbers of chunks.
+        List<IOSupplier<InputStream>> suppliers = new ArrayList<>();
+        for (Chunk chunk : chunks) {
+            IOSupplier<InputStream> ios = () -> chunk.inputStream()
+                    .orElseThrow(()
+                            -> new IllegalStateException("chunk deleted: 0x" + Hex.toHexString(chunk.checksum())));
+            suppliers.add(ios);
+        }
+        return new IOSupplierSequenceStream(suppliers);
+    }
+
+    InputStream chunkStreamx(List<Chunk> chunks) throws IOException {
         List<InputStream> inputStreams = new ArrayList<>();
         for (Chunk chunk : chunks) {
             InputStream is = chunk.inputStream()
@@ -156,6 +170,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
 
     @Override
     public String toString() {
-        return "FileAssembler{" + "fileKeys=" + fileKeys + ", injector=" + mutator + ", filePath=" + filePath + '}';
+        return "FileAssembler{" + "fileKeys=" + fileKeys + ", mutator=" + mutator + ", filePath=" + filePath + '}';
     }
 }

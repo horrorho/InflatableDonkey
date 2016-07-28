@@ -42,8 +42,6 @@ import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeys;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkReferences;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.google.protobuf.ByteString;
 import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
@@ -129,27 +127,11 @@ public final class AssetDownloader {
             StorageHostChunkList container = entry.getValue();
             int containerIndex = entry.getKey();
             Optional<Map<ChunkReference, Chunk>> chunks
-                    = Optional.of(stored(container, containerIndex))
-                    .orElseGet(() -> chunkClient.apply(httpClient, store, container, containerIndex));
+                    = chunkClient.apply(httpClient, store, container, containerIndex);
             if (!chunks.isPresent()) {
                 return Optional.empty();
             }
             map.putAll(chunks.get());
-        }
-        return Optional.of(map);
-    }
-
-    Optional<Map<ChunkReference, Chunk>> stored(StorageHostChunkList container, int containerIndex) {
-        List<ChunkServer.ChunkInfo> list = container.getChunkInfoList();
-        Map<ChunkReference, Chunk> map = new HashMap<>();
-        for (int i = 0, n = list.size(); i < n; i++) {
-            Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
-            if (!chunk.isPresent()) {
-                logger.debug("-- stored() - not all chunk present in the store");
-                return Optional.empty();
-            }
-            ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
-            map.put(chunkReference, chunk.get());
         }
         return Optional.of(map);
     }
