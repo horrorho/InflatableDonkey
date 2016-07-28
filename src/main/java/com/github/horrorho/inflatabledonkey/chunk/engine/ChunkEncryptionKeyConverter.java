@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 Ahseya.
+ * Copyright 2016 Ahseya.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,20 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
+import java.util.Optional;
+import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.StreamBlockCipher;
-import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.modes.CFBBlockCipher;
 
 /**
+ * Converts chunk encryption keys using the supplied metadata. Keys that are already in a valid state are returned
+ * unaltered.
  *
  * @author Ahseya
  */
 @Immutable
-public final class ChunkCiphers {
+@FunctionalInterface
+public interface ChunkEncryptionKeyConverter<T> extends BiFunction<byte[], T, Optional<byte[]>> {
 
-    private ChunkCiphers() {
-    }
-
-    public static StreamBlockCipher cipher() {
-        return new CFBBlockCipher(new AESFastEngine(), 128);
-    }
+    @Override
+    Optional<byte[]> apply(byte[] chunkEncryptionKey, T metadata);
 }

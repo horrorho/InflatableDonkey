@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.engine;
+package com.github.horrorho.inflatabledonkey.cloud;
 
-import java.util.Optional;
-import java.util.function.Function;
+import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import java.util.Collection;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -32,8 +32,10 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-@FunctionalInterface
-@Deprecated
-public interface ChunkKeyEncryptionKey extends Function<Integer, Optional<byte[]>> {
-
+public final class Moo {
+    public static void moo(Voodoo voodoo, Collection<Asset> assets) {
+        
+        
+        
+    }
 }

@@ -24,12 +24,6 @@
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -37,46 +31,9 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class ChunksContainer {
+public final class ChunkReferences {
 
-    private final ChunkServer.StorageHostChunkList shcl;
-    private final ChunkKeyEncryptionKey kek;
-    private final int index;
-
-    public ChunksContainer(ChunkServer.StorageHostChunkList shcl, ChunkKeyEncryptionKey kek, int index) {
-        this.shcl = Objects.requireNonNull(shcl);
-        this.kek = Objects.requireNonNull(kek);
-        this.index = index;
-    }
-
-    public ChunkServer.StorageHostChunkList storageHostChunkList() {
-        return shcl;
-    }
-
-    public int index() {
-        return index;
-    }
-
-    public int count() {
-        return shcl.getChunkInfoCount();
-    }
-
-    public Optional<byte[]> keyEncryptionKey(int index) {
-        return kek.apply(index);
-    }
-
-    public LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.ChunkInfo> chunkInfos() {
-        List<ChunkServer.ChunkInfo> list = shcl.getChunkInfoList();
-        return IntStream.range(0, list.size())
-                .mapToObj(Integer::valueOf)
-                .collect(Collectors.toMap(
-                        i -> chunkReference(index, i),
-                        list::get,
-                        (u, t) -> u,
-                        LinkedHashMap::new));
-    }
-
-    ChunkServer.ChunkReference chunkReference(int containerIndex, int chunkIndex) {
+    public static ChunkServer.ChunkReference chunkReference(int containerIndex, int chunkIndex) {
         return ChunkServer.ChunkReference.newBuilder()
                 .setContainerIndex(containerIndex)
                 .setChunkIndex(chunkIndex)

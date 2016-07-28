@@ -33,6 +33,7 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 @FunctionalInterface
+@Deprecated
 public interface ChunkKeyEncryptionKeys {
 
     Optional<ChunkKeyEncryptionKey> apply(ChunkServer.StorageHostChunkList container);

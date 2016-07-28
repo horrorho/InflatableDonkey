@@ -40,6 +40,8 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public interface ChunkStore {
 
+    boolean contains(byte[] checksum);
+
     Optional<Chunk> chunk(byte[] checksum);
 
     /**

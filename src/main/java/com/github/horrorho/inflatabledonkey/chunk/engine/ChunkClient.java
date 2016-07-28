@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
+import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactoryLegacy;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
 import java.util.Map;
@@ -54,30 +54,28 @@ public final class ChunkClient {
 
     private static final ChunkClient DEFAULT_INSTANCE = new ChunkClient();
 
-    private final ChunkListDecrypterFactory chunkDecrypterFactory;
     private final Function<ChunkServer.StorageHostChunkList, HttpUriRequest> requestFactory;
 
     public ChunkClient(
-            ChunkListDecrypterFactory chunkDecrypterFactory,
             Function<ChunkServer.StorageHostChunkList, HttpUriRequest> requestFactory) {
-        this.chunkDecrypterFactory = Objects.requireNonNull(chunkDecrypterFactory);
         this.requestFactory = Objects.requireNonNull(requestFactory);
     }
 
     ChunkClient() {
-        this(ChunkListDecrypterFactory.defaults(), ChunkListRequestFactory.instance());
+        this(ChunkListRequestFactoryLegacy.instance());
     }
 
     public Optional<Map<ChunkServer.ChunkReference, Chunk>>
-            apply(HttpClient client, ChunksContainer container, ChunkStore store) {
+            apply(HttpClient client, ChunkStore store, ChunkServer.StorageHostChunkList container, int containerIndex) {
         try {
-            ChunkListDecrypter decrypter = chunkDecrypterFactory.apply(store, container);
+            ChunkListDecrypter decrypter = new ChunkListDecrypter(store, container, containerIndex);
             InputStreamResponseHandler<Map<ChunkServer.ChunkReference, Chunk>> handler
                     = new InputStreamResponseHandler<>(decrypter);
 
-            HttpUriRequest request = requestFactory.apply(container.storageHostChunkList());
+            HttpUriRequest request = requestFactory.apply(container);
 
             Map<ChunkServer.ChunkReference, Chunk> chunks = client.execute(request, handler);
+
             return Optional.of(chunks);
 
         } catch (IOException ex) {

@@ -23,9 +23,9 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunksContainer;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyConverter;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
@@ -37,13 +37,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKey;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKeys;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeys;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkReferences;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.google.protobuf.ByteString;
+import java.util.function.Consumer;
+import static java.util.stream.Collectors.toList;
 
 /**
  *
@@ -56,55 +59,78 @@ public final class AssetDownloader {
 
     private final ChunkClient chunkClient;
     private final ChunkStore store;
+    private final ChunkEncryptionKeyConverter<byte[]> converter;
 
-    public AssetDownloader(ChunkClient chunkClient, ChunkStore store) {
+    public AssetDownloader(ChunkClient chunkClient, ChunkStore store, ChunkEncryptionKeyConverter<byte[]> converter) {
         this.chunkClient = Objects.requireNonNull(chunkClient);
         this.store = Objects.requireNonNull(store);
+        this.converter = Objects.requireNonNull(converter);
     }
 
     public AssetDownloader(ChunkStore store) {
-        this(ChunkClient.defaultInstance(), store);
+        this(ChunkClient.defaultInstance(), store, ChunkKeys.instance());
     }
 
-    public void accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
-        accept(httpClient, VoodooFactory.from(authorizedAssets), consumer);
+    public void
+            accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
+        BiConsumer<ByteString, List<Chunk>> c = consumer(consumer, authorizedAssets.fileSignatureToAsset());
+        Map<ByteString, byte[]> fsToKek = authorizedAssets.fileSignatureToKeyEncryptionKey();
+        List<Voodoo> voodooList = VoodooFactory.from(authorizedAssets.fileGroups())
+                .stream()
+                .map(u -> VoodooFactory.convertChunkEncryptionKeys(u, converter, fsToKek))
+                .collect(toList());
+        processGroups(httpClient, voodooList, c);
     }
 
-    public void accept(HttpClient httpClient, Collection<Voodoo> voodoos, BiConsumer<Asset, List<Chunk>> consumer) {
-        ChunkKeyEncryptionKeys keks = Voodoo.keyEncryptionKeys(voodoos);
-        voodoos.forEach(v -> accept(httpClient, v, keks, consumer));
+    BiConsumer<ByteString, List<Chunk>>
+            consumer(BiConsumer<Asset, List<Chunk>> consumer, Map<ByteString, Asset> fileSignatureToAsset) {
+        return (u, v) -> {
+            if (fileSignatureToAsset.containsKey(u)) {
+                consumer.accept(fileSignatureToAsset.get(u), v);
+            } else {
+                logger.warn("-- consumer() - no asset for file signature: {}", u);
+            }
+        };
     }
 
-    public boolean
-            accept(HttpClient httpClient, Voodoo voodoo, ChunkKeyEncryptionKeys keks, BiConsumer<Asset, List<Chunk>> consumer) {
-        List<ChunkReference> chunkReferences = voodoo.chunkReferences();
-        return fetch(httpClient, keks, voodoo.containers(), voodoo.asset())
-                .filter(u -> u
-                        .keySet()
-                        .containsAll(chunkReferences))
-                .map(u -> chunkReferences
+    void processGroups(HttpClient httpClient, Collection<Voodoo> voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+        voodoo.forEach(u -> processGroup(httpClient, u, consumer));
+    }
+
+    void processGroup(HttpClient httpClient, Voodoo voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+        voodoo.fileSignatures()
+                .stream()
+                .forEach(u -> process(httpClient, voodoo, u, v -> consumer.accept(u, v)));
+    }
+
+    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature,
+            Consumer< List<Chunk>> consumer) {
+        voodoo.shcls(fileSignature)
+                .ifPresent(u -> voodoo
+                        .chunkReferences(fileSignature)
+                        .flatMap(v -> fetch(httpClient, v, u))
+                        .ifPresent(consumer));
+    }
+
+    public Optional<List<Chunk>>
+            fetch(HttpClient httpClient, List<ChunkReference> chunks, Map<Integer, StorageHostChunkList> containers) {
+        return fetch(httpClient, containers)
+                .filter(u -> u.keySet().containsAll(chunks))
+                .map(u -> chunks
                         .stream()
                         .map(u::get)
-                        .collect(Collectors.toList()))
-                .map(u -> {
-                    consumer.accept(voodoo.asset(), u);
-                    return true;
-                })
-                .orElseGet(() -> {
-                    Asset asset = voodoo.asset();
-                    String path = asset.domain().orElse("NULL") + asset.relativePath().orElse("NULL");
-                    logger.warn("-- accept() - failed to download asset: {}", path);
-                    return false;
-                });
+                        .collect(toList()));
     }
 
     Optional<Map<ChunkReference, Chunk>>
-            fetch(HttpClient httpClient, ChunkKeyEncryptionKeys keks, Map<Integer, StorageHostChunkList> containers,
-                    Asset asset) {
+            fetch(HttpClient httpClient, Map<Integer, StorageHostChunkList> containers) {
         Map<ChunkReference, Chunk> map = new HashMap<>();
         for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
-            Optional<Map<ChunkReference, Chunk>> chunks = keks.apply(entry.getValue())
-                    .flatMap(kek -> fetch(httpClient, kek, entry.getValue(), entry.getKey()));
+            StorageHostChunkList container = entry.getValue();
+            int containerIndex = entry.getKey();
+            Optional<Map<ChunkReference, Chunk>> chunks
+                    = Optional.of(stored(container, containerIndex))
+                    .orElseGet(() -> chunkClient.apply(httpClient, store, container, containerIndex));
             if (!chunks.isPresent()) {
                 return Optional.empty();
             }
@@ -113,9 +139,18 @@ public final class AssetDownloader {
         return Optional.of(map);
     }
 
-    Optional<Map<ChunkReference, Chunk>>
-            fetch(HttpClient httpClient, ChunkKeyEncryptionKey kek, StorageHostChunkList container, int index) {
-        ChunksContainer shclContainer = new ChunksContainer(container, kek, index);
-        return chunkClient.apply(httpClient, shclContainer, store);
+    Optional<Map<ChunkReference, Chunk>> stored(StorageHostChunkList container, int containerIndex) {
+        List<ChunkServer.ChunkInfo> list = container.getChunkInfoList();
+        Map<ChunkReference, Chunk> map = new HashMap<>();
+        for (int i = 0, n = list.size(); i < n; i++) {
+            Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
+            if (!chunk.isPresent()) {
+                logger.debug("-- stored() - not all chunk present in the store");
+                return Optional.empty();
+            }
+            ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
+            map.put(chunkReference, chunk.get());
+        }
+        return Optional.of(map);
     }
 }

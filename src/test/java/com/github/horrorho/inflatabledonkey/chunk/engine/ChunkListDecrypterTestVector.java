@@ -40,6 +40,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 1",
                     false,
+                    "01b10494169a749368e98d8efdf2a50f7c",
                     "023092c9f9ab92a9841efca0fb431a0ce73d7be5722e1a21c2",
                     "f65aa507381b30f40df155f972fe450e",
                     "01a81db3319113dc2158167fa9f1eb8db45cd6593d",
@@ -70,6 +71,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 2",
                     false,
+                    "01cd9f32e68ef9814333f2a5c179d26ea4",
                     "0244c3a921e2f7583c518cba007e14c9903ec9c1bb1f3af74d",
                     "b630ea66fa8145c3190c57a829613556",
                     "81d67f1759a4b139d37587b0ff6a5105b6738dd285",
@@ -101,6 +103,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 3",
                     false,
+                    "014cf09532a20fca6e9a741d255ba13d58",
                     "02b84a72c64b6d9f664c6f1370f0a40714aba62382765a1b8f",
                     "d356c6f7d08e6d3394cc03b0660a0297",
                     "0109f7139bee724aba95729a13e6733efd3c2671ed",
@@ -153,6 +156,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 4",
                     false,
+                    "017ca00e1427bb6ba479f15e4a4bdbf8db",
                     "0278186cd110aa09e6735b0a28eba84b06a9969dbec4fdbc51",
                     "604810ae2ac5bf7d58a40b59fcee86fb",
                     "81d4665136ee5a0c139abf84885e3f8243eee149ac",
@@ -206,6 +210,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 5",
                     false,
+                    "01823455208ed4b8d912e3c2952d47d3aa",
                     "020e5dd712ebb16576bc5c7b04a765ec2057ab13122dced0de",
                     "672d3a229c5388e612ff1f219e8f7836",
                     "01ab763344d26327011932d8ab655466cff6cca022",
@@ -236,6 +241,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector 6",
                     false,
+                    "018f77c7cde1f4bb818e52f12fb0ea0b21",
                     "02030ce21f8c1a04f12eb1a2d125bfde374a1513a16772ddd8",
                     "8dfe48080d3432b7ee5ac0dc08a73542",
                     "81ab763344d26327011932d8ab655466cff6cca022",
@@ -267,6 +273,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector fail KEK",
                     true,
+                    "014cd92fff64da39b35e94a2bfaf3364df",
                     "029fb70825074b363b59cc7d2953bd9088c7a4c65819e7e0bc",
                     "00000000000000000000000000000000",
                     "0107c44326c081d785d2448f5861863103b7e3f00b",
@@ -297,6 +304,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector fail key",
                     true,
+                    "01ec4f898e542871b96cadaf5e4ba40470",
                     "02a9e8c32ee6f8bf8fcb4c419d672441b6595bb962307e7c70",
                     "85aa67ba738a9c411b3c3d89d5e8eab9",
                     "0107c44326c081d785d2448f5861863103b7e3f00b",
@@ -327,6 +335,7 @@ public class ChunkListDecrypterTestVector {
             = new ChunkListDecrypterTestVector(
                     "Vector fail checksum",
                     true,
+                    "014cd92fff64da39b35e94a2bfaf3364df",
                     "029fb70825074b363b59cc7d2953bd9088c7a4c65819e7e0bc",
                     "282b2d9abf3419eaf06a8e93a791bfdd",
                     "010000000000000000000000000000000000000000",
@@ -355,17 +364,19 @@ public class ChunkListDecrypterTestVector {
 
     private final String id;
     private final boolean bad;
-    private final byte[] chunkEncryptionKey;
+    private final byte[] keyTypeOne;
+    private final byte[] keyTypeTwo;
     private final byte[] kek;
     private final byte[] checksum;
     private final byte[] plaintext;
     private final byte[] ciphertext;
 
     public ChunkListDecrypterTestVector(
-            String id, boolean bad, String chunkEncryptionKey, String kek, String checksum, String plaintext, String ciphertext) {
+            String id, boolean bad, String keyTypeOne, String keyTypeTwo, String kek, String checksum, String plaintext, String ciphertext) {
         this.id = Objects.requireNonNull(id);
         this.bad = bad;
-        this.chunkEncryptionKey = Hex.decode(chunkEncryptionKey);
+        this.keyTypeOne = Hex.decode(keyTypeOne);
+        this.keyTypeTwo = Hex.decode(keyTypeTwo);
         this.kek = Hex.decode(kek);
         this.checksum = Hex.decode(checksum);
         this.plaintext = Base64.getDecoder().decode(plaintext);
@@ -380,8 +391,12 @@ public class ChunkListDecrypterTestVector {
         return bad;
     }
 
-    public byte[] chunkEncryptionKey() {
-        return Arrays.copyOf(chunkEncryptionKey, chunkEncryptionKey.length);
+    public byte[] keyTypeOne() {
+        return Arrays.copyOf(keyTypeOne, keyTypeOne.length);
+    }
+
+    public byte[] keyTypeTwo() {
+        return Arrays.copyOf(keyTypeTwo, keyTypeTwo.length);
     }
 
     public byte[] kek() {

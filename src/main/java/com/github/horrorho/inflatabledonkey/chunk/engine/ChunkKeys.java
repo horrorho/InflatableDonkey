@@ -32,33 +32,69 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Converts type 0x02 chunk encryption keys to type 0x01 chunk encryption keys.
  *
  * @author Ahseya
  */
 @Immutable
-public final class ChunkKeys {
+public final class ChunkKeys implements ChunkEncryptionKeyConverter<byte[]> {
 
-    // 447E254DA96F1A75C8FB:10007C60
+    public static ChunkKeys instance() {
+        return INSTANCE;
+    }
     private static final Logger logger = LoggerFactory.getLogger(ChunkKeys.class);
+
+    private static final ChunkKeys INSTANCE = new ChunkKeys();
 
     private ChunkKeys() {
     }
 
-    public static Optional<byte[]> unwrap(byte[] key, byte[] kek) {
-        logger.trace("-- unwrap() - key: 0x{} kek: 0x{}", Hex.toHexString(key), Hex.toHexString(kek));
-        if (key.length != 0x19) {
-            logger.warn("-- unwrap() - key too short: 0x{}", Hex.toHexString(key));
+    @Override
+    public Optional<byte[]> apply(byte[] chunkEncryptionKey, byte[] keyEncryptionKey) {
+        logger.trace("<< apply() - chunkEncryptionKey: 0x{} keyEncryptionKey: 0x{}",
+                Hex.toHexString(chunkEncryptionKey), Hex.toHexString(keyEncryptionKey));
+        Optional<byte[]> out = doApply(chunkEncryptionKey, keyEncryptionKey);
+        logger.trace(">> apply() - chunkEncryptionKey: 0x{}", out.map(Hex::toHexString).orElse("NULL"));
+        return out;
+    }
+
+    public Optional<byte[]> doApply(byte[] chunkEncryptionKey, byte[] keyEncryptionKey) {
+        if (chunkEncryptionKey.length == 0x00) {
+            logger.warn("-- doApply() - empty chunk key encryption key", Hex.toHexString(chunkEncryptionKey));
+            return Optional.empty();
         }
-
-        int keyType = key[0];
-        if (keyType != 2) {
-            logger.warn("-- unwrap() - unsupported key type: {}", keyType);
+        int keyType = chunkEncryptionKey[0];
+        switch (keyType) {
+            case 1:
+                return type1(chunkEncryptionKey);
+            case 2:
+                return type2(chunkEncryptionKey, keyEncryptionKey);
+            default:
+                logger.warn("-- doApply() - unsupported key type: {}", keyType);
+                return Optional.empty();
         }
+    }
 
-        byte[] wrappedKey = Arrays.copyOfRange(key, 0x01, 0x19);
-        Optional<byte[]> unwrappedKey = RFC3394Wrap.unwrapAES(kek, wrappedKey);
+    Optional<byte[]> type1(byte[] chunkEncryptionKey) {
+        if (chunkEncryptionKey.length != 0x11) {
+            logger.warn("-- type1() - bad chunk encryption key length: 0x:{}", Hex.toHexString(chunkEncryptionKey));
+            return Optional.empty();
+        }
+        return Optional.of(chunkEncryptionKey);
+    }
 
-        logger.trace("-- unwrap() - unwrapped key: 0x{}", unwrappedKey.map(Hex::toHexString).orElse("NULL"));
-        return unwrappedKey;
+    Optional<byte[]> type2(byte[] chunkEncryptionKey, byte[] keyEncryptionKey) {
+        if (chunkEncryptionKey.length != 0x19) {
+            logger.warn("-- type2() - bad chunk encryption key length: 0x:{}", Hex.toHexString(chunkEncryptionKey));
+            return Optional.empty();
+        }
+        byte[] wrappedKey = Arrays.copyOfRange(chunkEncryptionKey, 0x01, 0x19);
+        return RFC3394Wrap.unwrapAES(keyEncryptionKey, wrappedKey)
+                .map(u -> {
+                    byte[] k = new byte[0x11];
+                    k[0] = 0x01;
+                    System.arraycopy(u, 0, k, 1, u.length);
+                    return k;
+                });
     }
 }

@@ -23,27 +23,22 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.function.Function;
+import static java.util.stream.Collectors.toMap;
 import net.jcip.annotations.Immutable;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeyEncryptionKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Asset with it's ChunkServer.StorageHostChunkList/ ChunkServer.Reference data.
  *
  * @author Ahseya
  */
@@ -52,103 +47,57 @@ public final class Voodoo {
 
     private static final Logger logger = LoggerFactory.getLogger(Voodoo.class);
 
-    public static ChunkKeyEncryptionKeys
-            keyEncryptionKeys(Collection<Voodoo> voodoos) {
-        Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keks = voodoos.stream()
-                .map(Voodoo::keyEncryptionKeys)
-                .collect(HashMap::new, Map::putAll, Map::putAll);
-        return container -> Optional.ofNullable(keks.get(container))
-                .map(u -> index -> Optional.ofNullable(u.get(index)));
+    private final Map<Integer, StorageHostChunkList> indexToSHCL;
+    private final Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences;
+
+    public Voodoo(Map<Integer, StorageHostChunkList> indexToSHCL,
+            Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences) {
+        this.indexToSHCL = new HashMap<>(indexToSHCL);
+        this.fileSignatureToChunkReferences = new HashMap<>(fileSignatureToChunkReferences);
+        // TODO verify all chunks are references in indexToSHCL
     }
 
-    private final Asset asset;
-    private final LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferences;
-
-    public Voodoo(
-            Asset asset,
-            LinkedHashMap<ChunkServer.ChunkReference, ChunkServer.StorageHostChunkList> chunkReferences) {
-
-        this.asset = Objects.requireNonNull(asset);
-        this.chunkReferences = new LinkedHashMap<>(chunkReferences);
-        asset.fileSignature()
-                .map(ByteString::copyFrom)
-                .orElseThrow(() -> new IllegalArgumentException("asset missing file signature"));
-
-        logger.trace("** Voodoo() - asset: {}", asset);
-        logger.trace("** Voodoo() - chunkReferences: {}", chunkReferences.size());
+    public Map<Integer, StorageHostChunkList> indexToSHCL() {
+        return new HashMap<>(indexToSHCL);
     }
 
-    public Asset asset() {
-        return asset;
+    public Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences() {
+        return new HashMap<>(fileSignatureToChunkReferences);
     }
 
-    public Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keyEncryptionKeys() {
-        return asset.keyEncryptionKey()
-                .map(this::keyEncryptionKeys)
-                .orElseGet(Collections::emptyMap);
+    public Set<ByteString> fileSignatures() {
+        return new HashSet<>(fileSignatureToChunkReferences.keySet());
     }
 
-    Map<ChunkServer.StorageHostChunkList, Map<Integer, byte[]>> keyEncryptionKeys(byte[] kek) {
-        return chunkReferences
-                .entrySet()
+    public boolean contains(ByteString fileSignature) {
+        return fileSignatureToChunkReferences.containsKey(fileSignature);
+    }
+
+    public Optional<List<ChunkReference>> chunkReferences(ByteString fileSignature) {
+        return Optional.ofNullable(fileSignatureToChunkReferences.get(fileSignature));
+    }
+
+    public Optional<Map<Integer, StorageHostChunkList>> shcls(ByteString fileSignature) {
+        if (!contains(fileSignature)) {
+            return Optional.empty();
+        }
+        Map<Integer, StorageHostChunkList> shcls = fileSignatureToChunkReferences.get(fileSignature)
                 .stream()
-                .map(e -> new SimpleImmutableEntry<>(e.getValue(), (int) e.getKey().getChunkIndex()))
-                .collect(Collectors.groupingBy(e -> e.getKey(),
-                        Collectors.toMap(Map.Entry::getValue, e -> kek, (u, v) -> u)));
+                .map(u -> (int) u.getContainerIndex())
+                .distinct()
+                .collect(toMap(Function.identity(), indexToSHCL::get));
+        return Optional.of(shcls);
     }
 
-    public Map<Integer, ChunkServer.StorageHostChunkList> containers() {
-        return chunkReferences.entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        e -> (int) e.getKey().getContainerIndex(),
-                        Map.Entry::getValue,
-                        (t, u) -> {
-                            if (!t.equals(u)) {
-                                logger.warn("-- containers() - collision: {} {}", t, u);
-                            }
-                            return t;
-                        }));
-    }
-
-    public List<ChunkServer.ChunkReference> chunkReferences() {
-        return new ArrayList<>(chunkReferences.keySet());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 41 * hash + Objects.hashCode(this.asset);
-        hash = 41 * hash + Objects.hashCode(this.chunkReferences);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Voodoo other = (Voodoo) obj;
-        if (!Objects.equals(this.asset, other.asset)) {
-            return false;
-        }
-        if (!Objects.equals(this.chunkReferences, other.chunkReferences)) {
-            return false;
-        }
-        return true;
+    public Optional<StorageHostChunkList> shcl(int containerIndex) {
+        return Optional.ofNullable(indexToSHCL.get(containerIndex));
     }
 
     @Override
     public String toString() {
         return "Voodoo{"
-                + ", asset=" + asset
-                + ", chunkReferences=" + chunkReferences
+                + "indexToSHCL=" + indexToSHCL
+                + ", fileSignatureToChunkReferences=" + fileSignatureToChunkReferences
                 + '}';
     }
 }

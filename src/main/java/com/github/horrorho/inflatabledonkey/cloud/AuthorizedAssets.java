@@ -26,11 +26,13 @@ package com.github.horrorho.inflatabledonkey.cloud;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.google.protobuf.ByteString;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +69,15 @@ public final class AuthorizedAssets {
 
     public Map<ByteString, Asset> fileSignatureToAsset() {
         return new HashMap<>(fileSignatureToAsset);
+    }
+
+    public Map<ByteString, byte[]> fileSignatureToKeyEncryptionKey() {
+        return fileSignatureToAsset
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().keyEncryptionKey().isPresent())
+                .map(e -> new SimpleImmutableEntry<>(e.getKey(), e.getValue().keyEncryptionKey().get()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public ChunkServer.FileGroups fileGroups() {

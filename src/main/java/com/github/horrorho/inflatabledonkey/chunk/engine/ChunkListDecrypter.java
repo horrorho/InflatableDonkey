@@ -26,76 +26,83 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.output.NullOutputStream;
+import org.bouncycastle.crypto.engines.AESFastEngine;
+import org.bouncycastle.crypto.modes.CFBBlockCipher;
 import org.bouncycastle.crypto.io.CipherInputStream;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Decrypts storage host chunk list streams.
  *
  * @author Ahseya
  */
 @ThreadSafe
-public final class ChunkListDecrypter implements IOFunction<InputStream, Map<ChunkServer.ChunkReference, Chunk>> {
+public final class ChunkListDecrypter implements IOFunction<InputStream, Map<ChunkReference, Chunk>> {
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkListDecrypter.class);
 
-    private final BiFunction<byte[], InputStream, CipherInputStream> cipherInputStreams;
-    private final BiFunction<byte[], byte[], Optional<byte[]>> keyUnwrap;
     private final ChunkStore store;
-    private final ChunksContainer container;
+    private final StorageHostChunkList container;
+    private final int containerIndex;
 
-    public ChunkListDecrypter(
-            BiFunction< byte[], InputStream, CipherInputStream> cipherInputStreams,
-            BiFunction<byte[], byte[], Optional<byte[]>> keyUnwrap,
-            ChunkStore store,
-            ChunksContainer container) {
-
-        this.cipherInputStreams = Objects.requireNonNull(cipherInputStreams);
-        this.keyUnwrap = Objects.requireNonNull(keyUnwrap);
+    public ChunkListDecrypter(ChunkStore store, StorageHostChunkList container, int containerIndex) {
         this.store = Objects.requireNonNull(store);
         this.container = Objects.requireNonNull(container);
+        this.containerIndex = containerIndex;
     }
 
     @Override
-    public Map<ChunkServer.ChunkReference, Chunk> apply(InputStream inputStream) throws IOException {
-        logger.trace("<< apply() - InputStream: {}", inputStream);
-        Map<ChunkServer.ChunkReference, Chunk> chunks = new HashMap<>();
-        int i = 0;
-        for (Map.Entry<ChunkServer.ChunkReference, ChunkServer.ChunkInfo> entry : container.chunkInfos().entrySet()) {
-            chunk(inputStream, entry.getValue(), i++)
-                    .map(c -> chunks.put(entry.getKey(), c));
+    public Map<ChunkReference, Chunk> apply(InputStream inputStream) throws IOException {
+        try {
+            logger.trace("<< apply() - InputStream: {}", inputStream);
+
+            Map<ChunkReference, Chunk> chunks = new HashMap<>();
+            List<ChunkInfo> list = container.getChunkInfoList();
+            for (int i = 0, n = list.size(); i < n; i++) {
+                ChunkInfo chunkInfo = list.get(i);
+                ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
+                chunk(inputStream, chunkInfo).ifPresent(u -> chunks.put(chunkReference, u));
+            }
+
+            logger.trace(">> apply() - chunks: {}", chunks);
+            return chunks;
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
-        logger.trace(">> apply() - chunks: {}", chunks);
-        return chunks;
     }
 
-    Optional<Chunk> chunk(InputStream inputStream, ChunkServer.ChunkInfo chunkInfo, int index) throws IOException {
-        logger.trace("<< chunk() - chunkInfo: {} index: {}", chunkInfo, index);
+    Optional<Chunk> chunk(InputStream inputStream, ChunkInfo chunkInfo) throws IOException {
+        logger.trace("<< chunk() - chunkInfo: {} index: {}", chunkInfo);
 
         BoundedInputStream bis = new BoundedInputStream(inputStream, chunkInfo.getChunkLength());
         bis.setPropagateClose(false);
-        Optional<Chunk> chunk = chunk(bis, chunkInfo, index);
+        Optional<Chunk> chunk = chunk(bis, chunkInfo);
         consume(bis);
 
         logger.trace(">> chunk() - chunk: {}", chunk);
         return chunk;
     }
 
-    Optional<Chunk> chunk(BoundedInputStream bis, ChunkServer.ChunkInfo chunkInfo, int index) throws IOException {
+    Optional<Chunk> chunk(BoundedInputStream bis, ChunkInfo chunkInfo) throws IOException {
         byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
         Optional<Chunk> chunk = store.chunk(checksum);
         if (chunk.isPresent()) {
@@ -104,25 +111,19 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
         }
         logger.debug("-- chunk() - chunk not present in store: 0x:{}", Hex.toHexString(checksum));
         byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
-        return decrypt(bis, chunkEncryptionKey, checksum, index);
+        return decrypt(bis, chunkEncryptionKey, checksum);
     }
 
-    Optional<Chunk>
-            decrypt(BoundedInputStream bis, byte[] chunkEncryptionKey, byte[] checksum, int index) throws IOException {
-        Optional<byte[]> key = unwrapKey(chunkEncryptionKey, index);
-        if (key.isPresent()) {
-            byte[] k = key.get();
-            logger.debug("-- decrypt() - key: 0x{} chunk: 0x{}", Hex.toHexString(k), Hex.toHexString(checksum));
-            store(cipherInputStreams.apply(k, bis), checksum);
+    Optional<Chunk> decrypt(BoundedInputStream bis, byte[] chunkEncryptionKey, byte[] checksum) throws IOException {
+        if (chunkEncryptionKey.length != 0x11 || chunkEncryptionKey[0] != 0x01) {
+            logger.warn("-- decrypt() - unsupported chunk encryption key: 0x{}", Hex.toHexString(chunkEncryptionKey));
         } else {
-            logger.warn("-- decrypt() - key unwrap failed chunk: 0x{}", Hex.toHexString(checksum));
+            byte[] key = Arrays.copyOfRange(chunkEncryptionKey, 1, chunkEncryptionKey.length);
+            CFBBlockCipher cipher = new CFBBlockCipher(new AESFastEngine(), 128);
+            cipher.init(false, new KeyParameter(key));
+            store(new CipherInputStream(bis, cipher), checksum);
         }
         return store.chunk(checksum);
-    }
-
-    Optional<byte[]> unwrapKey(byte[] chunkEncryptionKey, int index) {
-        return container.keyEncryptionKey(index)
-                .flatMap(kek -> keyUnwrap.apply(chunkEncryptionKey, kek));
     }
 
     void store(CipherInputStream is, byte[] checksum) throws IOException {

@@ -86,6 +86,14 @@ public final class DiskChunkStore implements ChunkStore {
     }
 
     @Override
+    public boolean contains(byte[] checksum) {
+        synchronized (lock) {
+            Path file = path(checksum);
+            return Files.exists(file);
+        }
+    }
+
+    @Override
     public Optional<Chunk> chunk(byte[] checksum) {
         synchronized (lock) {
             Path file = path(checksum);
