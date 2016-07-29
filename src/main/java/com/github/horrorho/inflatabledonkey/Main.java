@@ -47,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -177,11 +178,13 @@ public class Main {
         }
 
         // Filter snapshots.
-        Map<Device, List<Snapshot>> filtered = Property.FILTER_DEVICE.asList()
-                .<UnaryOperator<Map<Device, List<Snapshot>>>>flatMap(
-                        u -> Property.FILTER_SNAPSHOT.asList(Integer::parseInt).map(v -> new ArgsSelector(u, v)))
-                .orElseGet(UserSelector::instance)
-                .apply(deviceSnapshots);
+        Optional<List<String>> filterDevices = Property.FILTER_DEVICE.asList();
+        Optional<List<Integer>> filterSnapshots = Property.FILTER_SNAPSHOT.asList(Integer::parseInt);
+        UnaryOperator<Map<Device, List<Snapshot>>> filter
+                = (!filterDevices.isPresent() && !filterSnapshots.isPresent())
+                        ? UserSelector.instance()
+                        : new ArgsSelector(filterDevices.orElseGet(Collections::emptyList), filterSnapshots.orElseGet(Collections::emptyList));
+        Map<Device, List<Snapshot>> filtered = filter.apply(deviceSnapshots);
 
         filtered.forEach((device, snapshots) -> {
             logger.info("-- main() - selected device: {}", device.info());
@@ -212,7 +215,7 @@ public class Main {
 
         // Print domain list option.
         if (Property.PRINT_DOMAIN_LIST.asBoolean().orElse(false)) {
-            backup.printDomainList(httpClient, deviceSnapshots);
+            backup.printDomainList(httpClient, filtered);
             return;
         }
 

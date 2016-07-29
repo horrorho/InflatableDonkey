@@ -55,7 +55,7 @@ public final class IndexFilter<T> implements UnaryOperator<List<T>> {
 
     List<T> filter(List<T> list) {
         return selection.stream()
-                .map(i -> i < 0 ? list.size() - i : i)
+                .map(i -> i < 0 ? list.size() + i : i)
                 .filter(i -> i >= 0 && i < list.size())
                 .map(list::get)
                 .collect(Collectors.toList());

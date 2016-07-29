@@ -76,8 +76,10 @@ public final class ArgsSelector implements UnaryOperator<Map<Device, List<Snapsh
     }
 
     boolean device(Map.Entry<Device, ? extends Collection<Snapshot>> entry) {
-        return entry.getValue().isEmpty()
-                ? false
-                : uuids.contains(entry.getKey().deviceID().hash().toLowerCase(Locale.US));
+        if (entry.getValue().isEmpty()) {
+            return false;
+        }
+        String hash = entry.getKey().deviceID().hash().toLowerCase(Locale.US);
+        return uuids.stream().anyMatch(hash::contains);
     }
 }
