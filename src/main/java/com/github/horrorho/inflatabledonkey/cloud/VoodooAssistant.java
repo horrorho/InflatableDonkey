@@ -24,7 +24,9 @@
 package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyConverter;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -58,7 +60,7 @@ public final class VoodooAssistant {
             Voodoo voodoo,
             ChunkEncryptionKeyConverter<byte[]> chunkEncryptionKeyConverter,
             Map<ByteString, byte[]> fileSignatureToKeyEncryptionKey) {
-        Map<Integer, ChunkServer.StorageHostChunkList> indexToSHCL = voodoo.indexToSHCL();
+        Map<Integer, StorageHostChunkList> indexToSHCL = voodoo.indexToSHCL();
         fileSignatureToKeyEncryptionKey
                 .entrySet()
                 .stream()
@@ -71,14 +73,14 @@ public final class VoodooAssistant {
         return new Voodoo(indexToSHCL, voodoo.fileSignatureToChunkReferences());
     }
 
-    static ChunkServer.StorageHostChunkList
-            unwrapKeys(ChunkServer.StorageHostChunkList shcl, KeyConverter unwrap, Collection<Integer> chunks) {
+    static StorageHostChunkList
+            unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Collection<Integer> chunks) {
         return unwrapKeys(shcl, unwrap, new HashSet<>(chunks));
     }
 
-    static ChunkServer.StorageHostChunkList
-            unwrapKeys(ChunkServer.StorageHostChunkList shcl, KeyConverter unwrap, Set<Integer> chunks) {
-        ChunkServer.StorageHostChunkList.Builder builder = shcl.toBuilder();
+    static StorageHostChunkList
+            unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Set<Integer> chunks) {
+        StorageHostChunkList.Builder builder = shcl.toBuilder();
         if (logger.isDebugEnabled()) {
             List<Integer> bad = chunks.stream()
                     .filter(i -> i >= builder.getChunkInfoCount())
@@ -93,7 +95,7 @@ public final class VoodooAssistant {
         return builder.build();
     }
 
-    static ChunkServer.ChunkInfo unwrapKey(KeyConverter unwrap, ChunkServer.ChunkInfo chunkInfo) {
+    static ChunkInfo unwrapKey(KeyConverter unwrap, ChunkInfo chunkInfo) {
         return unwrap.apply(chunkInfo.getChunkEncryptionKey().toByteArray())
                 .map(ByteString::copyFrom)
                 .map(u -> chunkInfo.toBuilder().setChunkEncryptionKey(u).build())
@@ -104,8 +106,8 @@ public final class VoodooAssistant {
     }
 
     static Map<Integer, List<Integer>>
-            containerChunkList(List<ChunkServer.ChunkReference> chunkReferences,
-                    Map<Integer, ChunkServer.StorageHostChunkList> indexToSHCL) {
+            containerChunkList(List<ChunkReference> chunkReferences,
+                    Map<Integer, StorageHostChunkList> indexToSHCL) {
         return chunkReferences
                 .stream()
                 .filter(cr -> {

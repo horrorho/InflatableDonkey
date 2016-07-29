@@ -107,8 +107,7 @@ public final class AssetDownloader {
                 .forEach(u -> process(httpClient, voodoo, u, v -> consumer.accept(u, v)));
     }
 
-    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature,
-            Consumer< List<Chunk>> consumer) {
+    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature, Consumer< List<Chunk>> consumer) {
         voodoo.shcls(fileSignature)
                 .ifPresent(u -> voodoo
                         .chunkReferences(fileSignature)

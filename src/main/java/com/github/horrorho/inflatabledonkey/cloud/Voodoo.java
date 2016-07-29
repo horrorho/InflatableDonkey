@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
@@ -56,15 +57,20 @@ public final class Voodoo {
         this.indexToSHCL = new HashMap<>(indexToSHCL);
         this.fileSignatureToChunkReferences = new HashMap<>(fileSignatureToChunkReferences);
 
-        fileSignatureToChunkReferences.entrySet()
+        // Sanity check.
+        fileSignatureToChunkReferences.forEach((k, v) -> v
                 .stream()
-                .filter(e -> !e
-                        .getValue()
-                        .stream()
-                        .map(u -> (int) u.getContainerIndex())
-                        .allMatch(indexToSHCL::containsKey))
-                .map(Map.Entry::getKey)
-                .forEach(u -> logger.warn("** Voodoo() - missing container/s for file signature: {}", u));
+                .forEach(u -> {
+                    int containerIndex = (int) u.getContainerIndex();
+                    if (!indexToSHCL.containsKey((int) u.getContainerIndex())) {
+                        logger.warn("** Voodoo() - bad container index: {} file signature: {}", containerIndex, k);
+                    }
+                    List<ChunkServer.ChunkInfo> chunkInfoList = indexToSHCL.get(containerIndex).getChunkInfoList();
+                    int chunkIndex = (int) u.getChunkIndex();
+                    if (chunkIndex >= chunkInfoList.size()) {
+                        logger.warn("** Voodoo() - bad chunk index: {} file signature: {}", chunkIndex, k);
+                    }
+                }));
     }
 
     public Map<Integer, StorageHostChunkList> indexToSHCL() {

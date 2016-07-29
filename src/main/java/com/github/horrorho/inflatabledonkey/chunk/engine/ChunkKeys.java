@@ -39,6 +39,14 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class ChunkKeys implements ChunkEncryptionKeyConverter<byte[]> {
 
+    public static Optional<Integer> keyType(byte[] chunkEncryptionKey) {
+        if (chunkEncryptionKey.length == 0x00) {
+            logger.warn("-- keyType() - empty chunk key encryption key", Hex.toHexString(chunkEncryptionKey));
+            return Optional.empty();
+        }
+        return Optional.of((int) chunkEncryptionKey[0]);
+    }
+
     public static ChunkKeys instance() {
         return INSTANCE;
     }

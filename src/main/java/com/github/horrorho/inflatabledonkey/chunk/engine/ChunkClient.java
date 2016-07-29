@@ -73,15 +73,25 @@ public final class ChunkClient {
     public Optional<Map<ChunkReference, Chunk>>
             apply(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
             throws IOException {
+                
         Optional<Map<ChunkReference, Chunk>> stored = stored(store, container, containerIndex);
         if (stored.isPresent()) {
             logger.debug("-- apply() - not downloading, all chunks are available in the store");
             return stored;
         }
+        
+        return fetch(client, store, container, containerIndex);
+    }
 
+    public Optional<Map<ChunkReference, Chunk>>
+            fetch(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
+            throws IOException {
+                
         ChunkListDecrypter decrypter = new ChunkListDecrypter(store, container, containerIndex);
+        
         InputStreamResponseHandler<Map<ChunkReference, Chunk>> handler
                 = new InputStreamResponseHandler<>(decrypter);
+        
         HttpUriRequest request = requestFactory.apply(container.getHostInfo());
         Map<ChunkReference, Chunk> chunks = client.execute(request, handler);
 
@@ -91,6 +101,7 @@ public final class ChunkClient {
     Optional<Map<ChunkReference, Chunk>>
             stored(ChunkStore store, StorageHostChunkList container, int containerIndex) {
         List<ChunkInfo> list = container.getChunkInfoList();
+        
         Map<ChunkReference, Chunk> map = new HashMap<>();
         for (int i = 0, n = list.size(); i < n; i++) {
             Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
