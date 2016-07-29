@@ -28,11 +28,13 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Objects;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  *
  * @author Ahseya
  */
+@NotThreadSafe
 public class IOSupplierSequenceStream extends InputStream {
 
     private final Iterator<IOSupplier<InputStream>> it;

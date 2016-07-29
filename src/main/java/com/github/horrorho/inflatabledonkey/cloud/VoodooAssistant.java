@@ -83,7 +83,7 @@ public final class VoodooAssistant {
         if (logger.isDebugEnabled()) {
             List<Integer> bad = chunks.stream()
                     .filter(i -> i >= builder.getChunkInfoCount())
-                    .collect(Collectors.toList());
+                    .collect(toList());
             if (!bad.isEmpty()) {
                 logger.warn("-- unwrapKeys() - bad indices: {} shcl: {}", bad, shcl);
             }

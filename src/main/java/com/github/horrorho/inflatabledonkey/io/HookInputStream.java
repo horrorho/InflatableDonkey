@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  * @param <T> wrapped type
  */
+@NotThreadSafe
 public class HookInputStream<T extends InputStream> extends InputStream {
 
     private static final Logger logger = LoggerFactory.getLogger(HookInputStream.class);
