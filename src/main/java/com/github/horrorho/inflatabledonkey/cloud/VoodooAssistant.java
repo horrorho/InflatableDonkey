@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
@@ -68,7 +67,7 @@ public final class VoodooAssistant {
                         e -> new AbstractMap.SimpleImmutableEntry<>(
                                 e.getKey(), cek -> chunkEncryptionKeyConverter.apply(cek, e.getValue())))
                 .forEach(u -> containerChunkList(voodoo.chunkReferences(u.getKey()).get(), indexToSHCL)
-                        .forEach((i, c) -> indexToSHCL.compute(i, (x, shcl) -> unwrapKeys(shcl, u.getValue(), c))));
+                        .forEach((i, j) -> indexToSHCL.compute(i, (x, shcl) -> unwrapKeys(shcl, u.getValue(), j))));
         return new Voodoo(indexToSHCL, voodoo.fileSignatureToChunkReferences());
     }
 
