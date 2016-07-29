@@ -98,6 +98,14 @@ public final class AuthorizeAssets {
         if (contentBaseUrls.size() != 1) {
             logger.warn("-- authorize() - unexpected contentBaseUrl count: {}", contentBaseUrls);
         }
+        if (ckAssets.isEmpty()) {
+            logger.warn("-- authorize() - no ckAssets");
+            return AuthorizedAssets.empty();
+        }
+        if (dsPrsIDs.isEmpty()) {
+            logger.warn("-- authorize() - no dsPrsID");
+            return AuthorizedAssets.empty();
+        }
 
         String dsPrsID = ckAssets.get(0).getDsPrsID();
         String contentBaseUrl = ckAssets.get(0).getContentBaseURL();
@@ -109,6 +117,7 @@ public final class AuthorizeAssets {
     }
 
     Map<ByteString, Asset> fileSignatureToAssets(Collection<Asset> assets) {
+        // Filter out empty files/ files that cannot be re-assembled.
         return assets.stream()
                 .filter(u -> u.fileSignature().isPresent())
                 .filter(u -> u.size().map(s -> s > 0).orElse(false))
