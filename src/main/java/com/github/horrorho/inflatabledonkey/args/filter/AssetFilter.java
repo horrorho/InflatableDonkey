@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.args.filter;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.time.Instant;
@@ -84,8 +84,8 @@ public final class AssetFilter implements Predicate<Asset> {
 
     boolean filterAttributeSize(Asset asset) {
         return asset.attributeSize()
-                .filter(t -> sizeMax.map(u -> t < u * 1024).orElse(true))
-                .map(t -> sizeMin.map(u -> t > u * 1024).orElse(true))
+                .filter(u -> sizeMax.map(v -> u < v * 1024).orElse(true))
+                .map(u -> sizeMin.map(v -> u > v * 1024).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterAttributeSize() - no attributeSize: {}", asset);
                     return true;
@@ -94,8 +94,8 @@ public final class AssetFilter implements Predicate<Asset> {
 
     boolean filterBirth(Asset asset) {
         return asset.birth().map(Instant::getEpochSecond)
-                .filter(t -> birthMax.map(u -> t < u).orElse(true))
-                .map(t -> birthMin.map(u -> t > u).orElse(true))
+                .filter(u -> birthMax.map(v -> u < v).orElse(true))
+                .map(u -> birthMin.map(v -> u > v).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterBirth() - no filterBirth: {}", asset);
                     return true;
@@ -104,9 +104,9 @@ public final class AssetFilter implements Predicate<Asset> {
 
     boolean filterRelativePath(Asset asset) {
         return asset.relativePath()
-                .map(t -> t.toLowerCase(Locale.US))
-                .filter(t -> relativePath.map(us -> us.stream().anyMatch(u -> t.contains(u))).orElse(true))
-                .map(t -> extension.map(us -> us.stream().anyMatch(u -> t.endsWith(u))).orElse(true))
+                .map(u -> u.toLowerCase(Locale.US))
+                .filter(u -> relativePath.map(vs -> vs.stream().anyMatch(v -> u.contains(v))).orElse(true))
+                .map(u -> extension.map(vs -> vs.stream().anyMatch(v -> u.endsWith(v))).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterRelativePath() - no relativePath: {}", asset);
                     return false;
@@ -116,8 +116,8 @@ public final class AssetFilter implements Predicate<Asset> {
     boolean filterStatusChanged(Asset asset) {
         return asset.statusChanged()
                 .map(Instant::getEpochSecond)
-                .filter(t -> statusChangedMax.map(u -> t < u).orElse(true))
-                .map(t -> statusChangedMin.map(u -> t > u).orElse(true))
+                .filter(u -> statusChangedMax.map(v -> u < v).orElse(true))
+                .map(u -> statusChangedMin.map(v -> u > v).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterStatusChanged() - no statusChanged: {}", asset);
                     return true;

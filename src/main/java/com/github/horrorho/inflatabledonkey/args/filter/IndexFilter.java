@@ -21,61 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.args.filter;
 
-import com.github.horrorho.inflatabledonkey.data.backup.Device;
-import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 
 /**
+ * Index filter. Filters List elements with reference to their indices. Negative selection values indicate positions
+ * relative to the last element, with the last element being -1. If no selections are specified, the filter is disabled
+ * and all elements pass through un-filtered.
  *
  * @author Ahseya
  */
 @Immutable
-public final class SnapshotSelector implements UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> {
+public final class IndexFilter<T> implements UnaryOperator<List<T>> {
 
-    private final Collection<Integer> selection;
+    private final List<Integer> selection;
 
-    public SnapshotSelector(Collection<Integer> selection) {
+    public IndexFilter(Collection<Integer> selection) {
         this.selection = new ArrayList<>(selection);
     }
 
     @Override
-    public Map<Device, ? extends Collection<Snapshot>>
-            apply(Map<Device, ? extends Collection<Snapshot>> deviceSnapshots) {
+    public List<T> apply(List<T> list) {
         return selection.isEmpty()
-                ? deviceSnapshots
-                : doApply(deviceSnapshots);
+                ? list
+                : filter(list);
     }
 
-    public Map<Device, List<Snapshot>>
-            doApply(Map<Device, ? extends Collection<Snapshot>> deviceSnapshots) {
-        return deviceSnapshots.entrySet()
-                .stream()
-                .map(e -> new SimpleImmutableEntry<>(e.getKey(), filter(e.getValue())))
-                .filter(e -> !e.getValue().isEmpty())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new));
-    }
-
-    List<Snapshot> filter(Collection<Snapshot> snapshots) {
-        return filter(new ArrayList<>(snapshots));
-    }
-
-    List<Snapshot> filter(List<Snapshot> snapshots) {
+    List<T> filter(List<T> list) {
         return selection.stream()
-                .map(i -> i < 0
-                        ? snapshots.size() - i
-                        : i)
-                .filter(i -> i >= 0 && i < snapshots.size())
-                .map(snapshots::get)
+                .map(i -> i < 0 ? list.size() - i : i)
+                .filter(i -> i >= 0 && i < list.size())
+                .map(list::get)
                 .collect(Collectors.toList());
     }
 }

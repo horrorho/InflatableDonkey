@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.util;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +49,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @param <T> item type
  */
 @NotThreadSafe
-public class Selector<T> implements Supplier<Optional<Set<T>>> {
+public class Selector<T> implements Supplier<Optional<List<T>>> {
 
     public static <T> Selector.Builder<T> builder(Map<String, T> options) {
         return new Builder(options);
@@ -90,7 +91,7 @@ public class Selector<T> implements Supplier<Optional<Set<T>>> {
     }
 
     @Override
-    public Optional<Set<T>> get() {
+    public Optional<List<T>> get() {
         Scanner console = new Scanner(in, StandardCharsets.UTF_8.name());
         while (true) {
             out.print(prompt);
@@ -100,17 +101,17 @@ public class Selector<T> implements Supplier<Optional<Set<T>>> {
             }
 
             if (line.isEmpty()) {
-                return Optional.of(Collections.emptySet());
+                return Optional.of(Collections.emptyList());
             }
 
-            Optional<Set<T>> mapped = map(line);
+            Optional<List<T>> mapped = map(line);
             if (mapped.isPresent()) {
                 return Optional.of(mapped.get());
             }
         }
     }
 
-    Optional<Set<T>> map(String line) {
+    Optional<List<T>> map(String line) {
         if (!isCaseSensitive) {
             line = line.toLowerCase(Locale.US);
         }
@@ -118,7 +119,7 @@ public class Selector<T> implements Supplier<Optional<Set<T>>> {
         Set<T> mapped = validate(tokens)
                 ? tokens.stream().map(options::get).collect(Collectors.toCollection(LinkedHashSet::new))
                 : null;
-        return Optional.ofNullable(mapped);
+        return Optional.ofNullable(new ArrayList<>(mapped));
     }
 
     boolean validate(Collection<String> tokens) {

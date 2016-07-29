@@ -23,8 +23,12 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
+import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
@@ -48,6 +52,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -172,8 +177,10 @@ public class Main {
         }
 
         // Filter snapshots.
-        Map<Device, ? extends Collection<Snapshot>> filtered
-                = XFilter.apply(Property.FILTER_DEVICE.asList(), Property.FILTER_SNAPSHOT.asList(Integer::parseInt))
+        Map<Device, List<Snapshot>> filtered = Property.FILTER_DEVICE.asList()
+                .<UnaryOperator<Map<Device, List<Snapshot>>>>flatMap(
+                        u -> Property.FILTER_SNAPSHOT.asList(Integer::parseInt).map(v -> new ArgsSelector(u, v)))
+                .orElseGet(UserSelector::instance)
                 .apply(deviceSnapshots);
 
         filtered.forEach((device, snapshots) -> {
