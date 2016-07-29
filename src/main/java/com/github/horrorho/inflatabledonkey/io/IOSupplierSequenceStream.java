@@ -40,15 +40,16 @@ public class IOSupplierSequenceStream extends InputStream {
     private final Iterator<IOSupplier<InputStream>> it;
     private InputStream is = null;
 
-    public IOSupplierSequenceStream(Iterator<IOSupplier<InputStream>> streams) {
+    public IOSupplierSequenceStream(Iterator<IOSupplier<InputStream>> streams) throws IOException {
         this.it = Objects.requireNonNull(streams);
+        next();
     }
 
-    public IOSupplierSequenceStream(Collection<IOSupplier<InputStream>> streams) {
+    public IOSupplierSequenceStream(Collection<IOSupplier<InputStream>> streams) throws IOException {
         this(streams.iterator());
     }
 
-    public void next() throws IOException {
+    final void next() throws IOException {
         if (is != null) {
             is.close();
         }
