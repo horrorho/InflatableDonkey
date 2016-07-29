@@ -73,7 +73,9 @@ public final class AssetDownloader {
     public void
             accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
         // Map consumer to accepting file signatures.
-        BiConsumer<ByteString, List<Chunk>> c = consumer(consumer, authorizedAssets.fileSignatureToAsset());
+        BiConsumer<ByteString, List<Chunk>> c
+                = (u, v) -> consumer.accept(authorizedAssets.asset(u)
+                        .orElseThrow(() -> new IllegalStateException("no asset for file signature")), v);
 
         // Unwrap and replace type 2 chunk encryption keys with type 1 keys.
         Map<ByteString, byte[]> fsToKek = authorizedAssets.fileSignatureToKeyEncryptionKey();
@@ -84,17 +86,6 @@ public final class AssetDownloader {
 
         // Remaining process is now similar to iOS 8.
         processGroups(httpClient, voodooList, c);
-    }
-
-    BiConsumer<ByteString, List<Chunk>>
-            consumer(BiConsumer<Asset, List<Chunk>> consumer, Map<ByteString, Asset> fileSignatureToAsset) {
-        return (u, v) -> {
-            if (fileSignatureToAsset.containsKey(u)) {
-                consumer.accept(fileSignatureToAsset.get(u), v);
-            } else {
-                logger.warn("-- consumer() - no asset for file signature: {}", u);
-            }
-        };
     }
 
     void processGroups(HttpClient httpClient, Collection<Voodoo> voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
