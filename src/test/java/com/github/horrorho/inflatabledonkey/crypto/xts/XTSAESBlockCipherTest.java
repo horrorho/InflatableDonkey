@@ -54,7 +54,7 @@ public class XTSAESBlockCipherTest {
         for (int i = 0; i < ptx.length; i += cipher.getBlockSize()) {
             cipher.processBlock(ptx, i, out, i);
         }
-        assertArrayEquals(out, ctx);
+        assertArrayEquals(ctx, out);
     }
 
     @Test
@@ -67,6 +67,6 @@ public class XTSAESBlockCipherTest {
         for (int i = 0; i < ctx.length; i += cipher.getBlockSize()) {
             cipher.processBlock(ctx, i, out, i);
         }
-        assertArrayEquals(out, ptx);
+        assertArrayEquals(ptx, out);
     }
 }

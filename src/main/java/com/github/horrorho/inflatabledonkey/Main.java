@@ -25,7 +25,8 @@ package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
-import com.github.horrorho.inflatabledonkey.chunk.engine.standard.StandardChunkEngine;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
@@ -139,11 +140,11 @@ public class Main {
         BackupAssistant assistant = BackupAssistant.create(httpClient, account);
 
         // Output folders.
-        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups"))
+        Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups")).normalize()
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
-        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property
-        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property
+        Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property normalize()
+        Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
         System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
@@ -153,9 +154,9 @@ public class Main {
 
         // Download tools.
         AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-        DiskChunkStore chunkStore = new DiskChunkStore(chunkOutputFolder, tempOutputFolder);
-        StandardChunkEngine chunkEngine = new StandardChunkEngine(chunkStore);
-        AssetDownloader assetDownloader = new AssetDownloader(chunkEngine);
+
+        DiskChunkStore chunkStore = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, chunkOutputFolder, tempOutputFolder);
+        AssetDownloader assetDownloader = new AssetDownloader(chunkStore);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
         DownloadAssistant downloadAssistant

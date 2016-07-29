@@ -23,13 +23,13 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Chunk. Must implement hashcode/ equals methods.
+ * Chunk. Must implement hashcode/ equals methods. Not immutable, the underlying data may be deleted from the store.
  *
  * @author Ahseya
  */
@@ -38,9 +38,5 @@ public interface Chunk {
 
     byte[] checksum();
 
-    InputStream inputStream() throws UncheckedIOException;
-
-    @Deprecated
-    long copyTo(OutputStream output) throws UncheckedIOException;
+    Optional<InputStream> inputStream() throws IOException;
 }
-// TODO Consider closeable, at present undestructable.

@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -76,49 +78,59 @@ public final class AuthorizeAssets {
     }
 
     public AuthorizedAssets authorize(HttpClient httpClient, Collection<Asset> assets) throws UncheckedIOException {
-        Map<ByteString, List<Asset>> downloadables = downloadables(assets);
-
-        // Duplicate file signatures indicate duplicate files.
-        // Primary asset is downloaded, others are copied.
-        // Voodoo will is undefined for duplicate file signatures.
-        List<Asset> primaryAssets = primaryAsset(downloadables);
-
-        List<CloudKit.Asset> ckAssets = ckAssets(primaryAssets);
-
+        Map<ByteString, Asset> fileSignatureToAssets = fileSignatureToAssets(assets);
+        List<CloudKit.Asset> ckAssets = ckAssets(fileSignatureToAssets.values());
         if (ckAssets.isEmpty()) {
             return AuthorizedAssets.empty();
         }
 
-        // Should be the same for all assets. Assumption not tested.
+        // Only expecting one dsPrsID/ contentBaseUrl.
+        Set<String> dsPrsIDs = ckAssets.stream()
+                .collect(Collectors.groupingBy(u -> u.getDsPrsID()))
+                .keySet();
+        if (dsPrsIDs.size() != 1) {
+            logger.warn("-- authorize() - unexpected dsPrsID count: {}", dsPrsIDs);
+        }
+
+        Set<String> contentBaseUrls = ckAssets.stream()
+                .collect(Collectors.groupingBy(u -> u.getContentBaseURL()))
+                .keySet();
+        if (contentBaseUrls.size() != 1) {
+            logger.warn("-- authorize() - unexpected contentBaseUrl count: {}", contentBaseUrls);
+        }
+        if (ckAssets.isEmpty()) {
+            logger.warn("-- authorize() - no ckAssets");
+            return AuthorizedAssets.empty();
+        }
+        if (dsPrsIDs.isEmpty()) {
+            logger.warn("-- authorize() - no dsPrsID");
+            return AuthorizedAssets.empty();
+        }
+
         String dsPrsID = ckAssets.get(0).getDsPrsID();
         String contentBaseUrl = ckAssets.get(0).getContentBaseURL();
-
         CloudKit.FileTokens fileTokens = FileTokensFactory.from(ckAssets);
 
         ChunkServer.FileGroups fileGroups = authorizeGet(httpClient, dsPrsID, contentBaseUrl, fileTokens);
-        return new AuthorizedAssets(fileGroups, downloadables);
+
+        return new AuthorizedAssets(fileGroups, fileSignatureToAssets);
     }
 
-    ChunkServer.FileGroups authorizeGet(
-            HttpClient httpClient,
-            String dsPrsID,
-            String contentBaseUrl,
-            CloudKit.FileTokens fileTokens) throws UncheckedIOException {
-        try {
-            // TODO tidy
-            Optional<HttpUriRequest> fileGroups = AuthorizeGetRequestFactory.instance()
-                    .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens);
-
-            if (!fileGroups.isPresent()) {
-                logger.warn("-- authorizeGet() - no file groups");
-                return ChunkServer.FileGroups.newBuilder().build();
-            }
-
-            return httpClient.execute(fileGroups.get(), RESPONSE_HANDLER);
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
+    Map<ByteString, Asset> fileSignatureToAssets(Collection<Asset> assets) {
+        // Filter out empty files/ files that cannot be re-assembled.
+        return assets.stream()
+                .filter(u -> u.fileSignature().isPresent())
+                .filter(u -> u.size().map(s -> s > 0).orElse(false))
+                .filter(u -> u.keyEncryptionKey().isPresent())
+                .filter(u -> u.domain().isPresent())
+                .filter(u -> u.relativePath().isPresent())
+                .collect(Collectors.toMap(
+                        u -> ByteString.copyFrom(u.fileSignature().get()),
+                        Function.identity(),
+                        (u, v) -> {
+                            logger.warn("-- fileSignatureToAssets() - file signature collision: {} {}", u, v);
+                            return u;
+                        }));
     }
 
     List<CloudKit.Asset> ckAssets(Collection<Asset> assets) {
@@ -129,49 +141,23 @@ public final class AuthorizeAssets {
                 .collect(Collectors.toList());
     }
 
-    List<Asset> primaryAsset(Map<ByteString, List<Asset>> fileSignaturetoAssetList) {
-        return fileSignaturetoAssetList.entrySet()
-                .stream().filter(e -> {
-                    if (e.getValue().isEmpty()) {
-                        logger.error("-- primaryAsset() - empty asset list: {}", e);
-                        return false;
-                    }
-                    return true;
-                })
-                .map(e -> e.getValue()
-                        .get(0))
-                .collect(Collectors.toList());
+    ChunkServer.FileGroups
+            authorizeGet(HttpClient httpClient, String dsPrsID, String contentBaseUrl, CloudKit.FileTokens fileTokens)
+            throws UncheckedIOException {
+        return AuthorizeGetRequestFactory.instance()
+                .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens)
+                .map(u -> execute(httpClient, u, RESPONSE_HANDLER))
+                .orElseGet(() -> {
+                    logger.warn("-- authorizeGet() - no file groups");
+                    return ChunkServer.FileGroups.newBuilder().build();
+                });
     }
 
-    Map<ByteString, List<Asset>> downloadables(Collection<Asset> assets) {
-        return assets.stream()
-                .filter(this::isDownloadable)
-                .collect(Collectors.groupingBy(a -> ByteString.copyFrom(a.fileSignature().get())));
-    }
-
-    boolean isDownloadable(Asset asset) {
-        // TODO verify then simplify/ remove logging statements
-        if (asset.size().map(u -> u <= 0).orElse(true)) {
-            logger.debug("-- isDownloadable() - empty asset: {}", asset);
-            return false;
+    <T> T execute(HttpClient httpClient, HttpUriRequest request, ResponseHandler<T> handler) {
+        try {
+            return httpClient.execute(request, handler);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
-        if (!asset.fileSignature().isPresent()) {
-            logger.debug("-- isDownloadable() - no file signature: {}", asset);
-            return false;
-        }
-        if (!asset.keyEncryptionKey().isPresent()) {
-            logger.debug("-- isDownloadable() - no key decryption key: {}", asset);
-            return false;
-        }
-        if (!asset.domain().isPresent()) {
-            logger.debug("-- isDownloadable() - domain: {}", asset);
-            return false;
-        }
-        if (!asset.relativePath().isPresent()) {
-            logger.debug("-- isDownloadable() - no relative path: {}", asset);
-            return false;
-        }
-        logger.debug("-- isDownloadable() - true: {}", asset);
-        return true;
     }
 }

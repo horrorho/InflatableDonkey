@@ -21,28 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.io;
 
-import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * ChunkBuilder.
+ * OutputStream wrapper with a callback hook on successful close.
  *
  * @author Ahseya
+ * @param <T> wrapped type
  */
 @NotThreadSafe
-public class HookOutputStream extends OutputStream {
+public class HookOutputStream<T extends OutputStream> extends OutputStream {
 
-    private final OutputStream outputStream;
-    private final IOConsumer<Boolean> hook;
+    private static final Logger logger = LoggerFactory.getLogger(HookOutputStream.class);
 
-    public HookOutputStream(OutputStream outputStream, IOConsumer<Boolean> hook) {
-        this.outputStream = Objects.requireNonNull(outputStream, "outputStream");
-        this.hook = Objects.requireNonNull(hook, "consumer");
+    private final T outputStream;
+    private final IOConsumer<T> callback;
+
+    public HookOutputStream(T outputStream, IOConsumer<T> callback) {
+        this.outputStream = Objects.requireNonNull(outputStream);
+        this.callback = Objects.requireNonNull(callback);
     }
 
     @Override
@@ -69,10 +73,10 @@ public class HookOutputStream extends OutputStream {
     public void close() throws IOException {
         try {
             outputStream.close();
-            hook.accept(true);
+            callback.accept(outputStream);
 
         } catch (IOException ex) {
-            hook.accept(false);
+            logger.warn("-- close() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
             throw ex;
         }
     }

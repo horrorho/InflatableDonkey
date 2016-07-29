@@ -24,27 +24,30 @@
 package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEngine;
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.StorageHostChunkListContainer;
-import com.github.horrorho.inflatabledonkey.cloud.voodoo.Voodoo;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyConverter;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
-import com.google.protobuf.ByteString;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeys;
+import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.function.Consumer;
+import static java.util.stream.Collectors.toList;
 
 /**
- * AssetDownloader.
  *
  * @author Ahseya
  */
@@ -53,95 +56,96 @@ public final class AssetDownloader {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetDownloader.class);
 
-    private final ChunkEngine chunkEngine;
+    private final ChunkClient chunkClient;
+    private final ChunkStore store;
+    private final ChunkEncryptionKeyConverter<byte[]> converter;
 
-    public AssetDownloader(ChunkEngine chunkEngine) {
-        this.chunkEngine = Objects.requireNonNull(chunkEngine);
+    public AssetDownloader(ChunkClient chunkClient, ChunkStore store, ChunkEncryptionKeyConverter<byte[]> converter) {
+        this.chunkClient = Objects.requireNonNull(chunkClient);
+        this.store = Objects.requireNonNull(store);
+        this.converter = Objects.requireNonNull(converter);
     }
 
-    public void get(
-            HttpClient httpClient,
-            AuthorizedAssets assets,
-            BiConsumer<Asset, List<Chunk>> consumer) {
-
-        assets.fileGroups().getFileGroupsList()
-                .forEach(fileGroup -> get(httpClient, assets, fileGroup, consumer));
+    public AssetDownloader(ChunkStore store) {
+        this(ChunkClient.defaultInstance(), store, ChunkKeys.instance());
     }
 
-    void get(
-            HttpClient httpClient,
-            AuthorizedAssets assets,
-            ChunkServer.FileChecksumStorageHostChunkLists fileGroup,
-            BiConsumer<Asset, List<Chunk>> consumer) {
+    public void
+            accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
+        // Map consumer to accepting file signatures.
+        BiConsumer<ByteString, List<Chunk>> c = consumer(consumer, authorizedAssets.fileSignatureToAsset());
 
-        Voodoo voodoo = new Voodoo(fileGroup);
+        // Unwrap and replace type 2 chunk encryption keys with type 1 keys.
+        Map<ByteString, byte[]> fsToKek = authorizedAssets.fileSignatureToKeyEncryptionKey();
+        List<Voodoo> voodooList = VoodooFactory.from(authorizedAssets.fileGroups())
+                .stream()
+                .map(u -> VoodooAssistant.convertChunkEncryptionKeys(u, converter, fsToKek))
+                .collect(toList());
 
-        get(httpClient, assets, voodoo, consumer);
+        // Remaining process is now similar to iOS 8.
+        processGroups(httpClient, voodooList, c);
     }
 
-    void get(
-            HttpClient httpClient,
-            AuthorizedAssets assets,
-            Voodoo voodoo,
-            BiConsumer<Asset, List<Chunk>> consumer) {
-
-        Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey
-                = chunkReference -> voodoo.fileSignature(chunkReference)
-                .flatMap(assets::asset)
-                .flatMap(Asset::keyEncryptionKey);
-
-        assets.assets()
-                .forEach(assetList -> get(httpClient, getKeyEncryptionKey, assetList, voodoo, consumer));
+    BiConsumer<ByteString, List<Chunk>>
+            consumer(BiConsumer<Asset, List<Chunk>> consumer, Map<ByteString, Asset> fileSignatureToAsset) {
+        return (u, v) -> {
+            if (fileSignatureToAsset.containsKey(u)) {
+                consumer.accept(fileSignatureToAsset.get(u), v);
+            } else {
+                logger.warn("-- consumer() - no asset for file signature: {}", u);
+            }
+        };
     }
 
-    void get(
-            HttpClient httpClient,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey,
-            List<Asset> assetList,
-            Voodoo voodoo,
-            BiConsumer<Asset, List<Chunk>> consumer) {
-
-        if (assetList.isEmpty()) {
-            logger.error("-- get() - empty asset list");
-            return;
-        }
-
-        Asset primaryAsset = assetList.get(0);
-
-        Map<ChunkServer.ChunkReference, Chunk> chunkData
-                = fetchChunkData(httpClient, getKeyEncryptionKey, primaryAsset, voodoo);
-
-        assembleAssetChunkList(chunkData, primaryAsset, voodoo)
-                .ifPresent(fileChunkList -> assetList.forEach(a -> consumer.accept(a, fileChunkList)));
+    void processGroups(HttpClient httpClient, Collection<Voodoo> voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+        voodoo.forEach(u -> processGroup(httpClient, u, consumer));
     }
 
-    Map<ChunkServer.ChunkReference, Chunk> fetchChunkData(
-            HttpClient httpClient,
-            Function<ChunkServer.ChunkReference, Optional<byte[]>> getKeyEncryptionKey,
-            Asset asset,
-            Voodoo voodoo) {
-
-        ByteString fileSignature = ByteString.copyFrom(asset.fileSignature().get());    // Filtered, get should be safe.
-        Set<StorageHostChunkListContainer> storageHostChunkListContainer
-                = voodoo.storageHostChunkListContainer(fileSignature);
-
-        return chunkEngine.fetch(httpClient, storageHostChunkListContainer, getKeyEncryptionKey);
+    void processGroup(HttpClient httpClient, Voodoo voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+        voodoo.fileSignatures()
+                .stream()
+                .forEach(u -> process(httpClient, voodoo, u, v -> consumer.accept(u, v)));
     }
 
-    Optional<List<Chunk>>
-            assembleAssetChunkList(Map<ChunkServer.ChunkReference, Chunk> chunkData, Asset asset, Voodoo voodoo) {
+    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature,
+            Consumer< List<Chunk>> consumer) {
+        voodoo.shcls(fileSignature)
+                .ifPresent(u -> voodoo
+                        .chunkReferences(fileSignature)
+                        .flatMap(v -> fetch(httpClient, v, u))
+                        .ifPresent(consumer));
+    }
 
-        ByteString fileSignature = ByteString.copyFrom(asset.fileSignature().get());    // Filtered, get should be safe.
-        List<ChunkServer.ChunkReference> chunkReferenceList = voodoo.chunkReferenceList(fileSignature);
-        if (!chunkData.keySet().containsAll(chunkReferenceList)) {
-            logger.warn("-- assembleFileChunkList() - missing chunks: {}", asset);
+    public Optional<List<Chunk>>
+            fetch(HttpClient httpClient, List<ChunkReference> chunks, Map<Integer, StorageHostChunkList> containers) {
+        return fetch(httpClient, containers)
+                .filter(u -> u.keySet().containsAll(chunks))
+                .map(u -> chunks
+                        .stream()
+                        .map(u::get)
+                        .collect(toList()));
+    }
+
+    Optional<Map<ChunkReference, Chunk>>
+            fetch(HttpClient httpClient, Map<Integer, StorageHostChunkList> containers) {
+        try {
+            Map<ChunkReference, Chunk> map = new HashMap<>();
+            for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
+                StorageHostChunkList container = entry.getValue();
+                int containerIndex = entry.getKey();
+                Optional<Map<ChunkReference, Chunk>> chunks
+                        = chunkClient.apply(httpClient, store, container, containerIndex);
+                if (!chunks.isPresent()) {
+                    return Optional.empty();
+                }
+                map.putAll(chunks.get());
+            }
+            return Optional.of(map);
+
+        } catch (IOException ex) {
+            logger.warn("-- fetch() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            logger.trace("-- fetch() - IOException: ", ex);
             return Optional.empty();
         }
-
-        List<Chunk> fileChunkList = chunkReferenceList.stream()
-                .map(chunkData::get)
-                .collect(Collectors.toList());
-
-        return Optional.of(fileChunkList);
     }
 }

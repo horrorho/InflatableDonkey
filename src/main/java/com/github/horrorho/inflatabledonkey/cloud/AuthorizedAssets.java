@@ -26,10 +26,9 @@ package com.github.horrorho.inflatabledonkey.cloud;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,52 +55,44 @@ public final class AuthorizedAssets {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizedAssets.class);
 
-    static Map<ByteString, List<Asset>> copy(Map<ByteString, List<Asset>> assets) {
-        return assets.entrySet()
-                .stream()
-                .filter(e -> {
-                    if (e.getValue().isEmpty()) {
-                        logger.error("-- copy() - empty asset list: {}", e);
-                        return false;
-                    }
-                    return true;
-                })
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> new ArrayList<>(e.getValue())));
-    }
-
     private final ChunkServer.FileGroups fileGroups;
-    private final Map<ByteString, List<Asset>> assets;
+    private final Map<ByteString, Asset> fileSignatureToAsset;
 
-    public AuthorizedAssets(
-            ChunkServer.FileGroups fileGroups,
-            Map<ByteString, List<Asset>> assets) {
-
+    public AuthorizedAssets(ChunkServer.FileGroups fileGroups, Map<ByteString, Asset> fileSignatureToAssets) {
         this.fileGroups = Objects.requireNonNull(fileGroups);
-        this.assets = copy(assets);
+        this.fileSignatureToAsset = new HashMap<>(fileSignatureToAssets);
     }
 
     public Optional<Asset> asset(ByteString fileSignature) {
-        return Optional.ofNullable(assets.get(fileSignature))
-                .map(l -> l.get(0));
+        return Optional.ofNullable(fileSignatureToAsset.get(fileSignature));
     }
 
-    public Optional<List<Asset>> assets(ByteString fileSignature) {
-        return Optional.ofNullable(assets.get(fileSignature))
-                .map(ArrayList::new);
+    public Map<ByteString, Asset> fileSignatureToAsset() {
+        return new HashMap<>(fileSignatureToAsset);
     }
 
-    public Collection<List<Asset>> assets() {
-        return new ArrayList<>(assets.values());
+    public Map<ByteString, byte[]> fileSignatureToKeyEncryptionKey() {
+        return fileSignatureToAsset
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().keyEncryptionKey().isPresent())
+                .map(e -> new SimpleImmutableEntry<>(e.getKey(), e.getValue().keyEncryptionKey().get()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public ChunkServer.FileGroups fileGroups() {
         return fileGroups;
     }
 
+    public int size() {
+        return fileSignatureToAsset.size();
+    }
+
     @Override
     public String toString() {
-        return "AuthorizedAssets{" + "fileGroups=" + fileGroups + ", assets=" + assets + '}';
+        return "AuthorizedAssets{"
+                + "fileGroups=" + fileGroups
+                + ", fileSignatureToAsset=" + fileSignatureToAsset
+                + '}';
     }
 }

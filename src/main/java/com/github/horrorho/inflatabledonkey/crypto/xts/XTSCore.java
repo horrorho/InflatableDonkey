@@ -58,19 +58,15 @@ class XTSCore {
     }
 
     XTSCore init(boolean forEncryption, KeyParameter key) throws IllegalArgumentException {
-        if (key instanceof KeyParameter) {
-            byte[] k = ((KeyParameter) key).getKey();
-            if (k.length != 32 && k.length != 64) {
-                throw new IllegalArgumentException("bad key length: " + k.length);
-            }
-
-            byte[] key1 = Arrays.copyOfRange(k, 0, k.length / 2);
-            byte[] key2 = Arrays.copyOfRange(k, k.length / 2, k.length);
-
-            return init(forEncryption, new KeyParameter(key1), new KeyParameter(key2));
+        byte[] k = ((KeyParameter) key).getKey();
+        if (k.length != 32 && k.length != 64) {
+            throw new IllegalArgumentException("bad key length: " + k.length);
         }
 
-        throw new IllegalArgumentException("invalid key type: " + key.getClass().getName());
+        byte[] key1 = Arrays.copyOfRange(k, 0, k.length / 2);
+        byte[] key2 = Arrays.copyOfRange(k, k.length / 2, k.length);
+
+        return init(forEncryption, new KeyParameter(key1), new KeyParameter(key2));
     }
 
     XTSCore init(boolean forEncryption, KeyParameter key1, KeyParameter key2) throws IllegalArgumentException {

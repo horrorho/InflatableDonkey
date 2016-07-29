@@ -31,7 +31,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagType;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +100,10 @@ public final class KeyBagManager {
     KeyBag fetchKeyBag(HttpClient httpClient, KeyBagID keyBagID) {
         // FAIL used to limit recurrent fetches on unavailable key bags.
         return keyBagClient.apply(httpClient, keyBagID)
-                .orElse(FAIL);
+                .orElseGet(() -> {
+                    logger.warn(" --fetchKeyBag() - failed to fetch key bag: {}", keyBagID);
+                    return FAIL;
+                });
     }
 
     @Override

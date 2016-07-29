@@ -21,37 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.voodoo;
+package com.github.horrorho.inflatabledonkey.chunk.store;
 
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Arrays;
 import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * MapAssistant.
  *
  * @author Ahseya
  */
 @Immutable
-public final class MapAssistant {
+public final class ChunkDigests {
 
-    private static final Logger logger = LoggerFactory.getLogger(MapAssistant.class);
-
-    public static <K, V> Map<V, K> invertMapList(Map<K, List<V>> map) {
-        return map.entrySet()
-                .stream()
-                .flatMap(e -> e.getValue().stream()
-                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(v, e.getKey())))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (a, b) -> {
-                            logger.warn("-- invertMapList() - duplicates: {} {}", a, b);
-                            return a;
-                        }));
+    public static boolean test(byte[] a, byte[] b) {
+        if (a.length < 1 || b.length < 1) {
+            return false;
+        }
+        if ((a[0] & 0x7F) != (b[0] & 0x7F)) {
+            return false;
+        }
+        return Arrays.equals(Arrays.copyOfRange(a, 1, a.length), Arrays.copyOfRange(b, 1, b.length));
     }
 }

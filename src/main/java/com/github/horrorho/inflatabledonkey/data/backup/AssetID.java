@@ -64,7 +64,7 @@ public final class AssetID {
     }
 
     static AssetID file(String[] split) {
-        // Format: F:<uuid>:<base64 hash>:<size>:<tag>
+        // Format: F:<snapshot uuid>:<base64 hash>:<size>:<tag>
         // size = size in bytes
         return new AssetID(split[1], split[2], split[3], split[4], size(split[3]));
     }

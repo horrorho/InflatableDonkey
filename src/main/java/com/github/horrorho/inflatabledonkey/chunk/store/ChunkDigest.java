@@ -21,43 +21,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.chunk.store;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /**
  *
  * @author Ahseya
  */
-public class DiskChunkFiles {
+public class ChunkDigest implements Digest {
 
-    private static final int SUBSPLIT = Property.PATH_CHUNK_STORE_SUBSPLIT
-            .asInteger()
-            .orElse(3);
+    private static final int SIZE = 21;
 
-    static Path filename(byte[] chunkChecksum) {
-        return filename(chunkChecksum, SUBSPLIT);
+    private final Digest digest;
+
+    public ChunkDigest() {
+        this.digest = new SHA256Digest();
     }
 
-    static Path filename(byte[] chunkChecksum, int subSplit) {
-        String filename = Hex.toHexString(chunkChecksum);
-
-        return filename.length() < subSplit
-                ? Paths.get(filename)
-                : subSplit(filename, subSplit);
+    @Override
+    public String getAlgorithmName() {
+        return "ChunkDigest";
     }
 
-    static Path subSplit(String filename, int subSplit) {
-        Path path = Paths.get(".");
-        for (int i = 0; i < subSplit; i++) {
-            path = path.resolve(String.valueOf(filename.charAt(i)));
-        }
+    @Override
+    public int getDigestSize() {
+        return SIZE;
+    }
 
-        return path.resolve(filename.substring(subSplit))
-                .normalize();
+    @Override
+    public void update(byte in) {
+        digest.update(in);
+    }
+
+    @Override
+    public void update(byte[] in, int inOff, int len) {
+        digest.update(in, inOff, len);
+    }
+
+    @Override
+    public int doFinal(byte[] out, int outOff) {
+        byte[] hash = new byte[digest.getDigestSize()];
+        digest.doFinal(hash, 0);
+        digest.update(hash, 0, hash.length);
+        digest.doFinal(hash, 0);
+        out[outOff] = 0x01;
+        System.arraycopy(hash, 0, out, outOff + 1, SIZE - 1);
+        return SIZE;
+    }
+
+    @Override
+    public void reset() {
+        digest.reset();
     }
 }
-// TODO rework as object

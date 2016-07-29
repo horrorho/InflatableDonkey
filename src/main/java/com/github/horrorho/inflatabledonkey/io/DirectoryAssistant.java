@@ -41,7 +41,7 @@ public final class DirectoryAssistant {
     private static final Logger logger = LoggerFactory.getLogger(DirectoryAssistant.class);
 
     public static boolean createParent(Path file) {
-        Path parent = file.getParent();
+        Path parent = file.toAbsolutePath().normalize().getParent();
         if (parent == null) {
             return true;
         }
@@ -52,8 +52,8 @@ public final class DirectoryAssistant {
     public static boolean create(Path directory) {
         if (Files.exists(directory)) {
             if (Files.isDirectory(directory)) {
+                logger.debug("-- create() - directory already exists: {}", directory);
                 return true;
-
             } else {
                 logger.warn("-- create() - directory path exists but is not a directory: {}", directory);
                 return false;
@@ -62,11 +62,49 @@ public final class DirectoryAssistant {
 
         try {
             Files.createDirectories(directory);
+            logger.debug("-- create() - directory created: {}", directory);
             return true;
-
         } catch (IOException ex) {
             logger.debug("-- create() - IOException: {}", ex);
             return false;
         }
+    }
+
+    public static boolean deleteEmptyBranch(Path base, Path folder) {
+        return doDeleteEmptyBranch(base.normalize().toAbsolutePath(), folder.normalize().toAbsolutePath());
+    }
+
+    private static boolean doDeleteEmptyBranch(Path base, Path directory) {
+        if (!directory.startsWith(base)) {
+            logger.warn("-- doDeleteEmptyBranch() - path not in base directory, base: {} directory: {}", base, directory);
+            return false;
+        }
+        if (!Files.exists(directory)) {
+            logger.warn("-- doDeleteEmptyBranch() - directory doesn't exist: {}", directory);
+            return false;
+        }
+
+        boolean deleted = false;
+        try {
+            while (!directory.equals(base)) {
+                if (!Files.isDirectory(directory)) {
+                    logger.warn("-- doDeleteEmptyBranch() - not a directory: {}", directory);
+                    break;
+                }
+                if (Files.list(directory).findFirst().isPresent()) {
+                    logger.debug("-- doDeleteEmptyBranch() - directory not empty: {}", directory);
+                    break;
+                }
+
+                Files.delete(directory);
+                logger.debug(" --doDeleteEmptyBranch() - deleted: {}", directory);
+                deleted = true;
+
+                directory = directory.getParent();
+            }
+        } catch (IOException ex) {
+            logger.warn("-- doDeleteEmptyBranch() - IOException: ", ex);
+        }
+        return deleted;
     }
 }

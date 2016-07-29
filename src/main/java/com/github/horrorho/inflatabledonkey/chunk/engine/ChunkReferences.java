@@ -21,13 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud.voodoo;
+package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import net.jcip.annotations.Immutable;
 
 /**
- * ChunkReferences
  *
  * @author Ahseya
  */

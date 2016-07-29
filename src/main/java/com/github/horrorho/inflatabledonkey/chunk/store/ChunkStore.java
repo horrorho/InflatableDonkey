@@ -40,21 +40,35 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public interface ChunkStore {
 
+    boolean contains(byte[] checksum);
+
     Optional<Chunk> chunk(byte[] checksum);
 
     /**
-     * Returns an OutputStream to write chunk data into. On closing this stream the chunk data is committed to the
-     * store, assuming that the chunk hasn't been committed in the interim by a competing thread.
+     * Returns an OutputStream to write chunk data into. On closing this stream, the checksum referenced data is
+     * verified and committed to the store, assuming that a competing thread has not already done so. If the chunk data
+     * fails to match the specified checksum an IOException is thrown.
      *
      * @param checksum
-     * @return OutputStream if the checksum referenced chunk is not already in the store.
+     * @return OutputStream if the referenced chunk is not already in the store
      * @throws IOException
      */
-    Optional<OutputStream> write(byte[] checksum) throws IOException;
+    Optional<OutputStream> outputStream(byte[] checksum) throws IOException;
 
-    default List<Optional<Chunk>> chunks(Collection<byte[]> checksums) {
-        return checksums.stream()
+    /**
+     * Deletes the checksum referenced chunk data.
+     *
+     * @param checksum
+     * @return true if the specified chunk data was present and deleted
+     * @throws IOException
+     */
+    boolean delete(byte[] checksum) throws IOException;
+
+    default Optional<List<Chunk>> chunks(Collection<byte[]> checksums) {
+        List<Chunk> chunks = checksums.stream()
                 .map(this::chunk)
+                .map(u -> u.orElse(null))
                 .collect(Collectors.toList());
+        return (chunks.contains(null)) ? Optional.empty() : Optional.of(chunks);
     }
 }

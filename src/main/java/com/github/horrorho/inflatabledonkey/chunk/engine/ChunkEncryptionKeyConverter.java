@@ -21,43 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.bouncycastle.util.encoders.Hex;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import net.jcip.annotations.Immutable;
 
 /**
+ * Converts chunk encryption keys using the supplied metadata. Keys that are already in a valid state are returned
+ * unaltered.
  *
  * @author Ahseya
+ * @param <T> metadata type
  */
-public class DiskChunkFiles {
+@Immutable
+@FunctionalInterface
+public interface ChunkEncryptionKeyConverter<T> extends BiFunction<byte[], T, Optional<byte[]>> {
 
-    private static final int SUBSPLIT = Property.PATH_CHUNK_STORE_SUBSPLIT
-            .asInteger()
-            .orElse(3);
-
-    static Path filename(byte[] chunkChecksum) {
-        return filename(chunkChecksum, SUBSPLIT);
-    }
-
-    static Path filename(byte[] chunkChecksum, int subSplit) {
-        String filename = Hex.toHexString(chunkChecksum);
-
-        return filename.length() < subSplit
-                ? Paths.get(filename)
-                : subSplit(filename, subSplit);
-    }
-
-    static Path subSplit(String filename, int subSplit) {
-        Path path = Paths.get(".");
-        for (int i = 0; i < subSplit; i++) {
-            path = path.resolve(String.valueOf(filename.charAt(i)));
-        }
-
-        return path.resolve(filename.substring(subSplit))
-                .normalize();
-    }
+    @Override
+    Optional<byte[]> apply(byte[] chunkEncryptionKey, T metadata);
 }
-// TODO rework as object

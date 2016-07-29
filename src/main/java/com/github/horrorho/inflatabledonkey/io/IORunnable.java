@@ -21,43 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.chunk.store.disk;
+package com.github.horrorho.inflatabledonkey.io;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.bouncycastle.util.encoders.Hex;
+import java.io.IOException;
 
 /**
  *
  * @author Ahseya
  */
-public class DiskChunkFiles {
+@FunctionalInterface
+public interface IORunnable {
 
-    private static final int SUBSPLIT = Property.PATH_CHUNK_STORE_SUBSPLIT
-            .asInteger()
-            .orElse(3);
-
-    static Path filename(byte[] chunkChecksum) {
-        return filename(chunkChecksum, SUBSPLIT);
-    }
-
-    static Path filename(byte[] chunkChecksum, int subSplit) {
-        String filename = Hex.toHexString(chunkChecksum);
-
-        return filename.length() < subSplit
-                ? Paths.get(filename)
-                : subSplit(filename, subSplit);
-    }
-
-    static Path subSplit(String filename, int subSplit) {
-        Path path = Paths.get(".");
-        for (int i = 0; i < subSplit; i++) {
-            path = path.resolve(String.valueOf(filename.charAt(i)));
-        }
-
-        return path.resolve(filename.substring(subSplit))
-                .normalize();
-    }
+    void run() throws IOException;
 }
-// TODO rework as object

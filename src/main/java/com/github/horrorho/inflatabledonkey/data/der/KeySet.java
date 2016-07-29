@@ -138,9 +138,14 @@ public final class KeySet extends ASN1Object {
         if (match.isPresent()) {
             if (match.get()) {
                 logger.debug("** KeySet() - checksums match");
-
             } else {
-                logger.warn("** KeySet()  - bad checksum OR code failure");
+                try {
+                    logger.debug("** KeySet()  - checksums do not match in: {} constructed: {}",
+                            Hex.toHexString(primitive.getEncoded()),
+                            Hex.toHexString(toASN1Primitive(false).getEncoded()));
+                } catch (IOException ex) {
+                    logger.debug("** KeySet() - IOException: ", ex);
+                }
             }
         }
     }
@@ -148,9 +153,8 @@ public final class KeySet extends ASN1Object {
     byte[] calculateChecksum() {
         try {
             // Re-encode the data minus the supplied checksum then calculate SHA256 hash.
-            // This should match the supplied checksum.
+            // This should ideally match the supplied checksum.
             // Verifies data integrity AND our decode/ encode processes.
-
             byte[] contents = toASN1Primitive(false).getEncoded();
 
             Digest digest = DIGEST.get();

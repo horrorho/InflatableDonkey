@@ -23,60 +23,84 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.HostInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
-import com.github.horrorho.inflatabledonkey.responsehandler.ByteArrayResponseHandler;
+import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ChunkListsClient.
  *
  * @author Ahseya
  */
 @Immutable
 public final class ChunkClient {
 
+    public static ChunkClient defaultInstance() {
+        return DEFAULT_INSTANCE;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(ChunkClient.class);
 
-    private ChunkClient() {
+    private static final ChunkClient DEFAULT_INSTANCE = new ChunkClient();
+
+    private final Function<HostInfo, HttpUriRequest> requestFactory;
+
+    public ChunkClient(
+            Function<HostInfo, HttpUriRequest> requestFactory) {
+        this.requestFactory = Objects.requireNonNull(requestFactory);
     }
 
-    public static Optional<byte[]> fetch(HttpClient httpClient, ChunkServer.StorageHostChunkList chunkList) {
-        ChunkListRequestFactory chunkListRequestFactory = ChunkListRequestFactory.instance();
-        return fetch(httpClient, chunkList, chunkListRequestFactory);
+    ChunkClient() {
+        this(ChunkListRequestFactory.instance());
     }
 
-    public static Optional<byte[]> fetch(
-            HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory) {
-
-        ByteArrayResponseHandler responseHandler = ByteArrayResponseHandler.instance();
-        return fetch(httpClient, chunkList, chunkListRequestFactory, responseHandler);
-    }
-
-    public static <T> Optional<T> fetch(
-            HttpClient httpClient,
-            ChunkServer.StorageHostChunkList chunkList,
-            Function<ChunkServer.StorageHostChunkList, HttpUriRequest> chunkListRequestFactory,
-            ResponseHandler<T> responseHandler) {
-
-        try {
-            HttpUriRequest request = chunkListRequestFactory.apply(chunkList);
-            T data = httpClient.execute(request, responseHandler);
-            return Optional.of(data);
-
-        } catch (IOException ex) {
-            logger.warn("-- fetch() - IOException: {}", ex);
-            return Optional.empty();
+    public Optional<Map<ChunkReference, Chunk>>
+            apply(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
+            throws IOException {
+        Optional<Map<ChunkReference, Chunk>> stored = stored(store, container, containerIndex);
+        if (stored.isPresent()) {
+            logger.debug("-- apply() - not downloading, all chunks are available in the store");
+            return stored;
         }
+
+        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, container, containerIndex);
+        InputStreamResponseHandler<Map<ChunkReference, Chunk>> handler
+                = new InputStreamResponseHandler<>(decrypter);
+        HttpUriRequest request = requestFactory.apply(container.getHostInfo());
+        Map<ChunkReference, Chunk> chunks = client.execute(request, handler);
+
+        return Optional.of(chunks);
+    }
+
+    Optional<Map<ChunkReference, Chunk>>
+            stored(ChunkStore store, StorageHostChunkList container, int containerIndex) {
+        List<ChunkInfo> list = container.getChunkInfoList();
+        Map<ChunkReference, Chunk> map = new HashMap<>();
+        for (int i = 0, n = list.size(); i < n; i++) {
+            Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
+            if (!chunk.isPresent()) {
+                logger.debug("-- stored() - not all chunks present in the store");
+                return Optional.empty();
+            }
+            ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
+            map.put(chunkReference, chunk.get());
+        }
+        return Optional.of(map);
     }
 }

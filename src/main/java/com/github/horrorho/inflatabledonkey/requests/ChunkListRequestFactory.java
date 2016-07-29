@@ -28,6 +28,7 @@ import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.message.BasicHeader;
 
 /**
  * ChunkServer.StorageHostChunkList storageHostChunkList HttpUriRequest factory.
@@ -35,7 +36,7 @@ import org.apache.http.client.methods.RequestBuilder;
  * @author Ahseya
  */
 @Immutable
-public final class ChunkListRequestFactory implements Function<ChunkServer.StorageHostChunkList, HttpUriRequest> {
+public final class ChunkListRequestFactory implements Function<ChunkServer.HostInfo, HttpUriRequest> {
 
     public static ChunkListRequestFactory instance() {
         return INSTANCE;
@@ -47,19 +48,15 @@ public final class ChunkListRequestFactory implements Function<ChunkServer.Stora
     }
 
     @Override
-    public HttpUriRequest apply(ChunkServer.StorageHostChunkList storageHostChunkList) {
-        ChunkServer.HostInfo hostInfo = storageHostChunkList.getHostInfo();
+    public HttpUriRequest apply(ChunkServer.HostInfo hostInfo) {
         String uri = hostInfo.getScheme() + "://" + hostInfo.getHostname() + "/" + hostInfo.getUri();
-
         HttpUriRequest request = RequestBuilder.create(hostInfo.getMethod())
                 .setUri(uri)
                 .build();
-
         hostInfo.getHeadersList()
                 .stream()
-                .map(HeadersLegacy::header)
+                .map(u -> new BasicHeader(u.getName(), u.getValue()))
                 .forEach(request::addHeader);
-
         return request;
     }
 }

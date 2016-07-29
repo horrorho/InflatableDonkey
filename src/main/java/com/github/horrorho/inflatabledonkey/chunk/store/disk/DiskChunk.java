@@ -23,24 +23,24 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
+import com.github.horrorho.inflatabledonkey.io.HookInputStream;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
+import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.READ;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
-import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * DiskChunk.
  *
  * @author Ahseya
  */
@@ -63,28 +63,37 @@ public final class DiskChunk implements Chunk {
     }
 
     @Override
-    public InputStream inputStream() throws UncheckedIOException {
+    public Optional<InputStream> inputStream() throws IOException {
+        return Files.exists(file)
+                ? doInputStream()
+                : Optional.empty();
+    }
+
+    Optional<InputStream> doInputStream() throws IOException {
         try {
-            return Files.newInputStream(file, READ);
+            InputStream is = Files.newInputStream(file, READ);
+            if (logger.isTraceEnabled()) {
+                logger.trace("-- doInputStream() - open: {}", Hex.toHexString(checksum()));
+                IOConsumer<InputStream> callback = u
+                        -> logger.trace("-- doInputStream() - callback close: {}", Hex.toHexString(checksum()));
+                is = new HookInputStream(is, callback);
+            }
+            return Optional.of(is);
 
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
+        } catch (NoSuchFileException ex) {
+            logger.warn("-- doInputStream() - file was just deleted: {}", ex);
+            return Optional.empty();
         }
     }
 
-    @Override
-    public long copyTo(OutputStream output) throws UncheckedIOException {
-        try (InputStream input = Files.newInputStream(file, READ)) {
-            long bytes = IOUtils.copyLarge(input, output);
-
-            logger.debug("-- copyTo() - written (bytes): {}", bytes);
-            return bytes;
-
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-    }
-
+//    Optional<InputStream> doInputStream() throws IOException {
+//        try {
+//            return Optional.of(Files.newInputStream(file, READ));
+//        } catch (NoSuchFileException ex) {
+//            logger.warn("-- doInputStream() - file was just deleted: {}", ex);
+//            return Optional.empty();
+//        }
+//    }
     @Override
     public int hashCode() {
         int hash = 5;
