@@ -31,12 +31,9 @@ import com.github.horrorho.inflatabledonkey.io.IOSupplierSequenceStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -154,18 +151,6 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
             suppliers.add(ios);
         }
         return new IOSupplierSequenceStream(suppliers);
-    }
-
-    InputStream chunkStreamx(List<Chunk> chunks) throws IOException {
-        List<InputStream> inputStreams = new ArrayList<>();
-        for (Chunk chunk : chunks) {
-            InputStream is = chunk.inputStream()
-                    .orElseThrow(()
-                            -> new IllegalStateException("chunk deleted: 0x" + Hex.toHexString(chunk.checksum())));
-            inputStreams.add(is);
-        }
-        Enumeration<InputStream> enumeration = Collections.enumeration(inputStreams);
-        return new SequenceInputStream(enumeration);
     }
 
     @Override
