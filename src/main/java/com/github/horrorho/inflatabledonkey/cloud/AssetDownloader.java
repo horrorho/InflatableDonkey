@@ -72,12 +72,17 @@ public final class AssetDownloader {
 
     public void
             accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
+        // Map consumer to accepting file signatures.
         BiConsumer<ByteString, List<Chunk>> c = consumer(consumer, authorizedAssets.fileSignatureToAsset());
+
+        // Unwrap and replace type 2 chunk encryption keys with type 1 keys.
         Map<ByteString, byte[]> fsToKek = authorizedAssets.fileSignatureToKeyEncryptionKey();
         List<Voodoo> voodooList = VoodooFactory.from(authorizedAssets.fileGroups())
                 .stream()
-                .map(u -> VoodooFactory.convertChunkEncryptionKeys(u, converter, fsToKek))
+                .map(u -> VoodooAssistant.convertChunkEncryptionKeys(u, converter, fsToKek))
                 .collect(toList());
+
+        // Remaining process is now similar to iOS 8.
         processGroups(httpClient, voodooList, c);
     }
 

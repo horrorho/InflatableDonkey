@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Ties in asset chunk references to storage host containers.
  *
  * @author Ahseya
  */
@@ -54,7 +55,16 @@ public final class Voodoo {
             Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences) {
         this.indexToSHCL = new HashMap<>(indexToSHCL);
         this.fileSignatureToChunkReferences = new HashMap<>(fileSignatureToChunkReferences);
-        // TODO verify all chunks are references in indexToSHCL
+
+        fileSignatureToChunkReferences.entrySet()
+                .stream()
+                .filter(e -> !e
+                        .getValue()
+                        .stream()
+                        .map(u -> (int) u.getContainerIndex())
+                        .allMatch(indexToSHCL::containsKey))
+                .map(Map.Entry::getKey)
+                .forEach(u -> logger.warn("** Voodoo() - missing container/s for file signature: {}", u));
     }
 
     public Map<Integer, StorageHostChunkList> indexToSHCL() {
