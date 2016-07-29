@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -57,22 +56,13 @@ public final class SnapshotSelector implements UnaryOperator<Map<Device, ? exten
                 : doApply(deviceSnapshots);
     }
 
-    public Map<Device, ? extends Collection<Snapshot>>
+    public Map<Device, List<Snapshot>>
             doApply(Map<Device, ? extends Collection<Snapshot>> deviceSnapshots) {
         return deviceSnapshots.entrySet()
                 .stream()
-                .map(this::filter)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(e -> new SimpleImmutableEntry<>(e.getKey(), filter(e.getValue())))
+                .filter(e -> !e.getValue().isEmpty())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new));
-    }
-
-    Optional<Map.Entry<Device, ? extends Collection<Snapshot>>>
-            filter(Map.Entry<Device, ? extends Collection<Snapshot>> entry) {
-        List<Snapshot> filtered = filter(entry.getValue());
-        return filtered.isEmpty()
-                ? Optional.empty()
-                : Optional.of(new SimpleImmutableEntry<>(entry.getKey(), filtered));
     }
 
     List<Snapshot> filter(Collection<Snapshot> snapshots) {

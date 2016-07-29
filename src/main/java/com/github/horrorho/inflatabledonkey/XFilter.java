@@ -38,22 +38,22 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class XFilter {
 
-    public static UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>
-            apply(Optional<? extends Collection<String>> device, Optional<? extends Collection<Integer>> snapshot) {
-                System.out.println("d " + device);
-                System.out.println("s " + snapshot);
-        return device.isPresent() || snapshot.isPresent()
-                ? combine(device, snapshot)
+    public static UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> apply(
+            Optional<? extends Collection<String>> deviceSelection,
+            Optional<? extends Collection<Integer>> snapshotSelection) {
+        return deviceSelection.isPresent() || snapshotSelection.isPresent()
+                ? combine(deviceSelection, snapshotSelection)
                 : UserSelector.instance();
     }
 
-    static UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>
-            combine(Optional<? extends Collection<String>> device, Optional<? extends Collection<Integer>> snapshot) {
-        UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> opDevice = device
-                .map(d -> (UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>) new DeviceSelector(d))
+    static UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> combine(
+            Optional<? extends Collection<String>> deviceSelection,
+            Optional<? extends Collection<Integer>> snapshotSelection) {
+        UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> opDevice = deviceSelection
+                .<UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>>map(DeviceSelector::new)
                 .orElse(UnaryOperator.identity());
-        UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> opSnapshot = snapshot
-                .map(s -> (UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>) new SnapshotSelector(s))
+        UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> opSnapshot = snapshotSelection
+                .<UnaryOperator<Map<Device, ? extends Collection<Snapshot>>>>map(SnapshotSelector::new)
                 .orElse(UnaryOperator.identity());
         return u -> opDevice.andThen(opSnapshot).apply(u);
     }

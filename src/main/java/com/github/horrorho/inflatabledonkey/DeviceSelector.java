@@ -30,7 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -45,7 +46,7 @@ public final class DeviceSelector implements UnaryOperator<Map<Device, ? extends
     public DeviceSelector(Collection<String> selection) {
         this.selection = selection.stream()
                 .map(u -> u.toLowerCase(Locale.US))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     @Override
@@ -61,7 +62,7 @@ public final class DeviceSelector implements UnaryOperator<Map<Device, ? extends
         return deviceSnapshots.entrySet()
                 .stream()
                 .filter(this::match)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new));
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new));
     }
 
     boolean match(Map.Entry<Device, ? extends Collection<Snapshot>> entry) {
