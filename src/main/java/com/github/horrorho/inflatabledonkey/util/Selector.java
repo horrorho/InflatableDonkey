@@ -119,7 +119,7 @@ public class Selector<T> implements Supplier<Optional<List<T>>> {
         Set<T> mapped = validate(tokens)
                 ? tokens.stream().map(options::get).collect(Collectors.toCollection(LinkedHashSet::new))
                 : null;
-        return Optional.ofNullable(new ArrayList<>(mapped));
+        return Optional.ofNullable(mapped).map(ArrayList::new);
     }
 
     boolean validate(Collection<String> tokens) {
