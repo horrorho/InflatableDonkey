@@ -7,20 +7,7 @@
     </appender>
     
     <!-- DEBUG/ TRACE switches WILL log sensitive information. Use with caution. -->
-    <logger name="com.github.horrorho.inflatabledonkey" level="info" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
- 
- 
-    <logger name="com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunk" level="trace" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
- 
-    <logger name="com.github.horrorho.inflatabledonkey.file.FileAssembler" level="trace" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
- 
-    <logger name="com.github.horrorho.inflatabledonkey.cloud.AssetDownloader" level="trace" additivity="false">
+    <logger name="com.github.horrorho.inflatabledonkey" level="warn" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
