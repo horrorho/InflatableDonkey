@@ -142,7 +142,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, List<Snapsh
                 return this;
             }
             String token = deviceTokens.next();
-            System.out.println(pad(token, 2) + ": DEVICE - " + device.info());
+            System.out.println(pad(token, 2) + ": " + device.info());
             putChoice(token, device, new ArrayList<>(snapshots));
             return this;
         }

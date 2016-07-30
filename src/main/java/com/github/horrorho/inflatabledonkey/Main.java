@@ -46,14 +46,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -92,13 +91,9 @@ public class Main {
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
-        System.out.println("    --mode CBC");
-        System.out.println("or");
-        System.out.println("    --mode XTS");
-        System.out.println("");
-
+        System.out.println("    --mode CBC  or  --mode XTS");
         // SystemDefault HttpClient.
-        // TODO concurrent, close
+        // TODO close
 //        CloseableHttpClient httpClient = HttpClients.custom()
 //                .setUserAgent("CloudKit/479 (13A404)")
 //                .setRedirectStrategy(new LaxRedirectStrategy())
@@ -153,7 +148,7 @@ public class Main {
         Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
-        System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
+        System.out.println("\nOutput folder: " + assetOutputFolder.toAbsolutePath());
 
         // TODO automatic decrypt mode
         Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
@@ -172,6 +167,7 @@ public class Main {
         // Retrieve snapshots.
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
 
+        System.out.println("");
         if (deviceSnapshots.isEmpty()) {
             System.out.println("No devices/ snapshots.");
             return;
@@ -180,11 +176,22 @@ public class Main {
         // Filter snapshots.
         Optional<List<String>> filterDevices = Property.FILTER_DEVICE.asList();
         Optional<List<Integer>> filterSnapshots = Property.FILTER_SNAPSHOT.asList(Integer::parseInt);
-        UnaryOperator<Map<Device, List<Snapshot>>> filter
-                = (!filterDevices.isPresent() && !filterSnapshots.isPresent())
-                        ? UserSelector.instance()
-                        : new ArgsSelector(filterDevices.orElseGet(Collections::emptyList), filterSnapshots.orElseGet(Collections::emptyList));
-        Map<Device, List<Snapshot>> filtered = filter.apply(deviceSnapshots);
+        final Map<Device, List<Snapshot>> filtered;
+        if (filterDevices.isPresent() || filterSnapshots.isPresent()) {
+            System.out.println("Available:");
+            print(deviceSnapshots);
+
+            String cliFilters = "\nFilter -> ";
+            cliFilters += Property.FILTER_DEVICE.value()
+                    .map(u -> u.isEmpty() ? "ALL" : u).map(u -> " devices: " + u).orElse("");
+            cliFilters += Property.FILTER_SNAPSHOT.value().map(u -> " snapshots: " + u).orElse("");
+            System.out.println(cliFilters);
+            filtered = new ArgsSelector(filterDevices.orElseGet(Collections::emptyList), filterSnapshots.orElseGet(Collections::emptyList))
+                    .apply(deviceSnapshots);
+        } else {
+            filtered = UserSelector.instance()
+                    .apply(deviceSnapshots);
+        }
 
         filtered.forEach((device, snapshots) -> {
             logger.info("-- main() - selected device: {}", device.info());
@@ -193,20 +200,12 @@ public class Main {
         });
 
         if (filtered.isEmpty()) {
-            System.out.println("Nothing selected.");
-            System.exit(0);
+            System.out.println("\nNothing selected.");
+            return;
         }
 
-        System.out.println("\nSelection:");
-        filtered.entrySet()
-                .stream()
-                .map(u -> {
-                    System.out.println("DEVICE - " + u.getKey().info());
-                    return u.getValue();
-                })
-                .flatMap(Collection::stream)
-                .map(Snapshot::info)
-                .forEach(u -> System.out.println("  SNAPSHOT - " + u));
+        System.out.println("\nSelected:");
+        print(filtered);
 
         // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
@@ -231,6 +230,18 @@ public class Main {
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
         backup.download(httpClient, filtered, assetsFilter, assetFilter);
+    }
+
+    static void print(Map<Device, List<Snapshot>> deviceSnapshot) {
+        deviceSnapshot.entrySet()
+                .stream()
+                .map(u -> {
+                    System.out.println("DEVICE: " + u.getKey().info());
+                    return u.getValue();
+                })
+                .forEach(u
+                        -> IntStream.range(0, u.size())
+                        .forEach(i -> System.out.println("  SNAPSHOT: " + i + "\t" + u.get(i).info())));
     }
 }
 
