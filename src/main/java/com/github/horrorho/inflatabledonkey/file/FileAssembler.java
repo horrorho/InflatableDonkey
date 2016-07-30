@@ -101,23 +101,24 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
+        String info = asset.domain().orElse("") + asset.relativePath().orElse("");
         return asset.encryptionKey()
-                .map(u -> decrypt(path, chunks, u, asset.fileChecksum()))
-                .orElseGet(() -> write(path, chunks, Optional.empty(), asset.fileChecksum()));
+                .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum()))
+                .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum()));
     }
 
-    boolean decrypt(Path path, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
+    boolean decrypt(Path path, String info, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
         return fileKeys.apply(encryptionKey)
                 .map(Optional::of)
                 .map(mutator)
-                .map(u -> write(path, chunks, u, signature))
+                .map(u -> write(path, info, chunks, u, signature))
                 .orElseGet(() -> {
                     logger.warn("-- decrypt() - failed to unwrap encryption key");
                     return false;
                 });
     }
 
-    boolean write(Path path, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
+    boolean write(Path path, String info, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
         logger.debug("-- write() - path: {} key cipher: {} signature: 0x{}",
                 path, keyCipher, signature.map(Hex::toHexString).orElse("NULL"));
 
@@ -129,8 +130,10 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
                 XFileKey kc = keyCipher.get();
                 logger.info("-- write() - written: {} status: {} mode: {} flags: 0x{}",
                         path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
+                System.out.println(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
             } else {
                 logger.info("-- write() - written: {} status: {}", path, status);
+                System.out.println(">> " + info);
             }
             return status;
 

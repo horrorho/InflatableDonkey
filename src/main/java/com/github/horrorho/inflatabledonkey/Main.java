@@ -46,13 +46,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -91,7 +91,7 @@ public class Main {
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
-        System.out.println("    --mode CBC  or  --mode XTS");
+        System.out.println("    --mode CBC  OR  --mode XTS");
         // SystemDefault HttpClient.
         // TODO close
 //        CloseableHttpClient httpClient = HttpClients.custom()
@@ -182,8 +182,12 @@ public class Main {
             print(deviceSnapshots);
 
             String cliFilters = "\nFilter -> ";
-            cliFilters += Property.FILTER_DEVICE.value()
-                    .map(u -> u.isEmpty() ? "ALL" : u).map(u -> " devices: " + u).orElse("");
+            String cliFilterDevices = Property.FILTER_DEVICE.value().orElse("");
+            if (cliFilterDevices.isEmpty()) {
+                cliFilterDevices = "ALL";
+            }
+            cliFilters += " devices: " + cliFilterDevices;
+
             cliFilters += Property.FILTER_SNAPSHOT.value().map(u -> " snapshots: " + u).orElse("");
             System.out.println(cliFilters);
             filtered = new ArgsSelector(filterDevices.orElseGet(Collections::emptyList), filterSnapshots.orElseGet(Collections::emptyList))
@@ -206,6 +210,7 @@ public class Main {
 
         System.out.println("\nSelected:");
         print(filtered);
+        System.out.println("");
 
         // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
@@ -239,9 +244,8 @@ public class Main {
                     System.out.println("DEVICE: " + u.getKey().info());
                     return u.getValue();
                 })
-                .forEach(u
-                        -> IntStream.range(0, u.size())
-                        .forEach(i -> System.out.println("  SNAPSHOT: " + i + "\t" + u.get(i).info())));
+                .flatMap(Collection::stream)
+                .forEach(u -> System.out.println("  SNAPSHOT: " + u.info()));
     }
 }
 

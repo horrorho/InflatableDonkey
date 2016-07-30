@@ -67,7 +67,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, List<Snapsh
         System.out.println();
         Map<String, Map<Device, List<Snapshot>>> choices = new Builder().add(deviceSnapshots).build();
 
-        System.out.println("\nInput selection (multiple values accepted, leave blank to select all, q to quit):");
+        System.out.println("\nEnter selection (multiple values accepted, leave blank to select all, q to quit):");
 
         return Selector.builder(choices).build()
                 .get()
@@ -142,7 +142,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, List<Snapsh
                 return this;
             }
             String token = deviceTokens.next();
-            System.out.println(pad(token, 2) + ": " + device.info());
+            System.out.println(pad(token, 2) + ": DEVICE " + device.info());
             putChoice(token, device, new ArrayList<>(snapshots));
             return this;
         }
