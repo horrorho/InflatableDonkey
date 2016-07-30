@@ -21,11 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.args.filter;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import com.github.horrorho.inflatabledonkey.util.Selector;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,11 +36,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -48,7 +47,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @author Ahseya
  */
 @Immutable
-public final class UserSelector implements UnaryOperator<Map<Device, ? extends Collection<Snapshot>>> {
+public final class UserSelector implements UnaryOperator<Map<Device, List<Snapshot>>> {
 
     public static final UserSelector instance() {
         return INSTANCE;
@@ -60,33 +59,38 @@ public final class UserSelector implements UnaryOperator<Map<Device, ? extends C
     }
 
     @Override
-    public Map<Device, ? extends Collection<Snapshot>> apply(Map<Device, ? extends Collection<Snapshot>> deviceSnapshots) {
+    public Map<Device, List<Snapshot>> apply(Map<Device, List<Snapshot>> deviceSnapshots) {
         if (deviceSnapshots.isEmpty()) {
             return Collections.emptyMap();
         }
 
         System.out.println();
-        Map<String, Map<Device, Collection<Snapshot>>> choices = new Builder().add(deviceSnapshots).build();
+        Map<String, Map<Device, List<Snapshot>>> choices = new Builder().add(deviceSnapshots).build();
 
-        System.out.println("\nInput selection (multiple values accepted, leave blank to select all, q to quit):");
+        System.out.println("\nEnter selection (multiple values accepted, leave blank to select all, q to quit):");
+
         return Selector.builder(choices).build()
                 .get()
-                .map(this::combine)
+                .map(this::merge)
                 .map(m -> m.isEmpty() ? deviceSnapshots : m)
                 .orElse(Collections.emptyMap());
     }
 
-    Map<Device, ? extends Collection<Snapshot>> combine(Set<Map<Device, Collection<Snapshot>>> set) {
+    Map<Device, List<Snapshot>> merge(Collection<Map<Device, List<Snapshot>>> set) {
         return set.stream()
                 .map(Map::entrySet)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (u, v) -> Stream.of(u, v)
-                        .flatMap(Collection::stream)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)),
+                        this::merge,
                         LinkedHashMap::new));
+    }
+
+    List<Snapshot> merge(Collection<Snapshot> a, Collection<Snapshot> b) {
+        LinkedHashSet<Snapshot> set = new LinkedHashSet<>(a);
+        set.addAll(b);
+        return new ArrayList<>(set);
     }
 
     @NotThreadSafe
@@ -96,7 +100,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, ? extends C
                 = IntStream.range('A', 'Z' + 1).mapToObj(i -> (char) i).map(Object::toString).collect(Collectors.toList());
 
         private final Iterator<String> deviceTokens;
-        private final Map<String, Map<Device, Collection<Snapshot>>> choices = new HashMap<>();
+        private final Map<String, Map<Device, List<Snapshot>>> choices = new HashMap<>();
         private int snapshotIndex = 1;
 
         Builder(List<String> deviceTokens) {
@@ -138,13 +142,13 @@ public final class UserSelector implements UnaryOperator<Map<Device, ? extends C
                 return this;
             }
             String token = deviceTokens.next();
-            System.out.println(pad(token, 2) + ": DEVICE - " + device.info());
-            putChoice(token, device, snapshots);
+            System.out.println(pad(token, 2) + ": DEVICE " + device.info());
+            putChoice(token, device, new ArrayList<>(snapshots));
             return this;
         }
 
-        void putChoice(String token, Device device, Collection<Snapshot> snapshots) {
-            Map<Device, Collection<Snapshot>> map = new HashMap<>();
+        void putChoice(String token, Device device, List<Snapshot> snapshots) {
+            Map<Device, List<Snapshot>> map = new HashMap<>();
             map.put(device, snapshots);
             choices.put(token, map);
         }
@@ -153,7 +157,7 @@ public final class UserSelector implements UnaryOperator<Map<Device, ? extends C
             return String.format("%" + pad + "s", token);
         }
 
-        Map<String, Map<Device, Collection<Snapshot>>> build() {
+        Map<String, Map<Device, List<Snapshot>>> build() {
             return choices;
         }
     }

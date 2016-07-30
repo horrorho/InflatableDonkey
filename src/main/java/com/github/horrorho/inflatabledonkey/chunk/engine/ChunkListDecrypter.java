@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Decrypts storage host chunk list streams.
+ * Decrypts storage host chunk list streams. Limited to type 0x01 chunk decryption.
  *
  * @author Ahseya
  */
@@ -72,13 +72,25 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
 
     @Override
     public Map<ChunkReference, Chunk> apply(InputStream inputStream) throws IOException {
+        // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
+        // keys should unwrap to the same 0x01 key with the block yielding the same output data.
+        // We assume identical offsets yield identical data which allow us simpler data streaming.
         try {
             logger.trace("<< apply() - InputStream: {}", inputStream);
 
             Map<ChunkReference, Chunk> chunks = new HashMap<>();
             List<ChunkInfo> list = container.getChunkInfoList();
-            for (int i = 0, n = list.size(); i < n; i++) {
+            for (int i = 0, offset = 0, n = list.size(); i < n; i++) {
                 ChunkInfo chunkInfo = list.get(i);
+                int chunkOffset = chunkInfo.getChunkOffset();
+                if (chunkOffset > offset) {
+                    logger.warn("-- apply() - bad offset");
+                    break;
+                } else if (chunkOffset != offset) {
+                    logger.debug("-- apply() - duplicate offset chunkInfo: {}", chunkInfo);
+                    continue;
+                }
+                offset += chunkInfo.getChunkLength();
                 ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
                 chunk(inputStream, chunkInfo).ifPresent(u -> chunks.put(chunkReference, u));
             }
@@ -106,10 +118,10 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
         byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
         Optional<Chunk> chunk = store.chunk(checksum);
         if (chunk.isPresent()) {
-            logger.debug("-- chunk() - chunk present in store: 0x:{}", Hex.toHexString(checksum));
+            logger.debug("-- chunk() - chunk present in store: 0x{}", Hex.toHexString(checksum));
             return chunk;
         }
-        logger.debug("-- chunk() - chunk not present in store: 0x:{}", Hex.toHexString(checksum));
+        logger.debug("-- chunk() - chunk not present in store: 0x{}", Hex.toHexString(checksum));
         byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
         return decrypt(bis, chunkEncryptionKey, checksum);
     }

@@ -69,6 +69,7 @@ public final class ArgsFactory {
         args.add(filterStatusMin());
         args.add(filterStatusMax());
         args.add(mode());
+        args.add(threads());
         args.add(snapshots());
         args.add(domains());
         args.add(token());
@@ -100,7 +101,7 @@ public final class ArgsFactory {
         Option option = Option.builder("d")
                 .longOpt("device")
                 .desc("Device filter/s. Leave empty to select all devices/ disable user selection.")
-                .argName("id")
+                .argName("id/s")
                 .hasArgs()
                 .optionalArg(true)
                 .build();
@@ -233,6 +234,16 @@ public final class ArgsFactory {
                 .hasArg(false)
                 .build();
         return new Arg(Property.PRINT_DOMAIN_LIST, option, ArgsFactory::mapToLowerCase);
+    }
+
+    static Arg threads() {
+        Option option = Option.builder()
+                .longOpt("threads")
+                .desc("Number of concurrent download threads." + defaultValue(Property.THREADS))
+                .argName("int")
+                .hasArgs()
+                .build();
+        return new Arg(Property.THREADS, option, ArgsFactory::mapNumber);
     }
 
     static Arg token() {

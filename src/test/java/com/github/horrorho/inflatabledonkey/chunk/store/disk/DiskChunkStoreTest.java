@@ -44,6 +44,7 @@ import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,6 +80,7 @@ public class DiskChunkStoreTest {
     private static final Path TEMP = BASE.resolve("testDiskChunkStore").resolve("temp");
     private static final Path CACHE = BASE.resolve("testDiskChunkStore").resolve("cache");
 
+    @Ignore
     @Test
     @Parameters
     public void test(byte[] data) throws IOException {

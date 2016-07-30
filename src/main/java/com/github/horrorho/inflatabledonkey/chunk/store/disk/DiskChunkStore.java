@@ -80,8 +80,8 @@ public final class DiskChunkStore implements ChunkStore {
         this.lock = Objects.requireNonNull(lock);
         this.digests = Objects.requireNonNull(digests);
         this.testDigest = Objects.requireNonNull(testDigest);
-        this.chunkFolder = Objects.requireNonNull(chunkFolder.normalize().toAbsolutePath());
-        this.tempFolder = Objects.requireNonNull(tempFolder.normalize().toAbsolutePath());
+        this.chunkFolder = chunkFolder.normalize().toAbsolutePath();
+        this.tempFolder = tempFolder.normalize().toAbsolutePath();
     }
 
     public DiskChunkStore(Supplier<Digest> digests, BiPredicate<byte[], byte[]> testDigest, Path chunkFolder,

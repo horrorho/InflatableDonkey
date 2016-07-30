@@ -23,8 +23,12 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
+import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
@@ -43,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,13 +91,9 @@ public class Main {
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
-        System.out.println("    --mode CBC");
-        System.out.println("or");
-        System.out.println("    --mode XTS");
-        System.out.println("");
-
+        System.out.println("    --mode CBC  OR  --mode XTS");
         // SystemDefault HttpClient.
-        // TODO concurrent, close
+        // TODO close
 //        CloseableHttpClient httpClient = HttpClients.custom()
 //                .setUserAgent("CloudKit/479 (13A404)")
 //                .setRedirectStrategy(new LaxRedirectStrategy())
@@ -147,7 +148,7 @@ public class Main {
         Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
-        System.out.println("Output folder: " + assetOutputFolder.toAbsolutePath());
+        System.out.println("\nOutput folder: " + assetOutputFolder.toAbsolutePath());
 
         // TODO automatic decrypt mode
         Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
@@ -166,15 +167,35 @@ public class Main {
         // Retrieve snapshots.
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);
 
+        System.out.println("");
         if (deviceSnapshots.isEmpty()) {
             System.out.println("No devices/ snapshots.");
             return;
         }
 
         // Filter snapshots.
-        Map<Device, ? extends Collection<Snapshot>> filtered
-                = XFilter.apply(Property.FILTER_DEVICE.asList(), Property.FILTER_SNAPSHOT.asList(Integer::parseInt))
-                .apply(deviceSnapshots);
+        Optional<List<String>> filterDevices = Property.FILTER_DEVICE.asList();
+        Optional<List<Integer>> filterSnapshots = Property.FILTER_SNAPSHOT.asList(Integer::parseInt);
+        final Map<Device, List<Snapshot>> filtered;
+        if (filterDevices.isPresent() || filterSnapshots.isPresent()) {
+            System.out.println("Available:");
+            print(deviceSnapshots);
+
+            String cliFilters = "\nFilter -> ";
+            String cliFilterDevices = Property.FILTER_DEVICE.value().orElse("");
+            if (cliFilterDevices.isEmpty()) {
+                cliFilterDevices = "ALL";
+            }
+            cliFilters += " devices: " + cliFilterDevices;
+
+            cliFilters += Property.FILTER_SNAPSHOT.value().map(u -> " snapshots: " + u).orElse("");
+            System.out.println(cliFilters);
+            filtered = new ArgsSelector(filterDevices.orElseGet(Collections::emptyList), filterSnapshots.orElseGet(Collections::emptyList))
+                    .apply(deviceSnapshots);
+        } else {
+            filtered = UserSelector.instance()
+                    .apply(deviceSnapshots);
+        }
 
         filtered.forEach((device, snapshots) -> {
             logger.info("-- main() - selected device: {}", device.info());
@@ -183,20 +204,13 @@ public class Main {
         });
 
         if (filtered.isEmpty()) {
-            System.out.println("Nothing selected.");
-            System.exit(0);
+            System.out.println("\nNothing selected.");
+            return;
         }
 
-        System.out.println("\nSelection:");
-        filtered.entrySet()
-                .stream()
-                .map(u -> {
-                    System.out.println("DEVICE - " + u.getKey().info());
-                    return u.getValue();
-                })
-                .flatMap(Collection::stream)
-                .map(Snapshot::info)
-                .forEach(u -> System.out.println("  SNAPSHOT - " + u));
+        System.out.println("\nSelected:");
+        print(filtered);
+        System.out.println("");
 
         // Print snapshots option.
         if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
@@ -205,7 +219,7 @@ public class Main {
 
         // Print domain list option.
         if (Property.PRINT_DOMAIN_LIST.asBoolean().orElse(false)) {
-            backup.printDomainList(httpClient, deviceSnapshots);
+            backup.printDomainList(httpClient, filtered);
             return;
         }
 
@@ -221,6 +235,17 @@ public class Main {
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
         backup.download(httpClient, filtered, assetsFilter, assetFilter);
+    }
+
+    static void print(Map<Device, List<Snapshot>> deviceSnapshot) {
+        deviceSnapshot.entrySet()
+                .stream()
+                .map(u -> {
+                    System.out.println("DEVICE: " + u.getKey().info());
+                    return u.getValue();
+                })
+                .flatMap(Collection::stream)
+                .forEach(u -> System.out.println("  SNAPSHOT: " + u.info()));
     }
 }
 

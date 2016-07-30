@@ -62,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
 
 /**
  *
@@ -100,6 +101,7 @@ public class ChunkListDecrypterTest {
             .setScheme("http")
             .build();
 
+    @Ignore
     @Test
     @Parameters
     public void test(List<ChunkListDecrypterTestVector> vectors) throws IOException {
@@ -156,7 +158,7 @@ public class ChunkListDecrypterTest {
             Arrays.asList(VECTOR_FAIL_KEY, VECTOR_1),
             Arrays.asList(VECTOR_FAIL_CHECKSUM, VECTOR_1),
             Arrays.asList(VECTOR_1, VECTOR_5, VECTOR_FAIL_KEY, VECTOR_6, VECTOR_6,
-                VECTOR_FAIL_CHECKSUM, VECTOR_5, VECTOR_1)
+            VECTOR_FAIL_CHECKSUM, VECTOR_5, VECTOR_1)
         };
     }
 

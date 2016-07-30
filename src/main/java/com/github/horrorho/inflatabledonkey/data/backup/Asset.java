@@ -183,7 +183,7 @@ public final class Asset extends AbstractRecord {
     public String toString() {
         return "Asset{"
                 + "assetID=" + assetID
-                + "protectionClass=" + protectionClass
+                + ",protectionClass=" + protectionClass
                 + ", size=" + size
                 + ", fileType=" + fileType
                 + ", downloadTokenExpiration=" + downloadTokenExpiration

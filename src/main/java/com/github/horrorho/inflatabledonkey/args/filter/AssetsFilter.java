@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey;
+package com.github.horrorho.inflatabledonkey.args.filter;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import java.util.ArrayList;
@@ -43,25 +43,25 @@ public final class AssetsFilter implements Predicate<Assets> {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetsFilter.class);
 
-    private final Optional<List<String>> domain;
+    private final Optional<List<String>> domains;
 
-    public AssetsFilter(Optional<? extends Collection<String>> domain) {
-        this.domain = domain.map(ArrayList::new);
+    public AssetsFilter(Optional<? extends Collection<String>> domains) {
+        this.domains = domains.map(ArrayList::new);
     }
 
     @Override
     public boolean test(Assets asset) {
         return Optional.of(asset.domain()) // TOFIX if Asset#domain() isn't altered to Optional
-                .map(t -> t.toLowerCase(Locale.US))
-                .map(t -> domain.map(us -> us.stream().anyMatch(u -> t.contains(u))).orElse(true))
+                .map(u -> u.toLowerCase(Locale.US))
+                .map(u -> domains.map(vs -> vs.stream().anyMatch(v -> u.contains(v))).orElse(true))
                 .orElseGet(() -> {
-                    logger.debug("-- filterDomain() - no domain: {}", asset);
+                    logger.debug("-- test() - no domain: {}", asset);
                     return false;
                 });
     }
 
     @Override
     public String toString() {
-        return "AssetsFilter{" + "domain=" + domain + '}';
+        return "AssetsFilter{" + "domains=" + domains + '}';
     }
 }

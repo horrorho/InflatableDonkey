@@ -64,15 +64,15 @@ import org.slf4j.LoggerFactory;
  */
 @Immutable
 public final class Backup {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(Backup.class);
     private static final long BATCH_SIZE = 32 * 1024 * 1024;
     private static final int DEFAULT_THREADS = 1;
-    
+
     private final BackupAssistant backupAssistant;
     private final DownloadAssistant downloadAssistant;
     private final ForkJoinPool forkJoinPool;
-    
+
     public Backup(
             BackupAssistant backupAssistant,
             DownloadAssistant downloadAssistant,
@@ -81,11 +81,11 @@ public final class Backup {
         this.downloadAssistant = Objects.requireNonNull(downloadAssistant, "downloadAssistant");
         this.forkJoinPool = forkJoinPool.orElseGet(() -> new ForkJoinPool(DEFAULT_THREADS));
     }
-    
+
     public Backup(BackupAssistant backupAssistant, DownloadAssistant downloadAssistant) {
         this(backupAssistant, downloadAssistant, Optional.empty());
     }
-    
+
     public Map<Device, List<Snapshot>> snapshots(HttpClient httpClient) throws IOException {
         Optional<BackupAccount> backupAccount = backupAssistant.backupAccount(httpClient);
         logger.debug("-- snapshots() - backup account: {}", backupAccount);
@@ -93,16 +93,16 @@ public final class Backup {
             System.out.println("No iOS9 backups found. InflatableDonkey does not recover iOS8 or earlier backups.");
             return Collections.emptyMap();
         }
-        
+
         List<Device> devices = backupAssistant.devices(httpClient, backupAccount.get().devices());
         logger.debug("-- snapshots() - device count: {}", devices.size());
-        
+
         Map<Device, List<Snapshot>> snapshots = backupAssistant.deviceSnapshots(httpClient, devices);
         logger.debug("-- snapshots() - snapshot count: {}", snapshots.values().size());
-        
+
         return snapshots;
     }
-    
+
     public void download(
             HttpClient httpClient,
             Map<Device, ? extends Collection<Snapshot>> snapshots,
@@ -113,21 +113,17 @@ public final class Backup {
         // TODO rework once we have UncheckedIOExceptions
         for (Map.Entry<Device, ? extends Collection<Snapshot>> deviceSnapshot : snapshots.entrySet()) {
             Device device = deviceSnapshot.getKey();
-            
+
             for (Snapshot snapshot : deviceSnapshot.getValue()) {
-                download(httpClient, device, snapshot, assetsFilter, assetFilter);
+                downloadSnapshot(httpClient, device, snapshot, assetsFilter, assetFilter);
             }
         }
     }
-    
-    public void download(
-            HttpClient httpClient,
-            Device device,
-            Snapshot snapshot,
-            Predicate<Assets> assetsFilter,
-            Predicate<Asset> assetFilter
-    ) throws IOException {
 
+    public void downloadSnapshot(HttpClient httpClient, Device device, Snapshot snapshot,
+            Predicate<Assets> assetsFilter, Predicate<Asset> assetFilter) throws IOException {
+        System.out.println("Retrieving snapshot: " + snapshot.info());
+        System.out.println("");
         // Asset list.
         List<Assets> assetsList = backupAssistant.assetsList(httpClient, snapshot);
         logger.debug("-- download() - assets count: {}", assetsList.size());
@@ -147,24 +143,24 @@ public final class Backup {
                 .map(u -> u.nonEmpty()) // TODO handle empty assets at some point
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
-                
+
         List<List<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
-        doDownloads(httpClient, batches, assetFilter, relativePath);
+        downloadAssets(httpClient, batches, assetFilter, relativePath);
     }
-    
-    void doDownloads(HttpClient httpClient, List<List<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
+
+    void downloadAssets(HttpClient httpClient, List<List<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
             throws UncheckedIOException {
         try {
             forkJoinPool
                     .submit(() -> batches
                             .parallelStream()
-                            .forEach(u -> doDownload(httpClient, u, assetFilter, relativePath)))
+                            .forEach(u -> downloadBatch(httpClient, u, assetFilter, relativePath)))
                     .get();
-            
+
         } catch (InterruptedException ex) {
             logger.warn("-- doDownloads() - InterruptedException: {}", ex.getMessage());
             Thread.currentThread().interrupt();
-            
+
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof UncheckedIOException) {
@@ -173,8 +169,8 @@ public final class Backup {
             throw new RuntimeException(ex);
         }
     }
-    
-    void doDownload(HttpClient httpClient, List<AssetID> batch, Predicate<Asset> assetFilter, Path relativePath)
+
+    void downloadBatch(HttpClient httpClient, List<AssetID> batch, Predicate<Asset> assetFilter, Path relativePath)
             throws UncheckedIOException {
         logger.trace("<< doDownload() - batch: {}", batch);
         // TODO re-authorize time expired tokens.
@@ -186,7 +182,7 @@ public final class Backup {
         downloadAssistant.download(httpClient, assetList, relativePath);
         logger.trace(">> doDownload()");
     }
-    
+
     List<List<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
         List<List<AssetID>> lists = new ArrayList<>();
         Iterator<AssetID> it = assetIDs.iterator();
@@ -203,7 +199,7 @@ public final class Backup {
         }
         return lists;
     }
-    
+
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {
         // TODO if consistent can pull out device hash from snapshot backupProperties
         if (!device.snapshotIDs().contains(snapshot.snapshotID())) {
@@ -214,10 +210,10 @@ public final class Backup {
                 .orElse(snapshot.modification());
         LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
         String date = DateTimeFormatter.BASIC_ISO_DATE.format(ldt);
-        
+
         return Paths.get(device.deviceID().hash().toUpperCase(Locale.US)).resolve(date);
     }
-    
+
     public void printDomainList(HttpClient httpClient, Map<Device, ? extends Collection<Snapshot>> snapshots)
             throws IOException {
         // TODO rework once we have UncheckedIOExceptions
@@ -228,7 +224,7 @@ public final class Backup {
             }
         }
     }
-    
+
     public void printDomainList(HttpClient httpClient, Device device, Snapshot snapshot)
             throws IOException {
         // Asset list.
@@ -239,7 +235,7 @@ public final class Backup {
         System.out.println("Device: " + device.info());
         System.out.println("Snapshot: " + snapshot.info());
         System.out.println("Domains / file count:");
-        
+
         assetsList.stream()
                 .map(a -> a.domain() + " / " + a.assets().size())
                 .sorted()
