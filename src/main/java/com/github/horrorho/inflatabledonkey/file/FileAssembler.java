@@ -101,7 +101,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
-        String info = asset.domain().orElse("") + asset.relativePath().orElse("");
+        String info = asset.domain().orElse("") + " " + asset.relativePath().orElse("");
         return asset.encryptionKey()
                 .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum()))
                 .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum()));
