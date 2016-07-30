@@ -1,16 +1,8 @@
-**Update**, 27 July 2016. 
+**Update**, 30 July 2016. 
 
-Oooops! Sorry I stuffed up and pushed a broken build, issues [17](https://github.com/horrorho/InflatableDonkey/issues/17#issuecomment-234953968) and [20](https://github.com/horrorho/InflatableDonkey/issues/20). I've updated the working tree. I was testing on a cached backup, so I missed it and I now feel like a rather silly cow.
+Finally! The reworked and simplified download engine. Multi-threaded support is now enabled by default (x4 threads) which should increase download speeds. I've also tidied up the output so that it behaves more like a respectable tool and less like a warped experiment (which it probably still is).
 
-I'm currently re-coding the download engine which is a mess to be honest and difficult to test. I'm about 90% of the way through, but I won't be able to finish it until next week or so when I have more free time.
-
-**Update**, 24 July 2016. 
-
-I've ported over the [LiquidDonkey](https://github.com/horrorho/LiquidDonkey) selection/ filtering code. I haven't had a chance to fully test all of the parameters.
-
-Concurrent downloads have been enabled, but the thread count is set to one until I've had a chance to test it. You can change the THREADS [Property](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/java/com/github/horrorho/inflatabledonkey/args/Property.java) if you want to play with it. Concurrency can be a nightmare, but from day one I've written the code with concurrency in mind. I'm sure some of you have noticed the heavy functional style and immutability. So hopefully any bugs will be relatively minor.
-
-The error output probably needs attention. I know what the various errors mean but for more normal people it's probably an issue. However, at it's heart it's still a development tool that's aided me in unravelling the recovery process. With full trace [logging](https://github.com/horrorho/InflatableDonkey/blob/master/src/main/resources/logback.xml) enabled, it doesn't just download files, it shows you how it's downloading those files.
+Most of the code base should now be easier to understand. The crypto code might cause some eye bleeding, but I've tried to provide references for the algorithms in use. Please ticket any requests for code clarification.
 
 
 ### What is it?
