@@ -67,7 +67,7 @@ public final class DiskChunkStore implements ChunkStore {
     private final Path chunkFolder;
     private final Path tempFolder;
 
-    public DiskChunkStore(Object lock, Supplier<Digest> digests, BiPredicate<byte[], byte[]> testDigest,
+    DiskChunkStore(Object lock, Supplier<Digest> digests, BiPredicate<byte[], byte[]> testDigest,
             Path chunkFolder, Path tempFolder) throws IOException {
         if (!DirectoryAssistant.create(chunkFolder)) {
             throw new IOException("DiskChunkStore failed to create chunk folder: "
