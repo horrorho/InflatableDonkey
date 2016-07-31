@@ -80,9 +80,9 @@ public final class ProcessManager implements BiFunction<String, InputStream, Opt
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            Thread copy = new Thread(() -> copy(in, decoderOut));
+            Thread write = new Thread(() -> copy(in, decoderOut));
             Thread read = new Thread(() -> copy(decoderIn, out));
-            copy.start();
+            write.start();
             read.start();
 
             if (!process.waitFor(timeoutMS, TimeUnit.MILLISECONDS)) {
