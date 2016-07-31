@@ -23,8 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.exception;
 
-import java.util.Objects;
-
 /**
  * UncheckedInterruptedException.
  *

@@ -44,14 +44,8 @@ public class XTSAESBlockCipher implements BlockCipher {
     private long dataUnit;
     private int index;
 
-    XTSAESBlockCipher(
-            XTSCore core,
-            int blockSize,
-            int dataUnitSize,
-            long dataUnit,
-            int index) {
-
-        this.core = Objects.requireNonNull(core, "core");
+    XTSAESBlockCipher(XTSCore core, int blockSize, int dataUnitSize, long dataUnit, int index) {
+        this.core = Objects.requireNonNull(core);
         this.blockSize = blockSize;
         this.dataUnitSize = dataUnitSize;
         this.dataUnit = dataUnit;
@@ -92,16 +86,13 @@ public class XTSAESBlockCipher implements BlockCipher {
     @Override
     public int processBlock(byte[] in, int inOff, byte[] out, int outOff)
             throws DataLengthException, IllegalStateException {
-
         if (index == 0) {
             core.reset(dataUnit);
         }
-
         if ((index += blockSize) == dataUnitSize) {
             dataUnit++;
             index = 0;
         }
-
         return core.processBlock(in, inOff, out, outOff);
     }
 

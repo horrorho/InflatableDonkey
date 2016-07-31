@@ -74,35 +74,27 @@ public class XTSAESCipher {
 
     public int processDataUnit(byte[] in, int inOff, int length, byte[] out, int outOff, long sequenceNumber)
             throws DataLengthException, IllegalStateException {
-
         core.reset(sequenceNumber);
         return process(in, inOff, length, out, outOff);
     }
 
     int process(byte[] in, int inOff, int length, byte[] out, int outOff)
             throws DataLengthException, IllegalStateException {
-
         if (length < blockSize) {
             throw new DataLengthException("data unit size too small: " + length);
         }
-
         if (inOff + length > in.length) {
             throw new DataLengthException("input buffer too small for data unit size: " + length);
         }
-
         if (outOff + length > out.length) {
             throw new DataLengthException("output buffer too small for data unit size: " + length);
         }
-
-        int to = length % blockSize == 0
-                ? length
-                : length - (blockSize * 2);
+        int to = length % blockSize == 0 ? length : length - (blockSize * 2);
 
         int i;
         for (i = 0; i < to; i += blockSize) {
             core.processBlock(in, inOff + i, out, outOff + i);
         }
-
         if (length > i) {
             core.processPartial(in, inOff + i, out, outOff + i, length - i);
         }

@@ -45,8 +45,8 @@ class XTSCore {
     private boolean forEncryption;
 
     XTSCore(BlockCipher cipher, XTSTweak tweak) {
-        this.cipher = Objects.requireNonNull(cipher, "cipher");
-        this.tweak = Objects.requireNonNull(tweak, "tweak");
+        this.cipher = Objects.requireNonNull(cipher);
+        this.tweak = Objects.requireNonNull(tweak);
     }
 
     XTSCore(XTSTweak tweak) {
@@ -62,7 +62,6 @@ class XTSCore {
         if (k.length != 32 && k.length != 64) {
             throw new IllegalArgumentException("bad key length: " + k.length);
         }
-
         byte[] key1 = Arrays.copyOfRange(k, 0, k.length / 2);
         byte[] key2 = Arrays.copyOfRange(k, k.length / 2, k.length);
 
@@ -98,7 +97,6 @@ class XTSCore {
 
     int doProcessBlock(byte[] in, int inOff, byte[] out, int outOff, byte[] tweakValue)
             throws DataLengthException, IllegalStateException {
-
         merge(in, inOff, out, outOff, tweakValue);
         cipher.processBlock(out, outOff, out, outOff);
         merge(out, outOff, out, outOff, tweakValue);
@@ -115,31 +113,25 @@ class XTSCore {
         if (length <= BLOCK_SIZE) {
             throw new DataLengthException("input buffer too small/ missing last two blocks: " + length);
         }
-
         if (length >= BLOCK_SIZE * 2) {
             throw new DataLengthException("input buffer too large/ non-partial final block: " + length);
         }
-
         byte[] tweakA = tweak.value();
         byte[] tweakB = tweak.next().value();
-
         return forEncryption
-                ? XTSCore.this.doProcessPartial(in, inOff, out, outOff, length, tweakA, tweakB)
-                : XTSCore.this.doProcessPartial(in, inOff, out, outOff, length, tweakB, tweakA);
+                ? doProcessPartial(in, inOff, out, outOff, length, tweakA, tweakB)
+                : doProcessPartial(in, inOff, out, outOff, length, tweakB, tweakA);
     }
 
     int doProcessPartial(byte[] in, int inOff, byte[] out, int outOff, int length, byte[] tweakA, byte[] tweakB)
             throws DataLengthException, IllegalStateException {
         // M-1 block
         doProcessBlock(in, inOff, out, outOff, tweakA);
-
         // Cipher stealing
         byte[] buffer = Arrays.copyOfRange(out, outOff, outOff + BLOCK_SIZE);
         System.arraycopy(in, inOff + BLOCK_SIZE, buffer, 0, length - BLOCK_SIZE);
-
         // M block
         doProcessBlock(buffer, 0, buffer, 0, tweakB);
-
         // Copy blocks
         System.arraycopy(out, outOff, out, outOff + BLOCK_SIZE, length - BLOCK_SIZE);
         System.arraycopy(buffer, 0, out, outOff, BLOCK_SIZE);

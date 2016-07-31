@@ -55,9 +55,9 @@ class XTSTweak {
     private final byte[] tweak;
 
     XTSTweak(BlockCipher cipher, LongFunction<byte[]> tweakFunction, byte[] tweak) {
-        this.cipher = Objects.requireNonNull(cipher, "cipher");
-        this.tweakFunction = Objects.requireNonNull(tweakFunction, "tweakFunction");
-        this.tweak = Objects.requireNonNull(tweak, "tweak");
+        this.cipher = Objects.requireNonNull(cipher);
+        this.tweakFunction = Objects.requireNonNull(tweakFunction);
+        this.tweak = Objects.requireNonNull(tweak);
 
         if (cipher.getBlockSize() != BLOCK_SIZE) {
             throw new IllegalArgumentException("bad block size: " + cipher.getBlockSize());
@@ -97,14 +97,9 @@ class XTSTweak {
     XTSTweak next() {
         long lo = Pack.littleEndianToLong(tweak, 0);
         long hi = Pack.littleEndianToLong(tweak, 8);
-
-        long fdbk = (hi & MSB) == 0
-                ? 0L
-                : FDBK;
-
+        long fdbk = (hi & MSB) == 0 ? 0L : FDBK;
         hi = (hi << 1) | (lo >>> 63);
         lo = (lo << 1) ^ fdbk;
-
         Pack.longToLittleEndian(lo, tweak, 0);
         Pack.longToLittleEndian(hi, tweak, 8);
         return this;
