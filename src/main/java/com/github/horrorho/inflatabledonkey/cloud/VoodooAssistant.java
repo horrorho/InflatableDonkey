@@ -56,6 +56,14 @@ public final class VoodooAssistant {
     private interface KeyConverter extends Function<byte[], Optional<byte[]>> {
     }
 
+    /**
+     * Returns a new Voodoo with ChunkServer.ChunkInfo encryption keys converted to type 0x01 from type 0x02.
+     *
+     * @param voodoo
+     * @param chunkEncryptionKeyConverter
+     * @param fileSignatureToKeyEncryptionKey
+     * @return
+     */
     public static Voodoo convertChunkEncryptionKeys(
             Voodoo voodoo,
             ChunkEncryptionKeyConverter<byte[]> chunkEncryptionKeyConverter,
@@ -73,13 +81,11 @@ public final class VoodooAssistant {
         return new Voodoo(indexToSHCL, voodoo.fileSignatureToChunkReferences());
     }
 
-    static StorageHostChunkList
-            unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Collection<Integer> chunks) {
+    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Collection<Integer> chunks) {
         return unwrapKeys(shcl, unwrap, new HashSet<>(chunks));
     }
 
-    static StorageHostChunkList
-            unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Set<Integer> chunks) {
+    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Set<Integer> chunks) {
         StorageHostChunkList.Builder builder = shcl.toBuilder();
         if (logger.isDebugEnabled()) {
             List<Integer> bad = chunks.stream()
@@ -98,7 +104,10 @@ public final class VoodooAssistant {
     static ChunkInfo unwrapKey(KeyConverter unwrap, ChunkInfo chunkInfo) {
         return unwrap.apply(chunkInfo.getChunkEncryptionKey().toByteArray())
                 .map(ByteString::copyFrom)
-                .map(u -> chunkInfo.toBuilder().setChunkEncryptionKey(u).build())
+                .map(u -> chunkInfo
+                        .toBuilder()
+                        .setChunkEncryptionKey(u)
+                        .build())
                 .orElseGet(() -> {
                     logger.warn("-- unwrapKey() - chunk encryption key unwrap failed: {}", chunkInfo.getChunkChecksum());
                     return chunkInfo.toBuilder().clearChunkEncryptionKey().build();
@@ -106,8 +115,7 @@ public final class VoodooAssistant {
     }
 
     static Map<Integer, List<Integer>>
-            containerChunkList(List<ChunkReference> chunkReferences,
-                    Map<Integer, StorageHostChunkList> indexToSHCL) {
+            containerChunkList(List<ChunkReference> chunkReferences, Map<Integer, StorageHostChunkList> indexToSHCL) {
         return chunkReferences
                 .stream()
                 .filter(cr -> {
