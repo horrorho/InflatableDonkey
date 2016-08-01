@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Fetches, orders and decrypts chunk data from the server.
  *
  * @author Ahseya
  */
@@ -73,45 +74,94 @@ public final class ChunkClient {
     public Optional<Map<ChunkReference, Chunk>>
             apply(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
             throws IOException {
-                
-        Optional<Map<ChunkReference, Chunk>> stored = stored(store, container, containerIndex);
+
+        Optional<Map<ChunkReference, Chunk>> stored = storedChunks(store, container, containerIndex);
         if (stored.isPresent()) {
-            logger.debug("-- apply() - not downloading, all chunks are available in the store");
             return stored;
         }
-        
+
         return fetch(client, store, container, containerIndex);
     }
 
-    public Optional<Map<ChunkReference, Chunk>>
+    Optional<Map<ChunkReference, Chunk>>
             fetch(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
             throws IOException {
-                
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, container, containerIndex);
-        
-        InputStreamResponseHandler<Map<ChunkReference, Chunk>> handler
-                = new InputStreamResponseHandler<>(decrypter);
-        
+
+        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, removeDuplicates(container), containerIndex);
+        InputStreamResponseHandler<Map<ChunkReference, Chunk>> handler = new InputStreamResponseHandler<>(decrypter);
         HttpUriRequest request = requestFactory.apply(container.getHostInfo());
         Map<ChunkReference, Chunk> chunks = client.execute(request, handler);
 
         return Optional.of(chunks);
     }
 
-    Optional<Map<ChunkReference, Chunk>>
-            stored(ChunkStore store, StorageHostChunkList container, int containerIndex) {
+    StorageHostChunkList removeDuplicates(StorageHostChunkList container) {
+        // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
+        // keys should unwrap to the same 0x01 key with the block yielding the same output data.
+        if (container.getChunkInfoCount() < 2) {
+            return container;
+        }
+
         List<ChunkInfo> list = container.getChunkInfoList();
-        
+        StorageHostChunkList.Builder builder = container.toBuilder().clearChunkInfo();
+
+        ChunkInfo prior = list.get(0);
+        for (int i = 1, n = list.size(); i < n; i++) {
+            ChunkInfo chunkInfo = list.get(i);
+            if (chunkInfo.getChunkOffset() == prior.getChunkOffset()) {
+                prior = merge(prior, chunkInfo);
+            } else {
+                builder.addChunkInfo(prior);
+                prior = chunkInfo;
+            }
+        }
+        builder.addChunkInfo(prior);
+
+        return builder.build();
+    }
+
+    ChunkInfo merge(ChunkInfo a, ChunkInfo b) {
+        int aType = ChunkKeys.keyType(a.getChunkEncryptionKey().toByteArray()).orElse(-1);
+        int bType = ChunkKeys.keyType(b.getChunkEncryptionKey().toByteArray()).orElse(-1);
+
+        if (aType == 0x01 && bType == 0x01) {
+            if (!a.getChunkEncryptionKey().equals(b.getChunkEncryptionKey())
+                    || !a.getChunkChecksum().equals(b.getChunkChecksum())) {
+                // Data corruption/ probably code failure.
+                // We'll return the first option based on the reasonable chance (50%) that it may be correct.
+                logger.warn("-- merge() - incongruent chunks: {} {}", a, b);
+            } else {
+                logger.debug("-- merge() - merged: {} {}", a, b);
+            }
+            return a;
+        }
+        if (aType == 0x01) {
+            logger.debug("-- merge() - non 0x01 chunk encryption key type: {}", b);
+            return a;
+        }
+        if (bType == 0x01) {
+            logger.debug("-- merge() - non 0x01 chunk encryption key type: {}", a);
+            return b;
+        }
+        logger.debug("-- merge() - non 0x01 chunk encryption key types: {} {}", a, b);
+        return a;
+    }
+
+    Optional<Map<ChunkReference, Chunk>>
+            storedChunks(ChunkStore store, StorageHostChunkList container, int containerIndex) {
+        List<ChunkInfo> list = container.getChunkInfoList();
+
         Map<ChunkReference, Chunk> map = new HashMap<>();
         for (int i = 0, n = list.size(); i < n; i++) {
             Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
             if (!chunk.isPresent()) {
-                logger.debug("-- stored() - not all chunks present in the store");
+                logger.debug("-- storedChunks() - not all chunks present in store");
                 return Optional.empty();
             }
             ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
             map.put(chunkReference, chunk.get());
         }
+        logger.debug("-- storedChunks() - all chunks present in store");
         return Optional.of(map);
     }
 }

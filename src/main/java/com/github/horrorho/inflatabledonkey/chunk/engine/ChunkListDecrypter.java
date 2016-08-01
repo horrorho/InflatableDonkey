@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Decrypts storage host chunk list streams. Limited to type 0x01 chunk decryption.
+ * Decrypts storage host chunk list streams. Limited to contiguous chunk blocks and type 0x01 chunk decryption.
  *
  * @author Ahseya
  */
@@ -72,9 +72,6 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
 
     @Override
     public Map<ChunkReference, Chunk> apply(InputStream inputStream) throws IOException {
-        // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
-        // keys should unwrap to the same 0x01 key with the block yielding the same output data.
-        // We assume identical offsets yield identical data which allow us simpler data streaming.
         try {
             logger.trace("<< apply() - InputStream: {}", inputStream);
 
@@ -82,13 +79,8 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
             List<ChunkInfo> list = container.getChunkInfoList();
             for (int i = 0, offset = 0, n = list.size(); i < n; i++) {
                 ChunkInfo chunkInfo = list.get(i);
-                int chunkOffset = chunkInfo.getChunkOffset();
-                if (chunkOffset > offset) {
-                    logger.warn("-- apply() - bad offset");
-                    break;
-                } else if (chunkOffset != offset) {
-                    logger.debug("-- apply() - duplicate offset chunkInfo: {}", chunkInfo);
-                    continue;
+                if (chunkInfo.getChunkOffset() != offset) {
+                    throw new IOException("bad chunk offset data");
                 }
                 offset += chunkInfo.getChunkLength();
                 ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
