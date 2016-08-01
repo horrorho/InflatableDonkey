@@ -82,6 +82,7 @@ public final class KeyBagManager {
     }
 
     public KeyBagManager update(HttpClient httpClient, List<Asset> assets) {
+        // Although we lock the map for a good number of seconds to fetch a new key bag, it's a rare event.
         keyBagUUIDs(assets)
                 .forEach(uuid -> keyBagMap.computeIfAbsent(uuid, u -> fetchKeyBag(httpClient, u)));
         return this;
