@@ -23,14 +23,20 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
+import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -63,21 +69,44 @@ public final class DownloadAssistant {
         this.folder = Objects.requireNonNull(folder, "folder");
     }
 
-    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) {
-        if (assets.isEmpty()) {
-            return;
-        }
-
+    public void download(HttpClient httpClient, Set<Asset> assets, Path relativePath) {
+        logger.trace("<< download() - assets: {}", assets.size());
         Path outputFolder = folder.resolve(relativePath);
-
         keyBagManager.update(httpClient, assets);
-
         XFileKeyFactory fileKeys = new XFileKeyFactory(keyBagManager::keyBag);
         FileAssembler fileAssembler = new FileAssembler(fileKeys, outputFolder);
 
-        authorizeAssets.apply(httpClient, assets)
-                .ifPresent(u -> assetDownloader.accept(httpClient, u, fileAssembler));
+        Set<Asset> remaining = new HashSet<>(assets);
+        while (!remaining.isEmpty()) {
+            Optional<AuthorizedAssets> authorized = authorizeAssets.apply(httpClient, remaining);
+            if (!authorized.isPresent()) {
+                logger.warn("-- download() - failed to authorize assets");
+                return;
+            }
+            Set<Asset> attempted = doDownload(httpClient, authorized.get(), fileAssembler);
+            remaining.removeAll(attempted);
+        }
+        logger.trace(">> download()");
+    }
 
+    Set<Asset> doDownload(HttpClient httpClient, AuthorizedAssets authorized, FileAssembler assembler) {
+        logger.trace("<< doDownload() - authorized: {}", authorized.size());
+        // Here we attempt each file once. We leave SHCL container retries to the http client retry handler.
+        // Occasionally data servers report internal errors or are offline.
+        Set<Asset> attempted = new HashSet<>();
+        BiConsumer<Asset, Optional<List<Chunk>>> consumer
+                = (asset, chunks) -> {
+                    attempted.add(asset);
+                    assembler.accept(asset, chunks);
+                };
+
+        try {
+            assetDownloader.accept(httpClient, authorized, consumer);
+        } catch (IllegalStateException ex) {
+            // Consider creating a more specific exception for time expiration.
+            logger.debug("-- doDownload() - IllegalStateException: ", ex);
+        }
+        logger.trace(">> doDownload() - attempted: {}", attempted.size());
+        return attempted;
     }
 }
-// TODO time expiration tokens

@@ -96,7 +96,7 @@ public class HookInputStream<T extends InputStream> extends InputStream {
             callback.accept(inputStream);
 
         } catch (IOException ex) {
-            logger.warn("-- close() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            logger.debug("-- close() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
             throw ex;
         }
     }

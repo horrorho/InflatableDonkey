@@ -45,6 +45,8 @@ public class AuthorizeAssetsResponseHandler extends DonkeyResponseHandler<ChunkS
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssetsResponseHandler.class);
 
+    private static final long FALLBACK_DURATION_MS = 30 * 60 * 1000;    // TODO inject
+
     private final IOFunction<InputStream, ChunkServer.FileGroups> parser;
     private final long timestampTolerance;
 
@@ -95,6 +97,11 @@ public class AuthorizeAssetsResponseHandler extends DonkeyResponseHandler<ChunkS
     }
 
     ChunkServer.StorageHostChunkList adjustExpiryTimestamp(ChunkServer.StorageHostChunkList container, long offset) {
+        if (!container.getHostInfo().hasExpiry()) {
+            // Shouldn't happen, can probably remove this check.
+            logger.warn("-- adjustExpiryTimestamp() - no expiry timestamp: {}", container.getHostInfo());
+            return setExpiryTimestamp(container, System.currentTimeMillis() + FALLBACK_DURATION_MS);
+        }
         long timestamp = container.getHostInfo().getExpiry() + offset;
         return setExpiryTimestamp(container, timestamp);
     }

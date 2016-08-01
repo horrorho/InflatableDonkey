@@ -53,7 +53,8 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPredicate<Asset, List<Chunk>> {
+public final class FileAssembler
+        implements BiConsumer<Asset, Optional<List<Chunk>>>, BiPredicate<Asset, Optional<List<Chunk>>> {
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
@@ -76,19 +77,29 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     @Override
-    public void accept(Asset asset, List<Chunk> chunks) {
+    public void accept(Asset asset, Optional<List<Chunk>> chunks) {
         boolean test = test(asset, chunks);
         if (!test) {
-            logger.warn("-- accept() - failed to write asset: {}", asset.relativePath());
+            logger.debug("-- accept() - failed to write asset: {}", asset.relativePath());
         }
     }
 
     @Override
-    public boolean test(Asset asset, List<Chunk> chunks) {
-        logger.trace("<< test() - asset: {} chunks: {}", asset, chunks.size());
-        boolean success = assemble(asset, chunks);
+    public boolean test(Asset asset, Optional<List<Chunk>> chunks) {
+        logger.trace("<< test() - asset: {} chunks: {}",
+                asset, chunks.map(List::size).map(Object::toString).orElse("NULL"));
+        
+        boolean success = chunks.isPresent()
+                ? assemble(asset, chunks.get())
+                : fail(asset);
+        
         logger.trace(">> test() - success: {}", success);
         return success;
+    }
+
+    boolean fail(Asset asset) {
+        System.out.println("-- " + info(asset) + " failed");
+        return false;
     }
 
     boolean assemble(Asset asset, List<Chunk> chunks) {
@@ -101,7 +112,7 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
     }
 
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
-        String info = asset.domain().orElse("") + " " + asset.relativePath().orElse("");
+        String info = info(asset);
         return asset.encryptionKey()
                 .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum()))
                 .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum()));
@@ -154,6 +165,10 @@ public final class FileAssembler implements BiConsumer<Asset, List<Chunk>>, BiPr
             suppliers.add(ios);
         }
         return new IOSupplierSequenceStream(suppliers);
+    }
+
+    String info(Asset asset) {
+        return asset.domain().orElse("") + " " + asset.relativePath().orElse("");
     }
 
     @Override

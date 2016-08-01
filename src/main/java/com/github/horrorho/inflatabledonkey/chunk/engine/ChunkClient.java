@@ -60,15 +60,18 @@ public final class ChunkClient {
 
     private static final ChunkClient DEFAULT_INSTANCE = new ChunkClient();
 
-    private final Function<HostInfo, HttpUriRequest> requestFactory;
+    private static final long DEFAULT_EXPIRY_TIMESTAMP_GRACE = -5 * 60 * 1000;  // Negative 5 min grace period.
 
-    public ChunkClient(
-            Function<HostInfo, HttpUriRequest> requestFactory) {
+    private final Function<HostInfo, HttpUriRequest> requestFactory;
+    private final long expiryTimestampGrace;
+
+    public ChunkClient(Function<HostInfo, HttpUriRequest> requestFactory, long expiryTimestampGrace) {
         this.requestFactory = Objects.requireNonNull(requestFactory);
+        this.expiryTimestampGrace = expiryTimestampGrace;
     }
 
     ChunkClient() {
-        this(ChunkListRequestFactory.instance());
+        this(ChunkListRequestFactory.instance(), DEFAULT_EXPIRY_TIMESTAMP_GRACE);
     }
 
     public Optional<Map<ChunkReference, Chunk>>
@@ -78,6 +81,10 @@ public final class ChunkClient {
         Optional<Map<ChunkReference, Chunk>> stored = storedChunks(store, container, containerIndex);
         if (stored.isPresent()) {
             return stored;
+        }
+
+        if (container.getHostInfo().getExpiry() + expiryTimestampGrace < System.currentTimeMillis()) {
+            throw new IllegalStateException("container has expired");
         }
 
         return fetch(client, store, container, containerIndex);

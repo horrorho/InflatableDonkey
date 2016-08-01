@@ -38,16 +38,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
@@ -144,11 +145,11 @@ public final class Backup {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
-        List<List<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
+        List<Set<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
         downloadAssets(httpClient, batches, assetFilter, relativePath);
     }
 
-    void downloadAssets(HttpClient httpClient, List<List<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
+    void downloadAssets(HttpClient httpClient, List<Set<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
             throws UncheckedIOException {
         try {
             forkJoinPool
@@ -170,34 +171,34 @@ public final class Backup {
         }
     }
 
-    void downloadBatch(HttpClient httpClient, List<AssetID> batch, Predicate<Asset> assetFilter, Path relativePath)
+    void downloadBatch(HttpClient httpClient, Set<AssetID> batch, Predicate<Asset> assetFilter, Path relativePath)
             throws UncheckedIOException {
         logger.trace("<< doDownload() - batch: {}", batch);
         // TODO re-authorize time expired tokens.
-        List<Asset> assetList = backupAssistant.assets(httpClient, batch)
+        Set<Asset> assetList = backupAssistant.assets(httpClient, batch)
                 .stream()
                 .filter(assetFilter::test)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
         logger.debug("-- doDownload() - filtered asset count: {}", assetList.size());
         downloadAssistant.download(httpClient, assetList, relativePath);
         logger.trace(">> doDownload()");
     }
 
-    List<List<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
-        List<List<AssetID>> lists = new ArrayList<>();
+    List<Set<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
+        List<Set<AssetID>> list = new ArrayList<>();
         Iterator<AssetID> it = assetIDs.iterator();
         while (it.hasNext()) {
-            List<AssetID> list = new ArrayList<>();
+            Set<AssetID> set = new HashSet<>();
             long i = 0;
             do {
                 AssetID assetID = it.next();
                 i += assetID.size();
-                list.add(assetID);
+                set.add(assetID);
             } while (it.hasNext() && i < batchSize);
-            logger.debug("-- batch() - batch list: {} bytes: {}", list.size(), i);
-            lists.add(list);
+            logger.debug("-- batch() - batch list: {} bytes: {}", set.size(), i);
+            list.add(set);
         }
-        return lists;
+        return list;
     }
 
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {

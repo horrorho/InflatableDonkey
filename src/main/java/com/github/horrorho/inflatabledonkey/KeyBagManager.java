@@ -33,7 +33,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.KeyBagType;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -81,8 +80,8 @@ public final class KeyBagManager {
         return Optional.ofNullable(keyBagMap.get(keyBagID));
     }
 
-    public KeyBagManager update(HttpClient httpClient, List<Asset> assets) {
-        // Although we lock the map for a good number of seconds to fetch a new key bag, it's a rare event.
+    public KeyBagManager update(HttpClient httpClient, Collection<Asset> assets) {
+        // Although we lock the map for a number of seconds to fetch a new key bag, it's a rare event.
         keyBagUUIDs(assets)
                 .forEach(uuid -> keyBagMap.computeIfAbsent(uuid, u -> fetchKeyBag(httpClient, u)));
         return this;

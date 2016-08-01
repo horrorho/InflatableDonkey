@@ -70,10 +70,10 @@ public final class AssetDownloader {
         this(ChunkClient.defaultInstance(), store, ChunkKeys.instance());
     }
 
-    public void
-            accept(HttpClient httpClient, AuthorizedAssets authorizedAssets, BiConsumer<Asset, List<Chunk>> consumer) {
+    public void accept(HttpClient httpClient, AuthorizedAssets authorizedAssets,
+            BiConsumer<Asset, Optional<List<Chunk>>> consumer) {
         // Map consumer to accepting file signatures.
-        BiConsumer<ByteString, List<Chunk>> c
+        BiConsumer<ByteString, Optional<List<Chunk>>> c
                 = (u, v) -> consumer.accept(authorizedAssets.asset(u)
                         .orElseThrow(() -> new IllegalStateException("no asset for file signature")), v);
 
@@ -88,32 +88,31 @@ public final class AssetDownloader {
         processGroups(httpClient, voodooList, c);
     }
 
-    void processGroups(HttpClient httpClient, Collection<Voodoo> voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+    void processGroups(HttpClient httpClient, Collection<Voodoo> voodoo,
+            BiConsumer<ByteString, Optional<List<Chunk>>> consumer) {
         voodoo.forEach(u -> processGroup(httpClient, u, consumer));
     }
 
-    void processGroup(HttpClient httpClient, Voodoo voodoo, BiConsumer<ByteString, List<Chunk>> consumer) {
+    void processGroup(HttpClient httpClient, Voodoo voodoo, BiConsumer<ByteString, Optional<List<Chunk>>> consumer) {
         voodoo.fileSignatures()
                 .stream()
                 .forEach(u -> process(httpClient, voodoo, u, v -> consumer.accept(u, v)));
     }
 
-    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature, Consumer< List<Chunk>> consumer) {
-        voodoo.shcls(fileSignature)
-                .ifPresent(u -> voodoo
-                        .chunkReferences(fileSignature)
-                        .flatMap(v -> fetch(httpClient, v, u))
-                        .ifPresent(consumer));
+    void process(HttpClient httpClient, Voodoo voodoo, ByteString fileSignature,
+            Consumer<Optional<List<Chunk>>> consumer) {
+
+        Optional<List<Chunk>> chunkList = voodoo.shcls(fileSignature)
+                .flatMap(u -> voodoo.chunkReferences(fileSignature).flatMap(v -> fetch(httpClient, v, u)));
+        consumer.accept(chunkList);
     }
 
     public Optional<List<Chunk>>
             fetch(HttpClient httpClient, List<ChunkReference> chunks, Map<Integer, StorageHostChunkList> containers) {
+
         return fetch(httpClient, containers)
                 .filter(u -> u.keySet().containsAll(chunks))
-                .map(u -> chunks
-                        .stream()
-                        .map(u::get)
-                        .collect(toList()));
+                .map(u -> chunks.stream().map(u::get).collect(toList()));
     }
 
     Optional<Map<ChunkReference, Chunk>>
@@ -121,10 +120,10 @@ public final class AssetDownloader {
         try {
             Map<ChunkReference, Chunk> map = new HashMap<>();
             for (Map.Entry<Integer, StorageHostChunkList> entry : containers.entrySet()) {
+                int index = entry.getKey();
                 StorageHostChunkList container = entry.getValue();
-                int containerIndex = entry.getKey();
-                Optional<Map<ChunkReference, Chunk>> chunks
-                        = chunkClient.apply(httpClient, store, container, containerIndex);
+
+                Optional<Map<ChunkReference, Chunk>> chunks = chunkClient.apply(httpClient, store, container, index);
                 if (!chunks.isPresent()) {
                     return Optional.empty();
                 }
@@ -134,7 +133,6 @@ public final class AssetDownloader {
 
         } catch (IOException ex) {
             logger.warn("-- fetch() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
-            logger.trace("-- fetch() - IOException: ", ex);
             return Optional.empty();
         }
     }
