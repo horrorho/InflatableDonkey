@@ -109,7 +109,7 @@ public final class AssetFilter implements Predicate<Asset> {
                 .map(u -> extension.map(vs -> vs.stream().anyMatch(v -> u.endsWith(v))).orElse(true))
                 .orElseGet(() -> {
                     logger.debug("-- filterRelativePath() - no relativePath: {}", asset);
-                    return false;
+                    return true;
                 });
     }
 
