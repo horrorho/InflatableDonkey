@@ -53,7 +53,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -100,14 +102,26 @@ public class Main {
 //                .useSystemProperties()
 //                .build();
         int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX.asInteger().orElse(32);
+        int timeoutMS = 60000;    // TODO properties
         PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         connManager.setMaxTotal(maxConnections);
         connManager.setDefaultMaxPerRoute(maxConnections);
+        connManager.setValidateAfterInactivity(timeoutMS);
+
+        DefaultHttpRequestRetryHandler retryHandler = new DefaultHttpRequestRetryHandler(3, true);
+
+        RequestConfig config = RequestConfig.custom()
+                .setConnectionRequestTimeout(timeoutMS)
+                .setConnectTimeout(timeoutMS)
+                .setSocketTimeout(timeoutMS)
+                .build();
 
         CloseableHttpClient httpClient = HttpClients.custom()
-                .setUserAgent("CloudKit/479 (13A404)")
-                .setRedirectStrategy(new LaxRedirectStrategy())
                 .setConnectionManager(connManager)
+                .setDefaultRequestConfig(config)
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .setRetryHandler(retryHandler)
+                .setUserAgent("CloudKit/479 (13A404)")
                 .useSystemProperties()
                 .build();
 
