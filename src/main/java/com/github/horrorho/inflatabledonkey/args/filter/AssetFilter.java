@@ -25,16 +25,14 @@ package com.github.horrorho.inflatabledonkey.args.filter;
 
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -42,8 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 @Immutable
 public final class AssetFilter implements Predicate<Asset> {
-
-    private static final Logger logger = LoggerFactory.getLogger(AssetFilter.class);
 
     private final Optional<Long> birthMax;
     private final Optional<Long> birthMin;
@@ -63,15 +59,14 @@ public final class AssetFilter implements Predicate<Asset> {
             Optional<Integer> sizeMin,
             Optional<Long> statusChangedMax,
             Optional<Long> statusChangedMin) {
-
-        this.birthMax = Objects.requireNonNull(birthMax, "birthMax");
-        this.birthMin = Objects.requireNonNull(birthMin, "birthMin");
-        this.statusChangedMax = Objects.requireNonNull(statusChangedMax, "statusChangedMax");
-        this.statusChangedMin = Objects.requireNonNull(statusChangedMin, "statusChangedMin");
-        this.sizeMax = Objects.requireNonNull(sizeMax, "sizeMax");
-        this.sizeMin = Objects.requireNonNull(sizeMin, "sizeMin");
-        this.extension = extension.map(ArrayList::new);
-        this.relativePath = relativePath.map(ArrayList::new);
+        this.birthMax = Objects.requireNonNull(birthMax);
+        this.birthMin = Objects.requireNonNull(birthMin);
+        this.statusChangedMax = Objects.requireNonNull(statusChangedMax);
+        this.statusChangedMin = Objects.requireNonNull(statusChangedMin);
+        this.sizeMax = Objects.requireNonNull(sizeMax);
+        this.sizeMin = Objects.requireNonNull(sizeMin);
+        this.extension = extension.map(u -> u.stream().map(v -> v.toLowerCase(Locale.US)).collect(toList()));
+        this.relativePath = relativePath.map(u -> u.stream().map(v -> v.toLowerCase(Locale.US)).collect(toList()));
     }
 
     @Override
@@ -84,44 +79,32 @@ public final class AssetFilter implements Predicate<Asset> {
 
     boolean filterAttributeSize(Asset asset) {
         return asset.attributeSize()
-                .filter(u -> sizeMax.map(v -> u < v * 1024).orElse(true))
-                .map(u -> sizeMin.map(v -> u > v * 1024).orElse(true))
-                .orElseGet(() -> {
-                    logger.debug("-- filterAttributeSize() - no attributeSize: {}", asset);
-                    return true;
-                });
+                .map(u -> sizeMax.map(v -> u <= v * 1024).orElse(true)
+                        && sizeMin.map(v -> u >= v * 1024).orElse(true))
+                .orElse(true);
     }
 
     boolean filterBirth(Asset asset) {
         return asset.birth().map(Instant::getEpochSecond)
-                .filter(u -> birthMax.map(v -> u < v).orElse(true))
-                .map(u -> birthMin.map(v -> u > v).orElse(true))
-                .orElseGet(() -> {
-                    logger.debug("-- filterBirth() - no filterBirth: {}", asset);
-                    return true;
-                });
+                .map(u -> birthMax.map(v -> u <= v).orElse(true)
+                        && birthMin.map(v -> u >= v).orElse(true))
+                .orElse(true);
     }
 
     boolean filterRelativePath(Asset asset) {
         return asset.relativePath()
                 .map(u -> u.toLowerCase(Locale.US))
-                .filter(u -> relativePath.map(vs -> vs.stream().anyMatch(v -> u.contains(v))).orElse(true))
-                .map(u -> extension.map(vs -> vs.stream().anyMatch(v -> u.endsWith(v))).orElse(true))
-                .orElseGet(() -> {
-                    logger.debug("-- filterRelativePath() - no relativePath: {}", asset);
-                    return true;
-                });
+                .map(u -> relativePath.map(vs -> vs.stream().anyMatch(v -> u.contains(v))).orElse(true)
+                        && extension.map(vs -> vs.stream().anyMatch(v -> u.endsWith(v))).orElse(true))
+                .orElse(true);
     }
 
     boolean filterStatusChanged(Asset asset) {
         return asset.statusChanged()
                 .map(Instant::getEpochSecond)
-                .filter(u -> statusChangedMax.map(v -> u < v).orElse(true))
-                .map(u -> statusChangedMin.map(v -> u > v).orElse(true))
-                .orElseGet(() -> {
-                    logger.debug("-- filterStatusChanged() - no statusChanged: {}", asset);
-                    return true;
-                });
+                .map(u -> statusChangedMax.map(v -> u <= v).orElse(true)
+                        && statusChangedMin.map(v -> u >= v).orElse(true))
+                .orElse(true);
     }
 
     @Override
