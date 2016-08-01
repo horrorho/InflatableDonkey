@@ -24,11 +24,16 @@
 package com.github.horrorho.inflatabledonkey.responsehandler;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.utils.DateUtils;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -40,6 +45,7 @@ public abstract class DonkeyResponseHandler<T> implements ResponseHandler<T> {
 
     // Modified org.apache.http.impl.client.AbstractResponseHandler#handleResponse 
     // Appends the entity body, if present, to the HttpResponseException message if thrown.
+    // TOFIX should return Optional as nullable result.
     @Override
     public T handleResponse(final HttpResponse response) throws HttpResponseException, IOException {
         StatusLine statusLine = response.getStatusLine();
@@ -53,10 +59,29 @@ public abstract class DonkeyResponseHandler<T> implements ResponseHandler<T> {
             throw new HttpResponseException(statusLine.getStatusCode(), message);
         }
 
-        return entity == null
-                ? null
-                : handleEntity(entity);
+        if (entity == null) {
+            return null;
+        }
+
+        long timestampSystem = System.currentTimeMillis();
+        long timestampOffset = timestamp(response).orElse(timestampSystem) - timestampSystem;
+
+        return handleEntityTimestampOffset(entity, timestampOffset);
+    }
+
+    public T handleEntityTimestampOffset(HttpEntity entity, long timestampOffset) throws IOException {
+        return handleEntity(entity);
     }
 
     public abstract T handleEntity(HttpEntity entity) throws IOException;
+
+    Optional<Long> timestamp(HttpResponse response) {
+        return Arrays.asList(response.getAllHeaders())
+                .stream()
+                .filter(u -> u.getName().equalsIgnoreCase(HttpHeaders.DATE))
+                .map(Header::getValue)
+                .map(DateUtils::parseDate)
+                .map(u -> u.toInstant().toEpochMilli())
+                .findFirst();
+    }
 }

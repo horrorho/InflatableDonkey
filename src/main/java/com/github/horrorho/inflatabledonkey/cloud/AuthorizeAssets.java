@@ -27,16 +27,15 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
-import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -52,18 +51,20 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class AuthorizeAssets {
+public final class AuthorizeAssets implements BiFunction<HttpClient, Collection<Asset>, Optional<AuthorizedAssets>> {
 
     public static AuthorizeAssets backupd() {
         return BACKUPD;
     }
 
-    private static final AuthorizeAssets BACKUPD = new AuthorizeAssets("com.apple.backup.ios");
-
     private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssets.class);
 
+    private static final AuthorizeAssets BACKUPD = new AuthorizeAssets("com.apple.backup.ios");
+
+    private static final long TIMESTAMP_TOLERANCE = 15 * 60 * 1000;
+
     private static final ResponseHandler<ChunkServer.FileGroups> RESPONSE_HANDLER
-            = new InputStreamResponseHandler<>(ChunkServer.FileGroups.PARSER::parseFrom);
+            = new AuthorizeAssetsResponseHandler(TIMESTAMP_TOLERANCE);
 
     private final String container;
     private final String zone;
@@ -77,11 +78,12 @@ public final class AuthorizeAssets {
         this(container, "_defaultZone");
     }
 
-    public AuthorizedAssets authorize(HttpClient httpClient, Collection<Asset> assets) throws UncheckedIOException {
+    @Override
+    public Optional<AuthorizedAssets> apply(HttpClient httpClient, Collection<Asset> assets) {
         Map<ByteString, Asset> fileSignatureToAssets = fileSignatureToAssets(assets);
         List<CloudKit.Asset> ckAssets = ckAssets(fileSignatureToAssets.values());
         if (ckAssets.isEmpty()) {
-            return AuthorizedAssets.empty();
+            return Optional.of(AuthorizedAssets.empty());
         }
 
         // Only expecting one dsPrsID/ contentBaseUrl.
@@ -100,20 +102,19 @@ public final class AuthorizeAssets {
         }
         if (ckAssets.isEmpty()) {
             logger.warn("-- authorize() - no ckAssets");
-            return AuthorizedAssets.empty();
+            return Optional.of(AuthorizedAssets.empty());
         }
         if (dsPrsIDs.isEmpty()) {
             logger.warn("-- authorize() - no dsPrsID");
-            return AuthorizedAssets.empty();
+            return Optional.of(AuthorizedAssets.empty());
         }
 
         String dsPrsID = ckAssets.get(0).getDsPrsID();
         String contentBaseUrl = ckAssets.get(0).getContentBaseURL();
         CloudKit.FileTokens fileTokens = FileTokensFactory.from(ckAssets);
 
-        ChunkServer.FileGroups fileGroups = authorizeGet(httpClient, dsPrsID, contentBaseUrl, fileTokens);
-
-        return new AuthorizedAssets(fileGroups, fileSignatureToAssets);
+        return fileGroups(httpClient, dsPrsID, contentBaseUrl, fileTokens)
+                .map(u -> new AuthorizedAssets(u, fileSignatureToAssets));
     }
 
     Map<ByteString, Asset> fileSignatureToAssets(Collection<Asset> assets) {
@@ -141,23 +142,19 @@ public final class AuthorizeAssets {
                 .collect(Collectors.toList());
     }
 
-    ChunkServer.FileGroups
-            authorizeGet(HttpClient httpClient, String dsPrsID, String contentBaseUrl, CloudKit.FileTokens fileTokens)
-            throws UncheckedIOException {
-        return AuthorizeGetRequestFactory.instance()
-                .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens)
-                .map(u -> execute(httpClient, u, RESPONSE_HANDLER))
-                .orElseGet(() -> {
-                    logger.warn("-- authorizeGet() - no file groups");
-                    return ChunkServer.FileGroups.newBuilder().build();
-                });
+    Optional<ChunkServer.FileGroups>
+            fileGroups(HttpClient httpClient, String dsPrsID, String contentBaseUrl, CloudKit.FileTokens fileTokens) {
+
+        return AuthorizeGetRequestFactory.instance().newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens)
+                .flatMap(u -> execute(httpClient, u));
     }
 
-    <T> T execute(HttpClient httpClient, HttpUriRequest request, ResponseHandler<T> handler) {
+    Optional<ChunkServer.FileGroups> execute(HttpClient httpClient, HttpUriRequest request) {
         try {
-            return httpClient.execute(request, handler);
+            return Optional.ofNullable(httpClient.execute(request, RESPONSE_HANDLER));
         } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
+            logger.warn("-- execute() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            return Optional.empty();
         }
     }
 }

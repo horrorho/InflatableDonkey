@@ -25,11 +25,9 @@ package com.github.horrorho.inflatabledonkey;
 
 import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
 import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
-import com.github.horrorho.inflatabledonkey.cloud.AuthorizedAssets;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -65,7 +63,11 @@ public final class DownloadAssistant {
         this.folder = Objects.requireNonNull(folder, "folder");
     }
 
-    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) throws UncheckedIOException {
+    void download(HttpClient httpClient, List<Asset> assets, Path relativePath) {
+        if (assets.isEmpty()) {
+            return;
+        }
+
         Path outputFolder = folder.resolve(relativePath);
 
         keyBagManager.update(httpClient, assets);
@@ -73,9 +75,9 @@ public final class DownloadAssistant {
         XFileKeyFactory fileKeys = new XFileKeyFactory(keyBagManager::keyBag);
         FileAssembler fileAssembler = new FileAssembler(fileKeys, outputFolder);
 
-        AuthorizedAssets authorizedAssets = authorizeAssets.authorize(httpClient, assets);
+        authorizeAssets.apply(httpClient, assets)
+                .ifPresent(u -> assetDownloader.accept(httpClient, u, fileAssembler));
 
-        assetDownloader.accept(httpClient, authorizedAssets, fileAssembler);
     }
 }
 // TODO time expiration tokens
