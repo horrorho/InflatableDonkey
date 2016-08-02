@@ -101,11 +101,13 @@ public class Main {
 //                .setRedirectStrategy(new LaxRedirectStrategy())
 //                .useSystemProperties()
 //                .build();
-        int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX.asInteger().orElse(32);
-        int timeoutMS = 60000;    // TODO properties
+        int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX_TOTAL.asInteger().orElse(256);
+        int maxConnectionsPerRoute = Property.HTTP_CLIENT_CONNECTIONS_MAX_PER_ROUTE.asInteger().orElse(32);
+        int timeoutMS = Property.HTTP_CLIENT_TIMEOUT_MS.asInteger().orElse(60000);
+        
         PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setDefaultMaxPerRoute(maxConnectionsPerRoute);
         connManager.setMaxTotal(maxConnections);
-        connManager.setDefaultMaxPerRoute(maxConnections);
         connManager.setValidateAfterInactivity(timeoutMS);
 
         DefaultHttpRequestRetryHandler retryHandler = new DefaultHttpRequestRetryHandler(3, true);
