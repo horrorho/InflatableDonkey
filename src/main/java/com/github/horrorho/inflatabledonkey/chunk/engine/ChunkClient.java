@@ -26,17 +26,16 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.HostInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -58,9 +57,9 @@ public final class ChunkClient {
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkClient.class);
 
-    private static final ChunkClient DEFAULT_INSTANCE = new ChunkClient();
-
     private static final long DEFAULT_EXPIRY_TIMESTAMP_GRACE = -5 * 60 * 1000;  // Negative 5 min grace period.
+    private static final ChunkClient DEFAULT_INSTANCE
+            = new ChunkClient(ChunkListRequestFactory.instance(), DEFAULT_EXPIRY_TIMESTAMP_GRACE);
 
     private final Function<HostInfo, HttpUriRequest> requestFactory;
     private final long expiryTimestampGrace;
@@ -70,38 +69,27 @@ public final class ChunkClient {
         this.expiryTimestampGrace = expiryTimestampGrace;
     }
 
-    ChunkClient() {
-        this(ChunkListRequestFactory.instance(), DEFAULT_EXPIRY_TIMESTAMP_GRACE);
-    }
-
-    public Optional<Map<ChunkReference, Chunk>>
-            apply(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
-            throws IOException {
-
-        Optional<Map<ChunkReference, Chunk>> stored = storedChunks(store, container, containerIndex);
+    public Set<Chunk> apply(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
+        Optional<Set<Chunk>> stored = storedChunks(store, container);
         if (stored.isPresent()) {
-            return stored;
+            return stored.get();
         }
 
         if (container.getHostInfo().getExpiry() + expiryTimestampGrace < System.currentTimeMillis()) {
             throw new IllegalStateException("container has expired");
         }
 
-        return fetch(client, store, container, containerIndex);
+        return fetch(client, store, container);
     }
 
-    Optional<Map<ChunkReference, Chunk>>
-            fetch(HttpClient client, ChunkStore store, StorageHostChunkList container, int containerIndex)
-            throws IOException {
-
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, removeDuplicates(container), containerIndex);
-        InputStreamResponseHandler<Map<ChunkReference, Chunk>> handler = new InputStreamResponseHandler<>(decrypter);
+    Set<Chunk> fetch(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
+        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, removeDuplicates(container));
+        InputStreamResponseHandler<Set<Chunk>> handler = new InputStreamResponseHandler<>(decrypter);
         HttpUriRequest request = requestFactory.apply(container.getHostInfo());
-        Map<ChunkReference, Chunk> chunks = client.execute(request, handler);
-
-        return Optional.of(chunks);
+        return client.execute(request, handler);
     }
 
+    // TODO probably doesn't belong here
     StorageHostChunkList removeDuplicates(StorageHostChunkList container) {
         // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
         // keys should unwrap to the same 0x01 key with the block yielding the same output data.
@@ -134,7 +122,7 @@ public final class ChunkClient {
         if (aType == 0x01 && bType == 0x01) {
             if (!a.getChunkEncryptionKey().equals(b.getChunkEncryptionKey())
                     || !a.getChunkChecksum().equals(b.getChunkChecksum())) {
-                // Data corruption/ probably code failure.
+                // Data corruption/ probable code failure.
                 // We'll return the first option based on the reasonable chance (50%) that it may be correct.
                 logger.warn("-- merge() - incongruent chunks: {} {}", a, b);
             } else {
@@ -154,21 +142,18 @@ public final class ChunkClient {
         return a;
     }
 
-    Optional<Map<ChunkReference, Chunk>>
-            storedChunks(ChunkStore store, StorageHostChunkList container, int containerIndex) {
+    Optional<Set<Chunk>> storedChunks(ChunkStore store, StorageHostChunkList container) {
+        Set<Chunk> chunks = new HashSet<>();
         List<ChunkInfo> list = container.getChunkInfoList();
-
-        Map<ChunkReference, Chunk> map = new HashMap<>();
         for (int i = 0, n = list.size(); i < n; i++) {
             Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
             if (!chunk.isPresent()) {
                 logger.debug("-- storedChunks() - not all chunks present in store");
                 return Optional.empty();
             }
-            ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
-            map.put(chunkReference, chunk.get());
+            chunk.ifPresent(chunks::add);
         }
         logger.debug("-- storedChunks() - all chunks present in store");
-        return Optional.of(map);
+        return Optional.of(chunks);
     }
 }

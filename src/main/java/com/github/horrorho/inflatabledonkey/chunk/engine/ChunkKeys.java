@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @Immutable
-public final class ChunkKeys implements ChunkEncryptionKeyConverter<byte[]> {
+public final class ChunkKeys implements ChunkEncryptionKeyMapper<byte[]> {
 
     public static Optional<Integer> keyType(byte[] chunkEncryptionKey) {
         if (chunkEncryptionKey.length == 0x00) {

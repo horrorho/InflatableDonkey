@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyConverter;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyMapper;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
@@ -45,47 +46,39 @@ import org.slf4j.LoggerFactory;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
+ * Maps Voodoo ChunkServer.ChunkInfo chunk encryption keys.
  *
  * @author Ahseya
  */
 @Immutable
-public final class VoodooAssistant {
+public final class VoodooChunkEncryptionKeyMapper {
 
     @Immutable
     @FunctionalInterface
-    private interface KeyConverter extends Function<byte[], Optional<byte[]>> {
+    private interface KeyMapper extends Function<byte[], Optional<byte[]>> {
     }
 
-    /**
-     * Returns a new Voodoo with ChunkServer.ChunkInfo encryption keys converted to type 0x01 from type 0x02.
-     *
-     * @param voodoo
-     * @param chunkEncryptionKeyConverter
-     * @param fileSignatureToKeyEncryptionKey
-     * @return
-     */
-    public static Voodoo convertChunkEncryptionKeys(
-            Voodoo voodoo,
-            ChunkEncryptionKeyConverter<byte[]> chunkEncryptionKeyConverter,
+    public static Voodoo map(Voodoo voodoo, ChunkEncryptionKeyMapper<byte[]> chunkEncryptionKeyMapper,
             Map<ByteString, byte[]> fileSignatureToKeyEncryptionKey) {
-        Map<Integer, StorageHostChunkList> indexToSHCL = voodoo.indexToSHCL();
+
+        Map<Integer, StorageHostChunkList> indexToSHCL = voodoo.indexToContainer();
         fileSignatureToKeyEncryptionKey
                 .entrySet()
                 .stream()
-                .filter(u -> voodoo.contains(u.getKey()))
-                .<Map.Entry<ByteString, KeyConverter>>map(
+                .filter(u -> voodoo.has(u.getKey()))
+                .<Map.Entry<ByteString, KeyMapper>>map(
                         e -> new AbstractMap.SimpleImmutableEntry<>(
-                                e.getKey(), cek -> chunkEncryptionKeyConverter.apply(cek, e.getValue())))
+                                e.getKey(), cek -> chunkEncryptionKeyMapper.apply(cek, e.getValue())))
                 .forEach(u -> containerChunkList(voodoo.chunkReferences(u.getKey()).get(), indexToSHCL)
                         .forEach((i, j) -> indexToSHCL.compute(i, (x, shcl) -> unwrapKeys(shcl, u.getValue(), j))));
         return new Voodoo(indexToSHCL, voodoo.fileSignatureToChunkReferences());
     }
 
-    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Collection<Integer> chunks) {
+    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyMapper unwrap, Collection<Integer> chunks) {
         return unwrapKeys(shcl, unwrap, new HashSet<>(chunks));
     }
 
-    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyConverter unwrap, Set<Integer> chunks) {
+    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyMapper unwrap, Set<Integer> chunks) {
         StorageHostChunkList.Builder builder = shcl.toBuilder();
         if (logger.isDebugEnabled()) {
             List<Integer> bad = chunks.stream()
@@ -101,7 +94,7 @@ public final class VoodooAssistant {
         return builder.build();
     }
 
-    static ChunkInfo unwrapKey(KeyConverter unwrap, ChunkInfo chunkInfo) {
+    static ChunkInfo unwrapKey(KeyMapper unwrap, ChunkInfo chunkInfo) {
         return unwrap.apply(chunkInfo.getChunkEncryptionKey().toByteArray())
                 .map(ByteString::copyFrom)
                 .map(u -> chunkInfo
@@ -134,5 +127,6 @@ public final class VoodooAssistant {
                 .collect(groupingBy(u -> (int) u.getContainerIndex(), mapping(v -> (int) v.getChunkIndex(), toList())));
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(VoodooAssistant.class);
+    private static final Logger logger = LoggerFactory.getLogger(VoodooChunkEncryptionKeyMapper.class);
 }
+// TODO convert to Object

@@ -23,13 +23,15 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
+import com.github.horrorho.inflatabledonkey.cloud.*;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.FileGroups;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.requests.AuthorizeGetRequestFactory;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,98 +40,110 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static java.util.stream.Collectors.toMap;
 
 /**
- * AuthorizeAssets.
+ *
  *
  * @author Ahseya
  */
 @Immutable
-public final class AuthorizeAssets implements BiFunction<HttpClient, Collection<Asset>, Optional<AuthorizedAssets>> {
+public final class AuthorizeAssetsClient
+        implements BiFunction<HttpClient, Collection<Asset>, List<AuthorizedAsset<Asset>>> {
 
-    public static AuthorizeAssets backupd() {
+    public static AuthorizeAssetsClient backupd() {
         return BACKUPD;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssets.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssetsClient.class);
 
-    private static final AuthorizeAssets BACKUPD = new AuthorizeAssets("com.apple.backup.ios");
+    private static final AuthorizeAssetsClient BACKUPD = new AuthorizeAssetsClient("com.apple.backup.ios");
 
     private static final long TIMESTAMP_TOLERANCE = 15 * 60 * 1000;
 
-    private static final ResponseHandler<ChunkServer.FileGroups> RESPONSE_HANDLER
+    private static final ResponseHandler<FileGroups> RESPONSE_HANDLER
             = new AuthorizeAssetsResponseHandler(TIMESTAMP_TOLERANCE);
 
+    private final AuthorizedAssetFactory authorizedAssetFactory;
     private final String container;
     private final String zone;
 
-    public AuthorizeAssets(String container, String zone) {
-        this.container = Objects.requireNonNull(container, "container");
-        this.zone = Objects.requireNonNull(zone, "zone");
+    public AuthorizeAssetsClient(AuthorizedAssetFactory authorizedAssetFactory, String container, String zone) {
+        this.authorizedAssetFactory = Objects.requireNonNull(authorizedAssetFactory);
+        this.container = Objects.requireNonNull(container);
+        this.zone = Objects.requireNonNull(zone);
     }
 
-    public AuthorizeAssets(String container) {
+    public AuthorizeAssetsClient(String container, String zone) {
+        this(AuthorizedAssetFactory.defaultInstance(), container, "_defaultZone");
+    }
+
+    public AuthorizeAssetsClient(String container) {
         this(container, "_defaultZone");
     }
 
     @Override
-    public Optional<AuthorizedAssets> apply(HttpClient httpClient, Collection<Asset> assets) {
-        Map<ByteString, Asset> fileSignatureToAssets = fileSignatureToAssets(assets);
-        List<CloudKit.Asset> ckAssets = ckAssets(fileSignatureToAssets.values());
+    public List<AuthorizedAsset<Asset>> apply(HttpClient httpClient, Collection<Asset> assets) {
+        Map<ByteString, Asset> downloadables = downloadables(assets);
+        List<CloudKit.Asset> ckAssets = ckAssets(downloadables.values());
         if (ckAssets.isEmpty()) {
-            return Optional.of(AuthorizedAssets.empty());
+            return Collections.emptyList();
         }
 
-        // Only expecting one dsPrsID/ contentBaseUrl.
-        Set<String> dsPrsIDs = ckAssets.stream()
-                .collect(Collectors.groupingBy(u -> u.getDsPrsID()))
-                .keySet();
-        if (dsPrsIDs.size() != 1) {
-            logger.warn("-- authorize() - unexpected dsPrsID count: {}", dsPrsIDs);
+        Optional<String> dsPrsID = dsPrsID(ckAssets);
+        if (!dsPrsID.isPresent()) {
+            // We can inject dsPrsID but this situation is not expected to occur.
+            logger.warn("-- apply() - missing dsPrsID");
+            return Collections.emptyList();
         }
-
-        Set<String> contentBaseUrls = ckAssets.stream()
+        // Only expecting one contentBaseUrl. 
+        // Can probably simplify code to handle only one.
+        return ckAssets.stream()
                 .collect(Collectors.groupingBy(u -> u.getContentBaseURL()))
-                .keySet();
-        if (contentBaseUrls.size() != 1) {
-            logger.warn("-- authorize() - unexpected contentBaseUrl count: {}", contentBaseUrls);
-        }
-        if (ckAssets.isEmpty()) {
-            logger.warn("-- authorize() - no ckAssets");
-            return Optional.of(AuthorizedAssets.empty());
-        }
-        if (dsPrsIDs.isEmpty()) {
-            logger.warn("-- authorize() - no dsPrsID");
-            return Optional.of(AuthorizedAssets.empty());
-        }
-
-        String dsPrsID = ckAssets.get(0).getDsPrsID();
-        String contentBaseUrl = ckAssets.get(0).getContentBaseURL();
-        CloudKit.FileTokens fileTokens = FileTokensFactory.from(ckAssets);
-
-        return fileGroups(httpClient, dsPrsID, contentBaseUrl, fileTokens)
-                .map(u -> new AuthorizedAssets(u, fileSignatureToAssets));
+                .entrySet()
+                .stream()
+                .map(e -> fileGroups(httpClient, dsPrsID.get(), e.getKey(), FileTokensFactory.from(e.getValue())))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(u -> authorizedAssetFactory.apply(u, downloadables))
+                .flatMap(Collection::stream)
+                .collect(toList());
     }
 
-    Map<ByteString, Asset> fileSignatureToAssets(Collection<Asset> assets) {
-        // Filter out empty files/ files that cannot be re-assembled.
+    Optional<String> dsPrsID(Collection<CloudKit.Asset> ckAssets) {
+        Set<String> dsPrsIDs = ckAssets
+                .stream()
+                .map(CloudKit.Asset::getDsPrsID)
+                .collect(toSet());
+        if (dsPrsIDs.size() != 1) {
+            logger.warn("-- dsPrsID() - unexpected dsPrsID count: {}", dsPrsIDs);
+        }
+        return dsPrsIDs
+                .stream()
+                .findFirst();
+    }
+
+    Map<ByteString, Asset> downloadables(Collection<Asset> assets) {
+        // Filter out non-downloadble assets.
         return assets.stream()
                 .filter(u -> u.fileSignature().isPresent())
                 .filter(u -> u.size().map(s -> s > 0).orElse(false))
                 .filter(u -> u.keyEncryptionKey().isPresent())
                 .filter(u -> u.domain().isPresent())
                 .filter(u -> u.relativePath().isPresent())
-                .collect(Collectors.toMap(
+                .collect(toMap(
                         u -> ByteString.copyFrom(u.fileSignature().get()),
                         Function.identity(),
                         (u, v) -> {
-                            logger.warn("-- fileSignatureToAssets() - file signature collision: {} {}", u, v);
+                            logger.warn("-- downloadables() - file signature collision: {} {}", u, v);
                             return u;
                         }));
     }
@@ -142,14 +156,14 @@ public final class AuthorizeAssets implements BiFunction<HttpClient, Collection<
                 .collect(Collectors.toList());
     }
 
-    Optional<ChunkServer.FileGroups>
+    Optional<FileGroups>
             fileGroups(HttpClient httpClient, String dsPrsID, String contentBaseUrl, CloudKit.FileTokens fileTokens) {
-
-        return AuthorizeGetRequestFactory.instance().newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens)
+        return AuthorizeGetRequestFactory.instance()
+                .newRequest(dsPrsID, contentBaseUrl, container, zone, fileTokens)
                 .flatMap(u -> execute(httpClient, u));
     }
 
-    Optional<ChunkServer.FileGroups> execute(HttpClient httpClient, HttpUriRequest request) {
+    Optional<FileGroups> execute(HttpClient httpClient, HttpUriRequest request) {
         try {
             return Optional.ofNullable(httpClient.execute(request, RESPONSE_HANDLER));
         } catch (IOException ex) {
@@ -158,3 +172,4 @@ public final class AuthorizeAssets implements BiFunction<HttpClient, Collection<
         }
     }
 }
+// TODO throw IOException, let caller decide how to handle this situation.

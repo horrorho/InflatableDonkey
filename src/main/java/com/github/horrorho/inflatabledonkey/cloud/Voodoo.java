@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
@@ -34,10 +33,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Ties in asset chunk references to storage host containers.
@@ -49,70 +49,98 @@ public final class Voodoo {
 
     private static final Logger logger = LoggerFactory.getLogger(Voodoo.class);
 
-    private final Map<Integer, StorageHostChunkList> indexToSHCL;
+    static Map<ByteString, List<ChunkReference>> validate(Map<Integer, StorageHostChunkList> indexToContainer,
+            Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences) {
+        return fileSignatureToChunkReferences.entrySet()
+                .stream()
+                .filter(e -> e
+                        .getValue()
+                        .stream()
+                        .allMatch(u -> {
+                            int containerIndex = (int) u.getContainerIndex();
+                            if (!indexToContainer.containsKey(containerIndex)) {
+                                logger.warn("-- validate() - bad container index: {} file signature: {}",
+                                        containerIndex, e.getKey());
+                                return false;
+                            }
+                            int chunkIndex = (int) u.getChunkIndex();
+                            if (chunkIndex >= indexToContainer.get(containerIndex).getChunkInfoList().size()) {
+                                logger.warn("-- validate() - bad chunk index: {} file signature: {}",
+                                        chunkIndex, e.getKey());
+                                return false;
+                            }
+                            return true;
+                        }))
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private final Map<Integer, StorageHostChunkList> indexToContainer;
     private final Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences;
 
-    public Voodoo(Map<Integer, StorageHostChunkList> indexToSHCL,
+    public Voodoo(Map<Integer, StorageHostChunkList> indexToContainer,
             Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences) {
-        this.indexToSHCL = new HashMap<>(indexToSHCL);
-        this.fileSignatureToChunkReferences = new HashMap<>(fileSignatureToChunkReferences);
-
-        // Sanity check.
-        fileSignatureToChunkReferences.forEach((k, v) -> v
-                .stream()
-                .forEach(u -> {
-                    int containerIndex = (int) u.getContainerIndex();
-                    if (!indexToSHCL.containsKey((int) u.getContainerIndex())) {
-                        logger.warn("** Voodoo() - bad container index: {} file signature: {}", containerIndex, k);
-                    }
-                    List<ChunkServer.ChunkInfo> chunkInfoList = indexToSHCL.get(containerIndex).getChunkInfoList();
-                    int chunkIndex = (int) u.getChunkIndex();
-                    if (chunkIndex >= chunkInfoList.size()) {
-                        logger.warn("** Voodoo() - bad chunk index: {} file signature: {}", chunkIndex, k);
-                    }
-                }));
+        this.indexToContainer = new HashMap<>(indexToContainer);
+        this.fileSignatureToChunkReferences = validate(indexToContainer, fileSignatureToChunkReferences);
     }
 
-    public Map<Integer, StorageHostChunkList> indexToSHCL() {
-        return new HashMap<>(indexToSHCL);
+    public Map<Integer, StorageHostChunkList> indexToContainer() {
+        return new HashMap<>(indexToContainer);
     }
 
-    public Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences() {
-        return new HashMap<>(fileSignatureToChunkReferences);
-    }
-
-    public Set<ByteString> fileSignatures() {
-        return new HashSet<>(fileSignatureToChunkReferences.keySet());
-    }
-
-    public boolean contains(ByteString fileSignature) {
-        return fileSignatureToChunkReferences.containsKey(fileSignature);
-    }
-
-    public Optional<List<ChunkReference>> chunkReferences(ByteString fileSignature) {
-        return Optional.ofNullable(fileSignatureToChunkReferences.get(fileSignature));
-    }
-
-    public Optional<Map<Integer, StorageHostChunkList>> shcls(ByteString fileSignature) {
-        if (!contains(fileSignature)) {
+    public Optional<Map<Integer, StorageHostChunkList>> indexToContainer(ByteString fileSignature) {
+        if (!has(fileSignature)) {
             return Optional.empty();
         }
         Map<Integer, StorageHostChunkList> shcls = fileSignatureToChunkReferences.get(fileSignature)
                 .stream()
                 .map(u -> (int) u.getContainerIndex())
                 .distinct()
-                .collect(toMap(Function.identity(), indexToSHCL::get));
+                .collect(toMap(Function.identity(), indexToContainer::get));
         return Optional.of(shcls);
     }
 
-    public Optional<StorageHostChunkList> shcl(int containerIndex) {
-        return Optional.ofNullable(indexToSHCL.get(containerIndex));
+    public Set<ByteString> fileSignatures() {
+        return new HashSet<>(fileSignatureToChunkReferences.keySet());
+    }
+
+    public boolean has(ByteString fileSignature) {
+        return fileSignatureToChunkReferences.containsKey(fileSignature);
+    }
+
+    public Map<ByteString, List<ChunkReference>> fileSignatureToChunkReferences() {
+        return new HashMap<>(fileSignatureToChunkReferences);
+    }
+
+    public Optional<List<ChunkReference>> chunkReferences(ByteString fileSignature) {
+        return Optional.ofNullable(fileSignatureToChunkReferences.get(fileSignature));
+    }
+
+    public Optional<List<ByteString>> chunkChecksumList(ByteString fileSignature) {
+        return chunkReferences(fileSignature)
+                .map(u -> u.stream()
+                        .map(v -> indexToContainer // Boundaries checked/ filtered in constructor.
+                                .get((int) v.getContainerIndex())
+                                .getChunkInfo((int) v.getChunkIndex())
+                                .getChunkChecksum())
+                        .collect(toList()));
+    }
+
+    public Optional<StorageHostChunkList> container(int containerIndex) {
+        return Optional.ofNullable(indexToContainer.get(containerIndex));
+    }
+
+    public Optional<List<StorageHostChunkList>> containers(ByteString fileSignature) {
+        return chunkReferences(fileSignature)
+                .map(u -> u.stream()
+                        .map(v -> indexToContainer // Boundaries checked/ filtered in constructor.
+                                .get((int) v.getContainerIndex()))
+                        .collect(toList()));
     }
 
     @Override
     public String toString() {
         return "Voodoo{"
-                + "indexToSHCL=" + indexToSHCL
+                + "indexToContainer=" + indexToContainer
                 + ", fileSignatureToChunkReferences=" + fileSignatureToChunkReferences
                 + '}';
     }

@@ -29,11 +29,13 @@ import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
 import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.cloud.AssetDownloader;
-import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssets;
+import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssetsClient;
+import com.github.horrorho.inflatabledonkey.cloud.BatchSetIterator;
+import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
@@ -42,6 +44,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,7 +54,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -104,7 +109,7 @@ public class Main {
         int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX_TOTAL.asInteger().orElse(256);
         int maxConnectionsPerRoute = Property.HTTP_CLIENT_CONNECTIONS_MAX_PER_ROUTE.asInteger().orElse(32);
         int timeoutMS = Property.HTTP_CLIENT_TIMEOUT_MS.asInteger().orElse(60000);
-        
+
         PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         connManager.setDefaultMaxPerRoute(maxConnectionsPerRoute);
         connManager.setMaxTotal(maxConnections);
@@ -170,14 +175,22 @@ public class Main {
         Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
 
         // Download tools.
-        AuthorizeAssets authorizeAssets = AuthorizeAssets.backupd();
-
         DiskChunkStore chunkStore = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, chunkOutputFolder, tempOutputFolder);
-        AssetDownloader assetDownloader = new AssetDownloader(chunkStore);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
+        AuthorizeAssetsClient authorizeAssetsClient = AuthorizeAssetsClient.backupd();
+        ChunkClient chunkClient = ChunkClient.defaultInstance();
+
+        Function<FileAssembler, Donkey> donkeyFactory
+                = u -> new Donkey(authorizeAssetsClient, chunkClient, chunkStore, u);
+
+        int batchThreshold = 1;
+
+        Function<Set<Asset>, List<Set<Asset>>> batchFunction
+                = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);
+
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(authorizeAssets, assetDownloader, keyBagManager, outputFolder);
+                = new DownloadAssistant(donkeyFactory, batchFunction, keyBagManager, outputFolder);
         Backup backup = new Backup(assistant, downloadAssistant, forkJoinPool);
 
         // Retrieve snapshots.
@@ -265,11 +278,12 @@ public class Main {
     }
 }
 
+// TODO filter AssetID size rather than wait to download Asset and then filter.
 // TODO 0xFF System protectionInfo DONE
 // TODO file timestamps DONE
 // TODO date filtering DONE
 // TODO size filtering DONE
-// TODO time expired tokens / badly adjusted system clocks.
+// TODO time expired tokens / badly adjusted system clocks. DONE
 // TODO handle D in files DONE
 // TODO reconstruct empty files/ empty directories
 // TODO file timestamp DONE

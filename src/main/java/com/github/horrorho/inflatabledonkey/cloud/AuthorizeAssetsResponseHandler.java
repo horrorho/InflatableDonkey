@@ -45,7 +45,7 @@ public class AuthorizeAssetsResponseHandler extends DonkeyResponseHandler<ChunkS
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssetsResponseHandler.class);
 
-    private static final long FALLBACK_DURATION_MS = 30 * 60 * 1000;    // TODO inject
+    private static final long FALLBACK_DURATION_MS = 30 * 60 * 1000;
 
     private final IOFunction<InputStream, ChunkServer.FileGroups> parser;
     private final long timestampTolerance;

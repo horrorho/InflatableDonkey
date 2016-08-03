@@ -23,33 +23,50 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 /**
  *
  * @author Ahseya
+ * @param <T> reference type.
  */
 @Immutable
-public final class AuthorizedAssets {
+public final class AuthorizedAsset<T> {
 
-    private final Set<StorageHostChunkList> containers;
-    private final Map<Asset, List<ByteString>> assetToChunkChecksumList;
+    private final T asset;
+    private final List<StorageHostChunkList> containers;
+    private final List<ByteString> chunkChecksumList;
 
-    public AuthorizedAssets(Set<StorageHostChunkList> containers, Map<Asset, List<ByteString>> assetToChunkChecksumList) {
-        this.containers = new HashSet<>(containers);
-        this.assetToChunkChecksumList = assetToChunkChecksumList
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
+    public AuthorizedAsset(T asset, List<StorageHostChunkList> containers, List<ByteString> chunkChecksumList) {
+        this.asset = Objects.requireNonNull(asset);
+        this.containers = new ArrayList<>(containers);
+        this.chunkChecksumList = new ArrayList<>(chunkChecksumList);
+        // TODO validate
     }
 
+    public T asset() {
+        return asset;
+    }
+
+    public List<StorageHostChunkList> containers() {
+        return new ArrayList<>(containers);
+    }
+
+    public List<ByteString> chunkChecksumList() {
+        return new ArrayList<>(chunkChecksumList);
+    }
+
+    @Override
+    public String toString() {
+        return "AuthorizedAsset{"
+                + "asset=" + asset
+                + ", containers=" + containers
+                + ", chunkChecksumList=" + chunkChecksumList
+                + '}';
+    }
 }

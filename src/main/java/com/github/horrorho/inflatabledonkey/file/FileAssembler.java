@@ -88,11 +88,11 @@ public final class FileAssembler
     public boolean test(Asset asset, Optional<List<Chunk>> chunks) {
         logger.trace("<< test() - asset: {} chunks: {}",
                 asset, chunks.map(List::size).map(Object::toString).orElse("NULL"));
-        
+
         boolean success = chunks.isPresent()
                 ? assemble(asset, chunks.get())
                 : fail(asset);
-        
+
         logger.trace(">> test() - success: {}", success);
         return success;
     }

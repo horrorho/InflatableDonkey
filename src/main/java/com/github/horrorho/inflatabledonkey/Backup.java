@@ -29,6 +29,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -145,8 +146,12 @@ public final class Backup {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
-        List<Set<AssetID>> batches = batch(assetIDs, BATCH_SIZE);
-        downloadAssets(httpClient, batches, assetFilter, relativePath);
+        Set<Asset> assetList = backupAssistant.assets(httpClient, assetIDs)
+                .stream()
+                .filter(assetFilter::test)
+                .collect(Collectors.toSet());
+
+        downloadAssistant.download(httpClient, assetList, relativePath);
     }
 
     void downloadAssets(HttpClient httpClient, List<Set<AssetID>> batches, Predicate<Asset> assetFilter, Path relativePath)
@@ -182,23 +187,6 @@ public final class Backup {
         logger.debug("-- doDownload() - filtered asset count: {}", assetList.size());
         downloadAssistant.download(httpClient, assetList, relativePath);
         logger.trace(">> doDownload()");
-    }
-
-    List<Set<AssetID>> batch(Collection<AssetID> assetIDs, long batchSize) {
-        List<Set<AssetID>> list = new ArrayList<>();
-        Iterator<AssetID> it = assetIDs.iterator();
-        while (it.hasNext()) {
-            Set<AssetID> set = new HashSet<>();
-            long i = 0;
-            do {
-                AssetID assetID = it.next();
-                i += assetID.size();
-                set.add(assetID);
-            } while (it.hasNext() && i < batchSize);
-            logger.debug("-- batch() - batch list: {} bytes: {}", set.size(), i);
-            list.add(set);
-        }
-        return list;
     }
 
     public Path deviceSnapshotDateSubPath(Device device, Snapshot snapshot) {

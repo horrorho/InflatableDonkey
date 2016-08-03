@@ -179,6 +179,10 @@ public final class Asset extends AbstractRecord {
         return asset;
     }
 
+    public String decription() {
+        return domain().orElse("") + " " + relativePath().orElse("");
+    }
+
     @Override
     public String toString() {
         return "Asset{"

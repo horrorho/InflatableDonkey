@@ -29,7 +29,8 @@ import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Chunk. Must implement hashcode/ equals methods. Not immutable, the underlying data may be deleted from the store.
+ * Chunk. SHALL implement hashcode/ equals methods based solely on the chunk checksum. Not immutable, as the underlying
+ * data may be deleted from the store.
  *
  * @author Ahseya
  */

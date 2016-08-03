@@ -28,7 +28,7 @@ import java.util.function.BiFunction;
 import net.jcip.annotations.Immutable;
 
 /**
- * Converts chunk encryption keys using the supplied metadata. Keys that are already in a valid state are returned
+ * Maps chunk encryption keys using the supplied metadata. Keys that are already in a valid state are returned
  * unaltered.
  *
  * @author Ahseya
@@ -36,7 +36,7 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 @FunctionalInterface
-public interface ChunkEncryptionKeyConverter<T> extends BiFunction<byte[], T, Optional<byte[]>> {
+public interface ChunkEncryptionKeyMapper<T> extends BiFunction<byte[], T, Optional<byte[]>> {
 
     @Override
     Optional<byte[]> apply(byte[] chunkEncryptionKey, T metadata);

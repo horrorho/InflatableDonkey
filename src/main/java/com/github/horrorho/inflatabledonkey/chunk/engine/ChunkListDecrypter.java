@@ -27,17 +27,16 @@ import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -56,26 +55,24 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @ThreadSafe
-public final class ChunkListDecrypter implements IOFunction<InputStream, Map<ChunkReference, Chunk>> {
+public final class ChunkListDecrypter implements IOFunction<InputStream, Set<Chunk>> {
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkListDecrypter.class);
 
     private final ChunkStore store;
     private final StorageHostChunkList container;
-    private final int containerIndex;
 
-    public ChunkListDecrypter(ChunkStore store, StorageHostChunkList container, int containerIndex) {
+    public ChunkListDecrypter(ChunkStore store, StorageHostChunkList container) {
         this.store = Objects.requireNonNull(store);
         this.container = Objects.requireNonNull(container);
-        this.containerIndex = containerIndex;
     }
 
     @Override
-    public Map<ChunkReference, Chunk> apply(InputStream inputStream) throws IOException {
+    public Set<Chunk> apply(InputStream inputStream) throws IOException {
         try {
             logger.trace("<< apply() - InputStream: {}", inputStream);
 
-            Map<ChunkReference, Chunk> chunks = new HashMap<>();
+            Set<Chunk> chunks = new HashSet<>();
             List<ChunkInfo> list = container.getChunkInfoList();
             for (int i = 0, offset = 0, n = list.size(); i < n; i++) {
                 ChunkInfo chunkInfo = list.get(i);
@@ -83,8 +80,7 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Map<Chu
                     throw new IOException("bad chunk offset data");
                 }
                 offset += chunkInfo.getChunkLength();
-                ChunkReference chunkReference = ChunkReferences.chunkReference(containerIndex, i);
-                chunk(inputStream, chunkInfo).ifPresent(u -> chunks.put(chunkReference, u));
+                chunk(inputStream, chunkInfo).ifPresent(chunks::add);
             }
 
             logger.trace(">> apply() - chunks: {}", chunks);

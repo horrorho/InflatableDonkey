@@ -51,6 +51,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.io.IOUtils;
@@ -62,6 +64,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.junit.Ignore;
 
 /**
@@ -109,33 +112,38 @@ public class ChunkListDecrypterTest {
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         ChunkServer.StorageHostChunkList shcl = container(vectors, data);
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, shcl, 0);
+        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, shcl);
         ByteArrayInputStream dataIs = new ByteArrayInputStream(data.toByteArray());
-        Map<ChunkServer.ChunkReference, Chunk> chunks = decrypter.apply(dataIs);
+        Set<Chunk> chunks = decrypter.apply(dataIs);
+
+        System.out.println("chunks: " + chunks);
 
         long nonBad = vectors.stream()
+                .distinct()
                 .filter((u -> !u.bad()))
                 .count();
         assertEquals("chunk count", nonBad, chunks.size());
 
-        for (Map.Entry<ChunkServer.ChunkReference, Chunk> entry : chunks.entrySet()) {
-            ChunkServer.ChunkReference reference = entry.getKey();
-            Chunk chunk = entry.getValue();
-
-            int index = (int) reference.getChunkIndex();
-
+        for (Chunk chunk : chunks) {
             ByteArrayOutputStream chunkOs = new ByteArrayOutputStream();
             try (InputStream chunkIs = chunk.inputStream()
                     .orElseThrow(() -> new IllegalStateException("chunk deleted"))) {
                 IOUtils.copy(chunkIs, chunkOs);
             }
 
-            ChunkListDecrypterTestVector vector = vectors.get(index);
+            Optional<ChunkListDecrypterTestVector> optional = vectors.stream()
+                    .filter(u -> Arrays.equals(u.chunkChecksum(), chunk.checksum()))
+                    .findFirst();
+            if (!optional.isPresent()) {
+                fail("unknown checksum");
+                continue;
+            }
+            ChunkListDecrypterTestVector vector = optional.get();
             assertArrayEquals("plaintext: " + vector.id(), vector.plaintext(), chunkOs.toByteArray());
             assertArrayEquals("ciphertext: " + vector.id(), vector.chunkChecksum(), chunk.checksum());
-        };
+        }
 
-        for (Chunk chunk : chunks.values()) {
+        for (Chunk chunk : chunks) {
             store.delete(chunk.checksum());
         }
     }
