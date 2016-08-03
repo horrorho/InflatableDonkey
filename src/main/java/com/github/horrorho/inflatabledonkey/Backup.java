@@ -79,7 +79,7 @@ public final class Backup {
         }
 
         List<Device> devices = backupAssistant.devices(httpClient, backupAccount.get().devices());
-        logger.debug("-- snapshots() - device count: {}", devices.size());
+        logger.debug("-- snapshots() - devices: {}", devices);
 
         Map<Device, List<Snapshot>> snapshots = backupAssistant.deviceSnapshots(httpClient, devices);
         logger.debug("-- snapshots() - snapshot count: {}", snapshots.values().size());

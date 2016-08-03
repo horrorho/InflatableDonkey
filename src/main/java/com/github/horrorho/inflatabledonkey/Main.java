@@ -195,7 +195,7 @@ public class Main {
 
         System.out.println("");
         if (deviceSnapshots.isEmpty()) {
-            System.out.println("No devices/ snapshots.");
+            System.out.println("No backups found.");
             return;
         }
 
