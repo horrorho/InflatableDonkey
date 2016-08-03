@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -109,7 +110,7 @@ public final class CloudKitty {
 
     public List<ResponseOperation> get(HttpClient httpClient, String operation, List<RequestOperation> requests)
             throws IOException {
-        
+
         return get(httpClient, operation, requests, Function.identity());
     }
 
@@ -122,28 +123,33 @@ public final class CloudKitty {
     <T> List<T> execute(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws IOException {
         try {
+            logger.debug("-- execute() - requests: {}", requests.size());
             List<List<RequestOperation>> split = ListUtils.split(requests, limit);
-            Map<Integer, List<RequestOperation>> ordered = IntStream.range(0, split.size())
-                    .mapToObj(Integer::valueOf)
-                    .collect(Collectors.toMap(Function.identity(), split::get));
+            logger.debug("-- execute() - split: {}", split.size());
 
-            Map<Integer, List<ResponseOperation>> responses
-                    = forkJoinPool.submit(() -> ordered
-                            .entrySet()
-                            .parallelStream()
+            List<SimpleImmutableEntry<Integer, List<RequestOperation>>> list = IntStream.range(0, split.size())
+                    .mapToObj(i -> new SimpleImmutableEntry<>(i, split.get(i)))
+                    .collect(toList());
+
+            List<SimpleImmutableEntry<Integer, List<ResponseOperation>>> get
+                    = forkJoinPool.submit(() -> list.parallelStream()
                             .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                            .collect(toList()))
                     .get();
-            if (responses.size() != requests.size()) {
-                throw new IOException("CloudKitty execute, mismatched response size");
-            }
+
             // Order responses to match requests.
-            return responses.entrySet()
-                    .stream().sorted(Comparator.comparing(Map.Entry::getKey))
+            List<T> reordered = get.stream()
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(Map.Entry::getValue)
                     .flatMap(Collection::stream)
                     .map(field)
                     .collect(Collectors.toList());
+
+            if (reordered.size() != requests.size()) {
+                logger.warn("-- execute() - requests: {} reordered: {}", requests.size(), reordered.size());
+                throw new IOException("CloudKitty execute, bad response");
+            }
+            return reordered;
 
         } catch (UncheckedIOException ex) {
             throw ex.getCause();
@@ -158,6 +164,7 @@ public final class CloudKitty {
             request(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests)
             throws UncheckedIOException {
         logger.trace("<< request() - httpClient: {} header: {} requests: {}", httpClient, header, requests);
+        logger.debug("-- request() - requests: {}", requests.size());
 
         assert (!requests.isEmpty());
         byte[] data = encode(header, requests.iterator());
