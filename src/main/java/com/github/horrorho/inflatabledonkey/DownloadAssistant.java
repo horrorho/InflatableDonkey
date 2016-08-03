@@ -27,10 +27,13 @@ import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
@@ -50,17 +53,20 @@ public final class DownloadAssistant {
     private final Function<FileAssembler, Donkey> donkeyFactory;
     private final Function<Set<Asset>, List<Set<Asset>>> batchFunction;
     private final KeyBagManager keyBagManager;
+    private final ForkJoinPool forkJoinPool;
     private final Path folder;
 
     public DownloadAssistant(
             Function<FileAssembler, Donkey> donkeyFactory,
             Function<Set<Asset>, List<Set<Asset>>> batchFunction,
             KeyBagManager keyBagManager,
+            ForkJoinPool forkJoinPool,
             Path folder) {
 
         this.donkeyFactory = Objects.requireNonNull(donkeyFactory);
         this.batchFunction = Objects.requireNonNull(batchFunction);
         this.keyBagManager = Objects.requireNonNull(keyBagManager);
+        this.forkJoinPool = Objects.requireNonNull(forkJoinPool);
         this.folder = Objects.requireNonNull(folder);
     }
 
@@ -73,9 +79,30 @@ public final class DownloadAssistant {
 
         Donkey donkey = donkeyFactory.apply(fileAssembler);
 
-        batchFunction.apply(assets)
-                .stream()
-                .forEach(u -> donkey.apply(httpClient, u));
+        List<Set<Asset>> batchedAssets = batchFunction.apply(assets);
+
+        execute(httpClient, donkey, batchedAssets);
+
         logger.trace(">> download()");
+    }
+
+    public void execute(HttpClient httpClient, Donkey donkey, List<Set<Asset>> batchedAssets) {
+        logger.debug("-- download() - threads: {} batch count: {}",
+                forkJoinPool.getParallelism(), batchedAssets.size());
+
+        try {
+            forkJoinPool
+                    .submit(() -> batchedAssets
+                            .parallelStream()
+                            .forEach(u -> donkey.apply(httpClient, u)))
+                    .get();
+
+        } catch (InterruptedException ex) {
+            logger.warn("-- execute() - InterruptedException: {}", ex.getMessage());
+            Thread.currentThread().interrupt();
+
+        } catch (ExecutionException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

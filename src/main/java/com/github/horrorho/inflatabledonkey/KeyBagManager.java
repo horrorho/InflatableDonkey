@@ -31,6 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagType;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -57,8 +58,20 @@ public final class KeyBagManager {
 
     public static KeyBagManager defaults(CloudKitty kitty, ProtectionZone mbksync) {
         BiFunction<HttpClient, KeyBagID, Optional<KeyBag>> keyBagClient
-                = (httpClient, keyBagID) -> KeyBagClient.apply(httpClient, kitty, mbksync, keyBagID);
+                = (httpClient, keyBagID) -> keyBagClient(httpClient, kitty, mbksync, keyBagID);
         return new KeyBagManager(keyBagClient);
+    }
+
+    static Optional<KeyBag>
+            keyBagClient(HttpClient httpClient, CloudKitty kitty, ProtectionZone mbksync, KeyBagID keyBagID) {
+        try {
+            return Optional.of(KeyBagClient.apply(httpClient, kitty, mbksync, keyBagID));
+
+        } catch (IOException ex) {
+            logger.warn("-- keyBagClient() - IOException: {} {}",
+                    ex.getClass().getCanonicalName(), ex.getMessage());
+            return Optional.empty();
+        }
     }
 
     private static final KeyBag FAIL

@@ -33,10 +33,10 @@ import com.github.horrorho.inflatabledonkey.data.backup.ManifestIDIndex;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,17 +57,18 @@ public final class AssetsClient {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetsClient.class);
 
-    public static Optional<List<Assets>>
+    public static List<Assets>
             apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<Manifest> manifests)
-            throws UncheckedIOException {
+            throws IOException {
 
         if (manifests.isEmpty()) {
-            return Optional.of(new ArrayList<>());
+            return Collections.emptyList();
         }
 
         List<String> manifestIDs = manifestIDs(manifests);
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs)
-                .map(r -> assetsList(r, zone));
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs);
+        return assetsList(responses, zone);
     }
 
     static List<String> manifestIDs(Collection<Manifest> manifests) {

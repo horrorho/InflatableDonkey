@@ -31,9 +31,9 @@ import com.github.horrorho.inflatabledonkey.data.backup.SnapshotID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,20 +51,20 @@ public final class SnapshotClient {
 
     private static final Logger logger = LoggerFactory.getLogger(SnapshotClient.class);
 
-    public static Optional<List<Snapshot>>
+    public static List<Snapshot>
             snapshots(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<SnapshotID> snapshotIDs)
-            throws UncheckedIOException {
+            throws IOException {
 
         if (snapshotIDs.isEmpty()) {
-            return Optional.of(new ArrayList<>());
+            return Collections.emptyList();
         }
 
         List<String> snapshots = snapshotIDs.stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
-        
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots)
-                .map(r -> snapshots(r, zone));
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", snapshots);
+        return snapshots(responses, zone);
     }
 
     static List<Snapshot> snapshots(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {

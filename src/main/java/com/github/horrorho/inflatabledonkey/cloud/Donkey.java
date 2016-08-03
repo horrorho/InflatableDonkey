@@ -69,6 +69,7 @@ public final class Donkey {
     }
 
     public void apply(HttpClient httpClient, Collection<Asset> assets) {
+        logger.trace("<< apply() - assets: {}", assets.size());
         if (assets.isEmpty()) {
             return;
         }
@@ -78,6 +79,7 @@ public final class Donkey {
         consumeAssets(authorizedAssets, chunks);
 
         // TODO IllegalStateException
+        logger.trace(">> apply()");
     }
 
     Set<Chunk> fetchAssets(HttpClient httpClient, Collection<AuthorizedAsset<Asset>> authorizedAssets) {

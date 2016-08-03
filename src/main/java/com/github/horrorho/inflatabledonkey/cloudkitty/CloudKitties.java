@@ -27,6 +27,7 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
+import java.util.concurrent.ForkJoinPool;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -37,12 +38,12 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class CloudKitties {
 
-    public static CloudKitty backupd(CKInit ckInit, Account account) {
-        return create(ckInit, account, "com.apple.backup.ios", "com.apple.backupd");
+    public static CloudKitty backupd(ForkJoinPool forkJoinPool, CKInit ckInit, Account account) {
+        return create(forkJoinPool, ckInit, account, "com.apple.backup.ios", "com.apple.backupd");
     }
 
     public static CloudKitty
-            create(CKInit ckInit, Account account, String container, String bundle) {
+            create(ForkJoinPool forkJoinPool, CKInit ckInit, Account account, String container, String bundle) {
         String cloudKitToken = account.tokens().get(Token.CLOUDKITTOKEN);
         String cloudKitUserId = ckInit.cloudKitUserId();
         // Re-direct issues with ckInit baseUrl.
@@ -51,16 +52,7 @@ public final class CloudKitties {
                 .map(url -> url + "/api/client")
                 .orElseGet(() -> ckInit.production().url());
 
-        return create(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
-    }
-
-    static CloudKitty
-            create(String container, String bundle, String cloudKitUserId, String cloudKitToken, String baseUrl) {
-        String url = baseUrl + RECORD_RETRIEVE;
-        RequestOperationHeaders requestOperationHeaders = new RequestOperationHeaders(container, bundle);
-        ProtoBufsRequestFactory requestFactory
-                = new ProtoBufsRequestFactory(url, container, bundle, cloudKitUserId, cloudKitToken);
-        return new CloudKitty(requestOperationHeaders, requestFactory);
+        return create(forkJoinPool, container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
     }
 
     static CloudKitty test() {
@@ -69,8 +61,17 @@ public final class CloudKitties {
         String cloudKitToken = "CLOUDKIT_TOKEN";
         String cloudKitUserId = "CLOUDKIT_USERID";
         String baseUrl = "BASE_URL";
-        return create(container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
+        return create(new ForkJoinPool(1), container, bundle, cloudKitUserId, cloudKitToken, baseUrl);
     }
 
+    static CloudKitty create(ForkJoinPool forkJoinPool, String container, String bundle, String cloudKitUserId,
+            String cloudKitToken, String baseUrl) {
+
+        String url = baseUrl + RECORD_RETRIEVE;
+        RequestOperationHeaders requestOperationHeaders = new RequestOperationHeaders(container, bundle);
+        ProtoBufsRequestFactory requestFactory
+                = new ProtoBufsRequestFactory(url, container, bundle, cloudKitUserId, cloudKitToken);
+        return new CloudKitty(requestOperationHeaders, requestFactory, forkJoinPool);
+    }
     private static final String RECORD_RETRIEVE = "/record/retrieve";
 }

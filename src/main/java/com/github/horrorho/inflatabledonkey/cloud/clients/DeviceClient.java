@@ -29,7 +29,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceID;
 import com.github.horrorho.inflatabledonkey.data.backup.DeviceFactory;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -48,16 +48,16 @@ public final class DeviceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceClient.class);
 
-    public static Optional<List<Device>>
+    public static List<Device>
             apply(HttpClient httpClient, CloudKitty kitty, Collection<DeviceID> devices)
-            throws UncheckedIOException {
+            throws IOException {
 
         List<String> deviceList = devices.stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
-
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceList)
-                .map(DeviceClient::devices);
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", deviceList);
+        return devices(responses);
     }
 
     static List<Device> devices(List<CloudKit.RecordRetrieveResponse> responses) {

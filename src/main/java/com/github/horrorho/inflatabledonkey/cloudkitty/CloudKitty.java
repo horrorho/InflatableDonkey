@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
+import com.github.horrorho.inflatabledonkey.exception.UncheckedInterruptedException;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
 import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
@@ -33,14 +34,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -70,61 +76,82 @@ public final class CloudKitty {
     private final ResponseHandler<List<ResponseOperation>> responseHandler;
     private final Function<String, RequestOperationHeader> requestOperationHeaders;
     private final ProtoBufsRequestFactory requestFactory;
+    private final ForkJoinPool forkJoinPool;
     private final int limit;
 
     CloudKitty(
             ResponseHandler<List<ResponseOperation>> responseHandler,
             Function<String, RequestOperationHeader> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
+            ForkJoinPool forkJoinPool,
             int limit) {
-        this.responseHandler = Objects.requireNonNull(responseHandler, "responseHandler");
-        this.requestOperationHeaders = Objects.requireNonNull(requestOperationHeaders, "requestOperationHeaders");
-        this.requestFactory = Objects.requireNonNull(requestFactory, "requestFactory");
+        this.responseHandler = Objects.requireNonNull(responseHandler);
+        this.requestOperationHeaders = Objects.requireNonNull(requestOperationHeaders);
+        this.requestFactory = Objects.requireNonNull(requestFactory);
+        this.forkJoinPool = Objects.requireNonNull(forkJoinPool);
         this.limit = limit;
     }
 
     CloudKitty(
             Function<String, RequestOperationHeader> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
+            ForkJoinPool forkJoinPool,
             int limit) {
-        this(responseHandler(), requestOperationHeaders, requestFactory, limit);
+        this(responseHandler(), requestOperationHeaders, requestFactory, forkJoinPool, limit);
     }
 
     CloudKitty(
             Function<String, RequestOperationHeader> requestOperationHeaders,
-            ProtoBufsRequestFactory requestFactory) {
-        this(requestOperationHeaders, requestFactory, LIMIT);
+            ProtoBufsRequestFactory requestFactory,
+            ForkJoinPool forkJoinPool) {
+        this(requestOperationHeaders, requestFactory, forkJoinPool, LIMIT);
     }
 
-    public Optional<List<ResponseOperation>>
-            get(HttpClient httpClient, String operation, List<RequestOperation> requests)
-            throws UncheckedIOException {
+    public List<ResponseOperation> get(HttpClient httpClient, String operation, List<RequestOperation> requests)
+            throws IOException {
+        
         return get(httpClient, operation, requests, Function.identity());
     }
 
-    public <T> Optional<List<T>> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
-            Function<ResponseOperation, T> field) throws UncheckedIOException {
-        List<T> responses = doGet(httpClient, requestOperationHeaders.apply(operation), requests, field);
-        if (responses.size() != requests.size()) {
-            // TODO consider retry
-            logger.warn("-- get() - mismatch request: {} response: {}", requests.size(), responses.size());
-            return Optional.empty();
-        }
-        return Optional.of(responses);
+    public <T> List<T> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
+            Function<ResponseOperation, T> field) throws IOException {
+
+        return execute(httpClient, requestOperationHeaders.apply(operation), requests, field);
     }
 
-    <T> List<T> doGet(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
-            Function<ResponseOperation, T> field) throws UncheckedIOException {
-        List<T> responses = ListUtils.split(requests, LIMIT)
-                .stream()
-                .map(u -> request(httpClient, header, u))
-                .flatMap(Collection::stream)
-                .map(field)
-                .collect(Collectors.toList());
-        if (responses.size() != requests.size()) {
-            logger.warn("-- doGet() - size mismatch requests: {} responses: {}", requests.size(), responses.size());
+    <T> List<T> execute(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
+            Function<ResponseOperation, T> field) throws IOException {
+        try {
+            List<List<RequestOperation>> split = ListUtils.split(requests, limit);
+            Map<Integer, List<RequestOperation>> ordered = IntStream.range(0, split.size())
+                    .mapToObj(Integer::valueOf)
+                    .collect(Collectors.toMap(Function.identity(), split::get));
+
+            Map<Integer, List<ResponseOperation>> responses
+                    = forkJoinPool.submit(() -> ordered
+                            .entrySet()
+                            .parallelStream()
+                            .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                    .get();
+            if (responses.size() != requests.size()) {
+                throw new IOException("CloudKitty execute, mismatched response size");
+            }
+            // Order responses to match requests.
+            return responses.entrySet()
+                    .stream().sorted(Comparator.comparing(Map.Entry::getKey))
+                    .map(Map.Entry::getValue)
+                    .flatMap(Collection::stream)
+                    .map(field)
+                    .collect(Collectors.toList());
+
+        } catch (UncheckedIOException ex) {
+            throw ex.getCause();
+        } catch (InterruptedException ex) {
+            throw new UncheckedInterruptedException(ex);
+        } catch (ExecutionException ex) {
+            throw new RuntimeException(ex);
         }
-        return responses;
     }
 
     List<ResponseOperation>

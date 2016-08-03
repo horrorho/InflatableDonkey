@@ -133,8 +133,9 @@ public class Main {
                 .build();
 
         // TODO manage
-        Optional<ForkJoinPool> forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new);
-        logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.map(ForkJoinPool::getParallelism));
+        ForkJoinPool forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new)
+                .orElseGet(() -> new ForkJoinPool(1));
+        logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.getParallelism());
 
         // Auth
         // TODO rework when we have UncheckedIOException for Authenticator
@@ -159,7 +160,7 @@ public class Main {
         Account account = Accounts.account(httpClient, auth);
 
         // Backup
-        BackupAssistant assistant = BackupAssistant.create(httpClient, account);
+        BackupAssistant assistant = BackupAssistant.create(httpClient, forkJoinPool, account);
 
         // Output folders.
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups")).normalize()
@@ -190,8 +191,8 @@ public class Main {
                 = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);
 
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(donkeyFactory, batchFunction, keyBagManager, outputFolder);
-        Backup backup = new Backup(assistant, downloadAssistant, forkJoinPool);
+                = new DownloadAssistant(donkeyFactory, batchFunction, keyBagManager, forkJoinPool, outputFolder);
+        Backup backup = new Backup(assistant, downloadAssistant);
 
         // Retrieve snapshots.
         Map<Device, List<Snapshot>> deviceSnapshots = backup.snapshots(httpClient);

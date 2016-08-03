@@ -27,10 +27,11 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccount;
 import com.github.horrorho.inflatabledonkey.data.backup.BackupAccountFactory;
+import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
@@ -48,13 +49,18 @@ public final class BackupAccountClient {
     private static final Logger logger = LoggerFactory.getLogger(BackupAccountClient.class);
 
     public static Optional<BackupAccount>
-            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone) throws UncheckedIOException {
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone)
+            throws BadDataException, IOException {
 
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount")
-                .flatMap(r -> backupAccount(r, zone));
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", "BackupAccount");
+        return backupAccount(responses, zone);
     }
 
-    static Optional<BackupAccount> backupAccount(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+    static Optional<BackupAccount>
+            backupAccount(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone)
+            throws BadDataException {
+
         logger.debug("-- backupAccount() - responses: {}", responses);
         CloudKit.RecordRetrieveResponse response = responses.get(0);
         if (!response.hasRecord()) {
@@ -63,12 +69,8 @@ public final class BackupAccountClient {
         }
 
         CloudKit.ProtectionInfo protectionInfo = response.getRecord().getProtectionInfo();
-        Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
-        if (!optionalNewZone.isPresent()) {
-            logger.warn("-- backupAccount() - failed to retrieve protection info");
-            return Optional.empty();
-        }
-        ProtectionZone newZone = optionalNewZone.get();
+        ProtectionZone newZone = PZFactory.instance().create(zone, protectionInfo)
+                .orElseThrow(() -> new BadDataException("BackupAccountClient, failed to retrieve protection info"));
 
         BackupAccount backupAccount = BackupAccountFactory.from(responses.get(0).getRecord(), newZone);
         logger.debug("-- backupAccount() - backup account: {}", backupAccount);

@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -51,17 +51,18 @@ public final class AssetTokenClient {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
-    public static Optional<List<Asset>>
+    public static List<Asset>
             apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
-            throws UncheckedIOException {
+            throws IOException {
         List<String> nonEmptyAssets = assetIDs.stream()
                 .filter(a -> a.size() > 0)
                 .map(Object::toString)
                 .collect(Collectors.toList());
         logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
 
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets)
-                .map(r -> assets(r, zone));
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
+        return assets(responses, zone);
     }
 
     static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {

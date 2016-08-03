@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import com.github.horrorho.inflatabledonkey.crypto.RFC3394Wrap;
 import com.github.horrorho.inflatabledonkey.crypto.PBKDF2;
+import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,11 +53,10 @@ public final class KeyBagDecoder {
 
     private static final int KEK_BITLENGTH = 256;
 
-    public static Optional<KeyBag> decode(byte[] data, byte[] passcode) {
+    public static KeyBag decode(byte[] data, byte[] passcode) throws BadDataException {
         List<TagLengthValue> list = TagLengthValue.parse(data);
         if (list.size() < 3) {
-            logger.warn("-- from() - list too small");
-            return Optional.empty();
+            throw new BadDataException("KeyBagDecoder, bad key bag data");
         }
 
         Iterator<TagLengthValue> it = list.iterator();
@@ -67,21 +67,19 @@ public final class KeyBagDecoder {
 
         TagLengthValue type = it.next();
         if (!type.tag().equals("TYPE")) {
-            logger.warn("-- from() - bad format: {}", list);
-            return Optional.empty();
+            throw new BadDataException("KeyBagDecoder, bad key bag data");
         }
 
         KeyBagType keyBagType = KeyBagType.from(integer(type.value()));
         if (keyBagType != KeyBagType.BACKUP && keyBagType != KeyBagType.OTA) {
-            logger.warn("-- from() - not a backup keybag: {}", keyBagType);
-            return Optional.empty();
+            throw new BadDataException("KeyBagDecoder, not a backup key bag");
         }
 
         return KeyBagDecoder.decode(keyBagType, it, passcode);
     }
 
-    static Optional<KeyBag> decode(KeyBagType keyBagType, Iterator<TagLengthValue> it, byte[] passCode) {
-        return blocks(it).map(u -> KeyBagDecoder.decode(keyBagType, u, passCode));
+    static KeyBag decode(KeyBagType keyBagType, Iterator<TagLengthValue> it, byte[] passCode) throws BadDataException {
+        return KeyBagDecoder.decode(keyBagType, blocks(it), passCode);
     }
 
     static KeyBag decode(KeyBagType keyBagType, List<Map<String, byte[]>> blocks, byte[] passCode) {
@@ -106,15 +104,14 @@ public final class KeyBagDecoder {
         return new KeyBag(new KeyBagID(uuid), keyBagType, publicKeys, privateKeys);
     }
 
-    static Optional<List<Map<String, byte[]>>> blocks(Iterator<TagLengthValue> iterator) {
+    static List<Map<String, byte[]>> blocks(Iterator<TagLengthValue> iterator) throws BadDataException {
         TagLengthValue uuid = iterator.next();
         if (!uuid.tag().equals("UUID")) {
-            logger.warn("-- blocks() - bad format");
-            return Optional.empty();
+            throw new BadDataException("KeyBagDecoder, bad block format");
         }
         List<Map<String, byte[]>> blocks = new ArrayList<>();
         block(uuid, iterator, blocks);
-        return Optional.of(blocks);
+        return blocks;
     }
 
     static void block(TagLengthValue uuid, Iterator<TagLengthValue> iterator, List<Map<String, byte[]>> blocks) {
@@ -159,6 +156,7 @@ public final class KeyBagDecoder {
             return Optional.empty();
         }
         Optional<byte[]> key = RFC3394Wrap.unwrapAES(kek, wpky);
+        // Should probably throw an exception here
         logger.debug("-- unwrapKey() - unwrap kek: 0x{} wpky: 0x{} > key: 0x{}",
                 Hex.toHexString(kek), Hex.toHexString(wpky), key.map(Hex::toHexString).orElse("NULL"));
         return key;

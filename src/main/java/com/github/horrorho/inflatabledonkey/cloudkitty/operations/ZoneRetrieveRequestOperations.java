@@ -26,10 +26,10 @@ package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -42,23 +42,25 @@ import org.apache.http.client.HttpClient;
 @Immutable
 public final class ZoneRetrieveRequestOperations {
 
-    public static Optional<List<ZoneRetrieveResponse>> get(CloudKitty kitty, HttpClient httpClient, String... zones) {
+    public static List<ZoneRetrieveResponse> get(CloudKitty kitty, HttpClient httpClient, String... zones)
+            throws IOException {
         return get(kitty, httpClient, Arrays.asList(zones));
     }
 
-    public static Optional<List<ZoneRetrieveResponse>>
-            get(CloudKitty kitty, HttpClient httpClient, Collection<String> zones) {
+    public static List<ZoneRetrieveResponse>
+            get(CloudKitty kitty, HttpClient httpClient, Collection<String> zones)
+            throws IOException {
         List<RequestOperation> operations = operations(zones, kitty.cloudKitUserId());
         return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getZoneRetrieveResponse);
     }
 
-    public static List<RequestOperation> operations(Collection<String> zones, String cloudKitUserId) {
+    static List<RequestOperation> operations(Collection<String> zones, String cloudKitUserId) {
         return zones.stream()
                 .map(u -> operation(u, cloudKitUserId))
                 .collect(Collectors.toList());
     }
 
-    public static RequestOperation operation(String zone, String cloudKitUserId) {
+    static RequestOperation operation(String zone, String cloudKitUserId) {
         return RequestOperation.newBuilder()
                 .setOperation(CKProto.operation(201))
                 .setZoneRetrieveRequest(request(zone, cloudKitUserId))

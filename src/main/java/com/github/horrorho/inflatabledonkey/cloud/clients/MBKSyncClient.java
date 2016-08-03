@@ -30,10 +30,9 @@ import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -49,12 +48,13 @@ public final class MBKSyncClient {
 
     private static final Logger logger = LoggerFactory.getLogger(MBKSyncClient.class);
 
-    public static Optional<ProtectionZone>
+    public static ProtectionZone
             apply(HttpClient httpClient, CloudKitty kitty, Collection<Key<ECPrivateKey>> keys)
-            throws UncheckedIOException {
+            throws IOException {
 
-        return ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync")
-                .map(r -> zone(r, keys));
+        List<CloudKit.ZoneRetrieveResponse> responses
+                = ZoneRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", "mbksync");
+        return zone(responses, keys);
     }
 
     static ProtectionZone

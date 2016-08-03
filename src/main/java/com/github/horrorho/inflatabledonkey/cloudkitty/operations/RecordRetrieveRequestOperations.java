@@ -26,10 +26,10 @@ package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -42,25 +42,27 @@ import org.apache.http.client.HttpClient;
 @Immutable
 public final class RecordRetrieveRequestOperations {
 
-    public static Optional<List<RecordRetrieveResponse>>
-            get(CloudKitty kitty, HttpClient httpClient, String zone, String... recordNames) {
+    public static List<RecordRetrieveResponse>
+            get(CloudKitty kitty, HttpClient httpClient, String zone, String... recordNames)
+            throws IOException {
         return get(kitty, httpClient, zone, Arrays.asList(recordNames));
     }
 
-    public static Optional<List<RecordRetrieveResponse>>
-            get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames) {
+    public static List<RecordRetrieveResponse>
+            get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames)
+            throws IOException {
         List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
         return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
     }
 
-    public static List<RequestOperation>
+    static List<RequestOperation>
             operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
         return recordNames.stream()
                 .map(u -> operation(zone, u, cloudKitUserId))
                 .collect(Collectors.toList());
     }
 
-    public static RequestOperation operation(String zone, String recordName, String cloudKitUserId) {
+    static RequestOperation operation(String zone, String recordName, String cloudKitUserId) {
         return RequestOperation.newBuilder()
                 .setOperation(CKProto.operation(211))
                 .setRecordRetrieveRequest(request(zone, recordName, cloudKitUserId))

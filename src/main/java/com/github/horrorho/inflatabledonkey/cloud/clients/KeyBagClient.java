@@ -28,12 +28,12 @@ import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieve
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
+import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import java.io.UncheckedIOException;
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -48,29 +48,23 @@ public final class KeyBagClient {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBagClient.class);
 
-    public static Optional<KeyBag>
+    public static KeyBag
             apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, KeyBagID keyBagID)
-            throws UncheckedIOException {
+            throws BadDataException, IOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagID);
 
-        return RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString())
-                .flatMap(r -> keyBag(r, zone));
+        List<CloudKit.RecordRetrieveResponse> responses
+                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
+        return keyBag(responses, zone);
     }
 
-    static Optional<KeyBag> keyBag(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+    static KeyBag keyBag(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) throws BadDataException {
         logger.debug("-- keyBag() - responses: {}", responses);
         CloudKit.ProtectionInfo protectionInfo = responses.get(0)
                 .getRecord()
                 .getProtectionInfo();
-
-        Optional<ProtectionZone> optionalNewZone = PZFactory.instance().create(zone, protectionInfo);
-        if (!optionalNewZone.isPresent()) {
-            logger.warn("-- keyBag() - failed to retrieve protection info");
-            return Optional.empty();
-        }
-        ProtectionZone newZone = optionalNewZone.get();
-
+        ProtectionZone newZone = PZFactory.instance().create(zone, protectionInfo)
+                .orElseThrow(() -> new BadDataException("KeyBagClient, failed to retrieve protection info"));
         return KeyBagFactory.from(responses.get(0), newZone);
     }
-
 }

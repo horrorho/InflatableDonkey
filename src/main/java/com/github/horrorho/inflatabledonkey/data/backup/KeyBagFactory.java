@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
@@ -43,17 +44,18 @@ public final class KeyBagFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyBagFactory.class);
 
-    public static Optional<KeyBag> from(CloudKit.RecordRetrieveResponse response, ProtectionZone zone) {
+    public static KeyBag
+            from(CloudKit.RecordRetrieveResponse response, ProtectionZone zone)
+            throws BadDataException {
+
         Optional<byte[]> keyBagData = field(response.getRecord(), KEYBAG_DATA, zone);
         if (!keyBagData.isPresent()) {
-            logger.warn("-- from() - failed to acquire key bag");
-            return Optional.empty();
+            throw new BadDataException("KeyBagFactory, no key bag data");
         }
 
         Optional<byte[]> secret = field(response.getRecord(), SECRET, zone);
         if (!secret.isPresent()) {
-            logger.warn("-- from() - failed to acquire key bag pass code");
-            return Optional.empty();
+            throw new BadDataException("KeyBagFactory, failed to acquire key bag pass code");
         }
 
         return KeyBagDecoder.decode(keyBagData.get(), secret.get());
