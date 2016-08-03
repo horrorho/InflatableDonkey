@@ -74,11 +74,19 @@ public final class Donkey {
             return;
         }
 
-        List<AuthorizedAsset<Asset>> authorizedAssets = authorizeAssetsClient.apply(httpClient, assets);
-        Set<Chunk> chunks = fetchAssets(httpClient, authorizedAssets);
-        consumeAssets(authorizedAssets, chunks);
+        while (true) {
+            try {
+                List<AuthorizedAsset<Asset>> authorizedAssets = authorizeAssetsClient.apply(httpClient, assets);
+                Set<Chunk> chunks = fetchAssets(httpClient, authorizedAssets);
+                consumeAssets(authorizedAssets, chunks);
+                break;
 
-        // TODO IllegalStateException
+            } catch (IllegalStateException ex) {
+                // Our StorageHostChunkLists have expired.
+                // TODO tidy up this mechanic.
+                logger.debug("-- apply() - IllegalStateException: ", ex);
+            }
+        }
         logger.trace(">> apply()");
     }
 
