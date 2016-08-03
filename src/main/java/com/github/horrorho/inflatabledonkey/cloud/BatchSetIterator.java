@@ -77,14 +77,14 @@ public class BatchSetIterator<T> implements Iterator<Set<T>> {
     public Set<T> next() {
         while (iterator.hasNext()) {
             T item = iterator.next();
-            int assetSize = size.applyAsInt(item);
-            if (assetSize > threshold) {
+            int itemSize = size.applyAsInt(item);
+            if (itemSize > threshold) {
                 HashSet<T> set = new HashSet<>();
                 set.add(item);
                 return set;
             }
             batch.add(item);
-            if ((batchSize += assetSize) >= threshold) {
+            if ((batchSize += itemSize) >= threshold) {
                 break;
             }
         }
