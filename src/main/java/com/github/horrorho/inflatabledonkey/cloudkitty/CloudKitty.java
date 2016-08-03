@@ -56,7 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Super basic CloudKit client.
+ * Super basic concurrent CloudKit client. Requests over our limit (default: 400) are concurrently processed.
  *
  * @author Ahseya
  */
@@ -124,6 +124,8 @@ public final class CloudKitty {
             Function<ResponseOperation, T> field) throws IOException {
         try {
             logger.debug("-- execute() - requests: {}", requests.size());
+
+            // Split and concurrently pipeline requests over our limit.
             List<List<RequestOperation>> split = ListUtils.split(requests, limit);
             logger.debug("-- execute() - split: {}", split.size());
 
