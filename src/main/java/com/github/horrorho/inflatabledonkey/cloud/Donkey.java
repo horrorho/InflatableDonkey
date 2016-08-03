@@ -79,7 +79,7 @@ public final class Donkey {
             int bytes = assets.stream()
                     .mapToInt(u -> u.size().orElse(0))
                     .sum();
-            logger.debug("-- apply() - assets total size (bytes): {}", bytes);
+            logger.debug("-- apply() - assets total: {} size (bytes): {}", assets.size(), bytes);
         }
 
         while (true) {
@@ -111,9 +111,10 @@ public final class Donkey {
 
     Optional<Set<Chunk>> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
         ChunkServer.HostInfo hostInfo = container.getHostInfo();
-        logger.debug("-- fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
+        logger.trace("<< fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
         try {
             Set<Chunk> chunks = chunkClient.apply(httpClient, store, container);
+            logger.trace(">> fetchContainer() - chunks: {}", chunks);
             return Optional.of(chunks);
 
         } catch (IOException ex) {
