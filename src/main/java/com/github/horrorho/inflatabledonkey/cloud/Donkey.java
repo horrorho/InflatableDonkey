@@ -28,6 +28,7 @@ import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -74,6 +75,13 @@ public final class Donkey {
             return;
         }
 
+        if (logger.isDebugEnabled()) {
+            int bytes = assets.stream()
+                    .mapToInt(u -> u.size().orElse(0))
+                    .sum();
+            logger.debug("-- apply() - assets total size (bytes): {}", bytes);
+        }
+
         while (true) {
             try {
                 List<AuthorizedAsset<Asset>> authorizedAssets = authorizeAssetsClient.apply(httpClient, assets);
@@ -83,7 +91,6 @@ public final class Donkey {
 
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
-                // TODO tidy up this mechanic.
                 logger.debug("-- apply() - IllegalStateException: ", ex);
             }
         }
@@ -91,6 +98,7 @@ public final class Donkey {
     }
 
     Set<Chunk> fetchAssets(HttpClient httpClient, Collection<AuthorizedAsset<Asset>> authorizedAssets) {
+        logger.debug("-- fetchAssets() - assets: {}", authorizedAssets.size());
         return authorizedAssets.stream()
                 .map(AuthorizedAsset::containers)
                 .flatMap(Collection::stream)
@@ -102,14 +110,14 @@ public final class Donkey {
     }
 
     Optional<Set<Chunk>> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
-        logger.trace("<< fetchContainer() - container host info: {}", container.getHostInfo());
+        ChunkServer.HostInfo hostInfo = container.getHostInfo();
+        logger.debug("-- fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
         try {
             Set<Chunk> chunks = chunkClient.apply(httpClient, store, container);
-            logger.trace(">> fetchContainer() - chunks: {}", chunks);
             return Optional.of(chunks);
 
         } catch (IOException ex) {
-            logger.warn(">> fetchContainer() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            logger.warn("-- fetchContainer() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
             return Optional.empty();
         }
     }

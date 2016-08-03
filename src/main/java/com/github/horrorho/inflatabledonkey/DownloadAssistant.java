@@ -27,7 +27,6 @@ import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -87,14 +86,13 @@ public final class DownloadAssistant {
     }
 
     public void execute(HttpClient httpClient, Donkey donkey, List<Set<Asset>> batchedAssets) {
-        logger.debug("-- download() - threads: {} batch count: {}",
+        logger.debug("-- execute() - threads: {} batch count: {}",
                 forkJoinPool.getParallelism(), batchedAssets.size());
 
         try {
-            forkJoinPool
-                    .submit(() -> batchedAssets
-                            .parallelStream()
-                            .forEach(u -> donkey.apply(httpClient, u)))
+            forkJoinPool.submit(() -> batchedAssets
+                    .parallelStream()
+                    .forEach(u -> donkey.apply(httpClient, u)))
                     .get();
 
         } catch (InterruptedException ex) {
