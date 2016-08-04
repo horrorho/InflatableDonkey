@@ -67,7 +67,7 @@ public final class AssetTokenClient {
 
     static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
         return responses
-                .stream()
+                .parallelStream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
                 .map(r -> asset(r, zone))

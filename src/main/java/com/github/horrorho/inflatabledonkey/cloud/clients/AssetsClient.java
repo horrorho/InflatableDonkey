@@ -73,7 +73,7 @@ public final class AssetsClient {
 
     static List<String> manifestIDs(Collection<Manifest> manifests) {
         return manifests
-                .stream()
+                .parallelStream()
                 .map(AssetsClient::manifestIDs)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
