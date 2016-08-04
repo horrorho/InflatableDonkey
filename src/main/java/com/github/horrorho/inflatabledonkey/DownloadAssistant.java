@@ -75,13 +75,9 @@ public final class DownloadAssistant {
         keyBagManager.update(httpClient, assets);
         XFileKeyFactory fileKeys = new XFileKeyFactory(keyBagManager::keyBag);
         FileAssembler fileAssembler = new FileAssembler(fileKeys, outputFolder);
-
         Donkey donkey = donkeyFactory.apply(fileAssembler);
-
         List<Set<Asset>> batchedAssets = batchFunction.apply(assets);
-
         execute(httpClient, donkey, batchedAssets);
-
         logger.trace(">> download()");
     }
 
