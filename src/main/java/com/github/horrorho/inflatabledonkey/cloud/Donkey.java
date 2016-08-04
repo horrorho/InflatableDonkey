@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -88,10 +89,12 @@ public final class Donkey {
                 Set<Chunk> chunks = fetchAssets(httpClient, authorizedAssets);
                 consumeAssets(authorizedAssets, chunks);
                 break;
-
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
                 logger.debug("-- apply() - IllegalStateException: ", ex);
+            } catch (IOException ex) {
+                logger.warn("-- apply() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+                break;
             }
         }
         logger.trace(">> apply()");

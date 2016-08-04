@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.requests;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
@@ -56,30 +56,22 @@ public final class AuthorizeGetRequestFactory {
         this.headers = new HashMap<>(headers);
     }
 
-    public Optional<HttpUriRequest> newRequest(
-            String dsPrsID,
-            String contentBaseUrl,
-            String container,
-            String zone,
-            CloudKit.FileTokens fileTokens) {
+    public HttpUriRequest
+            newRequest(String dsPrsID, String contentBaseUrl, String container, String zone, CloudKit.FileTokens fileTokens) {
 
         if (fileTokens.getFileTokensCount() == 0) {
-            return Optional.empty();
+            throw new NoSuchElementException("no file tokens");
         }
-
         CloudKit.FileToken base = fileTokens.getFileTokens(0);
-
         String mmcsAuthToken = Stream.of(
                 Hex.encodeHexString(base.getFileChecksum().toByteArray()),
                 Hex.encodeHexString(base.getFileSignature().toByteArray()),
                 base.getToken())
                 .collect(Collectors.joining(" "));
-
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(fileTokens.toByteArray());
 
         String uri = contentBaseUrl + "/" + dsPrsID + "/authorizeGet";
-
-        HttpUriRequest request = RequestBuilder.post(uri)
+        return RequestBuilder.post(uri)
                 .addHeader(Headers.ACCEPT.header("application/vnd.com.apple.me.ubchunk+protobuf"))
                 .addHeader(Headers.CONTENTTYPE.header("application/vnd.com.apple.me.ubchunk+protobuf"))
                 .addHeader(Headers.XAPPLEMMCSDATACLASS.header("com.apple.Dataclass.CloudKit"))
@@ -92,8 +84,5 @@ public final class AuthorizeGetRequestFactory {
                 .addHeader(headers.get(Headers.XMMECLIENTINFO))
                 .setEntity(byteArrayEntity)
                 .build();
-
-        return Optional.of(request);
     }
 }
-// TODO gzip option
