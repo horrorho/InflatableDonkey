@@ -47,9 +47,6 @@ public final class AssetFactory {
     private static final String FILE_TYPE = "fileType";
     private static final String PROTECTION_CLASS = "protectionClass";
 
-    private static final long DEFAULT_EXPIRATION_SECONDS = 60 * 60; // 1 hour.
-    private static final long GRACE_TIME_SECONDS = 15 * 60; // 15 minutes.
-
     public static Optional<Asset> from(CloudKit.Record record, ProtectionZone zone) {
         return AssetID.from(record.getRecordIdentifier().getValue().getName())
                 .map(u -> from(u, record, zone));
@@ -80,11 +77,6 @@ public final class AssetFactory {
                 .map(CloudKit.Asset::getDownloadTokenExpiration)
                 .map(Instant::ofEpochSecond);
 
-        // TODO Adjust for bad system clocks.
-//        long currentTimeSeconds = System.currentTimeMillis() / 1000;
-//        Instant downloadTokenExpiration = tokenExpiration < (currentTimeSeconds + GRACE_TIME_SECONDS)
-//                ? Instant.ofEpochSecond(currentTimeSeconds + DEFAULT_EXPIRATION_SECONDS)
-//                : Instant.ofEpochSecond(tokenExpiration);
         Asset newAsset = new Asset(
                 record,
                 assetID,
