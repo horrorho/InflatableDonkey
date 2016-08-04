@@ -58,11 +58,24 @@ public final class AssetTokenClient {
                 .filter(a -> a.size() > 0)
                 .map(Object::toString)
                 .collect(Collectors.toList());
-        logger.debug("-- assets() - non-empty asset list size: {}", nonEmptyAssets.size());
+        logger.debug("-- apply() - non-empty asset list size: {}", nonEmptyAssets.size());
 
         List<CloudKit.RecordRetrieveResponse> responses
                 = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
-        return assets(responses, zone);
+        List<Asset> assets = assets(responses, zone);
+
+        if (logger.isDebugEnabled()) {
+            // Normally valid for 48 hours.
+            assets.stream()
+                    .map(Asset::downloadTokenExpiration)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .distinct()
+                    .sorted()
+                    .forEach(u -> logger.debug("-- apply() - expiration: {}", u));
+        }
+
+        return assets;
     }
 
     static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
@@ -77,7 +90,7 @@ public final class AssetTokenClient {
     }
 
     static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
-        logger.debug("-- asset() - record: {} zone: {}", record, zone);
+        logger.trace("-- asset() - record: {} zone: {}", record, zone);
         return PZFactory.instance()
                 .create(zone, record.getProtectionInfo())
                 .flatMap(u -> AssetFactory.from(record, u));
