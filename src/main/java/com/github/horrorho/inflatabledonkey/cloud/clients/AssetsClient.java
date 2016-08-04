@@ -102,20 +102,14 @@ public final class AssetsClient {
     }
 
     static Optional<ProtectionZone> zone(Collection<CloudKit.Record> records, ProtectionZone zone) {
-        List<ProtectionZone> zones = records
+        return records
                 .stream()
                 .filter(CloudKit.Record::hasProtectionInfo)
                 .map(CloudKit.Record::getProtectionInfo)
                 .map(u -> PZFactory.instance().create(zone, u))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
-        if (zones.size() != 1) {
-            logger.warn("-- zone() - unexpected protection info count: {}", zones.size());
-        }
-        return zones.isEmpty()
-                ? Optional.empty()
-                : Optional.of(zones.get(0));
+                .findFirst();
     }
 
     static Map<ManifestID, List<CloudKit.Record>>
