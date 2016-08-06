@@ -29,6 +29,7 @@ import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -110,6 +111,14 @@ public final class Donkey {
     Set<ByteString> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
         ChunkServer.HostInfo hostInfo = container.getHostInfo();
         logger.trace("<< fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
+        if (logger.isDebugEnabled()) {
+            int size = container.getChunkInfoList()
+                    .stream()
+                    .mapToInt(ChunkInfo::getChunkLength)
+                    .sum();
+            logger.debug("-- fetchContainer() - chunks: {} size: {}", container.getChunkInfoCount(), size);
+        }
+
         try {
             Set<ByteString> chunkChecksums = chunkClient.apply(httpClient, store, container)
                     .stream()
