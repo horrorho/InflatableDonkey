@@ -85,8 +85,6 @@ public final class Donkey {
 
         while (true) {
             try {
-                pool.authorize(httpClient);
-
                 if (assets.size() > fragmentationThreshold) {
                     processConcurrent(httpClient, aux, pool, consumer);
                 } else {
