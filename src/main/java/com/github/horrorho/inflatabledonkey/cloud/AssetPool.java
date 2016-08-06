@@ -39,28 +39,31 @@ import java.util.Set;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import net.jcip.annotations.NotThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static java.util.stream.Collectors.toMap;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  *
  * @author Ahseya
  */
-@NotThreadSafe
+@ThreadSafe
 public class AssetPool {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetPool.class);
 
+    private final Object lock;
     private final AuthorizeAssetsClient authorizeAssets;
     private final VoodooChunkEncryptionKeyMapper keyMapper;
     private Set<Asset> assets;
     private ItemElements<Asset, ByteString> assetChunks = null;
 
-    public AssetPool(AuthorizeAssetsClient authorizeAssets, VoodooChunkEncryptionKeyMapper keyMapper,
+    public AssetPool(Object lock, AuthorizeAssetsClient authorizeAssets, VoodooChunkEncryptionKeyMapper keyMapper,
             Set<Asset> assets) {
+        this.lock = Objects.requireNonNull(lock);
         this.authorizeAssets = Objects.requireNonNull(authorizeAssets);
         this.keyMapper = Objects.requireNonNull(keyMapper);
         this.assets = assets.stream()
@@ -68,77 +71,88 @@ public class AssetPool {
                 .collect(toSet());
     }
 
+    public AssetPool(AuthorizeAssetsClient authorizeAssets, VoodooChunkEncryptionKeyMapper keyMapper, Set<Asset> assets) {
+        this(new Object(), authorizeAssets, keyMapper, assets);
+    }
+
     public AssetPool(Set<Asset> assets) {
         this(AuthorizeAssetsClient.backupd(), VoodooChunkEncryptionKeyMapper.defaultInstance(), assets);
     }
 
     Collection<StorageHostChunkList> authorize(HttpClient httpClient) throws IOException {
-        Set<Asset> a = assets == null
-                ? assetChunks.items()
-                : assets;
-        Map<ByteString, Asset> fileSignatureToAsset
-                = a.stream().collect(toMap(u -> ByteString.copyFrom(u.fileSignature().get()), Function.identity()));
-        return authorize(httpClient, fileSignatureToAsset);
+        synchronized (lock) {
+            Set<Asset> a = assets == null
+                    ? assetChunks.items()
+                    : assets;
+            Map<ByteString, Asset> fileSignatureToAsset
+                    = a.stream().collect(toMap(u -> ByteString.copyFrom(u.fileSignature().get()), Function.identity()));
+            return authorize(httpClient, fileSignatureToAsset);
+        }
     }
 
     Collection<StorageHostChunkList>
             authorize(HttpClient httpClient, Map<ByteString, Asset> fileSignatureToAsset) throws IOException {
-        Function<ByteString, Optional<byte[]>> keyEncryptionKey
-                = u -> Optional.ofNullable(fileSignatureToAsset.get(u)).flatMap(Asset::keyEncryptionKey);
+        synchronized (lock) {
+            Function<ByteString, Optional<byte[]>> keyEncryptionKey
+                    = u -> Optional.ofNullable(fileSignatureToAsset.get(u)).flatMap(Asset::keyEncryptionKey);
 
-        List<Voodoo> voodooList = authorizeAssets.apply(httpClient, fileSignatureToAsset.values())
-                .stream()
-                .map(VoodooFactory::from)
-                .flatMap(Collection::stream)
-                .map(u -> keyMapper.apply(u, keyEncryptionKey))
-                .collect(toList());
+            List<Voodoo> voodooList = authorizeAssets.apply(httpClient, fileSignatureToAsset.values())
+                    .stream()
+                    .map(VoodooFactory::from)
+                    .flatMap(Collection::stream)
+                    .map(u -> keyMapper.apply(u, keyEncryptionKey))
+                    .collect(toList());
 
-        Map<Asset, List<ByteString>> assetToChunkChecksumList = voodooList.stream()
-                .map(Voodoo::fileSignatureToChunkChecksumList)
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
-                .filter(e -> {
-                    if (fileSignatureToAsset.containsKey(e.getKey())) {
-                        return true;
-                    }
-                    logger.warn("-- authorize() - unreferenced signature: {}", e.getKey());
-                    return false;
-                })
-                .map(e -> new SimpleImmutableEntry<>(fileSignatureToAsset.get(e.getKey()), e.getValue()))
-                .collect(toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (u, v) -> {
-                            if (!u.equals(v)) {
-                                logger.warn("-- authorize() - collision: {} {}", u, v);
-                            }
-                            return u;
-                        }));
+            Map<Asset, List<ByteString>> assetToChunkChecksumList = voodooList.stream()
+                    .map(Voodoo::fileSignatureToChunkChecksumList)
+                    .map(Map::entrySet)
+                    .flatMap(Collection::stream)
+                    .filter(e -> {
+                        if (fileSignatureToAsset.containsKey(e.getKey())) {
+                            return true;
+                        }
+                        logger.warn("-- authorize() - unreferenced signature: {}", e.getKey());
+                        return false;
+                    })
+                    .map(e -> new SimpleImmutableEntry<>(fileSignatureToAsset.get(e.getKey()), e.getValue()))
+                    .collect(toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (u, v) -> {
+                                if (!u.equals(v)) {
+                                    logger.warn("-- authorize() - collision: {} {}", u, v);
+                                }
+                                return u;
+                            }));
 
-        assetChunks = new ItemElements<>(assetToChunkChecksumList);
-        assets = null;
+            assetChunks = new ItemElements<>(assetToChunkChecksumList);
+            assets = null;
 
-        return voodooList.stream()
-                .map(Voodoo::containers)
-                .collect(ArrayList::new, List::addAll, List::addAll);
+            return voodooList.stream()
+                    .map(Voodoo::containers)
+                    .collect(ArrayList::new, List::addAll, List::addAll);
+        }
     }
 
     public Map<Asset, Optional<List<ByteString>>>
             put(StorageHostChunkList container, Collection<ByteString> chunkChecksums) {
-        if (assetChunks == null) {
-            throw new IllegalStateException("not authorized");
-        }
-        Set<ByteString> missing = container.getChunkInfoList()
-                .stream()
-                .map(ChunkInfo::getChunkChecksum)
-                .collect(toSet());
-        missing.removeAll(chunkChecksums);
+        synchronized (lock) {
+            if (assetChunks == null) {
+                throw new IllegalStateException("not authorized");
+            }
+            Set<ByteString> missing = container.getChunkInfoList()
+                    .stream()
+                    .map(ChunkInfo::getChunkChecksum)
+                    .collect(toSet());
+            missing.removeAll(chunkChecksums);
 
-        Map<Asset, Optional<List<ByteString>>> map = putElements(chunkChecksums);
-        map.putAll(voidElements(missing));
-        return map;
+            Map<Asset, Optional<List<ByteString>>> map = putElements(chunkChecksums);
+            map.putAll(voidElements(missing));
+            return map;
+        }
     }
 
+    @GuardedBy("lock")
     Map<Asset, Optional<List<ByteString>>> putElements(Collection<ByteString> chunkChecksums) {
         return assetChunks.putElements(chunkChecksums)
                 .entrySet()
@@ -147,6 +161,7 @@ public class AssetPool {
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    @GuardedBy("lock")
     Map<Asset, Optional<List<ByteString>>> voidElements(Collection<ByteString> chunkChecksums) {
         return assetChunks.voidElements(chunkChecksums)
                 .stream()
@@ -154,6 +169,10 @@ public class AssetPool {
     }
 
     public boolean isEmpty() {
-        return false;
+        synchronized (lock) {
+            return assets == null
+                    ? assetChunks.isEmpty()
+                    : assets.isEmpty();
+        }
     }
 }

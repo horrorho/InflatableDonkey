@@ -135,6 +135,8 @@ public class Main {
         // TODO manage
         ForkJoinPool forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new)
                 .orElseGet(() -> new ForkJoinPool(1));
+        ForkJoinPool forkJoinPoolAux = new ForkJoinPool(12);
+
         logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.getParallelism());
 
         // Auth
@@ -187,7 +189,7 @@ public class Main {
         Function<Set<Asset>, List<Set<Asset>>> batchFunction
                 = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant( batchFunction, keyBagManager, forkJoinPool, donkey, outputFolder);
+                = new DownloadAssistant(batchFunction, keyBagManager, forkJoinPool, forkJoinPoolAux, donkey, outputFolder);
         Backup backup = new Backup(assistant, downloadAssistant);
 
         // Retrieve snapshots.
@@ -195,7 +197,7 @@ public class Main {
 
         System.out.println("");
         if (deviceSnapshots.isEmpty()) {
-            System.out.println("No backups found.");
+            System.out.println("No iOS 9+ backups found.");
             return;
         }
 

@@ -164,6 +164,10 @@ public final class ItemElements<T, U> {
                         .forEach(s -> s.remove(item)));
     }
 
+    public boolean isEmpty() {
+        return itemToTally.isEmpty();
+    }
+
     @Override
     public String toString() {
         return "ItemElements{" + "elementToItems=" + elementToItems + ", itemToTally=" + itemToTally + '}';

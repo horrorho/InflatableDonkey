@@ -27,21 +27,22 @@ import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.exception.UncheckedInterruptedException;
 import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.Immutable;
@@ -60,13 +61,14 @@ public final class Donkey {
 
     private final ChunkClient chunkClient;
     private final ChunkStore store;
+    private final int fragmentationThreshold = 64;
 
     public Donkey(ChunkClient chunkClient, ChunkStore store) {
         this.chunkClient = Objects.requireNonNull(chunkClient);
         this.store = Objects.requireNonNull(store);
     }
 
-    public void apply(HttpClient httpClient, Set<Asset> assets, FileAssembler consumer) {
+    public void apply(HttpClient httpClient, ForkJoinPool aux, Set<Asset> assets, FileAssembler consumer) {
         logger.trace("<< apply() - assets: {}", assets.size());
         if (assets.isEmpty()) {
             return;
@@ -84,8 +86,12 @@ public final class Donkey {
         while (true) {
             try {
                 pool.authorize(httpClient);
-                process(httpClient, pool, consumer);
 
+                if (assets.size() > fragmentationThreshold) {
+                    processConcurrent(httpClient, aux, pool, consumer);
+                } else {
+                    process(httpClient, pool, consumer);
+                }
                 break;
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
@@ -99,13 +105,37 @@ public final class Donkey {
     }
 
     void process(HttpClient httpClient, AssetPool pool, FileAssembler consumer) throws IOException {
-        pool.authorize(httpClient)
-                .stream()
-                .map(u -> pool.put(u, fetchContainer(httpClient, u)))
-                .map(Map::entrySet)
-                .flatMap(Collection::stream)
-                .map(e -> new SimpleImmutableEntry<>(e.getKey(), chunks(e.getValue())))
-                .forEach(e -> consumer.accept(e.getKey(), e.getValue()));
+        logger.trace("<< process()");
+        pool.authorize(httpClient).forEach(u -> processContainer(httpClient, u, pool, consumer));
+        logger.trace(">> process()");
+    }
+
+    void processConcurrent(HttpClient httpClient, ForkJoinPool fjp, AssetPool pool, FileAssembler consumer) throws IOException {
+        logger.trace("<< processConcurrent()");
+        try {
+            Collection<StorageHostChunkList> containers = pool.authorize(httpClient);
+            fjp.submit(() -> {
+                containers.parallelStream().forEach(u -> processContainer(httpClient, u, pool, consumer));
+            }).get();
+
+        } catch (InterruptedException ex) {
+            throw new UncheckedInterruptedException(ex);
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            }
+            throw new RuntimeException(cause);
+        }
+        logger.trace("<< processConcurrent()");
+    }
+
+    void processContainer(HttpClient httpClient, StorageHostChunkList container, AssetPool pool, FileAssembler consumer) {
+        pool.put(container, fetchContainer(httpClient, container))
+                .forEach((k, v) -> consumer.accept(k, chunks(v)));
     }
 
     Set<ByteString> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {

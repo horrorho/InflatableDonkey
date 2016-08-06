@@ -52,6 +52,7 @@ public final class DownloadAssistant {
     private final Function<Set<Asset>, List<Set<Asset>>> batchFunction;
     private final KeyBagManager keyBagManager;
     private final ForkJoinPool forkJoinPool;
+    private final ForkJoinPool forkJoinPoolAux;
     private final Donkey donkey;
     private final Path folder;
 
@@ -59,12 +60,14 @@ public final class DownloadAssistant {
             Function<Set<Asset>, List<Set<Asset>>> batchFunction,
             KeyBagManager keyBagManager,
             ForkJoinPool forkJoinPool,
+            ForkJoinPool forkJoinPoolAux,
             Donkey donkey,
             Path folder) {
 
         this.batchFunction = Objects.requireNonNull(batchFunction);
         this.keyBagManager = Objects.requireNonNull(keyBagManager);
         this.forkJoinPool = Objects.requireNonNull(forkJoinPool);
+        this.forkJoinPoolAux = Objects.requireNonNull(forkJoinPoolAux);
         this.donkey = Objects.requireNonNull(donkey);
         this.folder = Objects.requireNonNull(folder);
     }
@@ -85,7 +88,7 @@ public final class DownloadAssistant {
         try {
             forkJoinPool.submit(() -> batchedAssets
                     .parallelStream()
-                    .forEach(u -> donkey.apply(httpClient, u, fileAssembler)))
+                    .forEach(u -> donkey.apply(httpClient, forkJoinPoolAux, u, fileAssembler)))
                     .get();
 
         } catch (InterruptedException ex) {
