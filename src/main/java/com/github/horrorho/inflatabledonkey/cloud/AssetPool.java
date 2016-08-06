@@ -164,7 +164,7 @@ public class AssetPool {
                     .map(ChunkInfo::getChunkChecksum)
                     .collect(toSet());
             missing.removeAll(chunkChecksums);
-            logger.debug("-- debug() - missing: ", missing);
+            logger.debug("-- debug() - missing: {}", missing);
 
             Map<Asset, Optional<List<ByteString>>> map = putElements(chunkChecksums);
             map.putAll(voidElements(missing));

@@ -78,7 +78,7 @@ public final class ChunkClient {
 
         if (!containsType1Keys(container)) {
             // We cannot decrypt non-type 1 keys, little point in fetching data.
-            logger.info("-- apply() - no type 1 keys: ", container);
+            logger.debug("-- apply() - no type 1 keys: ", container);
             return Collections.emptySet();
         }
 
@@ -100,7 +100,7 @@ public final class ChunkClient {
         return container
                 .getChunkInfoList()
                 .stream()
-                .map(u -> u.getChunkChecksum().toByteArray())
+                .map(u -> u.getChunkEncryptionKey().toByteArray())
                 .map(ChunkKeys::keyType)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
