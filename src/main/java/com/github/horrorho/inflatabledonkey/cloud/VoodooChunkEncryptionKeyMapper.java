@@ -24,25 +24,26 @@
 package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkEncryptionKeyMapper;
+import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkKeys;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
@@ -51,41 +52,50 @@ import static java.util.stream.Collectors.groupingBy;
  * @author Ahseya
  */
 @Immutable
-public final class VoodooChunkEncryptionKeyMapper {
+public final class VoodooChunkEncryptionKeyMapper
+        implements BiFunction<Voodoo, Function<ByteString, Optional<byte[]>>, Voodoo> {
 
-    @Immutable
-    @FunctionalInterface
-    private interface KeyMapper extends Function<byte[], Optional<byte[]>> {
+    public static VoodooChunkEncryptionKeyMapper defaultInstance() {
+        return DEFAULT_INSTANCE;
     }
 
-    public static Voodoo map(Voodoo voodoo, ChunkEncryptionKeyMapper<byte[]> chunkEncryptionKeyMapper,
-            Map<ByteString, byte[]> fileSignatureToKeyEncryptionKey) {
+    private static final Logger logger = LoggerFactory.getLogger(VoodooChunkEncryptionKeyMapper.class);
 
-        Map<Integer, StorageHostChunkList> indexToSHCL = voodoo.indexToContainer();
-        fileSignatureToKeyEncryptionKey
-                .entrySet()
-                .stream()
-                .filter(u -> voodoo.has(u.getKey()))
-                .<Map.Entry<ByteString, KeyMapper>>map(
-                        e -> new AbstractMap.SimpleImmutableEntry<>(
-                                e.getKey(), cek -> chunkEncryptionKeyMapper.apply(cek, e.getValue())))
-                .forEach(u -> containerChunkList(voodoo.chunkReferences(u.getKey()).get(), indexToSHCL)
-                        .forEach((i, j) -> indexToSHCL.compute(i, (x, shcl) -> unwrapKeys(shcl, u.getValue(), j))));
-        return new Voodoo(indexToSHCL, voodoo.fileSignatureToChunkReferences());
+    private static final VoodooChunkEncryptionKeyMapper DEFAULT_INSTANCE
+            = new VoodooChunkEncryptionKeyMapper(ChunkKeys.instance());
+
+    private final ChunkEncryptionKeyMapper<byte[]> chunkEncryptionKeyMapper;
+
+    public VoodooChunkEncryptionKeyMapper(ChunkEncryptionKeyMapper<byte[]> chunkEncryptionKeyMapper) {
+        this.chunkEncryptionKeyMapper = Objects.requireNonNull(chunkEncryptionKeyMapper);
     }
 
-    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyMapper unwrap, Collection<Integer> chunks) {
-        return unwrapKeys(shcl, unwrap, new HashSet<>(chunks));
+    @Override
+    public Voodoo apply(Voodoo voodoo, Function<ByteString, Optional<byte[]>> keyEncryptionKey) {
+        Map<ByteString, List<ChunkReference>> chunkReferences = voodoo.fileSignatureToChunkReferences();
+        Map<Integer, StorageHostChunkList> containers = voodoo.indexToContainer();
+
+        chunkReferences
+                .forEach((k, v) -> keyEncryptionKey.apply(k).ifPresent(kek -> unwrap(containers, v, kek)));
+
+        return new Voodoo(containers, chunkReferences);
     }
 
-    static StorageHostChunkList unwrapKeys(StorageHostChunkList shcl, KeyMapper unwrap, Set<Integer> chunks) {
-        StorageHostChunkList.Builder builder = shcl.toBuilder();
+    void unwrap(Map<Integer, StorageHostChunkList> containers, List<ChunkReference> references, byte[] kek) {
+        Function<byte[], Optional<byte[]>> unwrap = key -> chunkEncryptionKeyMapper.apply(key, kek);
+        resolveChunkReferences(containers, references)
+                .forEach((index, chunks) -> containers.compute(index, (u, v) -> unwrapKeys(unwrap, v, chunks)));
+    }
+
+    StorageHostChunkList
+            unwrapKeys(Function<byte[], Optional<byte[]>> unwrap, StorageHostChunkList container, Set<Integer> chunks) {
+        StorageHostChunkList.Builder builder = container.toBuilder();
         if (logger.isDebugEnabled()) {
             List<Integer> bad = chunks.stream()
                     .filter(i -> i >= builder.getChunkInfoCount())
                     .collect(toList());
             if (!bad.isEmpty()) {
-                logger.warn("-- unwrapKeys() - bad indices: {} shcl: {}", bad, shcl);
+                logger.warn("-- unwrapKeys() - bad indices: {} shcl: {}", bad, container);
             }
         }
         IntStream.range(0, builder.getChunkInfoCount())
@@ -94,7 +104,7 @@ public final class VoodooChunkEncryptionKeyMapper {
         return builder.build();
     }
 
-    static ChunkInfo unwrapKey(KeyMapper unwrap, ChunkInfo chunkInfo) {
+    ChunkInfo unwrapKey(Function<byte[], Optional<byte[]>> unwrap, ChunkInfo chunkInfo) {
         return unwrap.apply(chunkInfo.getChunkEncryptionKey().toByteArray())
                 .map(ByteString::copyFrom)
                 .map(u -> chunkInfo
@@ -107,26 +117,25 @@ public final class VoodooChunkEncryptionKeyMapper {
                 });
     }
 
-    static Map<Integer, List<Integer>>
-            containerChunkList(List<ChunkReference> chunkReferences, Map<Integer, StorageHostChunkList> indexToSHCL) {
-        return chunkReferences
+    Map<Integer, Set<Integer>>
+            resolveChunkReferences(Map<Integer, StorageHostChunkList> containers, List<ChunkReference> references) {
+        return references
                 .stream()
-                .filter(cr -> {
+                .map(cr -> {
                     int containerIndex = (int) cr.getContainerIndex();
-                    if (!indexToSHCL.containsKey(containerIndex)) {
+                    if (!containers.containsKey(containerIndex)) {
                         logger.warn("-- containerChunkList() - bad container index: {}", containerIndex);
-                        return false;
+                        return null;
                     }
                     int chunkIndex = (int) cr.getChunkIndex();
-                    if (indexToSHCL.get(containerIndex).getChunkInfoCount() < chunkIndex) {
+                    if (containers.get(containerIndex).getChunkInfoCount() < chunkIndex) {
                         logger.warn("-- containerChunkList() - bad chunk index: {}", chunkIndex);
-                        return false;
+                        return null;
                     }
-                    return true;
+                    return new SimpleImmutableEntry<>(containerIndex, chunkIndex);
                 })
-                .collect(groupingBy(u -> (int) u.getContainerIndex(), mapping(v -> (int) v.getChunkIndex(), toList())));
+                .filter(Objects::nonNull)
+                .collect(groupingBy(Map.Entry::getKey, mapping(Map.Entry::getValue, toSet())));
     }
-
-    private static final Logger logger = LoggerFactory.getLogger(VoodooChunkEncryptionKeyMapper.class);
 }
-// TODO convert to Object
+// TODO concurrent

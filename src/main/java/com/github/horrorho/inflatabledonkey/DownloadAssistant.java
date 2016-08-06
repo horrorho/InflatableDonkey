@@ -49,23 +49,23 @@ public final class DownloadAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadAssistant.class);
 
-    private final Function<FileAssembler, Donkey> donkeyFactory;
     private final Function<Set<Asset>, List<Set<Asset>>> batchFunction;
     private final KeyBagManager keyBagManager;
     private final ForkJoinPool forkJoinPool;
+    private final Donkey donkey;
     private final Path folder;
 
     public DownloadAssistant(
-            Function<FileAssembler, Donkey> donkeyFactory,
             Function<Set<Asset>, List<Set<Asset>>> batchFunction,
             KeyBagManager keyBagManager,
             ForkJoinPool forkJoinPool,
+            Donkey donkey,
             Path folder) {
 
-        this.donkeyFactory = Objects.requireNonNull(donkeyFactory);
         this.batchFunction = Objects.requireNonNull(batchFunction);
         this.keyBagManager = Objects.requireNonNull(keyBagManager);
         this.forkJoinPool = Objects.requireNonNull(forkJoinPool);
+        this.donkey = Objects.requireNonNull(donkey);
         this.folder = Objects.requireNonNull(folder);
     }
 
@@ -75,20 +75,17 @@ public final class DownloadAssistant {
         keyBagManager.update(httpClient, assets);
         XFileKeyFactory fileKeys = new XFileKeyFactory(keyBagManager::keyBag);
         FileAssembler fileAssembler = new FileAssembler(fileKeys, outputFolder);
-        Donkey donkey = donkeyFactory.apply(fileAssembler);
         List<Set<Asset>> batchedAssets = batchFunction.apply(assets);
-        execute(httpClient, donkey, batchedAssets);
+        execute(httpClient, fileAssembler, batchedAssets);
         logger.trace(">> download()");
     }
 
-    public void execute(HttpClient httpClient, Donkey donkey, List<Set<Asset>> batchedAssets) {
-        logger.debug("-- execute() - threads: {} batch count: {}",
-                forkJoinPool.getParallelism(), batchedAssets.size());
-
+    public void execute(HttpClient httpClient, FileAssembler fileAssembler, List<Set<Asset>> batchedAssets) {
+        logger.debug("-- execute() - threads: {} batch count: {}", forkJoinPool.getParallelism(), batchedAssets.size());
         try {
             forkJoinPool.submit(() -> batchedAssets
                     .parallelStream()
-                    .forEach(u -> donkey.apply(httpClient, u)))
+                    .forEach(u -> donkey.apply(httpClient, u, fileAssembler)))
                     .get();
 
         } catch (InterruptedException ex) {

@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.cloud;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,10 +35,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Ties in asset chunk references to storage host containers.
@@ -99,6 +100,10 @@ public final class Voodoo {
         return Optional.of(shcls);
     }
 
+    public List<StorageHostChunkList> containers() {
+        return new ArrayList<>(indexToContainer.values());
+    }
+
     public Set<ByteString> fileSignatures() {
         return new HashSet<>(fileSignatureToChunkReferences.keySet());
     }
@@ -113,6 +118,28 @@ public final class Voodoo {
 
     public Optional<List<ChunkReference>> chunkReferences(ByteString fileSignature) {
         return Optional.ofNullable(fileSignatureToChunkReferences.get(fileSignature));
+    }
+
+    public Map<ByteString, List<ByteString>> fileSignatureToChunkChecksumList() {
+        return fileSignatureToChunkReferences
+                .entrySet()
+                .stream()
+                .collect(toMap(Map.Entry::getKey, e -> checksums(e.getValue())));
+    }
+
+    private List<ByteString> checksums(List<ChunkReference> chunkReferences) {
+        return chunkReferences
+                .stream()
+                .map(this::checksum)
+                .collect(toList());
+    }
+
+    private ByteString checksum(ChunkReference chunkReference) {
+        // Boundaries are checked/ filtered in constructor.
+        return indexToContainer
+                .get((int) chunkReference.getContainerIndex())
+                .getChunkInfo((int) chunkReference.getChunkIndex())
+                .getChunkChecksum();
     }
 
     public Optional<List<ByteString>> chunkChecksumList(ByteString fileSignature) {

@@ -182,12 +182,12 @@ public class Main {
         AuthorizeAssetsClient authorizeAssetsClient = AuthorizeAssetsClient.backupd();
         ChunkClient chunkClient = ChunkClient.defaultInstance();
 
-        Function<FileAssembler, Donkey> donkeyFactory = u -> new Donkey(authorizeAssetsClient, chunkClient, chunkStore, u);
+        Donkey donkey = new Donkey(chunkClient, chunkStore);
         int batchThreshold = Property.ENGINE_BATCH_THRESHOLD.asInteger().orElse(1048576);
         Function<Set<Asset>, List<Set<Asset>>> batchFunction
                 = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);
         DownloadAssistant downloadAssistant
-                = new DownloadAssistant(donkeyFactory, batchFunction, keyBagManager, forkJoinPool, outputFolder);
+                = new DownloadAssistant( batchFunction, keyBagManager, forkJoinPool, donkey, outputFolder);
         Backup backup = new Backup(assistant, downloadAssistant);
 
         // Retrieve snapshots.

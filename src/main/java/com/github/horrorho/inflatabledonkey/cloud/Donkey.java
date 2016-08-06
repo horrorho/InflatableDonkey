@@ -32,15 +32,16 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
@@ -56,21 +57,15 @@ public final class Donkey {
 
     private static final Logger logger = LoggerFactory.getLogger(Donkey.class);
 
-    private final AuthorizeAssetsClient authorizeAssetsClient;
     private final ChunkClient chunkClient;
     private final ChunkStore store;
-    private final FileAssembler consumer;
 
-    public Donkey(AuthorizeAssetsClient authorizeAssetsClient, ChunkClient chunkClient, ChunkStore store,
-            FileAssembler consumer) {
-
-        this.authorizeAssetsClient = Objects.requireNonNull(authorizeAssetsClient);
+    public Donkey(ChunkClient chunkClient, ChunkStore store) {
         this.chunkClient = Objects.requireNonNull(chunkClient);
         this.store = Objects.requireNonNull(store);
-        this.consumer = Objects.requireNonNull(consumer);
     }
 
-    public void apply(HttpClient httpClient, Collection<Asset> assets) {
+    public void apply(HttpClient httpClient, Set<Asset> assets, FileAssembler consumer) {
         logger.trace("<< apply() - assets: {}", assets.size());
         if (assets.isEmpty()) {
             return;
@@ -83,16 +78,18 @@ public final class Donkey {
             logger.debug("-- apply() - assets total: {} size (bytes): {}", assets.size(), bytes);
         }
 
+        AssetPool pool = new AssetPool(assets);
+
         while (true) {
             try {
-                List<AuthorizedAsset<Asset>> authorizedAssets = authorizeAssetsClient.apply(httpClient, assets);
-                Set<Chunk> chunks = fetchAssets(httpClient, authorizedAssets);
-                consumeAssets(authorizedAssets, chunks);
+                pool.authorize(httpClient);
+                process(httpClient, pool, consumer);
+
                 break;
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
                 logger.debug("-- apply() - IllegalStateException: ", ex);
-            } catch (IOException ex) {
+            } catch (IllegalArgumentException | IOException ex) {
                 logger.warn("-- apply() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
                 break;
             }
@@ -100,53 +97,47 @@ public final class Donkey {
         logger.trace(">> apply()");
     }
 
-    Set<Chunk> fetchAssets(HttpClient httpClient, Collection<AuthorizedAsset<Asset>> authorizedAssets) {
-        logger.debug("-- fetchAssets() - assets: {}", authorizedAssets.size());
-        return authorizedAssets.stream()
-                .map(AuthorizedAsset::containers)
+    void process(HttpClient httpClient, AssetPool pool, FileAssembler consumer) throws IOException {
+        pool.authorize(httpClient)
+                .stream()
+                .map(u -> pool.put(u, fetchContainer(httpClient, u)))
+                .map(Map::entrySet)
                 .flatMap(Collection::stream)
-                .map(u -> fetchContainer(httpClient, u))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .flatMap(Collection::stream)
-                .collect(toSet());
+                .map(e -> new SimpleImmutableEntry<>(e.getKey(), chunks(e.getValue())))
+                .forEach(e -> consumer.accept(e.getKey(), e.getValue()));
     }
 
-    Optional<Set<Chunk>> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
+    Set<ByteString> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
         ChunkServer.HostInfo hostInfo = container.getHostInfo();
         logger.trace("<< fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
         try {
-            Set<Chunk> chunks = chunkClient.apply(httpClient, store, container);
-            logger.trace(">> fetchContainer() - chunks: {}", chunks);
-            return Optional.of(chunks);
+            Set<ByteString> chunkChecksums = chunkClient.apply(httpClient, store, container)
+                    .stream()
+                    .map(Chunk::checksum)
+                    .map(ByteString::copyFrom)
+                    .collect(toSet());
+            logger.trace(">> fetchContainer() - chunk checksums: {}", chunkChecksums);
+            return chunkChecksums;
 
         } catch (IOException ex) {
             logger.warn("-- fetchContainer() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    Optional<List<Chunk>> chunks(Optional<List<ByteString>> chunkChecksumList) {
+        try {
+            return chunkChecksumList
+                    .map(us -> us
+                            .stream()
+                            .map(ByteString::toByteArray)
+                            .map(store::chunk)
+                            .map(Optional::get)
+                            .collect(toList()));
+
+        } catch (NoSuchElementException ex) {
+            logger.warn("-- chunks() - NoSuchElementException: {}", ex.getMessage());
             return Optional.empty();
         }
-    }
-
-    void consumeAssets(Collection<AuthorizedAsset<Asset>> authorizedAssets, Set<Chunk> chunks) {
-        Map<ByteString, Chunk> map = chunkMap(chunks);
-        authorizedAssets.forEach(u -> consumeAsset(u, map));
-    }
-
-    void consumeAsset(AuthorizedAsset<Asset> authorizedAsset, Map<ByteString, Chunk> map) {
-        if (map.keySet().containsAll(authorizedAsset.chunkChecksumList())) {
-            List<Chunk> chunkList = authorizedAsset.chunkChecksumList()
-                    .stream()
-                    .map(map::get)
-                    .collect(Collectors.toList());
-            logger.debug("-- consumeAsset() - all chunks present: {}", authorizedAsset.asset().decription());
-            consumer.accept(authorizedAsset.asset(), Optional.of(chunkList));
-
-        } else {
-            logger.debug("-- consumeAsset() - not all chunks present {}", authorizedAsset.asset().decription());
-            consumer.accept(authorizedAsset.asset(), Optional.empty());
-        }
-    }
-
-    Map<ByteString, Chunk> chunkMap(Set<Chunk> chunks) {
-        return chunks.stream().collect(Collectors.toMap(u -> ByteString.copyFrom(u.checksum()), Function.identity()));
     }
 }
