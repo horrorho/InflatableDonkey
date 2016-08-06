@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
@@ -36,10 +35,7 @@ import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
- * BiMapSet.
- * <p>
- * Lightweight bi-map of sets with common references. Remove only. No put methods. Null values not permitted. Thread
- * safe.
+ * Lightweight bi-map of sets with common references. Remove only. Null values not permitted.
  *
  * @author Ahseya
  * @param <K> key type
@@ -81,11 +77,11 @@ public class BiMapSet<K, V> {
     }
 
     public Set<K> keySet() {
-        return kToVSet.keySet();
+        return new HashSet<>(kToVSet.keySet());
     }
 
     public Set<V> valueSet() {
-        return vToKSet.keySet();
+        return new HashSet<>(vToKSet.keySet());
     }
 
     public Set<K> keys(V value) {
@@ -109,12 +105,12 @@ public class BiMapSet<K, V> {
     }
 
     <T, U> Set<U> set(T t, Map<T, Set<U>> tToUSet) {
-        Set<U> set = t == null
-                ? Collections.emptySet()
-                : tToUSet.get(t);
-
+        if (t == null) {
+            return Collections.emptySet();
+        }
+        Set<U> set = tToUSet.get(t);
         return set == null
-                ? new HashSet<>()
+                ? Collections.emptySet()
                 : new HashSet<>(set);
     }
 
@@ -135,5 +131,10 @@ public class BiMapSet<K, V> {
                     }
                 })
                 .collect(toSet());
+    }
+
+    @Override
+    public String toString() {
+        return "BiMapSet{" + "kToVSet=" + kToVSet + ", vToKSet=" + vToKSet + '}';
     }
 }

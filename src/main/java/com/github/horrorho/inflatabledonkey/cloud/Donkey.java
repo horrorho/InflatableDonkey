@@ -101,7 +101,7 @@ public final class Donkey {
                 break;
             }
         }
-        logger.trace(">> apply()");
+        logger.trace(">> apply() - pool empty: {}", pool.isEmpty());
     }
 
     void process(HttpClient httpClient, AssetPool pool, FileAssembler consumer) throws IOException {

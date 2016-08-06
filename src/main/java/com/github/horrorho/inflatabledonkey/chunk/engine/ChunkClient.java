@@ -31,6 +31,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChun
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -75,6 +76,12 @@ public final class ChunkClient {
             return stored.get();
         }
 
+        if (!containsType1Keys(container)) {
+            // We cannot decrypt non-type 1 keys, little point in fetching data.
+            logger.info("-- apply() - no type 1 keys: ", container);
+            return Collections.emptySet();
+        }
+
         if (container.getHostInfo().getExpiry() + expiryTimestampGrace < System.currentTimeMillis()) {
             throw new IllegalStateException("container has expired");
         }
@@ -83,14 +90,24 @@ public final class ChunkClient {
     }
 
     Set<Chunk> fetch(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, removeDuplicates(container));
+        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, compact(container));
         InputStreamResponseHandler<Set<Chunk>> handler = new InputStreamResponseHandler<>(decrypter);
         HttpUriRequest request = requestFactory.apply(container.getHostInfo());
         return client.execute(request, handler);
     }
 
-    // TODO probably doesn't belong here
-    StorageHostChunkList removeDuplicates(StorageHostChunkList container) {
+    boolean containsType1Keys(StorageHostChunkList container) {
+        return container
+                .getChunkInfoList()
+                .stream()
+                .map(u -> u.getChunkChecksum().toByteArray())
+                .map(ChunkKeys::keyType)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .anyMatch(u -> u == 1);
+    }
+
+    StorageHostChunkList compact(StorageHostChunkList container) {
         // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
         // keys should unwrap to the same 0x01 key with the block yielding the same output data.
         if (container.getChunkInfoCount() < 2) {
@@ -110,36 +127,18 @@ public final class ChunkClient {
                 prior = chunkInfo;
             }
         }
-        builder.addChunkInfo(prior);
-
-        return builder.build();
+        return builder.addChunkInfo(prior).build();
     }
 
     ChunkInfo merge(ChunkInfo a, ChunkInfo b) {
         int aType = ChunkKeys.keyType(a.getChunkEncryptionKey().toByteArray()).orElse(-1);
         int bType = ChunkKeys.keyType(b.getChunkEncryptionKey().toByteArray()).orElse(-1);
-
-        if (aType == 0x01 && bType == 0x01) {
-            if (!a.getChunkEncryptionKey().equals(b.getChunkEncryptionKey())
-                    || !a.getChunkChecksum().equals(b.getChunkChecksum())) {
-                // Data corruption/ probable code failure.
-                // We'll return the first option based on the reasonable chance (50%) that it may be correct.
-                logger.warn("-- merge() - incongruent chunks: {} {}", a, b);
-            } else {
-                logger.debug("-- merge() - merged: {} {}", a, b);
-            }
-            return a;
+        if (aType == 0x01 && bType == 0x01 && !a.getChunkEncryptionKey().equals(b.getChunkEncryptionKey())) {
+            logger.warn("-- merge() - incongruent chunks: {} {}", a, b);
+        } else {
+            logger.debug("-- merge() - merged: {} {}", a, b);
         }
-        if (aType == 0x01) {
-            logger.debug("-- merge() - non 0x01 chunk encryption key type: {}", b);
-            return a;
-        }
-        if (bType == 0x01) {
-            logger.debug("-- merge() - non 0x01 chunk encryption key type: {}", a);
-            return b;
-        }
-        logger.debug("-- merge() - non 0x01 chunk encryption key types: {} {}", a, b);
-        return a;
+        return aType == 0x01 ? a : b;
     }
 
     Optional<Set<Chunk>> storedChunks(ChunkStore store, StorageHostChunkList container) {

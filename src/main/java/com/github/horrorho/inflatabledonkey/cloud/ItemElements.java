@@ -23,19 +23,15 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
+import com.github.horrorho.inflatabledonkey.util.BiMapSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
+import java.util.function.Function;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.NotThreadSafe;
@@ -45,74 +41,38 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author Ahseya
- * @param <T> item type
- * @param <U> element type
+ * @param <T> asset type
+ * @param <U> chunk type
  */
 @NotThreadSafe
 public final class ItemElements<T, U> {
 
-    @NotThreadSafe
-    static final class Tally<T> {
-
-        private final List<T> itemList;
-        private final Set<T> remainingItems;
-
-        Tally(List<T> itemList, Collection<T> remainingItems) {
-            this.itemList = new ArrayList<>(itemList);
-            this.remainingItems = new HashSet<>(remainingItems);
-        }
-
-        Tally(List<T> items) {
-            this(items, items);
-        }
-
-        public List<T> items() {
-            return new ArrayList<>(itemList);
-        }
-
-        Optional<List<T>> put(T item) {
-            remainingItems.remove(item);
-            return remainingItems.isEmpty()
-                    ? Optional.of(new ArrayList<>(itemList))
-                    : Optional.empty();
-        }
-    }
-
-    static <T, U> Map<U, Set<T>> elementToItems(Map<T, List<U>> itemToElements) {
-        return itemToElements
-                .entrySet()
+    static <T, U> Map<T, List<U>> copy(Map<T, List<U>> map) {
+        return map.entrySet()
                 .stream()
-                .flatMap(e -> e.getValue().stream().map(v -> new SimpleImmutableEntry<>(v, e.getKey())))
-                .collect(groupingBy(Map.Entry::getKey, mapping(Map.Entry::getValue, toSet())));
-    }
-
-    static <T, U> Map<T, Tally<U>> itemToTally(Map<T, List<U>> itemToElements) {
-        return itemToElements
-                .entrySet()
-                .stream()
-                .collect(toMap(Map.Entry::getKey, e -> new Tally<>(e.getValue())));
+                .collect(toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ItemElements.class);
 
-    private final Map<U, Set<T>> elementToItems;
-    private final Map<T, Tally<U>> itemToTally;
+    private final Map<T, List<U>> itemToElements;
+    private final BiMapSet<T, U> biMap;
 
-    ItemElements(Map<U, Set<T>> elementToItems, Map<T, Tally<U>> itemToTally) {
-        this.elementToItems = new HashMap<>(elementToItems);
-        this.itemToTally = new HashMap<>(itemToTally);
+    private ItemElements(Map<T, List<U>> itemToElements, BiMapSet<T, U> biMap) {
+        this.itemToElements = itemToElements;
+        this.biMap = biMap;
     }
 
     public ItemElements(Map<T, List<U>> itemToElements) {
-        this(elementToItems(itemToElements), itemToTally(itemToElements));
+        this(copy(itemToElements), BiMapSet.from(itemToElements));
     }
 
     public Set<T> items() {
-        return new HashSet<>(itemToTally.keySet());
+        return biMap.keySet();
     }
 
     public Set<U> elements() {
-        return new HashSet<>(elementToItems.keySet());
+        return biMap.valueSet();
     }
 
     public Map<T, List<U>> putElements(Collection<U> elements) {
@@ -122,24 +82,14 @@ public final class ItemElements<T, U> {
     }
 
     public Map<T, List<U>> putElement(U element) {
-        return Optional.ofNullable(elementToItems.remove(element))
-                .<Map<T, List<U>>>map(ts -> ts
-                        .stream()
-                        .map(k -> putElement(k, element))
-                        .collect(HashMap::new, Map::putAll, Map::putAll))
-                .orElseGet(Collections::emptyMap);
-    }
-
-    Map<T, List<U>> putElement(T item, U element) {
-        return Optional.ofNullable(itemToTally.get(item))
-                .flatMap(t -> t.put(element))
-                .<Map<T, List<U>>>map(ts -> {
-                    itemToTally.remove(item);
-                    HashMap<T, List<U>> map = new HashMap<>();
-                    map.put(item, ts);
-                    return map;
+        return biMap.removeValue(element)
+                .stream()
+                .peek(u -> {
+                    if (!itemToElements.containsKey(u)) {
+                        logger.error("-- putElement() - bad state, missing element: {}", u);
+                    }
                 })
-                .orElseGet(Collections::emptyMap);
+                .collect(toMap(Function.identity(), itemToElements::remove));
     }
 
     public Set<T> voidElements(Collection<U> elements) {
@@ -149,27 +99,28 @@ public final class ItemElements<T, U> {
     }
 
     public Set<T> voidElement(U element) {
-        Set<T> items = elementToItems.getOrDefault(element, Collections.emptySet());
-        items.forEach(this::voidItem);
-        return items;
-    }
-
-    void voidItem(T item) {
-        Optional.ofNullable(itemToTally.remove(item))
-                .map(Tally::items)
-                .ifPresent(us -> us
-                        .stream()
-                        .map(elementToItems::get)
-                        .filter(Objects::nonNull)
-                        .forEach(s -> s.remove(item)));
+        // Unrecoverable items.
+        return biMap.keys(element)
+                .stream()
+                .peek(biMap::removeKey)
+                .peek(t -> {
+                    if (itemToElements.remove(t) == null) {
+                        logger.error("-- voidElement() - bad state, missing element: {}", t);
+                    }
+                })
+                .collect(toSet());
     }
 
     public boolean isEmpty() {
-        return itemToTally.isEmpty();
+        if (itemToElements.isEmpty() != biMap.isEmpty()) {
+            logger.error("-- isEmpty() - bad state, itemToElements: {} biMap: {}",
+                    itemToElements.isEmpty(), biMap.isEmpty());
+        }
+        return itemToElements.isEmpty();
     }
 
     @Override
     public String toString() {
-        return "ItemElements{" + "elementToItems=" + elementToItems + ", itemToTally=" + itemToTally + '}';
+        return "ItemElements{" + "itemToElements=" + itemToElements + ", biMap=" + biMap + '}';
     }
 }
