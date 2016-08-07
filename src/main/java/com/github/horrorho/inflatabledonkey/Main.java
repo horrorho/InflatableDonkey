@@ -33,7 +33,6 @@ import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.cloud.AuthorizeAssetsClient;
 import com.github.horrorho.inflatabledonkey.cloud.BatchSetIterator;
 import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
@@ -44,7 +43,6 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
-import com.github.horrorho.inflatabledonkey.file.FileAssembler;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -133,11 +131,19 @@ public class Main {
                 .build();
 
         // TODO manage
-        ForkJoinPool forkJoinPool = Property.THREADS.asInteger().map(ForkJoinPool::new)
-                .orElseGet(() -> new ForkJoinPool(1));
-        ForkJoinPool forkJoinPoolAux = new ForkJoinPool(12);
+        int threads = Property.ENGINE_THREADS.asInteger().orElse(1);
+        ForkJoinPool forkJoinPool = new ForkJoinPool(threads);
 
+        // Hack to improve the speed of multiple small asset retrieval by providing a larger auxillary threadpool for 
+        // them.
+        int auxThreads = Property.ENGINE_FRAGMENTATION_POOL_MULTIPLIER.asInteger().orElse(0) * threads;
+        Optional<ForkJoinPool> forkJoinPoolAux = auxThreads == 0
+                ? Optional.empty()
+                : Optional.of(new ForkJoinPool(auxThreads));
+        Integer fragmentationThreshold = Property.ENGINE_FRAGMENTATION_THRESHOLD.asInteger().orElse(64);
         logger.info("-- main() - ForkJoinPool parallelism: {}", forkJoinPool.getParallelism());
+        logger.info("-- main() - ForkJoinPool aux: {}", forkJoinPoolAux.map(ForkJoinPool::getParallelism));
+        logger.info("-- main() - ForkJoinPool fragmentation threshold: {}", fragmentationThreshold);
 
         // Auth
         // TODO rework when we have UncheckedIOException for Authenticator
@@ -181,10 +187,9 @@ public class Main {
         DiskChunkStore chunkStore = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, chunkOutputFolder, tempOutputFolder);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
-        AuthorizeAssetsClient authorizeAssetsClient = AuthorizeAssetsClient.backupd();
         ChunkClient chunkClient = ChunkClient.defaultInstance();
 
-        Donkey donkey = new Donkey(chunkClient, chunkStore);
+        Donkey donkey = new Donkey(chunkClient, chunkStore, fragmentationThreshold);
         int batchThreshold = Property.ENGINE_BATCH_THRESHOLD.asInteger().orElse(1048576);
         Function<Set<Asset>, List<Set<Asset>>> batchFunction
                 = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);

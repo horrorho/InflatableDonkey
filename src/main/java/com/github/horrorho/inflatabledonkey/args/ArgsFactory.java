@@ -239,11 +239,11 @@ public final class ArgsFactory {
     static Arg threads() {
         Option option = Option.builder()
                 .longOpt("threads")
-                .desc("Number of concurrent download threads." + defaultValue(Property.THREADS))
+                .desc("Number of concurrent download threads." + defaultValue(Property.ENGINE_THREADS))
                 .argName("int")
                 .hasArgs()
                 .build();
-        return new Arg(Property.THREADS, option, ArgsFactory::mapNumber);
+        return new Arg(Property.ENGINE_THREADS, option, ArgsFactory::mapNumber);
     }
 
     static Arg token() {

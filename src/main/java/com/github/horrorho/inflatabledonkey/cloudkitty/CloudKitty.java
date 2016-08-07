@@ -48,7 +48,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
-import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
-@Immutable
+@ThreadSafe
 public final class CloudKitty {
 
     static ResponseHandler<List<ResponseOperation>> responseHandler() {

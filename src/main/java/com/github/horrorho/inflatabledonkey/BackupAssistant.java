@@ -55,7 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
-import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ahseya
  */
-@Immutable
+@ThreadSafe
 public final class BackupAssistant {
 
     public static BackupAssistant

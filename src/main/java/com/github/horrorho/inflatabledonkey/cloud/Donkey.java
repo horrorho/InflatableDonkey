@@ -61,14 +61,15 @@ public final class Donkey {
 
     private final ChunkClient chunkClient;
     private final ChunkStore store;
-    private final int fragmentationThreshold = 64;
+    private final int fragmentationThreshold;
 
-    public Donkey(ChunkClient chunkClient, ChunkStore store) {
+    public Donkey(ChunkClient chunkClient, ChunkStore store, int fragmentationThreshold) {
         this.chunkClient = Objects.requireNonNull(chunkClient);
         this.store = Objects.requireNonNull(store);
+        this.fragmentationThreshold = fragmentationThreshold;
     }
 
-    public void apply(HttpClient httpClient, ForkJoinPool aux, Set<Asset> assets, FileAssembler consumer) {
+    public void apply(HttpClient httpClient, Optional<ForkJoinPool> aux, Set<Asset> assets, FileAssembler consumer) {
         logger.trace("<< apply() - assets: {}", assets.size());
         if (assets.isEmpty()) {
             return;
@@ -85,8 +86,8 @@ public final class Donkey {
 
         while (true) {
             try {
-                if (assets.size() > fragmentationThreshold) {
-                    processConcurrent(httpClient, aux, pool, consumer);
+                if (assets.size() > fragmentationThreshold && aux.isPresent()) {
+                    processConcurrent(httpClient, aux.get(), pool, consumer);
                 } else {
                     process(httpClient, pool, consumer);
                 }
@@ -108,13 +109,13 @@ public final class Donkey {
         logger.trace(">> process()");
     }
 
-    void processConcurrent(HttpClient httpClient, ForkJoinPool fjp, AssetPool pool, FileAssembler consumer) throws IOException {
+    void processConcurrent(HttpClient httpClient, ForkJoinPool fjp, AssetPool pool, FileAssembler consumer)
+            throws IOException {
         logger.trace("<< processConcurrent()");
         try {
             Collection<StorageHostChunkList> containers = pool.authorize(httpClient);
-            fjp.submit(() -> {
-                containers.parallelStream().forEach(u -> processContainer(httpClient, u, pool, consumer));
-            }).get();
+            fjp.submit(() -> containers.parallelStream().forEach(u -> processContainer(httpClient, u, pool, consumer)))
+                    .get();
 
         } catch (InterruptedException ex) {
             throw new UncheckedInterruptedException(ex);

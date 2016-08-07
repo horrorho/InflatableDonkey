@@ -56,6 +56,9 @@ public enum Property {
     DP_AESXTS_BLOCK_SIZE("4096"),
     DP_MODE("AUTO"),
     ENGINE_BATCH_THRESHOLD("1048576"),
+    ENGINE_FRAGMENTATION_THRESHOLD("64"),
+    ENGINE_FRAGMENTATION_POOL_MULTIPLIER("4"),
+    ENGINE_THREADS("4"),
     FILTER_ASSET_BIRTH_MAX(),
     FILTER_ASSET_BIRTH_MIN(),
     FILTER_ASSET_DOMAIN(),
@@ -80,7 +83,6 @@ public enum Property {
     PROTOC_PATH("protoc"),
     PROTOC_TIMEOUT_MS("15000"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
-    THREADS("4"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 
     static synchronized void setProperties(Map<Property, String> properties) {

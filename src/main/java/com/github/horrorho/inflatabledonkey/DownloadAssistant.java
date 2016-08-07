@@ -30,6 +30,7 @@ import com.github.horrorho.inflatabledonkey.file.XFileKeyFactory;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -52,7 +53,7 @@ public final class DownloadAssistant {
     private final Function<Set<Asset>, List<Set<Asset>>> batchFunction;
     private final KeyBagManager keyBagManager;
     private final ForkJoinPool forkJoinPool;
-    private final ForkJoinPool forkJoinPoolAux;
+    private final Optional<ForkJoinPool> forkJoinPoolAux;
     private final Donkey donkey;
     private final Path folder;
 
@@ -60,7 +61,7 @@ public final class DownloadAssistant {
             Function<Set<Asset>, List<Set<Asset>>> batchFunction,
             KeyBagManager keyBagManager,
             ForkJoinPool forkJoinPool,
-            ForkJoinPool forkJoinPoolAux,
+            Optional<ForkJoinPool> forkJoinPoolAux,
             Donkey donkey,
             Path folder) {
 
