@@ -33,7 +33,7 @@ import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.cloud.BatchSetIterator;
+import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
 import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
