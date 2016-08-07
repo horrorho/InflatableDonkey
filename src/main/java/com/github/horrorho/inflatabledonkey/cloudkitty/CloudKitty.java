@@ -153,12 +153,17 @@ public final class CloudKitty {
             }
             return reordered;
 
-        } catch (UncheckedIOException ex) {
-            throw ex.getCause();
         } catch (InterruptedException ex) {
             throw new UncheckedInterruptedException(ex);
         } catch (ExecutionException ex) {
-            throw new RuntimeException(ex);
+            Throwable cause = ex.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            if (cause instanceof UncheckedIOException) {
+                throw ((UncheckedIOException) cause).getCause();
+            }
+            throw new RuntimeException(cause);
         }
     }
 
