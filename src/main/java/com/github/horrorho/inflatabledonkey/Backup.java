@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
+import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
@@ -90,16 +91,18 @@ public final class Backup {
     public void download(
             HttpClient httpClient,
             Map<Device, ? extends Collection<Snapshot>> snapshots,
+            Predicate<Snapshot> snapshotFilter,
             Predicate<Assets> assetsFilter,
             Predicate<Asset> assetFilter
     ) throws IOException {
-
-        // TODO rework once we have UncheckedIOExceptions
+        
         for (Map.Entry<Device, ? extends Collection<Snapshot>> deviceSnapshot : snapshots.entrySet()) {
             Device device = deviceSnapshot.getKey();
 
             for (Snapshot snapshot : deviceSnapshot.getValue()) {
-                downloadSnapshot(httpClient, device, snapshot, assetsFilter, assetFilter);
+                if (snapshotFilter.test(snapshot)) {
+                    downloadSnapshot(httpClient, device, snapshot, assetsFilter, assetFilter);
+                }
             }
         }
     }

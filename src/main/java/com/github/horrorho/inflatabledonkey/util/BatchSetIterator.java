@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.cloud;
+package com.github.horrorho.inflatabledonkey.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

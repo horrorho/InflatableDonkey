@@ -31,7 +31,6 @@ import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -82,6 +81,10 @@ public final class Snapshot extends AbstractRecord {
 
     public Optional<Date> date() {
         return backupProperty("Date", NSDate.class).map(NSDate::getDate);
+    }
+
+    public Instant timestamp() {
+        return date().map(Date::toInstant).orElse(modification());
     }
 
     public Optional<String> snapshotHMACKey() {

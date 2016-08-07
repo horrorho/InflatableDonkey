@@ -28,12 +28,13 @@ import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.cloud.BatchSetIterator;
+import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
 import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
@@ -267,7 +268,14 @@ public class Main {
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
-        backup.download(httpClient, filtered, assetsFilter, assetFilter);
+
+        Optional<Long> snapshotDateMax = Property.FILTER_ASSET_BIRTH_MAX.asLong()
+                .flatMap(u -> Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong().map(v -> (u > v) ? u : v));
+        Optional<Long> snapshotDateMin = Property.FILTER_ASSET_BIRTH_MIN.asLong()
+                .flatMap(u -> Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong().map(v -> (u < v) ? u : v));
+        Predicate<Snapshot> snapshotFilter = new SnapshotFilter(snapshotDateMax, snapshotDateMin);
+
+        backup.download(httpClient, filtered, snapshotFilter, assetsFilter, assetFilter);
     }
 
     static void print(Map<Device, List<Snapshot>> deviceSnapshot) {
