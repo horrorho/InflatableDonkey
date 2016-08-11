@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey;
 import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.args.PropertyItemType;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
 import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
@@ -57,6 +58,8 @@ import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import static java.util.stream.Collectors.toList;
+import java.util.stream.Stream;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
@@ -259,11 +262,27 @@ public class Main {
 
         Predicate<Assets> assetsFilter = new AssetsFilter(Property.FILTER_ASSET_DOMAIN.asList());
 
+        // For simplicity we just pass in item types as relative paths, although it could give us superfluous matches.
+        List<String> filterItemTypes = Property.FILTER_ASSET_ITEM_TYPE.asList().orElse(Collections.emptyList())
+                .stream()
+                .map(PropertyItemType::valueOf)
+                .map(PropertyItemType::extensions)
+                .flatMap(Collection::stream)
+                .collect(toList());
+        List<String> filterRelativePathList = Property.FILTER_ASSET_RELATIVE_PATH.asList().orElse(Collections.emptyList());
+        List<String> filterRelativePaths = Stream.of(filterItemTypes, filterRelativePathList)
+                .flatMap(Collection::stream)
+                .collect(toList());
+        logger.info("-- main() - asset filter relative paths: {}", filterRelativePaths);
+
+        List<String> filterExtensions = Property.FILTER_ASSET_EXTENSION.asList().orElse(Collections.emptyList());
+        logger.info("-- main() - asset filter extensions: {}", filterExtensions);
+
         Predicate<Asset> assetFilter = new AssetFilter(
                 Property.FILTER_ASSET_BIRTH_MAX.asLong(),
                 Property.FILTER_ASSET_BIRTH_MIN.asLong(),
-                Property.FILTER_ASSET_EXTENSION.asList(),
-                Property.FILTER_ASSET_RELATIVE_PATH.asList(),
+                filterExtensions,
+                filterRelativePaths,
                 Property.FILTER_ASSET_SIZE_MAX.asInteger(),
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),

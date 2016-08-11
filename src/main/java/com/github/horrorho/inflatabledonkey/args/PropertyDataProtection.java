@@ -23,11 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -36,18 +31,9 @@ import net.jcip.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
-public enum PropertyDP {
+public enum PropertyDataProtection {
     AUTO,
     CBC,
     XTS,
     OFF;
-
-    @Deprecated
-    public static Optional<PropertyDP> parse(String mode) {
-        return Optional.ofNullable(map.get(mode.toUpperCase(Property.locale())));
-    }
-
-    private static final Map<String, PropertyDP> map = Arrays.asList(PropertyDP.values())
-            .stream()
-            .collect(Collectors.toMap(PropertyDP::name, Function.identity()));
 }

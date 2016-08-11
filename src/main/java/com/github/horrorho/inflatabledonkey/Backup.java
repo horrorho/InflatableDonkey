@@ -95,13 +95,15 @@ public final class Backup {
             Predicate<Assets> assetsFilter,
             Predicate<Asset> assetFilter
     ) throws IOException {
-        
+
         for (Map.Entry<Device, ? extends Collection<Snapshot>> deviceSnapshot : snapshots.entrySet()) {
             Device device = deviceSnapshot.getKey();
 
             for (Snapshot snapshot : deviceSnapshot.getValue()) {
                 if (snapshotFilter.test(snapshot)) {
                     downloadSnapshot(httpClient, device, snapshot, assetsFilter, assetFilter);
+                } else {
+                    logger.info("-- download() - skipping snapshot: {}", snapshot.info());
                 }
             }
         }
