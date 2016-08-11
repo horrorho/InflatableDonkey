@@ -51,6 +51,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -288,10 +289,21 @@ public class Main {
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
 
-        Optional<Long> snapshotDateMax = Property.FILTER_ASSET_BIRTH_MAX.asLong()
-                .flatMap(u -> Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong().map(v -> (u > v) ? u : v));
-        Optional<Long> snapshotDateMin = Property.FILTER_ASSET_BIRTH_MIN.asLong()
-                .flatMap(u -> Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong().map(v -> (u < v) ? u : v));
+        Optional<Long> snapshotDateMax = Stream.of(Property.FILTER_ASSET_BIRTH_MAX, Property.FILTER_ASSET_STATUS_CHANGED_MAX)
+                .map(Property::asLong)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.reverseOrder())
+                .findFirst();
+        logger.info("-- main() - snapshot date max: {}", snapshotDateMax);
+
+        Optional<Long> snapshotDateMin = Stream.of(Property.FILTER_ASSET_BIRTH_MIN, Property.FILTER_ASSET_STATUS_CHANGED_MIN)
+                .map(Property::asLong)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+        logger.info("-- main() - snapshot date min: {}", snapshotDateMin);
+
         Predicate<Snapshot> snapshotFilter = new SnapshotFilter(snapshotDateMax, snapshotDateMin);
 
         backup.download(httpClient, filtered, snapshotFilter, assetsFilter, assetFilter);
