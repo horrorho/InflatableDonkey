@@ -26,8 +26,10 @@ package com.github.horrorho.inflatabledonkey;
 import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.args.PropertyItemType;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
@@ -49,6 +51,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +59,8 @@ import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import static java.util.stream.Collectors.toList;
+import java.util.stream.Stream;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
@@ -258,16 +263,50 @@ public class Main {
 
         Predicate<Assets> assetsFilter = new AssetsFilter(Property.FILTER_ASSET_DOMAIN.asList());
 
+        // For simplicity we just pass in item types as relative paths, although it could give us superfluous matches.
+        List<String> filterItemTypes = Property.FILTER_ASSET_ITEM_TYPE.asList().orElse(Collections.emptyList())
+                .stream()
+                .map(PropertyItemType::valueOf)
+                .map(PropertyItemType::extensions)
+                .flatMap(Collection::stream)
+                .collect(toList());
+        List<String> filterRelativePathList = Property.FILTER_ASSET_RELATIVE_PATH.asList().orElse(Collections.emptyList());
+        List<String> filterRelativePaths = Stream.of(filterItemTypes, filterRelativePathList)
+                .flatMap(Collection::stream)
+                .collect(toList());
+        logger.info("-- main() - asset filter relative paths: {}", filterRelativePaths);
+
+        List<String> filterExtensions = Property.FILTER_ASSET_EXTENSION.asList().orElse(Collections.emptyList());
+        logger.info("-- main() - asset filter extensions: {}", filterExtensions);
+
         Predicate<Asset> assetFilter = new AssetFilter(
                 Property.FILTER_ASSET_BIRTH_MAX.asLong(),
                 Property.FILTER_ASSET_BIRTH_MIN.asLong(),
-                Property.FILTER_ASSET_EXTENSION.asList(),
-                Property.FILTER_ASSET_RELATIVE_PATH.asList(),
+                filterExtensions,
+                filterRelativePaths,
                 Property.FILTER_ASSET_SIZE_MAX.asInteger(),
                 Property.FILTER_ASSET_SIZE_MIN.asInteger(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
-        backup.download(httpClient, filtered, assetsFilter, assetFilter);
+
+        Optional<Long> snapshotDateMax = Stream.of(Property.FILTER_ASSET_BIRTH_MAX, Property.FILTER_ASSET_STATUS_CHANGED_MAX)
+                .map(Property::asLong)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.reverseOrder())
+                .findFirst();
+        logger.info("-- main() - snapshot date max: {}", snapshotDateMax);
+
+        Optional<Long> snapshotDateMin = Stream.of(Property.FILTER_ASSET_BIRTH_MIN, Property.FILTER_ASSET_STATUS_CHANGED_MIN)
+                .map(Property::asLong)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+        logger.info("-- main() - snapshot date min: {}", snapshotDateMin);
+
+        Predicate<Snapshot> snapshotFilter = new SnapshotFilter(snapshotDateMax, snapshotDateMin);
+
+        backup.download(httpClient, filtered, snapshotFilter, assetsFilter, assetFilter);
     }
 
     static void print(Map<Device, List<Snapshot>> deviceSnapshot) {
@@ -283,15 +322,5 @@ public class Main {
 }
 
 // TODO filter AssetID size rather than wait to download Asset and then filter.
-// TODO 0xFF System protectionInfo DONE
-// TODO file timestamps DONE
-// TODO date filtering DONE
-// TODO size filtering DONE
-// TODO time expired tokens / badly adjusted system clocks. DONE
-// TODO handle D in files DONE
 // TODO reconstruct empty files/ empty directories
-// TODO file timestamp DONE
-// TODO filtering DONE
-// TODO concurrent downloads DONE
-// TODO file asset cache
-// TODO 5000 limit? FIXED
+

@@ -26,12 +26,14 @@ package com.github.horrorho.inflatabledonkey.args.filter;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toSet;
+import java.util.stream.Stream;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -41,10 +43,19 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class AssetFilter implements Predicate<Asset> {
 
+    static Set<String> stringFilters(Collection<String> collection) {
+        Set<String> set = collection.stream().map(v -> v.toLowerCase(Locale.US)).collect(Collectors.toSet());
+        return set.isEmpty()
+                ? matchAll
+                : set;
+    }
+
+    private static final Set<String> matchAll = Stream.of("").collect(toSet());
+
     private final Optional<Long> birthMax;
     private final Optional<Long> birthMin;
-    private final Optional<List<String>> extension;
-    private final Optional<List<String>> relativePath;
+    private final Set<String> extensions;
+    private final Set<String> relativePaths;
     private final Optional<Integer> sizeMax;
     private final Optional<Integer> sizeMin;
     private final Optional<Long> statusChangedMax;
@@ -53,8 +64,8 @@ public final class AssetFilter implements Predicate<Asset> {
     public AssetFilter(
             Optional<Long> birthMax,
             Optional<Long> birthMin,
-            Optional<? extends Collection<String>> extension,
-            Optional<? extends Collection<String>> relativePath,
+            Collection<String> extensions,
+            Collection<String> relativePaths,
             Optional<Integer> sizeMax,
             Optional<Integer> sizeMin,
             Optional<Long> statusChangedMax,
@@ -65,8 +76,8 @@ public final class AssetFilter implements Predicate<Asset> {
         this.statusChangedMin = Objects.requireNonNull(statusChangedMin);
         this.sizeMax = Objects.requireNonNull(sizeMax);
         this.sizeMin = Objects.requireNonNull(sizeMin);
-        this.extension = extension.map(u -> u.stream().map(v -> v.toLowerCase(Locale.US)).collect(toList()));
-        this.relativePath = relativePath.map(u -> u.stream().map(v -> v.toLowerCase(Locale.US)).collect(toList()));
+        this.extensions = stringFilters(extensions);
+        this.relativePaths = stringFilters(relativePaths);
     }
 
     @Override
@@ -94,8 +105,7 @@ public final class AssetFilter implements Predicate<Asset> {
     boolean filterRelativePath(Asset asset) {
         return asset.relativePath()
                 .map(u -> u.toLowerCase(Locale.US))
-                .map(u -> relativePath.map(vs -> vs.stream().anyMatch(v -> u.contains(v))).orElse(true)
-                        && extension.map(vs -> vs.stream().anyMatch(v -> u.endsWith(v))).orElse(true))
+                .map(u -> relativePaths.stream().anyMatch(u::contains) && extensions.stream().anyMatch(u::endsWith))
                 .orElse(true);
     }
 
@@ -114,8 +124,8 @@ public final class AssetFilter implements Predicate<Asset> {
                 + ", statusChangedMin=" + statusChangedMin
                 + ", sizeMax=" + sizeMax
                 + ", sizeMin=" + sizeMin
-                + ", extension=" + extension
-                + ", relativePath=" + relativePath
+                + ", extension=" + extensions
+                + ", relativePath=" + relativePaths
                 + '}';
     }
 }

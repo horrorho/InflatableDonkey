@@ -62,6 +62,7 @@ public final class ArgsFactory {
         args.add(filterDomain());
         args.add(filterRelativePath());
         args.add(filterExtension());
+        args.add(filterItemType());
         args.add(filterSizeMax());
         args.add(filterSizeMin());
         args.add(filterBirthMin());
@@ -128,6 +129,16 @@ public final class ArgsFactory {
         return new Arg(Property.FILTER_ASSET_EXTENSION, option, ArgsFactory::mapToLowerCase);
     }
 
+    static Arg filterItemType() {
+        Option option = Option.builder()
+                .longOpt("item-type")
+                .desc("Only download the specified item type/s: " + PropertyItemType.DETAILS)
+                .argName("item-type/s")
+                .hasArgs()
+                .build();
+        return new Arg(Property.FILTER_ASSET_ITEM_TYPE, option, mapEnum(PropertyItemType::valueOf));
+    }
+
     static Arg filterRelativePath() {
         Option option = Option.builder()
                 .longOpt("relative-path")
@@ -143,7 +154,7 @@ public final class ArgsFactory {
                 .longOpt("snapshot")
                 .desc("Snapshot filter/s, 0 = first, 1 = next etc. "
                         + "Reverse selection with -1 = last, -2 = previous etc.")
-                .argName("int")
+                .argName("int/s")
                 .hasArgs()
                 .build();
         return new Arg(Property.FILTER_SNAPSHOT, option, ArgsFactory::mapNumber);
@@ -201,11 +212,11 @@ public final class ArgsFactory {
     static Arg mode() {
         Option option = Option.builder()
                 .longOpt("mode")
-                .desc("Data Protection decryption mode: " + optionsDefault(PropertyDP.class, Property.DP_MODE))
+                .desc("Data Protection decryption mode: " + optionsDefault(PropertyDataProtection.class, Property.DP_MODE))
                 .argName("mode")
                 .hasArg()
                 .build();
-        return new Arg(Property.DP_MODE, option, mapEnum(PropertyDP::valueOf));
+        return new Arg(Property.DP_MODE, option, mapEnum(PropertyDataProtection::valueOf));
     }
 
     static Arg outputFolder() {

@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.FileGroups;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toMap;
 
 /**
  *

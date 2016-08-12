@@ -24,11 +24,11 @@
 package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.args.PropertyDP;
-import static com.github.horrorho.inflatabledonkey.args.PropertyDP.AUTO;
-import static com.github.horrorho.inflatabledonkey.args.PropertyDP.CBC;
-import static com.github.horrorho.inflatabledonkey.args.PropertyDP.OFF;
-import static com.github.horrorho.inflatabledonkey.args.PropertyDP.XTS;
+import com.github.horrorho.inflatabledonkey.args.PropertyDataProtection;
+import static com.github.horrorho.inflatabledonkey.args.PropertyDataProtection.AUTO;
+import static com.github.horrorho.inflatabledonkey.args.PropertyDataProtection.CBC;
+import static com.github.horrorho.inflatabledonkey.args.PropertyDataProtection.OFF;
+import static com.github.horrorho.inflatabledonkey.args.PropertyDataProtection.XTS;
 import com.github.horrorho.inflatabledonkey.dataprotection.DPCipherFactories;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,7 +46,7 @@ public class XFileKeyMutatorFactory {
         return DEFAULT;
     }
 
-    public static UnaryOperator<Optional<XFileKey>> create(PropertyDP mode) {
+    public static UnaryOperator<Optional<XFileKey>> create(PropertyDataProtection mode) {
         switch (mode) {
             case AUTO:
                 return UnaryOperator.identity();
@@ -69,8 +69,8 @@ public class XFileKeyMutatorFactory {
         return key.map(u -> new XFileKey(u.key(), mode, u.flags()));
     }
 
-    private static final PropertyDP DEFAULT_MODE
-            = Property.DP_MODE.optional(PropertyDP::parse).orElse(PropertyDP.AUTO);
+    private static final PropertyDataProtection DEFAULT_MODE
+            = Property.DP_MODE.value().map(PropertyDataProtection::valueOf).orElse(PropertyDataProtection.AUTO);
 
     private static final UnaryOperator<Optional<XFileKey>> DEFAULT = XFileKeyMutatorFactory.create(DEFAULT_MODE);
 }
