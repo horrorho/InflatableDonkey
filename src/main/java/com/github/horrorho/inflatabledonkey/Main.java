@@ -322,15 +322,5 @@ public class Main {
 }
 
 // TODO filter AssetID size rather than wait to download Asset and then filter.
-// TODO 0xFF System protectionInfo DONE
-// TODO file timestamps DONE
-// TODO date filtering DONE
-// TODO size filtering DONE
-// TODO time expired tokens / badly adjusted system clocks. DONE
-// TODO handle D in files DONE
 // TODO reconstruct empty files/ empty directories
-// TODO file timestamp DONE
-// TODO filtering DONE
-// TODO concurrent downloads DONE
-// TODO file asset cache
-// TODO 5000 limit? FIXED
+
