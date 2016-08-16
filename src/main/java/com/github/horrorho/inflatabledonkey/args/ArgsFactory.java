@@ -71,6 +71,7 @@ public final class ArgsFactory {
         args.add(filterStatusMax());
         args.add(mode());
         args.add(threads());
+        args.add(turbo());
         args.add(snapshots());
         args.add(domains());
         args.add(token());
@@ -266,6 +267,16 @@ public final class ArgsFactory {
         return new Arg(Property.ARGS_TOKEN, option);
     }
 
+    static Arg turbo() {
+        Option option = Option.builder()
+                .longOpt("turbo")
+                .argName("int")
+                .desc("Engine thread multiplier for small assets." + defaultValue(Property.ENGINE_FRAGMENTATION_POOL_MULTIPLIER))
+                .hasArgs()
+                .build();
+        return new Arg(Property.ENGINE_FRAGMENTATION_POOL_MULTIPLIER, option, ArgsFactory::mapNumber);
+    }
+
     static String defaultValue(Property property) {
         return property.peek()
                 .map(u -> " Default: " + u + ".")
@@ -308,3 +319,4 @@ public final class ArgsFactory {
                 .toEpochSecond();
     }
 }
+// TODO negative integer rejection
