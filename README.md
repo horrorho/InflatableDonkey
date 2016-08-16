@@ -127,9 +127,9 @@ Download all files from the HomeDomain.
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --domain homedomain
 ```
 
-The are two data protection decryption modes and the detection algorithm is only about 90% accurate. If you experience file corruption please try setting the mode manually with either --mode CBC or --mode XTS.
+The are two data protection decryption modes but the detection algorithm is only about 90% accurate. If you experience file corruption please try setting the mode manually with either --mode CBC or --mode XTS.
 
-CBC mode.
+For example CBC mode.
 ```
 ~/InflatableDonkey-master/target $ java -jar InflatableDonkey.jar elvis@lives.com uhhurhur --mode CBC
 ```
