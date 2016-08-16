@@ -6,7 +6,7 @@ The good. New build with bugfixes and a few filtering enhancements. The download
 
 The bad. I'm putting this project on the back-burner for the foreseeable future. I just can't spare the time to add in enhancements. This project was only ever intended to be an experimental tool to aid in the discovery of the iOS 9 iCloud backup process, something it achieved a while ago. I've sinced whacked it around to function as a download tool in it's own right. 
 
-So! I've spent countless nights studying arcane crypto material, reverse-engineering binaries and poring over logs. Others, including my cat have also contributed. InflatableDonkey now knows many secrets and I'm rather hoping others can take it and fly with it.
+So! I've spent countless nights studying arcane crypto material, reverse-engineering binaries and poring over logs. Others, see below, have also contributed. InflatableDonkey now knows many secrets and I'm rather hoping others can take it and fly with it.
 
 
 **Update**, 30 July 2016. 
