@@ -211,6 +211,12 @@ public class Main {
             return;
         }
 
+        // Print snapshots option.
+        if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
+            print(deviceSnapshots);
+            return;
+        }
+
         // Filter snapshots.
         Optional<List<String>> filterDevices = Property.FILTER_DEVICE.asList();
         Optional<List<Integer>> filterSnapshots = Property.FILTER_SNAPSHOT.asList(Integer::parseInt);
@@ -249,11 +255,6 @@ public class Main {
         System.out.println("\nSelected:");
         print(filtered);
         System.out.println("");
-
-        // Print snapshots option.
-        if (Property.PRINT_SNAPSHOTS.asBoolean().orElse(false)) {
-            return;
-        }
 
         // Print domain list option.
         if (Property.PRINT_DOMAIN_LIST.asBoolean().orElse(false)) {
