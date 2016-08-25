@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.joining;
 public enum PropertyItemType {
     ADDRESS_BOOK("addressbook.sqlitedb"),
     CALENDAR("calendar.sqlitedb"),
-    CALL_HISTORY("call_history.db"),
+    CALL_HISTORY("callhistorydb"),
     MOVIES(".mov", ".mp4", ".avi"),
     NOTES("notes"),
     PHOTOS(".jpg", ".jpeg"),
