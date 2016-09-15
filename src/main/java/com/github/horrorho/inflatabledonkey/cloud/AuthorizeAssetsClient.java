@@ -111,7 +111,7 @@ public final class AuthorizeAssetsClient implements IOBiFunction<HttpClient, Col
 
     FileGroups fileGroups(HttpClient httpClient, String contentBaseUrl, Collection<CloudKit.Asset> ckAssets)
             throws UncheckedIOException {
-
+        logger.debug("-- fileGroups - contentBaseUrl: {} ckAssets: {}", contentBaseUrl, ckAssets.size());
         String dsPrsID = dsPrsID(ckAssets);
         CloudKit.FileTokens fileTokens = FileTokensFactory.from(ckAssets);
         return fileGroups(httpClient, dsPrsID, contentBaseUrl, fileTokens);
