@@ -35,6 +35,8 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -42,6 +44,8 @@ import org.apache.http.util.EntityUtils;
  * @param <T>
  */
 public abstract class DonkeyResponseHandler<T> implements ResponseHandler<T> {
+
+    private static final Logger logger = LoggerFactory.getLogger(DonkeyResponseHandler.class);
 
     // Modified org.apache.http.impl.client.AbstractResponseHandler#handleResponse 
     // Appends the entity body, if present, to the HttpResponseException message if thrown.
@@ -64,24 +68,27 @@ public abstract class DonkeyResponseHandler<T> implements ResponseHandler<T> {
         }
 
         long timestampSystem = System.currentTimeMillis();
-        long timestampOffset = timestamp(response).orElse(timestampSystem) - timestampSystem;
-
+        logger.debug("-- handleResponse() - timestamp system: {}", timestampSystem);
+        Optional<Long> timestampOffset = timestamp(response).map(t -> t - timestampSystem);
+        logger.debug("-- handleResponse() - timestamp offset: {}", timestampOffset);
         return handleEntityTimestampOffset(entity, timestampOffset);
     }
 
-    public T handleEntityTimestampOffset(HttpEntity entity, long timestampOffset) throws IOException {
+    public T handleEntityTimestampOffset(HttpEntity entity, Optional<Long> timestampOffset) throws IOException {
         return handleEntity(entity);
     }
 
     public abstract T handleEntity(HttpEntity entity) throws IOException;
 
     Optional<Long> timestamp(HttpResponse response) {
-        return Arrays.asList(response.getAllHeaders())
+        Optional<Long> timestamp = Arrays.asList(response.getAllHeaders())
                 .stream()
                 .filter(u -> u.getName().equalsIgnoreCase(HttpHeaders.DATE))
                 .map(Header::getValue)
                 .map(DateUtils::parseDate)
                 .map(u -> u.toInstant().toEpochMilli())
                 .findFirst();
+        logger.debug("-- timestamp() - timestamp: {}", timestamp);
+        return timestamp;
     }
 }

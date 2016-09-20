@@ -24,12 +24,16 @@
 package com.github.horrorho.inflatabledonkey.cloud;
 
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.FileChecksumStorageHostChunkLists;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.FileGroups;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.HostInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.github.horrorho.inflatabledonkey.responsehandler.DonkeyResponseHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.HttpEntity;
@@ -41,73 +45,100 @@ import org.slf4j.LoggerFactory;
  * @author Ahseya
  */
 @ThreadSafe
-public class AuthorizeAssetsResponseHandler extends DonkeyResponseHandler<ChunkServer.FileGroups> {
+public class AuthorizeAssetsResponseHandler extends DonkeyResponseHandler<FileGroups> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssetsResponseHandler.class);
 
-    private static final long FALLBACK_DURATION_MS = 30 * 60 * 1000;
+    private final IOFunction<InputStream, FileGroups> parser;
+    private final long fallbackDurationMS;
 
-    private final IOFunction<InputStream, ChunkServer.FileGroups> parser;
-    private final long timestampTolerance;
-
-    public AuthorizeAssetsResponseHandler(IOFunction<InputStream, ChunkServer.FileGroups> parser,
-            long timestampTolerance) {
+    public AuthorizeAssetsResponseHandler(IOFunction<InputStream, FileGroups> parser, long fallbackDurationMS) {
         this.parser = Objects.requireNonNull(parser);
-        this.timestampTolerance = timestampTolerance;
+        this.fallbackDurationMS = fallbackDurationMS;
     }
 
-    public AuthorizeAssetsResponseHandler(long timestampTolerance) {
-        this(ChunkServer.FileGroups.PARSER::parseFrom, timestampTolerance);
-    }
-
-    @Override
-    public ChunkServer.FileGroups
-            handleEntityTimestampOffset(HttpEntity entity, long timestampOffset) throws IOException {
-        ChunkServer.FileGroups fileGroups = handleEntity(entity);
-
-        if (Math.abs(timestampOffset) > timestampTolerance) {
-            logger.debug("-- handleEntityTimestampOffset() - system timestamp out of tolerance: {} ms", timestampOffset);
-            adjustExpiryTimestamp(fileGroups, timestampOffset);
-        }
-        return fileGroups;
+    public AuthorizeAssetsResponseHandler(long fallbackDurationMS) {
+        this(FileGroups.PARSER::parseFrom, fallbackDurationMS);
     }
 
     @Override
-    public ChunkServer.FileGroups handleEntity(HttpEntity entity) throws IOException {
+    public FileGroups
+            handleEntityTimestampOffset(HttpEntity entity, Optional<Long> timestampOffset) throws IOException {
+        logger.trace("-- handleEntityTimestampOffset() - timestamp offset: {}", timestampOffset);
+        FileGroups fileGroups = handleEntity(entity);
+        return adjustExpiryTimestamp(fileGroups, timestampOffset);
+    }
+
+    @Override
+    public FileGroups handleEntity(HttpEntity entity) throws IOException {
         try (InputStream inputStream = entity.getContent()) {
             return parser.apply(inputStream);
         }
     }
 
-    ChunkServer.FileGroups adjustExpiryTimestamp(ChunkServer.FileGroups fileGroups, long offset) {
-        List<ChunkServer.FileChecksumStorageHostChunkLists> fileGroupsList = fileGroups.getFileGroupsList()
+    FileGroups adjustExpiryTimestamp(FileGroups fileGroups, Optional<Long> timestampOffset) {
+        // We adjust the FileGroups timestamps based on machine time/ server time deltas. This allows us to function
+        // with inaccurate machine clocks. 
+        List<FileChecksumStorageHostChunkLists> fileGroupsList = fileGroups.getFileGroupsList()
                 .stream()
-                .map(u -> AuthorizeAssetsResponseHandler.this.adjustExpiryTimestamp(u, offset))
+                .map(u -> adjustExpiryTimestamp(u, timestampOffset))
                 .collect(toList());
-        return fileGroups.toBuilder().clearFileGroups().addAllFileGroups(fileGroupsList).build();
+        return fileGroups
+                .toBuilder()
+                .clearFileGroups()
+                .addAllFileGroups(fileGroupsList)
+                .build();
     }
 
-    ChunkServer.FileChecksumStorageHostChunkLists
-            adjustExpiryTimestamp(ChunkServer.FileChecksumStorageHostChunkLists fileGroup, long offset) {
-        List<ChunkServer.StorageHostChunkList> list = fileGroup.getStorageHostChunkListList()
+    FileChecksumStorageHostChunkLists
+            adjustExpiryTimestamp(FileChecksumStorageHostChunkLists fileGroup, Optional<Long> timestampOffset) {
+        List<StorageHostChunkList> list = fileGroup.getStorageHostChunkListList()
                 .stream()
-                .map(u -> AuthorizeAssetsResponseHandler.this.adjustExpiryTimestamp(u, offset))
+                .map(u -> adjustExpiryTimestamp(u, timestampOffset))
                 .collect(toList());
-        return fileGroup.toBuilder().clearStorageHostChunkList().addAllStorageHostChunkList(list).build();
+        return fileGroup
+                .toBuilder()
+                .clearStorageHostChunkList()
+                .addAllStorageHostChunkList(list)
+                .build();
     }
 
-    ChunkServer.StorageHostChunkList adjustExpiryTimestamp(ChunkServer.StorageHostChunkList container, long offset) {
+    StorageHostChunkList adjustExpiryTimestamp(StorageHostChunkList container, Optional<Long> timestampOffset) {
         if (!container.getHostInfo().hasExpiry()) {
-            // Shouldn't happen, can probably remove this check.
-            logger.warn("-- adjustExpiryTimestamp() - no expiry timestamp: {}", container.getHostInfo());
-            return setExpiryTimestamp(container, System.currentTimeMillis() + FALLBACK_DURATION_MS);
+            // Shouldn't happen.
+            logger.warn("-- adjustExpiryTimestamp() - no expiry timestamp: {} reverting to default",
+                    container.getHostInfo().getUri());
+            return defaultExpiryTimestamp(container);
         }
-        long timestamp = container.getHostInfo().getExpiry() + offset;
+        if (!timestampOffset.isPresent()) {
+            // Probably shouldn't happen.
+            logger.debug("-- adjustExpiryTimestamp() - no timestamp offset: {} reverting to default",
+                    container.getHostInfo().getUri());
+            return defaultExpiryTimestamp(container);
+        }
+        long timestamp = container.getHostInfo().getExpiry() + timestampOffset.get();
+        if (timestamp < System.currentTimeMillis()) {
+            // Shouldn't happen.
+            logger.warn("-- adjustExpiryTimestamp() - negative timestamp offset: {} reverting to default",
+                    container.getHostInfo().getUri());
+            return defaultExpiryTimestamp(container);
+        }
         return setExpiryTimestamp(container, timestamp);
     }
 
-    ChunkServer.StorageHostChunkList setExpiryTimestamp(ChunkServer.StorageHostChunkList container, long timestamp) {
-        ChunkServer.HostInfo hostInfo = container.getHostInfo().toBuilder().setExpiry(timestamp).build();
-        return container.toBuilder().setHostInfo(hostInfo).build();
+    StorageHostChunkList defaultExpiryTimestamp(StorageHostChunkList container) {
+        return setExpiryTimestamp(container, System.currentTimeMillis() + fallbackDurationMS);
+    }
+
+    StorageHostChunkList setExpiryTimestamp(StorageHostChunkList container, long timestamp) {
+        HostInfo hostInfo = container
+                .getHostInfo()
+                .toBuilder()
+                .setExpiry(timestamp)
+                .build();
+        return container
+                .toBuilder()
+                .setHostInfo(hostInfo)
+                .build();
     }
 }
