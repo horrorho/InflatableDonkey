@@ -37,12 +37,10 @@ public final class Curve25519 {
     private Curve25519() {
     }
 
-    private static final org.whispersystems.curve25519.Curve25519 curve25519
-            = org.whispersystems.curve25519.Curve25519.getInstance(org.whispersystems.curve25519.Curve25519.JAVA);
-
     public static byte[] agreement(byte[] publicKey, byte[] privateKey) {
-        // org.whispersystems.curve25519.BaseJavaCurve25591Provider#calculateAgreement appears to be thread safe.
-        return curve25519.calculateAgreement(publicKey, clampPrivateKey(privateKey));
+        byte[] sharedSecret = new byte[32];
+        djb.Curve25519.curve(sharedSecret, clampPrivateKey(privateKey), publicKey);
+        return sharedSecret;
     }
 
     static byte[] clampPrivateKey(byte[] privateKey) {

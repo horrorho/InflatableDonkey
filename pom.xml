@@ -42,9 +42,9 @@
     </build> 
     <dependencies>
         <dependency>
-            <groupId>org.whispersystems</groupId>
+            <groupId>org.zeromq</groupId>
             <artifactId>curve25519-java</artifactId>
-            <version>0.2.4</version>
+            <version>0.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -95,9 +95,9 @@
             <version>2.8.0</version>
         </dependency>
         <dependency>
-            <groupId>net.jcip</groupId>
+            <groupId>com.github.stephenc.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
-            <version>1.0</version>
+            <version>1.0-1</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
