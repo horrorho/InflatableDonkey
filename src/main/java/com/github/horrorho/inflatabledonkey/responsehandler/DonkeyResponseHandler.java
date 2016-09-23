@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.responsehandler;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -86,6 +87,7 @@ public abstract class DonkeyResponseHandler<T> implements ResponseHandler<T> {
                 .filter(u -> u.getName().equalsIgnoreCase(HttpHeaders.DATE))
                 .map(Header::getValue)
                 .map(DateUtils::parseDate)
+                .filter(Objects::nonNull)
                 .map(u -> u.toInstant().toEpochMilli())
                 .findFirst();
         logger.debug("-- timestamp() - timestamp: {}", timestamp);
