@@ -44,8 +44,7 @@ import org.slf4j.LoggerFactory;
 public class SRPClient {
     // https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
     // https://tools.ietf.org/html/rfc5054
-    // Verifier (RFC 5054 Section 2.4)
-    //      x = SHA1(s | SHA1(I | ":" | P))
+    // https://tools.ietf.org/html/rfc2945
 
     protected static final Logger logger = LoggerFactory.getLogger(SRPClient.class);
 
