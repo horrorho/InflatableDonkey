@@ -94,6 +94,7 @@ public final class Donkey {
                 break;
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
+                // TOFIX potentially unsafe. Use a more specific exception.
                 logger.debug("-- apply() - IllegalStateException: ", ex);
             } catch (IllegalArgumentException | IOException ex) {
                 logger.warn("-- apply() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
