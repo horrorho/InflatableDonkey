@@ -117,7 +117,7 @@ public class SRPClient {
         logger.debug("-- calculateClientEvidenceMessage() - key: 0x{}", Hex.toHexString(key));
 
         M1 = SRPAssistant.generateM1(digest, N, g, ephemeralKeyA, serverB, key, salt, identity);
-        logger.debug(">> calculateClientEvidenceMessage() - M1: 0x{}", Hex.toHexString(M1));
+        logger.debug("-- calculateClientEvidenceMessage() - M1: 0x{}", Hex.toHexString(M1));
 
         return Optional.of(M1);
     }
