@@ -107,12 +107,16 @@ public final class PZAssistant {
     }
 
     Optional<byte[]> unwrapKey(EncryptedKey encryptedKey, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
-        return importPublicKey(encryptedKey.masterKey().key())
+        Optional<byte[]> key = importPublicKey(encryptedKey.masterKey().key())
                 .map(Key::keyID)
                 .map(keys::get)
                 .map(Key::keyData)
                 .map(ECPrivateKey::d)
                 .map(d -> dataUnwrap.apply(encryptedKey.wrappedKey(), d));
+        if (!key.isPresent()) {
+            logger.warn("-- unwrapKey - failed to unwrap key: {}", encryptedKey);
+        }
+        return key;
     }
 
     Optional<Key<ECPublicKey>> importPublicKey(byte[] keyData) {
@@ -151,7 +155,6 @@ public final class PZAssistant {
     Optional<Collection<Key<ECPrivateKey>>> keys(NOS masterKey) {
         return DERUtils.parse(masterKey.key(), KeySet::new)
                 .flatMap(ServiceKeySetBuilder::build)
-                .map(ServiceKeySet::services)
-                .map(Map::values);
+                .map(ServiceKeySet::keys);
     }
 }

@@ -28,18 +28,20 @@ import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; 
+import org.slf4j.LoggerFactory;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * ServiceKeySetAssistant.
@@ -51,115 +53,105 @@ public final class ServiceKeySetAssistant {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceKeySetAssistant.class);
 
-    public static Map<KeyID, Key<ECPrivateKey>> importPrivateKeys(
-            Collection<PrivateKey> keys,
-            Function<PrivateKey, Optional<Key<ECPrivateKey>>> importFunction) {
-
+    public static Set<Key<ECPrivateKey>> importPrivateKeys(Collection<PrivateKey> keys,
+            Function<PrivateKey, Optional<Key<ECPrivateKey>>> importPrivateKey) {
         // Logging via peeks here as opposed to introducing logging code downstream.
-        Map<KeyID, Key<ECPrivateKey>> importedKeys = keys.stream()
-                .peek(pk -> {
-                    logger.debug("-- importPrivateKeys() > import: {}", pk);
-                })
-                .map(importFunction)
-                .peek(privateKey -> {
-                    if (privateKey.isPresent()) {
-                        logger.debug("-- importPrivateKeys() < import: {}", privateKey.get());
-
+        Set<Key<ECPrivateKey>> importedKeys = keys.stream()
+                .peek(u -> logger.debug("-- importPrivateKeys() > import: {}", u))
+                .map(importPrivateKey)
+                .peek(u -> {
+                    if (u.isPresent()) {
+                        logger.debug("-- importPrivateKeys() < import: {}", u.get());
                     } else {
                         logger.warn("-- importPrivateKeys() < import failed");
                     }
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toMap(
-                        Key::keyID,
-                        Function.identity(),
-                        (a, b) -> {
-                            logger.warn("-- importPrivateKeys() - duplicate key ID: {}", a.keyID());
-                            return a;
-                        }));
-
+                .collect(toSet());
         if (importedKeys.size() != keys.size()) {
             logger.warn("-- importPrivateKeys() - duplicate keys/ unable to import all keys");
         }
-
         return importedKeys;
     }
 
-    public static Map<KeyID, Key<ECPrivateKey>> verifyKeys(Collection<Key<ECPrivateKey>> privateKeys, Key<ECPrivateKey> masterKey) {
-        if (!masterKey.isTrusted()) {
-            logger.warn("-- verifyKeys() - master key is not trusted: {}", masterKey.keyID());
-            return new HashMap<>();
+    public static Set<Key<ECPrivateKey>> verifiedPrivateKeys(Collection<Key<ECPrivateKey>> keys) {
+        Set<Key<ECPrivateKey>> masterKeys = verifiedMasterKeys(keys);
+        Map<KeyID, Key<ECPrivateKey>> keyIDMasterKey = masterKeys
+                .stream().collect(toMap(Key::keyID, Function.identity()));
 
-        } else {
-            logger.debug("-- verifyKeys() - master key id: {}", masterKey.keyID());
+        return keys.stream()
+                .map(u -> masterKeys.contains(u)
+                        ? u
+                        : verifiedPrivateKey(u, keyIDMasterKey))
+                .collect(toSet());
+    }
+
+    static Key<ECPrivateKey>
+            verifiedPrivateKey(Key<ECPrivateKey> key, Map<KeyID, Key<ECPrivateKey>> keyIDMasterKey) {
+        // Returns trusted key if possible, otherwise untrusted key.
+        if (key.isTrusted()) {
+            return key;
         }
+        return key.masterKeyID()
+                .filter(keyIDMasterKey::containsKey)
+                .map(keyIDMasterKey::get)
+                .flatMap(key::verified)
+                .orElse(key);
+    }
 
-        return privateKeys.stream()
-                .map(key -> key.keyID().equals(masterKey.keyID()) ? masterKey : key.verify(masterKey))
-                .filter(Key::isTrusted)
-                .collect(Collectors.toMap(Key::keyID, Function.identity()));
+    static Set<Key<ECPrivateKey>> verifiedMasterKeys(Collection<Key<ECPrivateKey>> keys) {
+        int masterKeyServiceNumber = Service.PCS_MASTERKEY.number();
+        return keys
+                .stream()
+                .filter(u -> u
+                        .service()
+                        .map(v -> v == masterKeyServiceNumber)
+                        .orElse(false))
+                .map(Key::verifed)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toSet());
     }
 
     public static List<KeyID> untrustedKeys(Collection<Key<ECPrivateKey>> privateKeys) {
         return privateKeys.stream()
                 .filter(privateKey -> !privateKey.isTrusted())
                 .map(Key::keyID)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
-    public static Optional<Key<ECPrivateKey>> keyForService(Collection<Key<ECPrivateKey>> privateKeys, int service) {
-        return privateKeys.stream()
-                .filter(privateKey -> privateKey.service()
-                        .map(s -> s == service)
-                        .orElse(false))
-                .findFirst();
+    public static Map<Integer, Set<Key<ECPrivateKey>>> serviceKeys(Collection<Key<ECPrivateKey>> keys) {
+        return keys.stream()
+                .collect(groupingBy(ServiceKeySetAssistant::service, toSet()));
     }
 
-    public static List<Key<ECPrivateKey>>
-            unreferencedKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivateKey>> privateKeys) {
-
-        HashSet<KeyID> keyIDs = new HashSet<>(serviceKeyIDs.values());
-        Predicate<Map.Entry<KeyID, Key<ECPrivateKey>>> isOrphaned = entry -> !keyIDs.contains(entry.getKey());
-
-        return privateKeys.entrySet()
-                .stream()
-                .filter(isOrphaned)
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
+    static int service(Key<ECPrivateKey> key) {
+        return key.publicKeyInfo()
+                .map(u -> u.service())
+                .orElseGet(() -> {
+                    logger.debug("-- service() - missing key service: {}", key);
+                    return Service.UNKNOWN.number();
+                });
     }
 
     public static Map<Integer, Key<ECPrivateKey>>
-            serviceKeys(Map<Integer, KeyID> serviceKeyIDs, Map<KeyID, Key<ECPrivateKey>> privateKeys) {
-
-        Predicate<Map.Entry<Integer, KeyID>> isPresent = entry -> {
-            if (privateKeys.containsKey(entry.getValue())) {
-                return true;
-
-            } else {
-                logger.warn("-- serviceKeys() - missing key service: {}, key id: {}", entry.getKey(), entry.getValue());
-                return false;
-            }
-        };
-
+            incongruentServiceKeys(Collection<Key<ECPrivateKey>> keys, Map<Integer, Set<KeyID>> serviceKeyIDs) {
+        Map<KeyID, Key<ECPrivateKey>> map = keys.stream()
+                .collect(toMap(Key::keyID, Function.identity()));
         return serviceKeyIDs.entrySet()
                 .stream()
-                .filter(isPresent)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> privateKeys.get(entry.getValue())));
-    }
-
-    public static Map<Integer, Key<ECPrivateKey>> incongruentKeys(Map<Integer, Key<ECPrivateKey>> serviceKeys) {
-        Predicate<Map.Entry<Integer, Key<ECPrivateKey>>> isIncongruent = entry
-                -> entry.getValue().publicKeyInfo()
-                .map(PublicKeyInfo::service)
-                .map(s -> !entry.getKey().equals(s))
-                .orElse(false);
-
-        return serviceKeys.entrySet()
-                .stream()
-                .filter(isIncongruent)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .flatMap(e -> e
+                        .getValue()
+                        .stream()
+                        .map(v -> new SimpleImmutableEntry<>(e.getKey(), v)))
+                .filter(e -> map.containsKey(e.getValue()))
+                .filter(e -> map
+                        .get(e.getValue())
+                        .publicKeyInfo()
+                        .map(PublicKeyInfo::service)
+                        .map(u -> !e.getKey().equals(u))
+                        .orElse(false))
+                .collect(toMap(Map.Entry::getKey, e -> map.get(e.getValue())));
     }
 }

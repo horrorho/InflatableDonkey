@@ -55,7 +55,6 @@ public final class SignatureAssistant {
                     logger.warn("-- verify() - no public key info");
                     return false;
                 });
-
         if (match) {
             logger.debug("-- verify() - passed key: {} masterKey: {}", key, masterKey);
 
@@ -111,13 +110,10 @@ public final class SignatureAssistant {
                     signer.buildAndTime(),
                     Optional.empty(),
                     Optional.empty());
-
             byte[] encoded = info.getEncoded();
-
             byte[] message = new byte[digest.getDigestSize()];
             digest.update(encoded, 0, encoded.length);
             digest.doFinal(message, 0);
-
             return Optional.ofNullable(message);
 
         } catch (IOException ex) {
@@ -130,10 +126,8 @@ public final class SignatureAssistant {
         switch (signature.type()) {
             case 0x01:
                 return Optional.ofNullable(new SHA256Digest());
-
             case 0x02:
                 return Optional.ofNullable(new SHA512Digest());
-
             default:
                 logger.warn("-- digest() - unsupported signature type: {}", signature);
                 return Optional.empty();

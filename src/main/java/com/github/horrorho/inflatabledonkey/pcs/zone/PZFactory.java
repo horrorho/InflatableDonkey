@@ -70,11 +70,10 @@ public final class PZFactory {
             PZKeyUnwrap unwrapKey,
             PZAssistant assistant,
             PZAssistantLight assistantLight) {
-
-        this.kdf = Objects.requireNonNull(kdf, "kdf");
-        this.unwrapKey = Objects.requireNonNull(unwrapKey, "unwrapKey");
-        this.assistant = Objects.requireNonNull(assistant, "assistant");
-        this.assistantLight = Objects.requireNonNull(assistantLight, "assistantLight");
+        this.kdf = Objects.requireNonNull(kdf);
+        this.unwrapKey = Objects.requireNonNull(unwrapKey);
+        this.assistant = Objects.requireNonNull(assistant);
+        this.assistantLight = Objects.requireNonNull(assistantLight);
     }
 
     public ProtectionZone create(Collection<Key<ECPrivateKey>> keys) {
@@ -92,7 +91,6 @@ public final class PZFactory {
 
     Optional<ProtectionZone>
             create(LinkedHashMap<KeyID, Key<ECPrivateKey>> keys, String protectionInfoTag, byte[] protectionInfoData) {
-
         if (protectionInfoData.length == 0) {
             logger.warn("-- create() - empty protectionInfo");
             return Optional.empty();
@@ -102,41 +100,28 @@ public final class PZFactory {
                 : protectionZoneDER(keys, protectionInfoTag, protectionInfoData);
     }
 
-    Optional<ProtectionZone> protectionZoneDER(
-            LinkedHashMap<KeyID, Key<ECPrivateKey>> keys,
-            String protectionInfoTag,
+    Optional<ProtectionZone> protectionZoneDER(LinkedHashMap<KeyID, Key<ECPrivateKey>> keys, String protectionInfoTag,
             byte[] protectionInfo) {
-
         return DERUtils.parse(protectionInfo, ProtectionInfo::new)
                 .map(pi -> protectionZone(keys, protectionInfoTag, pi));
     }
 
-    ProtectionZone protectionZone(
-            LinkedHashMap<KeyID, Key<ECPrivateKey>> keys,
-            String protectionInfoTag,
+    ProtectionZone protectionZone(LinkedHashMap<KeyID, Key<ECPrivateKey>> keys, String protectionInfoTag,
             ProtectionInfo protectionInfo) {
-
         Optional<byte[]> masterKey = assistant.masterKey(protectionInfo, keys);
-
         Optional<byte[]> decryptKey = masterKey.map(kdf::apply);
-
+        // Ordering is important here. The latest protection zone is iterated first.
         LinkedHashMap newKeys = decryptKey.map(key -> assistant.keys(protectionInfo, key))
                 .map(this::keys)
                 .orElse(new LinkedHashMap());
         newKeys.putAll(keys);
-
         return new ProtectionZone(unwrapKey, masterKey, decryptKey, newKeys, protectionInfoTag);
     }
 
-    ProtectionZone protectionZoneLight(
-            LinkedHashMap<KeyID, Key<ECPrivateKey>> keys,
-            String protectionInfoTag,
+    ProtectionZone protectionZoneLight(LinkedHashMap<KeyID, Key<ECPrivateKey>> keys, String protectionInfoTag,
             byte[] protectionInfoData) {
-
         Optional<byte[]> masterKey = assistantLight.masterKey(protectionInfoData, keys.values());
-
         Optional<byte[]> decryptKey = masterKey.map(kdf::apply);
-
         return new ProtectionZone(unwrapKey, masterKey, decryptKey, keys, protectionInfoTag);
     }
 

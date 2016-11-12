@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class PZAssistantLight {
 
-    // D221163FBCAB1D23DD55:100165A0
     public static PZAssistantLight instance() {
         return INSTANCE;
     }
@@ -72,47 +71,40 @@ public final class PZAssistantLight {
     private final int curveFieldLength;
     private final int keyLength;
 
-    public PZAssistantLight(
-            Supplier<Digest> digestSupplier,
-            String curveName,
-            byte[] info,
-            int keyLength) {
-
+    public PZAssistantLight(Supplier<Digest> digestSupplier, String curveName, byte[] info, int keyLength) {
         this.digestSupplier = Objects.requireNonNull(digestSupplier, "digestSupplier");
         this.curveName = Objects.requireNonNull(curveName, "curveName");
         this.info = Arrays.copyOf(info, info.length);
         this.keyLength = keyLength;
-
         curveFieldLength = ECAssistant.fieldLength(curveName);
     }
 
     public Optional<byte[]> masterKey(byte[] protectionInfoData, Collection<Key<ECPrivateKey>> keys) {
-        logger.trace("<< apply() - protectionInfo: 0x{} keys: {}", Hex.toHexString(protectionInfoData), keys);
+        logger.trace("<< masterKey() - protectionInfo: 0x{} keys: {}", Hex.toHexString(protectionInfoData), keys);
         if (protectionInfoData[0] != -1) {
             throw new IllegalArgumentException("not a light object");
         }
 
         if (protectionInfoData.length < curveFieldLength + 3) {
-            logger.warn("-- apply() - short light object: 0x{}", Hex.toHexString(protectionInfoData));
+            logger.warn("-- masterKey() - short light object: 0x{}", Hex.toHexString(protectionInfoData));
             return Optional.empty();
         }
 
         byte[] publicKey = Arrays.copyOfRange(protectionInfoData, 1, 1 + curveFieldLength);
         byte[] wrappedKey = Arrays.copyOfRange(protectionInfoData, 1 + curveFieldLength, protectionInfoData.length - 2);
         byte[] tag = Arrays.copyOfRange(protectionInfoData, protectionInfoData.length - 2, protectionInfoData.length);
-        logger.debug("-- apply() - public key: 0x{}", Hex.toHexString(publicKey));
-        logger.debug("-- apply() - wrapped key: 0x{}", Hex.toHexString(wrappedKey));
-        logger.debug("-- apply() - tag: 0x{}", Hex.toHexString(tag));
+        logger.debug("-- masterKey() - public key: 0x{}", Hex.toHexString(publicKey));
+        logger.debug("-- masterKey() - wrapped key: 0x{}", Hex.toHexString(wrappedKey));
+        logger.debug("-- masterKey() - tag: 0x{}", Hex.toHexString(tag));
 
         Optional<byte[]> masterKey = ECPublicKeyImportCompact.instance().importKey(curveName, publicKey)
                 .flatMap(k -> unwrap(k, keys, wrappedKey));
-        logger.trace(">> apply() - master key: 0x{}", masterKey.map(Hex::toHexString));
+        logger.trace(">> masterKey() - master key: 0x{}", masterKey.map(Hex::toHexString));
         return masterKey;
     }
 
     Optional<byte[]> unwrap(ECPublicKey otherPublicKey, Collection<Key<ECPrivateKey>> keys, byte[] wrappedKey) {
         Digest digest = digestSupplier.get();
-
         return keys.stream()
                 .map(Key::keyData)
                 .map(k -> unwrap(otherPublicKey, k, digest, wrappedKey))
