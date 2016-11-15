@@ -50,7 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Decrypts storage host chunk list streams. Limited to contiguous chunk blocks and type 0x01 chunk decryption.
+ * Decrypts storage host chunk list streams. Limited to type 0x01 chunk decryption.
  *
  * @author Ahseya
  */
@@ -71,18 +71,14 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Set<Chu
     public Set<Chunk> apply(InputStream inputStream) throws IOException {
         try {
             logger.trace("<< apply() - InputStream: {}", inputStream);
-
             Set<Chunk> chunks = new HashSet<>();
             List<ChunkInfo> list = container.getChunkInfoList();
             for (int i = 0, offset = 0, n = list.size(); i < n; i++) {
                 ChunkInfo chunkInfo = list.get(i);
-                if (chunkInfo.getChunkOffset() != offset) {
-                    throw new IOException("bad chunk offset data");
-                }
-                offset += chunkInfo.getChunkLength();
+                skip(inputStream, chunkInfo.getChunkOffset() - offset);
                 chunk(inputStream, chunkInfo).ifPresent(chunks::add);
+                offset += chunkInfo.getChunkLength();
             }
-
             logger.trace(">> apply() - chunks: {}", chunks);
             return chunks;
         } finally {
@@ -90,14 +86,23 @@ public final class ChunkListDecrypter implements IOFunction<InputStream, Set<Chu
         }
     }
 
+    void skip(InputStream inputStream, int bytes) throws IOException {
+        if (bytes == 0) {
+            return;
+        }
+        if (bytes < 0) {
+            throw new IOException("bad chunk offset data");
+        }
+        logger.debug("-- debug() - skip: 0x:{}", Integer.toHexString(bytes));
+        inputStream.skip(bytes);
+    }
+
     Optional<Chunk> chunk(InputStream inputStream, ChunkInfo chunkInfo) throws IOException {
         logger.trace("<< chunk() - chunkInfo: {} index: {}", chunkInfo);
-
         BoundedInputStream bis = new BoundedInputStream(inputStream, chunkInfo.getChunkLength());
         bis.setPropagateClose(false);
         Optional<Chunk> chunk = chunk(bis, chunkInfo);
         consume(bis);
-
         logger.trace(">> chunk() - chunk: {}", chunk);
         return chunk;
     }

@@ -199,3 +199,4 @@ public class ChunkListDecrypterTest {
                 .build();
     }
 }
+// TODO test non-contiguous offset blocks.
