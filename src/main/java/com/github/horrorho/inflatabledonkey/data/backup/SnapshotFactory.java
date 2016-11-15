@@ -59,7 +59,7 @@ public final class SnapshotFactory {
                 .flatMap(u -> zone.decrypt(u, BACKUP_PROPERTIES));
 
         Snapshot snapshot = new Snapshot(record, snapshotID, backupProperties, manifests);
-        logger.debug("-- from() - snapshot: {}", snapshot);
+        logger.info("-- from() - snapshot: {}", snapshot);
         return snapshot;
     }
 
