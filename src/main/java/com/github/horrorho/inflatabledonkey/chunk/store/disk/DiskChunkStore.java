@@ -151,8 +151,10 @@ public final class DiskChunkStore implements ChunkStore {
 
             if (Files.exists(to)) {
                 logger.debug("-- copy() - duplicate chunk ignored: {}", to);
+                Files.deleteIfExists(temp);
                 return;
             }
+
             if (!Files.exists(temp)) {
                 throw new IOException("DiskChunkStore copy, temporary file missing: " + temp);
             }
