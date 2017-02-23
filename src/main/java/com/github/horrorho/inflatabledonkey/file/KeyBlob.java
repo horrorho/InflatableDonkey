@@ -69,8 +69,8 @@ public final class KeyBlob {
             return Optional.empty();
         }
 
-        if (buffer.remaining() != 0x48) {
-            logger.warn(">> create() - bad key data length: 0x{}", Integer.toHexString(buffer.remaining()));
+        if (buffer.remaining() < 0x48) {
+            logger.warn(">> create() - short key data length: 0x{}", Integer.toHexString(buffer.remaining()));
             return Optional.empty();
         }
 
@@ -79,6 +79,8 @@ public final class KeyBlob {
         buffer.get(publicKey);
         buffer.get(wrappedKey);
 
+        // TODO iOS 10.3 beta has an additional 8 bytes after the key data.
+        
         KeyBlob blob = new KeyBlob(uuid, publicKey, wrappedKey, protectionClass, u1, u2, u3);
         logger.trace(">> create() - blob: {}", blob);
         return Optional.of(blob);
