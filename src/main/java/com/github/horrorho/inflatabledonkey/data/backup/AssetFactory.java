@@ -56,8 +56,9 @@ public final class AssetFactory {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
         Optional<Integer> protectionClass = protectionClass(records);
         Optional<Integer> fileType = fileType(records);
-        Optional<byte[]> encryptedAttributes = encryptedAttributes(records)
-                .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES));
+        Optional<AssetEncryptedAttributes> encryptedAttributes = encryptedAttributes(records)
+                .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES))
+                .flatMap(AssetEncryptedAttributesFactory::from);
         Optional<CloudKit.Asset> asset = asset(records);
         Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasData)
                 .map(u -> u.getData().getValue().toByteArray())
@@ -70,9 +71,8 @@ public final class AssetFactory {
                 .map(CloudKit.Asset::getContentBaseURL);
         Optional<String> dsPrsID = asset.filter(CloudKit.Asset::hasDsPrsID)
                 .map(CloudKit.Asset::getDsPrsID);
-        Optional<Integer> fileSize = asset.filter(CloudKit.Asset::hasSize)
-                .map(CloudKit.Asset::getSize)
-                .map(Long::intValue);
+        Optional<Long> fileSize = asset.filter(CloudKit.Asset::hasSize)
+                .map(CloudKit.Asset::getSize);
         Optional<Instant> downloadTokenExpiration = asset.filter(CloudKit.Asset::hasDownloadTokenExpiration)
                 .map(CloudKit.Asset::getDownloadTokenExpiration)
                 .map(Instant::ofEpochSecond);
@@ -98,12 +98,12 @@ public final class AssetFactory {
     static Optional<Integer> protectionClass(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(u -> u
-                        .getIdentifier()
-                        .getName()
-                        .equals(PROTECTION_CLASS))
+                .getIdentifier()
+                .getName()
+                .equals(PROTECTION_CLASS))
                 .map(u -> u
-                        .getValue()
-                        .getSignedValue())
+                .getValue()
+                .getSignedValue())
                 .map(Long::intValue)
                 .findFirst();
     }
@@ -112,8 +112,8 @@ public final class AssetFactory {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals(FILE_TYPE))
                 .map(u -> u
-                        .getValue()
-                        .getSignedValue())
+                .getValue()
+                .getSignedValue())
                 .map(Long::intValue)
                 .findFirst();
     }
@@ -121,24 +121,24 @@ public final class AssetFactory {
     static Optional<CloudKit.Asset> asset(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(value -> value
-                        .getIdentifier()
-                        .getName()
-                        .equals(CONTENTS))
+                .getIdentifier()
+                .getName()
+                .equals(CONTENTS))
                 .map(u -> u
-                        .getValue()
-                        .getAssetValue())
+                .getValue()
+                .getAssetValue())
                 .findFirst();
     }
 
     static Optional<byte[]> encryptedAttributes(List<CloudKit.RecordField> records) {
         return records.stream()
                 .filter(u -> u
-                        .getIdentifier()
-                        .getName()
-                        .equals(ENCRYPTED_ATTRIBUTES))
+                .getIdentifier()
+                .getName()
+                .equals(ENCRYPTED_ATTRIBUTES))
                 .map(u -> u
-                        .getValue()
-                        .getBytesValue())
+                .getValue()
+                .getBytesValue())
                 .map(ByteString::toByteArray)
                 .findFirst();
     }

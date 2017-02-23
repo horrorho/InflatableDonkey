@@ -36,18 +36,15 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class SnapshotFilter implements Predicate<Snapshot> {
 
-    private final Optional<Long> dateMax;
     private final Optional<Long> dateMin;
 
-    public SnapshotFilter(Optional<Long> dateMax, Optional<Long> dateMin) {
-        this.dateMax = Objects.requireNonNull(dateMax);
+    public SnapshotFilter(Optional<Long> dateMin) {
         this.dateMin = Objects.requireNonNull(dateMin);
     }
 
     @Override
     public boolean test(Snapshot snapshot) {
         long timestamp = snapshot.timestamp().getEpochSecond();
-        return dateMax.map(v -> timestamp <= v).orElse(true)
-                && dateMin.map(v -> timestamp >= v).orElse(true);
+        return dateMin.map(v -> timestamp >= v).orElse(true);
     }
 }

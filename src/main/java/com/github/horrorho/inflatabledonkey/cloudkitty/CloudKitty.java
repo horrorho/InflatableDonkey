@@ -64,14 +64,12 @@ import org.slf4j.LoggerFactory;
 public final class CloudKitty {
 
     static ResponseHandler<List<ResponseOperation>> responseHandler() {
-        IOFunction<InputStream, ResponseOperation> parser
-                = logger.isTraceEnabled()
-                        ? new ProtobufParser<>(ResponseOperation::parseFrom)
-                        : ResponseOperation::parseFrom;
+        IOFunction<InputStream, ResponseOperation> parser = ProtobufParser.of(ResponseOperation::parseFrom);
         return new DelimitedProtobufHandler<>(parser);
     }
 
     private static final Logger logger = LoggerFactory.getLogger(CloudKitty.class);
+
     private static final int LIMIT = 400;
 
     private final ResponseHandler<List<ResponseOperation>> responseHandler;
@@ -135,9 +133,9 @@ public final class CloudKitty {
 
             List<SimpleImmutableEntry<Integer, List<ResponseOperation>>> get
                     = forkJoinPool.submit(() -> list.parallelStream()
-                            .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
-                            .collect(toList()))
-                    .get();
+                    .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
+                    .collect(toList()))
+                            .get();
 
             // Order responses to match requests.
             List<T> reordered = get.stream()

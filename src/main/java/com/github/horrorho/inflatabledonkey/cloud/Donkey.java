@@ -77,7 +77,7 @@ public final class Donkey {
 
         if (logger.isDebugEnabled()) {
             int bytes = assets.stream()
-                    .mapToInt(u -> u.size().orElse(0))
+                    .mapToInt(u -> u.size().map(Long::intValue).orElse(0))
                     .sum();
             logger.debug("-- apply() - assets total: {} size (bytes): {}", assets.size(), bytes);
         }
@@ -168,11 +168,11 @@ public final class Donkey {
         try {
             return chunkChecksumList
                     .map(us -> us
-                            .stream()
-                            .map(ByteString::toByteArray)
-                            .map(store::chunk)
-                            .map(Optional::get)
-                            .collect(toList()));
+                    .stream()
+                    .map(ByteString::toByteArray)
+                    .map(store::chunk)
+                    .map(Optional::get)
+                    .collect(toList()));
 
         } catch (NoSuchElementException ex) {
             logger.warn("-- chunks() - NoSuchElementException: {}", ex.getMessage());

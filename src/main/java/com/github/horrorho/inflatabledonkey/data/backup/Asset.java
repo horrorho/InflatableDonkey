@@ -23,21 +23,15 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
-import com.dd.plist.NSData;
-import com.dd.plist.NSDate;
-import com.dd.plist.NSDictionary;
-import com.dd.plist.NSNumber;
-import com.dd.plist.NSObject;
-import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -45,10 +39,11 @@ import org.bouncycastle.util.encoders.Hex;
  */
 @Immutable
 public final class Asset extends AbstractRecord {
-
+    private static final Logger logger = LoggerFactory.getLogger(Asset.class);
+    
     private final AssetID assetID;
     private final Optional<Integer> protectionClass;
-    private final Optional<Integer> size;
+    private final Optional<Long> size;
     private final Optional<Integer> fileType;
     private final Optional<Instant> downloadTokenExpiration;
     private final Optional<String> dsPrsID;
@@ -56,14 +51,14 @@ public final class Asset extends AbstractRecord {
     private final Optional<byte[]> fileChecksum;
     private final Optional<byte[]> fileSignature;
     private final Optional<byte[]> keyEncryptionKey;
-    private final Optional<NSDictionary> encryptedAttributes;
+    private final Optional<AssetEncryptedAttributes> encryptedAttributes;
     private final Optional<CloudKit.Asset> asset;
 
     Asset(
             CloudKit.Record record,
             AssetID assetID,
             Optional<Integer> protectionClass,
-            Optional<Integer> size,
+            Optional<Long> size,
             Optional<Integer> fileType,
             Optional<Instant> downloadTokenExpiration,
             Optional<String> dsPrsID,
@@ -71,21 +66,21 @@ public final class Asset extends AbstractRecord {
             Optional<byte[]> fileChecksum,
             Optional<byte[]> fileSignature,
             Optional<byte[]> keyEncryptionKey,
-            Optional<byte[]> encryptedAttributes,
+            Optional<AssetEncryptedAttributes> encryptedAttributes,
             Optional<CloudKit.Asset> asset) {
         super(record);
-        this.assetID = Objects.requireNonNull(assetID, "assetID");
-        this.protectionClass = Objects.requireNonNull(protectionClass, "protectionClass");
-        this.size = Objects.requireNonNull(size, "size");
-        this.fileType = Objects.requireNonNull(fileType, "fileType");
-        this.downloadTokenExpiration = Objects.requireNonNull(downloadTokenExpiration, "downloadTokenExpiration");
-        this.dsPrsID = Objects.requireNonNull(dsPrsID, "dsPrsID");
-        this.contentBaseURL = Objects.requireNonNull(contentBaseURL, "contentBaseURL");
-        this.fileChecksum = Objects.requireNonNull(fileChecksum, "fileChecksum");
-        this.fileSignature = Objects.requireNonNull(fileSignature, "fileSignature");
-        this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey, "keyEncryptionKey");
-        this.encryptedAttributes = encryptedAttributes.flatMap(NSDictionaries::parse);
-        this.asset = Objects.requireNonNull(asset, "asset");
+        this.assetID = Objects.requireNonNull(assetID);
+        this.protectionClass = Objects.requireNonNull(protectionClass);
+        this.size = Objects.requireNonNull(size);
+        this.fileType = Objects.requireNonNull(fileType);
+        this.downloadTokenExpiration = Objects.requireNonNull(downloadTokenExpiration);
+        this.dsPrsID = Objects.requireNonNull(dsPrsID);
+        this.contentBaseURL = Objects.requireNonNull(contentBaseURL);
+        this.fileChecksum = Objects.requireNonNull(fileChecksum);
+        this.fileSignature = Objects.requireNonNull(fileSignature);
+        this.keyEncryptionKey = Objects.requireNonNull(keyEncryptionKey);
+        this.encryptedAttributes = Objects.requireNonNull(encryptedAttributes);
+        this.asset = Objects.requireNonNull(asset);
     }
 
     public AssetID assetID() {
@@ -96,7 +91,7 @@ public final class Asset extends AbstractRecord {
         return protectionClass;
     }
 
-    public Optional<Integer> size() {
+    public Optional<Long> size() {
         return size;
     }
 
@@ -128,59 +123,52 @@ public final class Asset extends AbstractRecord {
         return keyEncryptionKey.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
-    <T extends NSObject> Optional<T> encryptedAttribute(String key, Class<T> to) {
-        return encryptedAttributes.flatMap(e -> NSDictionaries.as(e, key, to));
-    }
-
     public Optional<String> domain() {
-        return encryptedAttribute("domain", NSString.class).map(NSString::getContent);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::domain);
     }
 
     public Optional<String> relativePath() {
-        return encryptedAttribute("relativePath", NSString.class).map(NSString::getContent);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::relativePath);
     }
 
     public Optional<Instant> modified() {
-        return encryptedAttribute("domain", NSDate.class).map(NSDate::getDate)
-                .map(Date::toInstant);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::modified);
     }
 
     public Optional<Instant> birth() {
-        return encryptedAttribute("birth", NSDate.class).map(NSDate::getDate)
-                .map(Date::toInstant);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::birth);
     }
 
     public Optional<Instant> statusChanged() {
-        return encryptedAttribute("statusChanged", NSDate.class).map(NSDate::getDate)
-                .map(Date::toInstant);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::statusChanged);
     }
 
     public Optional<Integer> userID() {
-        return encryptedAttribute("userID", NSNumber.class).map(NSNumber::intValue);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::userID);
     }
 
     public Optional<Integer> groupID() {
-        return encryptedAttribute("groupID", NSNumber.class).map(NSNumber::intValue);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::groupID);
     }
 
     public Optional<Integer> mode() {
-        return encryptedAttribute("mode", NSNumber.class).map(NSNumber::intValue);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::mode);
     }
 
     public Optional<byte[]> encryptionKey() {
-        return encryptedAttribute("encryptionKey", NSData.class).map(NSData::bytes);
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::encryptionKey);
     }
 
-    public Optional<Integer> attributeSize() {
-        return encryptedAttribute("size", NSNumber.class).map(NSNumber::intValue);
+    public Optional<Long> attributeSize() {
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::size);
+    }
+
+    public Optional<byte[]> attributeChecksum() {
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::checksum);
     }
 
     public Optional<CloudKit.Asset> asset() {
         return asset;
-    }
-
-    public String decription() {
-        return domain().orElse("") + " " + relativePath().orElse("");
     }
 
     @Override
@@ -195,7 +183,7 @@ public final class Asset extends AbstractRecord {
                 + ", fileChecksum=" + fileChecksum.map(Hex::toHexString)
                 + ", fileSignature=" + fileSignature.map(Hex::toHexString)
                 + ", keyEncryptionKey=" + keyEncryptionKey.map(Hex::toHexString)
-                + ", encryptedAttributes=" + encryptedAttributes.map(NSObject::toXMLPropertyList)
+                + ", encryptedAttributes=" + encryptedAttributes
                 + ", asset=" + asset
                 + '}';
     }
