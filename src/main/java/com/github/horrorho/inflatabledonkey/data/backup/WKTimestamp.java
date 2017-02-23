@@ -39,7 +39,11 @@ public final class WKTimestamp {
     private static final long WK = 978307200000L;
 
     public static Instant toInstant(double timestamp) {
-        long unixTimestamp = (long) timestamp * 1000L + WK;
+        return toInstant((long) timestamp);
+    }
+
+    public static Instant toInstant(long timestamp) {
+        long unixTimestamp = timestamp * 1000L + WK;
         return Instant.ofEpochMilli(unixTimestamp);
     }
 }
