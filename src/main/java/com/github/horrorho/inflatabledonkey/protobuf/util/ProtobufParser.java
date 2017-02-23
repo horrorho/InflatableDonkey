@@ -30,7 +30,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -45,40 +44,35 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public class ProtobufParser<T extends Message> implements IOFunction<InputStream, T> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProtobufParser.class);
-
-    private static final Optional<ProtocRawDecoder> DECODER = ProtocRawDecoder.defaults();
-
-    private final Optional<ProtocRawDecoder> decoder;
-    private final IOFunction<InputStream, T> parse;
-
-    public ProtobufParser(IOFunction<InputStream, T> parse, Optional<ProtocRawDecoder> decoder) {
-        this.parse = Objects.requireNonNull(parse, "parse");
-        this.decoder = Objects.requireNonNull(decoder, "decoder");
+    public static <T extends Message> IOFunction<InputStream, T> of(IOFunction<InputStream, T> parse) {
+        if (logger.isTraceEnabled()) {
+            return ProtocRawDecoder.defaults()
+                    .map(decoder -> (IOFunction<InputStream, T>) new ProtobufParser(parse, decoder))
+                    .orElse(parse);
+        } else {
+            return parse;
+        }
     }
 
-    public ProtobufParser(IOFunction<InputStream, T> parse) {
-        this(parse, DECODER);
+    private static final Logger logger = LoggerFactory.getLogger(ProtobufParser.class);
+
+    private final ProtocRawDecoder decoder;
+    private final IOFunction<InputStream, T> parse;
+
+    public ProtobufParser(IOFunction<InputStream, T> parse, ProtocRawDecoder decoder) {
+        this.parse = Objects.requireNonNull(parse);
+        this.decoder = Objects.requireNonNull(decoder);
     }
 
     @Override
     public T apply(InputStream input) throws IOException {
-        return decoder.isPresent()
-                ? protocParse(input, decoder.get())
-                : parse(input);
-    }
-
-    T protocParse(InputStream input, ProtocRawDecoder decoder) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         IOUtils.copy(input, baos);
 
-        Optional<String> rawProtos = decoder.decode(new ByteArrayInputStream(baos.toByteArray()));
-        logger.debug("-- protocParse() - raw decode: {}", rawProtos.map(Object::toString).orElse("error"));
+        String decode = decoder.decode(new ByteArrayInputStream(baos.toByteArray())).orElse("error");
+        logger.trace("-- apply() - raw decode: {}", decode);
 
-        return parse(new ByteArrayInputStream(baos.toByteArray()));
-    }
-
-    T parse(InputStream is) throws IOException {
-        return parse.apply(is);
+        ByteArrayInputStream copy = new ByteArrayInputStream(baos.toByteArray());
+        return parse.apply(copy);
     }
 }

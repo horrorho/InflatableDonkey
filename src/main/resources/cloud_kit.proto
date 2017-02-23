@@ -531,3 +531,20 @@ message Zone {
 
 // can try passing malformed fields, the server sometimes returns an error giving us the field name
 // known message types: 200, 201, 202, 210, 211, 212, 213, 214, 220, 230, 240, 241, 242, 243, 300, 301, 302, 400, 800, 801, 802, 803, 804, 900, 901
+
+// patched encryptedAttributes
+message EncryptedAttributes {
+  optional string relativePath = 1;
+  optional string domain = 2;
+  optional uint64 birth = 3;            // probably
+  optional uint64 modified = 4;         // possibly 5
+  optional uint64 statusChanged = 5;    // possibly 4
+  optional uint64 size = 6;
+  optional uint32 groupID = 7;
+  optional uint32 userID = 8;
+  optional uint32 mode = 9;
+  optional uint64 x = 10;               // unknown, multiples of 4096 ?? file system block related
+  // 11 - unknown
+  optional bytes encryptionKey = 12;
+  optional bytes checksum = 13;         // SHA-256 checksum
+}
