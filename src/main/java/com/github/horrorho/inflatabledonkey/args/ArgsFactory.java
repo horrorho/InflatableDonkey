@@ -253,7 +253,7 @@ public final class ArgsFactory {
                 .longOpt("threads")
                 .desc("Number of concurrent download threads." + defaultValue(Property.ENGINE_THREADS))
                 .argName("int")
-                .hasArgs()
+                .hasArg()
                 .build();
         return new Arg(Property.ENGINE_THREADS, option, ArgsFactory::mapNumber);
     }
