@@ -23,21 +23,18 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.HostInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.github.horrorho.inflatabledonkey.requests.ChunkListRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.InputStreamResponseHandler;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
+import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -45,22 +42,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Fetches, orders and decrypts chunk data from the server.
+ * Fetches and decrypts chunk data from the server.
  *
  * @author Ahseya
  */
 @Immutable
 public final class ChunkClient {
 
-    public static ChunkClient defaultInstance() {
-        return DEFAULT_INSTANCE;
+    public static ChunkClient defaults() {
+        return DEFAULTS;
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkClient.class);
 
+    // TODO inject
     private static final long DEFAULT_EXPIRY_TIMESTAMP_GRACE = -5 * 60 * 1000;  // Negative 5 min grace period.
-    private static final ChunkClient DEFAULT_INSTANCE
+
+    private static final ChunkClient DEFAULTS
             = new ChunkClient(ChunkListRequestFactory.instance(), DEFAULT_EXPIRY_TIMESTAMP_GRACE);
+    private static final ChunkListDecrypter DECRYPTER = ChunkListDecrypter.instance();
 
     private final Function<HostInfo, HttpUriRequest> requestFactory;
     private final long expiryTimestampGrace;
@@ -70,89 +70,43 @@ public final class ChunkClient {
         this.expiryTimestampGrace = expiryTimestampGrace;
     }
 
-    public Set<Chunk> apply(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
-        Optional<Set<Chunk>> stored = storedChunks(store, container);
-        if (stored.isPresent()) {
-            return stored.get();
+    /**
+     *
+     * @param client
+     * @param container
+     * @param store
+     * @throws IOException
+     * @throws IllegalArgumentException on non 0x01 chunk keys
+     */
+    public void apply(HttpClient client, StorageHostChunkList container, ChunkStore store) throws IOException {
+        List<byte[]> checksums = checksums(container);
+        if (store.allChunks(checksums).isPresent()) {
+            logger.debug("-- apply() - all chunks are already present in the store");
+            return;
         }
-
-        if (!containsType1Keys(container)) {
-            // We cannot decrypt non-type 1 keys, little point in fetching data.
-            logger.debug("-- apply() - no type 1 keys: ", container);
-            return Collections.emptySet();
-        }
-
         if (container.getHostInfo().getExpiry() + expiryTimestampGrace < System.currentTimeMillis()) {
+            // TOFIX more specific exception
             throw new IllegalStateException("container has expired");
         }
-
-        return fetch(client, store, container);
+        fetch(client, store, container);
     }
 
-    Set<Chunk> fetch(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, compact(container));
-        InputStreamResponseHandler<Set<Chunk>> handler = new InputStreamResponseHandler<>(decrypter);
-        HttpUriRequest request = requestFactory.apply(container.getHostInfo());
-        return client.execute(request, handler);
-    }
-
-    boolean containsType1Keys(StorageHostChunkList container) {
-        return container
-                .getChunkInfoList()
+    List<byte[]> checksums(StorageHostChunkList container) {
+        return container.getChunkInfoList()
                 .stream()
-                .map(u -> u.getChunkEncryptionKey().toByteArray())
-                .map(ChunkKeys::keyType)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .anyMatch(u -> u == 1);
+                .map(chunkInfo -> chunkInfo.getChunkChecksum().toByteArray())
+                .collect(toList());
     }
 
-    StorageHostChunkList compact(StorageHostChunkList container) {
-        // ChunkInfos can reference the same chunk block offset, but with different wrapped 0x02 keys. These
-        // keys should unwrap to the same 0x01 key with the block yielding the same output data.
-        if (container.getChunkInfoCount() < 2) {
-            return container;
-        }
+    void fetch(HttpClient client, ChunkStore store, StorageHostChunkList container) throws IOException {
+        IOFunction<InputStream, Void> decrypt
+                = is -> {
+                    DECRYPTER.apply(container, is, store);
+                    return null;
+                };
 
-        List<ChunkInfo> list = container.getChunkInfoList();
-        StorageHostChunkList.Builder builder = container.toBuilder().clearChunkInfo();
-
-        ChunkInfo prior = list.get(0);
-        for (int i = 1, n = list.size(); i < n; i++) {
-            ChunkInfo chunkInfo = list.get(i);
-            if (chunkInfo.getChunkOffset() == prior.getChunkOffset()) {
-                prior = merge(prior, chunkInfo);
-            } else {
-                builder.addChunkInfo(prior);
-                prior = chunkInfo;
-            }
-        }
-        return builder.addChunkInfo(prior).build();
-    }
-
-    ChunkInfo merge(ChunkInfo a, ChunkInfo b) {
-        int aType = ChunkKeys.keyType(a.getChunkEncryptionKey().toByteArray()).orElse(-1);
-        int bType = ChunkKeys.keyType(b.getChunkEncryptionKey().toByteArray()).orElse(-1);
-        if (aType == 0x01 && bType == 0x01 && !a.getChunkEncryptionKey().equals(b.getChunkEncryptionKey())) {
-            logger.warn("-- merge() - incongruent chunks: {} {}", a, b);
-        } else {
-            logger.debug("-- merge() - merged: {} {}", a, b);
-        }
-        return aType == 0x01 ? a : b;
-    }
-
-    Optional<Set<Chunk>> storedChunks(ChunkStore store, StorageHostChunkList container) {
-        Set<Chunk> chunks = new HashSet<>();
-        List<ChunkInfo> list = container.getChunkInfoList();
-        for (int i = 0, n = list.size(); i < n; i++) {
-            Optional<Chunk> chunk = store.chunk(list.get(i).getChunkChecksum().toByteArray());
-            if (!chunk.isPresent()) {
-                logger.debug("-- storedChunks() - not all chunks present in store");
-                return Optional.empty();
-            }
-            chunk.ifPresent(chunks::add);
-        }
-        logger.debug("-- storedChunks() - all chunks present in store");
-        return Optional.of(chunks);
+        InputStreamResponseHandler<Void> handler = new InputStreamResponseHandler<>(decrypt);
+        HttpUriRequest request = requestFactory.apply(container.getHostInfo());
+        client.execute(request, handler);
     }
 }

@@ -191,7 +191,7 @@ public class Main {
         DiskChunkStore chunkStore = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, chunkOutputFolder, tempOutputFolder);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
-        ChunkClient chunkClient = ChunkClient.defaultInstance();
+        ChunkClient chunkClient = ChunkClient.defaults();
 
         Donkey donkey = new Donkey(chunkClient, chunkStore, fragmentationThreshold);
         int batchThreshold = Property.ENGINE_BATCH_THRESHOLD.asInteger().orElse(1048576);
@@ -317,4 +317,3 @@ public class Main {
 
 // TODO filter AssetID size rather than wait to download Asset and then filter.
 // TODO reconstruct empty files/ empty directories
-// TODO chunklistdecrypter premature input stream end check

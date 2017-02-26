@@ -24,19 +24,16 @@
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_1;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_2;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_3;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_4;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_5;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_6;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_FAIL_CHECKSUM;
-import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.VECTOR_FAIL_KEY;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.*;
+import static com.github.horrorho.inflatabledonkey.chunk.engine.ChunkListDecrypterTestVector.Type.*;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
+import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
-import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.HostInfo;
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,11 +45,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
+import static java.util.stream.Collectors.toList;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.commons.io.IOUtils;
@@ -63,9 +59,11 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 
 /**
  *
@@ -73,6 +71,9 @@ import org.junit.Ignore;
  */
 @RunWith(JUnitParamsRunner.class)
 public class ChunkListDecrypterTest {
+
+    @Rule
+    public final ExpectedException thrown = ExpectedException.none();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -94,7 +95,7 @@ public class ChunkListDecrypterTest {
     private static final Path TEMP = BASE.resolve("testDiskChunkStore").resolve("temp");
     private static final Path CACHE = BASE.resolve("testDiskChunkStore").resolve("cache");
 
-    private static final ChunkServer.HostInfo HOSTINFO = ChunkServer.HostInfo.newBuilder()
+    private static final HostInfo HOSTINFO = HostInfo.newBuilder()
             .setHostname("DUMMY")
             .setPort(80)
             .setMethod("GET")
@@ -108,23 +109,18 @@ public class ChunkListDecrypterTest {
     @Test
     @Parameters
     public void test(List<ChunkListDecrypterTestVector> vectors) throws IOException {
-        DiskChunkStore store = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, CACHE, TEMP);
+        ChunkStore store = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, CACHE, TEMP);
 
         ByteArrayOutputStream data = new ByteArrayOutputStream();
-        ChunkServer.StorageHostChunkList shcl = container(vectors, data);
-        ChunkListDecrypter decrypter = new ChunkListDecrypter(store, shcl);
+        StorageHostChunkList container = container(vectors, ChunkListDecrypterTestVector::keyTypeOne, data);
+        ChunkListDecrypter decrypter = ChunkListDecrypter.instance();
         ByteArrayInputStream dataIs = new ByteArrayInputStream(data.toByteArray());
-        Set<Chunk> chunks = decrypter.apply(dataIs);
+        decrypter.apply(container, dataIs, store);
 
-        System.out.println("chunks: " + chunks);
+        Optional<List<Chunk>> chunks = chunks(container, store);
+        assertTrue("not all chunks are present", chunks.isPresent());
 
-        long nonBad = vectors.stream()
-                .distinct()
-                .filter((u -> !u.bad()))
-                .count();
-        assertEquals("chunk count", nonBad, chunks.size());
-
-        for (Chunk chunk : chunks) {
+        for (Chunk chunk : chunks.get()) {
             ByteArrayOutputStream chunkOs = new ByteArrayOutputStream();
             try (InputStream chunkIs = chunk.inputStream()
                     .orElseThrow(() -> new IllegalStateException("chunk deleted"))) {
@@ -143,7 +139,7 @@ public class ChunkListDecrypterTest {
             assertArrayEquals("ciphertext: " + vector.id(), vector.chunkChecksum(), chunk.checksum());
         }
 
-        for (Chunk chunk : chunks) {
+        for (Chunk chunk : chunks.get()) {
             store.delete(chunk.checksum());
         }
     }
@@ -156,42 +152,98 @@ public class ChunkListDecrypterTest {
             Arrays.asList(VECTOR_4),
             Arrays.asList(VECTOR_5),
             Arrays.asList(VECTOR_6),
+            Arrays.asList(VECTOR_PAD, VECTOR_1, VECTOR_2),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_PAD),
+            Arrays.asList(VECTOR_PAD, VECTOR_1, VECTOR_2, VECTOR_PAD),
+            Arrays.asList(VECTOR_PAD, VECTOR_1, VECTOR_PAD, VECTOR_2, VECTOR_PAD),
             Arrays.asList(VECTOR_1, VECTOR_1),
-            Arrays.asList(VECTOR_5, VECTOR_6),
-            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_3, VECTOR_4),
-            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_3, VECTOR_4, VECTOR_5, VECTOR_6),
-            Arrays.asList(VECTOR_1, VECTOR_5, VECTOR_6, VECTOR_6, VECTOR_5, VECTOR_1),
-            Arrays.asList(VECTOR_FAIL_KEY),
-            Arrays.asList(VECTOR_FAIL_CHECKSUM),
-            Arrays.asList(VECTOR_FAIL_KEY, VECTOR_1),
-            Arrays.asList(VECTOR_FAIL_CHECKSUM, VECTOR_1),
-            Arrays.asList(VECTOR_1, VECTOR_5, VECTOR_FAIL_KEY, VECTOR_6, VECTOR_6,
-            VECTOR_FAIL_CHECKSUM, VECTOR_5, VECTOR_1)
+            Arrays.asList(VECTOR_2, VECTOR_2_ALT),
+            Arrays.asList(VECTOR_2, VECTOR_2_ALT, VECTOR_3),
+            Arrays.asList(VECTOR_1, VECTOR_1, VECTOR_2, VECTOR_2, VECTOR_3),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_2_ALT, VECTOR_PAD, VECTOR_3),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_PAD, VECTOR_3, VECTOR_3, VECTOR_PAD),
+            Arrays.asList(VECTOR_1, VECTOR_2, VECTOR_3, VECTOR_4, VECTOR_5, VECTOR_6)
         };
     }
 
-    public ChunkServer.StorageHostChunkList
-            container(List<ChunkListDecrypterTestVector> vectors, OutputStream data) throws IOException {
-        Map<Integer, byte[]> keyEncryptionKeys = new HashMap<>();
-        List<ChunkServer.ChunkInfo> chunkInfos = new ArrayList<>();
-        int offset = 0;
+    @Ignore
+    @Test
+    @Parameters
+    public void testIOException(List<ChunkListDecrypterTestVector> vectors) throws IOException {
+        thrown.expect(IOException.class);
 
-        for (int index = 0, n = vectors.size(); index < n; index++) {
+        ChunkStore store = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, CACHE, TEMP);
+
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+        StorageHostChunkList container = container(vectors, ChunkListDecrypterTestVector::keyTypeOne, data);
+        ChunkListDecrypter decrypter = ChunkListDecrypter.instance();
+        ByteArrayInputStream dataIs = new ByteArrayInputStream(data.toByteArray());
+        decrypter.apply(container, dataIs, store);
+    }
+
+    public static Object[] parametersForTestIOException() {
+        return new Object[]{
+            Arrays.asList(VECTOR_FAIL_KEY),
+            Arrays.asList(VECTOR_FAIL_CHECKSUM),};
+    }
+
+    @Ignore
+    @Test
+    public void testIllegalArgumentException() throws IOException {
+        thrown.expect(IllegalArgumentException.class);
+
+        ChunkStore store = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, CACHE, TEMP);
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+        List<ChunkListDecrypterTestVector> vectors = Arrays.asList(VECTOR_1, VECTOR_2);
+        StorageHostChunkList container = container(vectors, ChunkListDecrypterTestVector::keyTypeTwo, data);
+        ChunkListDecrypter decrypter = ChunkListDecrypter.instance();
+        ByteArrayInputStream dataIs = new ByteArrayInputStream(data.toByteArray());
+        decrypter.apply(container, dataIs, store);
+    }
+
+    Optional<List<Chunk>> chunks(StorageHostChunkList container, ChunkStore store) {
+        List<byte[]> checksums = checksums(container);
+        return store.allChunks(checksums);
+    }
+
+    List<byte[]> checksums(StorageHostChunkList container) {
+        return container.getChunkInfoList()
+                .stream()
+                .map(ci -> ci.getChunkChecksum().toByteArray())
+                .collect(toList());
+    }
+
+    StorageHostChunkList container(List<ChunkListDecrypterTestVector> vectors,
+            Function<ChunkListDecrypterTestVector, byte[]> key, OutputStream data) throws IOException {
+        List<ChunkInfo> chunkInfos = new ArrayList<>();
+        byte[] lastCiphertext = null;
+        for (int index = 0, offset = 0, length = 0, n = vectors.size(); index < n; index++) {
             ChunkListDecrypterTestVector vector = vectors.get(index);
             byte[] ciphertext = vector.ciphertext();
-            data.write(ciphertext);
-            keyEncryptionKeys.put(index, vector.kek());
-            ChunkServer.ChunkInfo chunkInfo = ChunkServer.ChunkInfo.newBuilder()
-                    .setChunkChecksum(ByteString.copyFrom(vector.chunkChecksum()))
-                    .setChunkEncryptionKey(ByteString.copyFrom(vector.keyTypeOne()))
-                    .setChunkLength(ciphertext.length)
-                    .setChunkOffset(offset)
-                    .build();
-            chunkInfos.add(chunkInfo);
-            offset += ciphertext.length;
+
+            if (vector.type() == PAD) {
+                data.write(ciphertext);
+            } else {
+                if (Arrays.equals(ciphertext, lastCiphertext)) {
+                    offset -= length;
+                } else {
+                    data.write(ciphertext);
+                }
+                ChunkInfo chunkInfo = ChunkInfo.newBuilder()
+                        .setChunkChecksum(ByteString.copyFrom(vector.chunkChecksum()))
+                        .setChunkEncryptionKey(ByteString.copyFrom(key.apply(vector)))
+                        .setChunkLength(ciphertext.length)
+                        .setChunkOffset(offset)
+                        .build();
+                chunkInfos.add(chunkInfo);
+            }
+
+            length = ciphertext.length;
+            offset += length;
+            lastCiphertext = ciphertext;
         }
 
-        return ChunkServer.StorageHostChunkList.newBuilder()
+        return StorageHostChunkList.newBuilder()
                 .setHostInfo(HOSTINFO)
                 .setStorageContainerKey("test")
                 .setStorageContainerAuthorizationToken("test")
@@ -199,4 +251,3 @@ public class ChunkListDecrypterTest {
                 .build();
     }
 }
-// TODO test non-contiguous offset blocks.

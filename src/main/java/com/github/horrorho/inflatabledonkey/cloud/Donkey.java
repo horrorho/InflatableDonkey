@@ -35,7 +35,6 @@ import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChun
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -95,7 +94,7 @@ public final class Donkey {
             } catch (IllegalStateException ex) {
                 // Our StorageHostChunkLists have expired.
                 // TOFIX potentially unsafe. Use a more specific exception.
-                logger.debug("-- apply() - IllegalStateException: ", ex);
+                logger.debug("-- apply() - IllegalStateException: {}", ex.getMessage());
             } catch (IllegalArgumentException | IOException ex) {
                 logger.warn("-- apply() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
                 break;
@@ -134,13 +133,19 @@ public final class Donkey {
     }
 
     void processContainer(HttpClient httpClient, StorageHostChunkList container, AssetPool pool, FileAssembler consumer) {
-        pool.put(container, fetchContainer(httpClient, container))
-                .forEach((k, v) -> consumer.accept(k, chunks(v)));
+        fetchContainer(httpClient, container);
+        Collection<ByteString> chunkChecksums = anyChunks(container.getChunkInfoList());
+        pool.put(container, chunkChecksums)
+                .forEach((k, v) -> {
+                    Optional<List<Chunk>> chunks = v.flatMap(this::chunks);
+                    consumer.accept(k, chunks);
+                });
     }
 
-    Set<ByteString> fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
+    void fetchContainer(HttpClient httpClient, StorageHostChunkList container) {
         ChunkServer.HostInfo hostInfo = container.getHostInfo();
         logger.trace("<< fetchContainer() - uri: {}", hostInfo.getHostname() + "/" + hostInfo.getUri());
+
         if (logger.isDebugEnabled()) {
             int size = container.getChunkInfoList()
                     .stream()
@@ -150,32 +155,36 @@ public final class Donkey {
         }
 
         try {
-            Set<ByteString> chunkChecksums = chunkClient.apply(httpClient, store, container)
-                    .stream()
-                    .map(Chunk::checksum)
-                    .map(ByteString::copyFrom)
-                    .collect(toSet());
-            logger.trace(">> fetchContainer() - chunk checksums: {}", chunkChecksums);
-            return chunkChecksums;
-
+            chunkClient.apply(httpClient, container, store);
         } catch (IOException ex) {
             logger.warn("-- fetchContainer() - {} {}", ex.getClass().getCanonicalName(), ex.getMessage());
-            return Collections.emptySet();
+        } catch (IllegalArgumentException ex) {
+            // Shouldn't happen unless we pass non type 0x01 keys.
+            logger.warn("-- fetchContainer() - internal error: {}", ex.getMessage());
         }
+
+        logger.trace(">> fetchContainer()");
     }
 
-    Optional<List<Chunk>> chunks(Optional<List<ByteString>> chunkChecksumList) {
+    Set<ByteString> anyChunks(Collection<ChunkInfo> chunks) {
+        return chunks.stream()
+                .map(chunkInfo -> chunkInfo.getChunkChecksum())
+                .filter(checksum -> store.contains(checksum.toByteArray()))
+                .collect(toSet());
+    }
+
+    Optional<List<Chunk>> chunks(List<ByteString> checksums) {
         try {
-            return chunkChecksumList
-                    .map(us -> us
+            List<Chunk> chunks = checksums
                     .stream()
                     .map(ByteString::toByteArray)
                     .map(store::chunk)
                     .map(Optional::get)
-                    .collect(toList()));
-
+                    .collect(toList());
+            return Optional.of(chunks);
         } catch (NoSuchElementException ex) {
-            logger.warn("-- chunks() - NoSuchElementException: {}", ex.getMessage());
+            // Shouldn't happen unless chunks are removed from the store.
+            logger.warn("-- chunks() - inconsistent store state: chunk/s lost");
             return Optional.empty();
         }
     }
