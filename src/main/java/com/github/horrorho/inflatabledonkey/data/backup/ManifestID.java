@@ -49,6 +49,7 @@ public final class ManifestID {
 
     static Optional<ManifestID> parse(String id) {
         // Format: M:<uuid>:<base64 hash>
+        // uuid = snapshot uuid
         // hash = HMAC-SHA1 <domain name> using Snapshot/ backupProperties/ SnapshotHMACKey
         String[] split = id.split(":");
         if (split.length != 3 || !split[0].equals("M")) {
