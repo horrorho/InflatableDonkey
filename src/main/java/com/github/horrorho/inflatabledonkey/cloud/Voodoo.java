@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud;
 
+import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkReference;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import com.google.protobuf.ByteString;
@@ -65,9 +66,15 @@ public final class Voodoo {
                                 return false;
                             }
                             int chunkIndex = (int) u.getChunkIndex();
-                            if (chunkIndex >= indexToContainer.get(containerIndex).getChunkInfoList().size()) {
+                            List<ChunkServer.ChunkInfo> chunkInfos
+                                = indexToContainer.get(containerIndex).getChunkInfoList();
+                            if (chunkIndex >= chunkInfos.size()) {
                                 logger.warn("-- validate() - bad chunk index: {} file signature: {}",
                                         chunkIndex, e.getKey());
+                                return false;
+                            }
+                            if (!chunkInfos.get(chunkIndex).hasChunkEncryptionKey()) {
+                                logger.warn("-- validate() - missing key for file signature: {}", e.getKey());
                                 return false;
                             }
                             return true;
