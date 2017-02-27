@@ -81,8 +81,6 @@ public enum Property {
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
     PATH_TEMP("temp"),
-    PROTOC_PATH(), // "protoc"
-    PROTOC_TIMEOUT_MS("15000"),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");
 

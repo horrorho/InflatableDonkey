@@ -28,14 +28,11 @@ import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSString;
-import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
-import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
+import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.UnknownFieldSet;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -55,9 +52,6 @@ public final class AssetEncryptedAttributesFactory {
     private static final Logger logger = LoggerFactory.getLogger(AssetEncryptedAttributesFactory.class);
 
     private static final byte[] BPLIST = new byte[]{0x62, 0x70, 0x6c, 0x69, 0x73, 0x74}; // binary property list header
-
-    private static final IOFunction<InputStream, CloudKit.EncryptedAttributes> PARSER
-            = ProtobufParser.of(CloudKit.EncryptedAttributes::parseFrom);
 
     public static Optional<AssetEncryptedAttributes> from(byte[] data) {
         if (data.length == 0) {
@@ -87,13 +81,15 @@ public final class AssetEncryptedAttributesFactory {
     }
 
     static Optional<CloudKit.EncryptedAttributes> parseProtobuf(byte[] data) {
+        logger.trace("-- parseProtobuf() << data: 0x{}", Hex.toHexString(data));
         try {
-            ByteArrayInputStream is = new ByteArrayInputStream(data);
-            CloudKit.EncryptedAttributes attributes = PARSER.apply(is);
+            CloudKit.EncryptedAttributes attributes = CloudKit.EncryptedAttributes.parseFrom(data);
+            ProtobufAssistant.logDebugUnknownFields(attributes);
+            logger.trace("-- parseProtobuf() >> attributes: {}", attributes);
             return Optional.of(attributes);
 
-        } catch (IOException ex) {
-            logger.warn("-- parseProtobuf() - {}: {}", ex.getClass(), ex.getMessage());
+        } catch (InvalidProtocolBufferException ex) {
+            logger.warn("-- parseProtobuf() - InvalidProtocolBufferException: {}", ex.getMessage());
             return Optional.empty();
         }
     }
