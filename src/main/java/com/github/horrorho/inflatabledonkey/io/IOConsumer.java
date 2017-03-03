@@ -31,6 +31,7 @@ import java.util.Objects;
  * @author Ahseya
  * @param <T> type
  */
+@FunctionalInterface
 public interface IOConsumer<T> {
 
     void accept(T t) throws IOException;
