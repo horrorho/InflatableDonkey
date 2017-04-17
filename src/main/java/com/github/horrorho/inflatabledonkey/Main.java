@@ -45,6 +45,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,8 +59,11 @@ import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
 import static java.util.stream.Collectors.toList;
+
 import java.util.stream.Stream;
+
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
@@ -73,8 +77,11 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.*;
 import java.util.Scanner;
 
@@ -128,47 +135,50 @@ public class Main {
 
         DefaultHttpRequestRetryHandler retryHandler = new DefaultHttpRequestRetryHandler(3, true);
 
-        RequestConfig config = RequestConfig.custom()
+        // Set proxy if needed
+        String proxyIp = Property.PROXY_IP.value().orElse("");
+        int proxyPort = Property.PROXY_PORT.asInteger().orElse(0);
+
+        RequestConfig.Builder configBuilder = RequestConfig.custom()
                 .setConnectionRequestTimeout(timeoutMS)
                 .setConnectTimeout(timeoutMS)
-                .setSocketTimeout(timeoutMS)
-                .build();
+                .setSocketTimeout(timeoutMS);
 
-		HttpClientBuilder clientBuilder = HttpClients.custom()
-		        .setConnectionManager(connManager)
-                .setDefaultRequestConfig(config)
+        HttpClientBuilder clientBuilder = HttpClients.custom()
+                .setConnectionManager(connManager)
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setRetryHandler(retryHandler)
                 .setUserAgent("CloudKit/479 (13A404)")
                 .useSystemProperties();
-                
-                
-		// Set proxy if needed
-		String proxyIp = Property.PROXY_IP.value().orElse("");
-		int proxyPort = Property.PROXY_PORT.asInteger().orElse(0);
-		        
-		if(proxyIp != "" && proxyPort != 0){
-	        logger.info("-- main() - Using Proxy: ", proxyIp , ":", proxyPort);
+
+
+        if (proxyIp != "" && proxyPort != 0) {
+            logger.info("-- main() - Using Proxy: ", proxyIp, ":", proxyPort);
             System.out.println("\nUsing Proxy: " + proxyIp + ":" + proxyPort);
-		
-			HttpHost proxyHost = new HttpHost(proxyIp, proxyPort);
-			DefaultProxyRoutePlanner routePlanner = new  DefaultProxyRoutePlanner(proxyHost);
-			clientBuilder.setRoutePlanner(routePlanner);
-		}
 
-        // set proxy authentication as needed
-        String proxyUsername = Property.PROXY_USERNAME.value().orElse("");
-        String proxyPassword = Property.PROXY_PASSWORD.value().orElse("");
+            HttpHost proxyHost = new HttpHost(proxyIp, proxyPort);
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxyHost);
+            clientBuilder.setRoutePlanner(routePlanner);
 
-        if(proxyUsername != "" && proxyPassword != ""){
-            logger.info("-- main() - Using Proxy Credentials: ", proxyUsername , ":", proxyPassword);
-            System.out.println("\nUsing Proxy Credentials: " + proxyUsername + ":" + proxyPassword);
-            CredentialsProvider credentialProvider = new BasicCredentialsProvider();
-            credentialProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyUsername, proxyUsername));
+            configBuilder.setProxy(proxyHost);
+            clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
 
-            clientBuilder.setDefaultCredentialsProvider(credentialProvider);
+            // set proxy authentication as needed
+            String proxyUsername = Property.PROXY_USERNAME.value().orElse("");
+            String proxyPassword = Property.PROXY_PASSWORD.value().orElse("");
+
+            if (proxyUsername != "" && proxyPassword != "") {
+                logger.info("-- main() - Using Proxy Credentials: ", proxyUsername, ":", proxyPassword);
+                System.out.println("\nUsing Proxy Credentials: " + proxyUsername + ":" + proxyPassword);
+                CredentialsProvider credentialProvider = new BasicCredentialsProvider();
+                credentialProvider.setCredentials(new AuthScope(proxyIp, proxyPort), new UsernamePasswordCredentials(proxyUsername, proxyUsername));
+
+                clientBuilder.setDefaultCredentialsProvider(credentialProvider);
+            }
+
         }
-
+        RequestConfig config = configBuilder.build();
+        clientBuilder.setDefaultRequestConfig(config);
 
         CloseableHttpClient httpClient = clientBuilder.build();
 
