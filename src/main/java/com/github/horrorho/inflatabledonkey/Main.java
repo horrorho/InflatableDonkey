@@ -69,6 +69,10 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.HttpHost;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.client.CredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.*;
@@ -145,12 +149,27 @@ public class Main {
 		        
 		if(proxyIp != "" && proxyPort != 0){
 	        logger.info("-- main() - Using Proxy: ", proxyIp , ":", proxyPort);
+            System.out.println("\nUsing Proxy: " + proxyIp + ":" + proxyPort);
 		
 			HttpHost proxyHost = new HttpHost(proxyIp, proxyPort);
 			DefaultProxyRoutePlanner routePlanner = new  DefaultProxyRoutePlanner(proxyHost);
 			clientBuilder.setRoutePlanner(routePlanner);
 		}
-   
+
+        // set proxy authentication as needed
+        String proxyUsername = Property.PROXY_USERNAME.value().orElse("");
+        String proxyPassword = Property.PROXY_PASSWORD.value().orElse("");
+
+        if(proxyUsername != "" && proxyPassword != ""){
+            logger.info("-- main() - Using Proxy Credentials: ", proxyUsername , ":", proxyPassword);
+            System.out.println("\nUsing Proxy Credentials: " + proxyUsername + ":" + proxyPassword);
+            CredentialsProvider credentialProvider = new BasicCredentialsProvider();
+            credentialProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyUsername, proxyUsername));
+
+            clientBuilder.setDefaultCredentialsProvider(credentialProvider);
+        }
+
+
         CloseableHttpClient httpClient = clientBuilder.build();
 
         // TODO manage

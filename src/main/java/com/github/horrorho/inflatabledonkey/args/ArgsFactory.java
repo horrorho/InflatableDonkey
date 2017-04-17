@@ -78,6 +78,8 @@ public final class ArgsFactory {
         args.add(help());
         args.add(proxyIp());
         args.add(proxyPort());
+        args.add(proxyUsername());
+        args.add(proxyPassword());
         return args;
     }
 
@@ -280,7 +282,7 @@ public final class ArgsFactory {
     }
 
     static Arg proxyIp() {    
-        Option option = Option.builder("x")
+        Option option = Option.builder()
                 .longOpt("proxy-ip")
                 .desc("Proxy IP address.")
                 .argName("string")
@@ -290,14 +292,34 @@ public final class ArgsFactory {
     }
     
     static Arg proxyPort() {
-        Option option = Option.builder("p")
+        Option option = Option.builder()
                 .longOpt("proxy-port")
                 .desc("Proxy port.")
                 .argName("int")
                 .hasArg()
                 .build();
         return new Arg(Property.PROXY_PORT, option, ArgsFactory::mapNumber);
-    }    
+    }
+
+    static Arg proxyUsername() {
+        Option option = Option.builder()
+                .longOpt("username")
+                .desc("Proxy username.")
+                .argName("string")
+                .hasArg()
+                .build();
+        return new Arg(Property.PROXY_USERNAME, option);
+    }
+
+    static Arg proxyPassword() {
+        Option option = Option.builder()
+                .longOpt("password")
+                .desc("Proxy password.")
+                .argName("string")
+                .hasArg()
+                .build();
+        return new Arg(Property.PROXY_PASSWORD, option);
+    }
 
     static String defaultValue(Property property) {
         return property.peek()
