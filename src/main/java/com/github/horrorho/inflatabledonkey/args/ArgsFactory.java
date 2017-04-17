@@ -76,6 +76,8 @@ public final class ArgsFactory {
         args.add(domains());
         args.add(token());
         args.add(help());
+        args.add(proxyIp());
+        args.add(proxyPort());
         return args;
     }
 
@@ -276,6 +278,26 @@ public final class ArgsFactory {
                 .build();
         return new Arg(Property.ENGINE_FRAGMENTATION_POOL_MULTIPLIER, option, ArgsFactory::mapNumber);
     }
+
+    static Arg proxyIp() {    
+        Option option = Option.builder("x")
+                .longOpt("proxy-ip")
+                .desc("Proxy IP address.")
+                .argName("string")
+                .hasArg()
+                .build();
+        return new Arg(Property.PROXY_IP, option);
+    }
+    
+    static Arg proxyPort() {
+        Option option = Option.builder("p")
+                .longOpt("proxy-port")
+                .desc("Proxy port.")
+                .argName("int")
+                .hasArg()
+                .build();
+        return new Arg(Property.PROXY_PORT, option, ArgsFactory::mapNumber);
+    }    
 
     static String defaultValue(Property property) {
         return property.peek()

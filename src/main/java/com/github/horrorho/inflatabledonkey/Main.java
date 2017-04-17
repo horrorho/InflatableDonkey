@@ -66,8 +66,13 @@ import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.HttpHost;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.*;
+import java.util.Scanner;
 
 /**
  * InflatableDonkey.
@@ -125,14 +130,28 @@ public class Main {
                 .setSocketTimeout(timeoutMS)
                 .build();
 
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setConnectionManager(connManager)
+		HttpClientBuilder clientBuilder = HttpClients.custom()
+		        .setConnectionManager(connManager)
                 .setDefaultRequestConfig(config)
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setRetryHandler(retryHandler)
                 .setUserAgent("CloudKit/479 (13A404)")
-                .useSystemProperties()
-                .build();
+                .useSystemProperties();
+                
+                
+		// Set proxy if needed
+		String proxyIp = Property.PROXY_IP.value().orElse("");
+		int proxyPort = Property.PROXY_PORT.asInteger().orElse(0);
+		        
+		if(proxyIp != "" && proxyPort != 0){
+	        logger.info("-- main() - Using Proxy: ", proxyIp , ":", proxyPort);
+		
+			HttpHost proxyHost = new HttpHost(proxyIp, proxyPort);
+			DefaultProxyRoutePlanner routePlanner = new  DefaultProxyRoutePlanner(proxyHost);
+			clientBuilder.setRoutePlanner(routePlanner);
+		}
+   
+        CloseableHttpClient httpClient = clientBuilder.build();
 
         // TODO manage
         int threads = Property.ENGINE_THREADS.asInteger().orElse(1);
