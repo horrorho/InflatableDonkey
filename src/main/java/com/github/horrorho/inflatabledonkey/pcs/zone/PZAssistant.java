@@ -28,25 +28,23 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
-import com.github.horrorho.inflatabledonkey.pcs.key.Key;
-import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
-import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.EncryptedKey;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.data.der.NOS;
 import com.github.horrorho.inflatabledonkey.data.der.ProtectionInfo;
 import com.github.horrorho.inflatabledonkey.data.der.ProtectionObject;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
+import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -92,12 +90,12 @@ public final class PZAssistant {
         return masterKey(protectionInfo.encryptedKeys().encryptedKeySet(), keys);
     }
 
-    Optional< byte[]> masterKey(Set<EncryptedKey> encryptedKeySet, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
+    Optional< byte[]> masterKey(List<EncryptedKey> encryptedKeySet, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
         return encryptedKey(encryptedKeySet)
                 .flatMap(ek -> unwrapKey(ek, keys));
     }
 
-    Optional<EncryptedKey> encryptedKey(Set<EncryptedKey> encryptedKeySet) {
+    Optional<EncryptedKey> encryptedKey(List<EncryptedKey> encryptedKeySet) {
         logger.debug("-- encryptedKey() - encrypted key set: {}", encryptedKeySet);
         if (encryptedKeySet.size() != 1) {
             logger.warn("-- encryptedKey() - unexpected encrypted key count: {}", encryptedKeySet.size());
@@ -141,7 +139,7 @@ public final class PZAssistant {
                 .orElse(Collections.emptyList());
     }
 
-    List<Key<ECPrivateKey>> keys(Set<NOS> masterKeySet) {
+    List<Key<ECPrivateKey>> keys(List<NOS> masterKeySet) {
         List<Key<ECPrivateKey>> keys = masterKeySet.stream()
                 .map(this::keys)
                 .filter(Optional::isPresent)

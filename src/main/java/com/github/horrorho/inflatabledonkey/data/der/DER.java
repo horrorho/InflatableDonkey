@@ -98,14 +98,14 @@ final class DER {
         return set;
     }
 
-    static <T> Set<T> asSet(ASN1Encodable encodable, Function<? super ASN1Primitive, T> function) {
+    static <T> List<T> asSet(ASN1Encodable encodable, Function<? super ASN1Primitive, T> function) {
         return asPrimitiveSet(encodable)
                 .stream()
                 .map(function)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
-    static <T> Function<ASN1Encodable, Set<T>> asSet(Function<? super ASN1Primitive, T> function) {
+    static <T> Function<ASN1Encodable, List<T>> asSet(Function<? super ASN1Primitive, T> function) {
         return encodable -> asSet(encodable, function);
     }
 
@@ -145,7 +145,7 @@ final class DER {
         }
     }
 
-    static DERSet toSet(Set<? extends ASN1Encodable> collection) {
+    static DERSet toSet(Collection<? extends ASN1Encodable> collection) {
         return new DERSet(vector(collection));
     }
 

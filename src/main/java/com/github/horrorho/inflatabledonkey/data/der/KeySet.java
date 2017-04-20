@@ -25,8 +25,10 @@ package com.github.horrorho.inflatabledonkey.data.der;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -72,23 +74,23 @@ public final class KeySet extends ASN1Object {
     private static final Supplier<Digest> DIGEST = SHA256Digest::new;
 
     private final String name;
-    private final Set<PrivateKey> keys;
-    private final Set<TypeData> serviceKeyIDs;
+    private final List<PrivateKey> keys;
+    private final List<TypeData> serviceKeyIDs;
     private final byte[] checksum;
     private final Optional<Integer> flags;    // bit 0 -> 1 = compact
     private final Optional<SignatureInfo> signatureInfo;
 
     KeySet(
             String name,
-            Set<PrivateKey> keys,
-            Set<TypeData> services,
+            List<PrivateKey> keys,
+            List<TypeData> services,
             byte[] checksum,
             Optional<Integer> flags,
             Optional<SignatureInfo> signatureInfo) {
 
         this.name = Objects.requireNonNull(name, "name");
-        this.keys = new HashSet<>(keys);
-        this.serviceKeyIDs = new HashSet<>(services);
+        this.keys = new ArrayList<>(keys);
+        this.serviceKeyIDs = new ArrayList<>(services);
         this.checksum = Arrays.copyOf(checksum, checksum.length);
         this.flags = Objects.requireNonNull(flags, "flags");
         this.signatureInfo = Objects.requireNonNull(signatureInfo, "signatureInfo");
@@ -102,8 +104,8 @@ public final class KeySet extends ASN1Object {
             Optional<SignatureInfo> signatureInfo) {
 
         this.name = Objects.requireNonNull(name, "name");
-        this.keys = new HashSet<>(keys);
-        this.serviceKeyIDs = new HashSet<>(services);
+        this.keys = new ArrayList<>(keys);
+        this.serviceKeyIDs = new ArrayList<>(services);
         this.flags = Objects.requireNonNull(flags, "flags");
         this.signatureInfo = Objects.requireNonNull(signatureInfo, "signatureInfo");
         this.checksum = calculateChecksum();
@@ -173,8 +175,8 @@ public final class KeySet extends ASN1Object {
         return name;
     }
 
-    public Set<PrivateKey> keys() {
-        return new HashSet<>(keys);
+    public List<PrivateKey> keys() {
+        return new ArrayList<>(keys);
     }
 
     public Set<TypeData> serviceKeyIDs() {
