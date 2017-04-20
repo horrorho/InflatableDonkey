@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.crypto;
 import java.util.Optional;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.RuntimeCryptoException;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
@@ -82,7 +83,7 @@ public final class AESGCM {
 
             return Arrays.copyOf(out, pos);
 
-        } catch (IllegalStateException | InvalidCipherTextException ex) {
+        } catch (IllegalStateException | InvalidCipherTextException | RuntimeCryptoException ex) {
             throw new IllegalStateException("GCM decrypt error", ex);
         }
     }
