@@ -75,6 +75,12 @@ public final class Snapshot extends AbstractRecord {
         return backupProperties.flatMap(u -> NSDictionaries.as(u, key, to));
     }
 
+    Optional<String> backupPropertyVersion() {
+        return backupProperty("Lockdown", NSDictionary.class)
+                .flatMap(u -> NSDictionaries.as(u, "ProductVersion", NSString.class))
+                .map(u -> u.getContent());
+    }
+
     public Optional<List<String>> appleIDs() {
         return backupProperty("AppleIDs", NSDictionary.class).map(NSDictionary::allKeys).map(Arrays::asList);
     }
@@ -137,7 +143,7 @@ public final class Snapshot extends AbstractRecord {
                 ? String.format("%4s GB ", (quotaUsed() / 1073741824))
                 : String.format("%4s MB ", (quotaUsed() / 1048576));
         Instant timestamp = date().map(Date::toInstant).orElse(modification());
-        String version = version().map(u -> "iOS " + u).orElse("");
+        String version = backupPropertyVersion().orElseGet(() -> version().map(u -> "iOS " + u).orElse(""));
         return quota + deviceName() + " (" + version + ")  " + timestamp;
     }
 
