@@ -113,7 +113,7 @@ public final class EscrowedKeys {
                 .filter(EscrowedKeys::isPCSRecord)
                 .map(nsObject -> (NSDictionary) nsObject)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("no escrow PCS record found"));
+                .orElseThrow(() -> new IllegalArgumentException("no escrow PCS record found: InflatableDonkey doesn't support iOS8 or earlier backups"));
     }
 
     static boolean isPCSRecord(NSObject metadata) {

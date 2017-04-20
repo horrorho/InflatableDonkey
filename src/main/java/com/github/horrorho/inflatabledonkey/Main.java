@@ -212,14 +212,21 @@ public class Main {
                         return null;
                     });
         }
-        if (escrowServiceKeySet == null) {
-            byte[] escrowedKeys = EscrowedKeys.data(httpClient, account);
-            data.setEscrowedKeys(escrowedKeys);
-            escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
-                    .flatMap(ServiceKeySetBuilder::build)
-                    .orElseThrow(() -> new IllegalStateException("failed to decrypt escrowed keys"));
-            cache.store(cachedData, cachedPassword, data.encoded());
+        try {
+            if (escrowServiceKeySet == null) {
+                byte[] escrowedKeys = EscrowedKeys.data(httpClient, account);
+                data.setEscrowedKeys(escrowedKeys);
+                escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
+                        .flatMap(ServiceKeySetBuilder::build)
+                        .orElseThrow(() -> new IllegalStateException("failed to decrypt escrowed keys"));
+                cache.store(cachedData, cachedPassword, data.encoded());
+            }
+        } catch (IllegalArgumentException ex) {
+            logger.warn("-- main() - exception : {}", ex);
+            System.out.println(ex.getLocalizedMessage());
+            System.exit(-1);
         }
+
         logger.info("-- main() - device -> hardware id: {} uuid: {}", data.deviceHardWareId(), data.deviceUuid());
 
         // Backup
