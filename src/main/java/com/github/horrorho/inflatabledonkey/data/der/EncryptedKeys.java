@@ -64,7 +64,7 @@ public final class EncryptedKeys extends ASN1Object {
     private static final int CONT0 = 0;
 
     private final int x;
-    private final Set<EncryptedKey> encryptedKeySet;
+    private final Set<EncryptedKey> encryptedKeySet; // TOFIX use list
     private final Optional<byte[]> cont0;
 
     public EncryptedKeys(int x, Set<EncryptedKey> encryptedKeySet, Optional<byte[]> cont0) {

@@ -32,7 +32,6 @@ import com.github.horrorho.inflatabledonkey.cloud.clients.MBKSyncClient;
 import com.github.horrorho.inflatabledonkey.cloud.clients.SnapshotClient;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInits;
-import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitties;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
@@ -53,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
@@ -68,10 +68,10 @@ import org.slf4j.LoggerFactory;
 public final class BackupAssistant {
 
     public static BackupAssistant
-            create(HttpClient httpClient, ForkJoinPool forkJoinPool, Account account) throws IOException {
+            create(HttpClient httpClient, ForkJoinPool forkJoinPool, Account account,
+                    ServiceKeySet escrowServiceKeySet, UUID deviceID, String deviceHardwareID) throws IOException {
         CKInit ckInit = CKInits.ckInitBackupd(httpClient, account);
-        CloudKitty kitty = CloudKitties.backupd(forkJoinPool, ckInit, account);
-        ServiceKeySet escrowServiceKeySet = EscrowedKeys.keys(httpClient, account);
+        CloudKitty kitty = CloudKitties.backupd(forkJoinPool, ckInit, account, deviceID, deviceHardwareID);
         ProtectionZone mbksync = MBKSyncClient.apply(httpClient, kitty, escrowServiceKeySet.keys());
         return new BackupAssistant(kitty, mbksync);
     }
@@ -111,9 +111,9 @@ public final class BackupAssistant {
                 .stream()
                 .distinct()
                 .flatMap(d -> d
-                        .snapshotIDs()
-                        .stream()
-                        .map(s -> new SimpleImmutableEntry<>(s, d)))
+                .snapshotIDs()
+                .stream()
+                .map(s -> new SimpleImmutableEntry<>(s, d)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         List<SnapshotID> snapshotIDs = devices

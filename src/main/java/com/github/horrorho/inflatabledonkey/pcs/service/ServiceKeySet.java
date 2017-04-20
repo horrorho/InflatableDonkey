@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.Immutable;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * ServiceKeySet.

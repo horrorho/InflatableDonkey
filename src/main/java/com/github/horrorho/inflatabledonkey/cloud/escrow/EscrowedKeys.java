@@ -64,7 +64,7 @@ public final class EscrowedKeys {
                 account.mobileMe().get("com.apple.Dataclass.KeychainSync", "escrowProxyUrl"));
     }
 
-    public static ServiceKeySet keys(HttpClient httpClient, Account account) throws IOException {
+    public static byte[] data(HttpClient httpClient, Account account) throws IOException {
         EscrowProxyRequestFactory escrowProxyRequestFactory = new EscrowProxyRequestFactory(
                 account.accountInfo().dsPrsID(),
                 account.tokens().get(Token.MMEAUTHTOKEN),
@@ -73,11 +73,11 @@ public final class EscrowedKeys {
         return keys(httpClient, escrowProxyRequestFactory);
     }
 
-    public static ServiceKeySet keys(HttpClient httpClient, EscrowProxyRequestFactory requests) throws IOException {
+    public static byte[] keys(HttpClient httpClient, EscrowProxyRequestFactory requests) throws IOException {
         return keys(httpClient, requests, REMAINING_ATTEMPTS_THRESHOLD);
     }
 
-    static ServiceKeySet
+    static byte[]
             keys(HttpClient httpClient, EscrowProxyRequestFactory requests, int remainingAttemptsThreshold)
             throws IOException {
 
@@ -133,15 +133,12 @@ public final class EscrowedKeys {
                 .orElseThrow(() -> new IllegalArgumentException("failed to create backup bag key set"));
     }
 
-    static ServiceKeySet escrowedKeys(NSDictionary record, ServiceKeySet backupBagPassword) {
+    static byte[] escrowedKeys(NSDictionary record, ServiceKeySet backupBagPassword) {
         String metadataBase64 = PListsLegacy.getAs(record, "metadata", NSString.class).getContent();
         byte[] metadata = Base64.getDecoder().decode(metadataBase64);
 
         byte[] data = ProtectedRecord.unlockData(metadata, backupBagPassword::key);
         logger.debug("-- escrowedKeys() - decrypted metadata: {}", Hex.toHexString(data));
-
-        return DERUtils.parse(data, KeySet::new)
-                .flatMap(ServiceKeySetBuilder::build)
-                .orElseThrow(() -> new IllegalArgumentException("failed to create escrowed key set"));
+        return data;
     }
 }

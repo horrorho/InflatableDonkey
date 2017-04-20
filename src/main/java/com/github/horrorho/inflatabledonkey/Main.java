@@ -23,32 +23,40 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
-import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyItemType;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
+import com.github.horrorho.inflatabledonkey.cache.FileCache;
+import com.github.horrorho.inflatabledonkey.cache.InflatableData;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
 import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Authenticator;
+import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
+import com.github.horrorho.inflatabledonkey.data.der.KeySet;
+import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
+import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
+import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -171,18 +179,52 @@ public class Main {
         // Account
         Account account = Accounts.account(httpClient, auth);
 
-        // Backup
-        BackupAssistant assistant = BackupAssistant.create(httpClient, forkJoinPool, account);
-
         // Output folders.
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups")).normalize()
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
         Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property normalize()
+        Path cachedData = chunkOutputFolder.resolve("data.enc");
         Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
+        logger.info("-- main() - cached data: {}", cachedData.toAbsolutePath());
         System.out.println("\nOutput folder: " + assetOutputFolder.toAbsolutePath());
+
+        // Cached data if available
+        byte[] bs = Base64.getDecoder().decode(auth.mmeAuthToken());
+        byte[] cachedPassword = Arrays.copyOfRange(bs, bs.length - 16, bs.length);
+        FileCache cache = FileCache.defaultInstance();
+        InflatableData data = cache.load(cachedData, cachedPassword)
+                .flatMap(InflatableData::from)
+                .orElseGet(() -> {
+                    logger.info("-- main() - no cached data available");
+                    return InflatableData.generate();
+                });
+
+        // Escrowed keys
+        ServiceKeySet escrowServiceKeySet = null;
+        if (data.hasEscrowedKeys()) {
+            escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
+                    .flatMap(ServiceKeySetBuilder::build)
+                    .orElseGet(() -> {
+                        logger.info("-- main() - failed to decrypt cached escrowed keys");
+                        return null;
+                    });
+        }
+        if (escrowServiceKeySet == null) {
+            byte[] escrowedKeys = EscrowedKeys.data(httpClient, account);
+            data.setEscrowedKeys(escrowedKeys);
+            escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
+                    .flatMap(ServiceKeySetBuilder::build)
+                    .orElseThrow(() -> new IllegalStateException("failed to decrypt escrowed keys"));
+            cache.store(cachedData, cachedPassword, data.encoded());
+        }
+        logger.info("-- main() - device -> hardware id: {} uuid: {}", data.deviceHardWareId(), data.deviceUuid());
+
+        // Backup
+        BackupAssistant assistant
+                = BackupAssistant.create(httpClient, forkJoinPool, account, escrowServiceKeySet, data.deviceUuid(), data.deviceHardWareId());
 
         // TODO automatic decrypt mode
         Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
