@@ -47,18 +47,18 @@ public final class AssetFactory {
     private static final String FILE_TYPE = "fileType";
     private static final String PROTECTION_CLASS = "protectionClass";
 
-    public static Optional<Asset> from(CloudKit.Record record, ProtectionZone zone) {
+    public static Optional<Asset> from(CloudKit.Record record, String domain, ProtectionZone zone) {
         return AssetID.from(record.getRecordIdentifier().getValue().getName())
-                .map(u -> from(u, record, zone));
+                .map(u -> from(u, domain, record, zone));
     }
 
-    static Asset from(AssetID assetID, CloudKit.Record record, ProtectionZone zone) {
+    static Asset from(AssetID assetID, String domain, CloudKit.Record record, ProtectionZone zone) {
         List<CloudKit.RecordField> records = record.getRecordFieldList();
         Optional<Integer> protectionClass = protectionClass(records);
         Optional<Integer> fileType = fileType(records);
         Optional<AssetEncryptedAttributes> encryptedAttributes = encryptedAttributes(records)
                 .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES))
-                .flatMap(AssetEncryptedAttributesFactory::from);
+                .flatMap(u -> AssetEncryptedAttributesFactory.from(u, domain));
         Optional<CloudKit.Asset> asset = asset(records);
         Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasData)
                 .map(u -> u.getData().getValue().toByteArray())

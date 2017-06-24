@@ -59,12 +59,16 @@ public final class MBKSyncClient {
 
     static ProtectionZone
             zone(List<CloudKit.ZoneRetrieveResponse> responses, Collection<Key<ECPrivateKey>> keys) {
-        logger.debug("-- zone() - responses: {}", responses);
+        logger.trace("-- zone() - responses: {}", responses);
         ProtectionZone zone = PZFactory.instance().create(keys);
-
         List<CloudKit.ProtectionInfo> protectionInfoList = protectionInfo(responses, zone);
         for (CloudKit.ProtectionInfo protectionInfo : protectionInfoList) {
             zone = PZFactory.instance().create(zone, protectionInfo)
+                    .orElse(zone);
+        }
+        List<CloudKit.ProtectionInfo> xs = recordProtectionInfo(responses, zone);
+        for (CloudKit.ProtectionInfo x : xs) {
+            zone = PZFactory.instance().create(zone, x)
                     .orElse(zone);
         }
         return zone;
@@ -79,6 +83,18 @@ public final class MBKSyncClient {
                 .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
                 .filter(CloudKit.Zone::hasProtectionInfo)
                 .map(CloudKit.Zone::getProtectionInfo)
+                .collect(Collectors.toList());
+    }
+
+    static List<CloudKit.ProtectionInfo>
+            recordProtectionInfo(List<CloudKit.ZoneRetrieveResponse> response, ProtectionZone zone) {
+        return response
+                .stream()
+                .map(CloudKit.ZoneRetrieveResponse::getZoneSummarysList)
+                .flatMap(Collection::stream)
+                .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
+                .filter(CloudKit.Zone::hasProtectionInfoX)
+                .map(CloudKit.Zone::getProtectionInfoX)
                 .collect(Collectors.toList());
     }
 }

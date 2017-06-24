@@ -53,7 +53,7 @@ public final class AssetEncryptedAttributesFactory {
 
     private static final byte[] BPLIST = new byte[]{0x62, 0x70, 0x6c, 0x69, 0x73, 0x74}; // binary property list header
 
-    public static Optional<AssetEncryptedAttributes> from(byte[] data) {
+    public static Optional<AssetEncryptedAttributes> from(byte[] data, String domain) {
         if (data.length == 0) {
             logger.warn("-- from() - empty data packet");
             return Optional.empty();
@@ -62,11 +62,11 @@ public final class AssetEncryptedAttributesFactory {
         // Test/ parse BPList.
         byte[] header = Arrays.copyOf(data, BPLIST.length);
         if (Arrays.equals(header, BPLIST)) {
-            return fromBPList(data);
+            return fromBPList(data, domain);
         }
 
         // Try parse Protobuf.
-        Optional<AssetEncryptedAttributes> attributes = AssetEncryptedAttributesFactory.fromProtobuf(data);
+        Optional<AssetEncryptedAttributes> attributes = AssetEncryptedAttributesFactory.fromProtobuf(data, domain);
         if (attributes.isPresent()) {
             return attributes;
         }
@@ -75,9 +75,8 @@ public final class AssetEncryptedAttributesFactory {
         return Optional.empty();
     }
 
-    public static Optional<AssetEncryptedAttributes> fromProtobuf(byte[] data) {
-        return parseProtobuf(data)
-                .map(AssetEncryptedAttributesFactory::fromProtobuf);
+    public static Optional<AssetEncryptedAttributes> fromProtobuf(byte[] data, String domain) {
+        return parseProtobuf(data).map(u -> fromProtobuf(u, domain));
     }
 
     static Optional<CloudKit.EncryptedAttributes> parseProtobuf(byte[] data) {
@@ -94,10 +93,11 @@ public final class AssetEncryptedAttributesFactory {
         }
     }
 
-    public static AssetEncryptedAttributes fromProtobuf(CloudKit.EncryptedAttributes data) {
-        Optional<String> domain = data.hasDomain()
-                ? Optional.of(data.getDomain())
-                : Optional.empty();
+    public static AssetEncryptedAttributes fromProtobuf(CloudKit.EncryptedAttributes data, String domain) {
+        logger.debug("-- fromProtobuf() - data: {}", data);
+        if (data.hasDomain() && !data.getDomain().equals(domain)) {
+            logger.warn("-- fromProtobuf() - domain mismatch: {} != {}", data.getDomain(), domain);
+        }
         Optional<String> relativePath = data.hasRelativePath()
                 ? Optional.of(data.getRelativePath())
                 : Optional.empty();
@@ -129,16 +129,17 @@ public final class AssetEncryptedAttributesFactory {
                 ? Optional.of(data.getChecksum().toByteArray())
                 : Optional.empty();
 
-        // Experimental info notifications as not all fields are known.
-        if (logger.isInfoEnabled()) {
+        // Experimental debug notifications as not all fields are known.
+        // TOFIX unknown field 14: observed values 1
+        if (logger.isDebugEnabled()) {
             UnknownFieldSet unknownFields = data.getUnknownFields();
             if (!unknownFields.asMap().isEmpty()) {
-                logger.info("-- fromProtobuf() - unknown fields: {} message: {}", unknownFields, data);
+                logger.debug("-- fromProtobuf() - unknown fields: {} message: {}", unknownFields, data);
             }
         }
 
         AssetEncryptedAttributes attributes = new AssetEncryptedAttributes(
-                domain,
+                Optional.of(domain),
                 relativePath,
                 modified,
                 birth,
@@ -153,14 +154,15 @@ public final class AssetEncryptedAttributesFactory {
         return attributes;
     }
 
-    public static Optional<AssetEncryptedAttributes> fromBPList(byte[] data) {
-        return NSDictionaries.parse(data)
-                .map(AssetEncryptedAttributesFactory::fromDictionary);
+    public static Optional<AssetEncryptedAttributes> fromBPList(byte[] data, String domain) {
+        return NSDictionaries.parse(data).map(u -> fromDictionary(u, domain));
     }
 
-    public static AssetEncryptedAttributes fromDictionary(NSDictionary data) {
-        Optional<String> domain = NSDictionaries.as(data, "domain", NSString.class)
-                .map(NSString::getContent);
+    public static AssetEncryptedAttributes fromDictionary(NSDictionary data, String domain) {
+        NSDictionaries.as(data, "domain", NSString.class)
+                .map(NSString::getContent)
+                .filter(u -> !u.equals(domain))
+                .ifPresent(u -> logger.warn("-- fromDictionary() - domain mismatch: {} != {}", u, domain));
         Optional<String> relativePath = NSDictionaries.as(data, "relativePath", NSString.class)
                 .map(NSString::getContent);
         Optional<Instant> modified = NSDictionaries.as(data, "modified", NSDate.class)
@@ -185,7 +187,7 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> checksum = Optional.empty();   // not present
 
         AssetEncryptedAttributes attributes = new AssetEncryptedAttributes(
-                domain,
+                Optional.of(domain),
                 relativePath,
                 modified,
                 birth,
@@ -196,7 +198,6 @@ public final class AssetEncryptedAttributesFactory {
                 size,
                 encryptionKey,
                 checksum);
-        logger.debug("-- fromDictionary() - encrypted attributes: {}", attributes);
         return attributes;
     }
 }

@@ -31570,6 +31570,19 @@ public final class CloudKit {
      * <code>optional .ProtectionInfo protectionInfo = 3;</code>
      */
     com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoOrBuilder();
+
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    boolean hasProtectionInfoX();
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX();
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder();
   }
   /**
    * Protobuf type {@code Zone}
@@ -31647,6 +31660,19 @@ public final class CloudKit {
                 protectionInfo_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000002;
+              break;
+            }
+            case 50: {
+              com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                subBuilder = protectionInfoX_.toBuilder();
+              }
+              protectionInfoX_ = input.readMessage(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(protectionInfoX_);
+                protectionInfoX_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000004;
               break;
             }
           }
@@ -31731,9 +31757,31 @@ public final class CloudKit {
       return protectionInfo_;
     }
 
+    public static final int PROTECTIONINFOX_FIELD_NUMBER = 6;
+    private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo protectionInfoX_;
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    public boolean hasProtectionInfoX() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX() {
+      return protectionInfoX_;
+    }
+    /**
+     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     */
+    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder() {
+      return protectionInfoX_;
+    }
+
     private void initFields() {
       zoneIdentifier_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordZoneIdentifier.getDefaultInstance();
       protectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+      protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -31754,6 +31802,9 @@ public final class CloudKit {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeMessage(3, protectionInfo_);
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeMessage(6, protectionInfoX_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -31770,6 +31821,10 @@ public final class CloudKit {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, protectionInfo_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, protectionInfoX_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -31882,6 +31937,7 @@ public final class CloudKit {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getZoneIdentifierFieldBuilder();
           getProtectionInfoFieldBuilder();
+          getProtectionInfoXFieldBuilder();
         }
       }
       private static Builder create() {
@@ -31902,6 +31958,12 @@ public final class CloudKit {
           protectionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
+        if (protectionInfoXBuilder_ == null) {
+          protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+        } else {
+          protectionInfoXBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -31946,6 +32008,14 @@ public final class CloudKit {
         } else {
           result.protectionInfo_ = protectionInfoBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        if (protectionInfoXBuilder_ == null) {
+          result.protectionInfoX_ = protectionInfoX_;
+        } else {
+          result.protectionInfoX_ = protectionInfoXBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -31967,6 +32037,9 @@ public final class CloudKit {
         }
         if (other.hasProtectionInfo()) {
           mergeProtectionInfo(other.getProtectionInfo());
+        }
+        if (other.hasProtectionInfoX()) {
+          mergeProtectionInfoX(other.getProtectionInfoX());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -32225,6 +32298,122 @@ public final class CloudKit {
           protectionInfo_ = null;
         }
         return protectionInfoBuilder_;
+      }
+
+      private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder> protectionInfoXBuilder_;
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public boolean hasProtectionInfoX() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX() {
+        if (protectionInfoXBuilder_ == null) {
+          return protectionInfoX_;
+        } else {
+          return protectionInfoXBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public Builder setProtectionInfoX(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
+        if (protectionInfoXBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          protectionInfoX_ = value;
+          onChanged();
+        } else {
+          protectionInfoXBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public Builder setProtectionInfoX(
+          com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder builderForValue) {
+        if (protectionInfoXBuilder_ == null) {
+          protectionInfoX_ = builderForValue.build();
+          onChanged();
+        } else {
+          protectionInfoXBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public Builder mergeProtectionInfoX(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
+        if (protectionInfoXBuilder_ == null) {
+          if (((bitField0_ & 0x00000004) == 0x00000004) &&
+              protectionInfoX_ != com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance()) {
+            protectionInfoX_ =
+              com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.newBuilder(protectionInfoX_).mergeFrom(value).buildPartial();
+          } else {
+            protectionInfoX_ = value;
+          }
+          onChanged();
+        } else {
+          protectionInfoXBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000004;
+        return this;
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public Builder clearProtectionInfoX() {
+        if (protectionInfoXBuilder_ == null) {
+          protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+          onChanged();
+        } else {
+          protectionInfoXBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder getProtectionInfoXBuilder() {
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return getProtectionInfoXFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder() {
+        if (protectionInfoXBuilder_ != null) {
+          return protectionInfoXBuilder_.getMessageOrBuilder();
+        } else {
+          return protectionInfoX_;
+        }
+      }
+      /**
+       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder> 
+          getProtectionInfoXFieldBuilder() {
+        if (protectionInfoXBuilder_ == null) {
+          protectionInfoXBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder>(
+                  getProtectionInfoX(),
+                  getParentForChildren(),
+                  isClean());
+          protectionInfoX_ = null;
+        }
+        return protectionInfoXBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Zone)
@@ -34149,17 +34338,18 @@ public final class CloudKit {
       "ifier\"N\n\024ZoneRetrieveResponse\0226\n\014zoneSum" +
       "marys\030\001 \003(\0132 .ZoneRetrieveResponseZoneSu" +
       "mmary\"<\n\037ZoneRetrieveResponseZoneSummary" +
-      "\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"^\n\004Zone\022-\n\016z" +
-      "oneIdentifier\030\001 \001(\0132\025.RecordZoneIdentifi",
-      "er\022\'\n\016protectionInfo\030\003 \001(\0132\017.ProtectionI" +
-      "nfo\"\344\001\n\023EncryptedAttributes\022\024\n\014relativeP" +
-      "ath\030\001 \001(\t\022\016\n\006domain\030\002 \001(\t\022\r\n\005birth\030\003 \001(\004" +
-      "\022\020\n\010modified\030\004 \001(\004\022\025\n\rstatusChanged\030\005 \001(" +
-      "\004\022\014\n\004size\030\006 \001(\004\022\017\n\007groupID\030\007 \001(\r\022\016\n\006user" +
-      "ID\030\010 \001(\r\022\014\n\004mode\030\t \001(\r\022\t\n\001x\030\n \001(\004\022\025\n\renc" +
-      "ryptionKey\030\014 \001(\014\022\020\n\010checksum\030\r \001(\014B9\n-co" +
-      "m.github.horrorho.inflatabledonkey.proto" +
-      "bufB\010CloudKit"
+      "\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"\210\001\n\004Zone\022-\n\016" +
+      "zoneIdentifier\030\001 \001(\0132\025.RecordZoneIdentif",
+      "ier\022\'\n\016protectionInfo\030\003 \001(\0132\017.Protection" +
+      "Info\022(\n\017protectionInfoX\030\006 \001(\0132\017.Protecti" +
+      "onInfo\"\344\001\n\023EncryptedAttributes\022\024\n\014relati" +
+      "vePath\030\001 \001(\t\022\016\n\006domain\030\002 \001(\t\022\r\n\005birth\030\003 " +
+      "\001(\004\022\020\n\010modified\030\004 \001(\004\022\025\n\rstatusChanged\030\005" +
+      " \001(\004\022\014\n\004size\030\006 \001(\004\022\017\n\007groupID\030\007 \001(\r\022\016\n\006u" +
+      "serID\030\010 \001(\r\022\014\n\004mode\030\t \001(\r\022\t\n\001x\030\n \001(\004\022\025\n\r" +
+      "encryptionKey\030\014 \001(\014\022\020\n\010checksum\030\r \001(\014B9\n" +
+      "-com.github.horrorho.inflatabledonkey.pr" +
+      "otobufB\010CloudKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -34388,7 +34578,7 @@ public final class CloudKit {
     internal_static_Zone_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Zone_descriptor,
-        new java.lang.String[] { "ZoneIdentifier", "ProtectionInfo", });
+        new java.lang.String[] { "ZoneIdentifier", "ProtectionInfo", "ProtectionInfoX", });
     internal_static_EncryptedAttributes_descriptor =
       getDescriptor().getMessageTypes().get(36);
     internal_static_EncryptedAttributes_fieldAccessorTable = new

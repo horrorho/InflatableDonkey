@@ -522,6 +522,8 @@ message ZoneRetrieveResponseZoneSummary {
 message Zone {
   optional RecordZoneIdentifier zoneIdentifier = 1;
   optional ProtectionInfo protectionInfo = 3;
+  optional ProtectionInfo recordProtectionInfo = 6;
+
 
 // CKDPZone
 // ?2  NSString * _etag;

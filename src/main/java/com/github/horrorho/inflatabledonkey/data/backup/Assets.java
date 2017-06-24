@@ -25,8 +25,11 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toMap;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +67,13 @@ public final class Assets {
 
     public int count() {
         return assets.size();
+    }
+
+    public Map<AssetID, String> nonEmptyMap() {
+        return assets.stream()
+                .filter(a -> a.size() > 0)
+                .distinct()
+                .collect(toMap(Function.identity(), u -> domain));
     }
 
     public List<AssetID> nonEmpty() {

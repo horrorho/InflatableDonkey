@@ -23,7 +23,6 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
@@ -48,6 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toMap;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -129,12 +129,12 @@ public final class Backup {
         logger.info("-- download() - snapshot relative path: {}", relativePath);
 
         // AssetIDs
-        List<AssetID> assetIDs = assets.stream()
-                .map(u -> u.nonEmpty()) // TODO handle empty assets at some point
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        Map<AssetID, String> assetIDDomains = assets.stream()
+                .map(u -> u.nonEmptyMap()) // TODO handle empty assets at some point
+                .flatMap(u -> u.entrySet().stream())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (l, r) -> l));
 
-        Set<Asset> assetList = backupAssistant.assets(httpClient, assetIDs)
+        Set<Asset> assetList = backupAssistant.assets(httpClient, assetIDDomains)
                 .stream()
                 .filter(assetFilter::test)
                 .collect(Collectors.toSet());

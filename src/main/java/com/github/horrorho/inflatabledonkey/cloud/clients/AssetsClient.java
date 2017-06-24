@@ -97,11 +97,10 @@ public final class AssetsClient {
     }
 
     static Optional<Assets> assets(List<CloudKit.Record> records, ProtectionZone zone) {
-        return zone(records, zone)
-                .flatMap(u -> AssetsFactory.from(records, u));
+        return AssetsFactory.from(records, zone(records, zone));
     }
 
-    static Optional<ProtectionZone> zone(Collection<CloudKit.Record> records, ProtectionZone zone) {
+    static ProtectionZone zone(Collection<CloudKit.Record> records, ProtectionZone zone) {
         return records
                 .stream()
                 .filter(CloudKit.Record::hasProtectionInfo)
@@ -109,7 +108,8 @@ public final class AssetsClient {
                 .map(u -> PZFactory.instance().create(zone, u))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .findFirst();
+                .findFirst()
+                .orElse(zone);
     }
 
     static Map<ManifestID, List<CloudKit.Record>>

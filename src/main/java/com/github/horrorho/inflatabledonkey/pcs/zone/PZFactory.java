@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,9 +114,12 @@ public final class PZFactory {
     ProtectionZone protectionZone(LinkedHashMap<KeyID, Key<ECPrivateKey>> keys, String protectionInfoTag,
             ProtectionInfo protectionInfo) {
         List<byte[]> masterKeys = assistant.masterKeys(protectionInfo, keys);
+        masterKeys.forEach(u -> logger.trace("-- protectionZone() - master key: 0x{}", Hex.toHexString(u)));
         List<byte[]> decryptKeys = masterKeys.stream()
                 .map(kdf::apply)
                 .collect(toList());
+        decryptKeys.forEach(u -> logger.trace("-- protectionZone() - decrypt key: 0x{}", Hex.toHexString(u)));
+
         // Ordering is important here. The latest protection zone should be iterated first.
         LinkedHashMap newKeys = keys(assistant.keys(protectionInfo, decryptKeys));
         newKeys.putAll(keys);

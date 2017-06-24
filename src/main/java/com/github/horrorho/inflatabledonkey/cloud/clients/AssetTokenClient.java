@@ -32,8 +32,8 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import net.jcip.annotations.Immutable;
@@ -52,18 +52,19 @@ public final class AssetTokenClient {
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
     public static List<Asset>
-            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Collection<AssetID> assetIDs)
+            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Map<AssetID, String> assetIDDomains)
             throws IOException {
-        List<String> nonEmptyAssets = assetIDs.stream()
-                .filter(a -> a.size() > 0)
-                .map(Object::toString)
+        List<String> nonEmptyAssets = assetIDDomains.entrySet()
+                .stream()
+                .filter(e -> e.getKey().size() > 0)
+                .map(e -> e.getKey().toString())
                 .collect(Collectors.toList());
         logger.debug("-- apply() - non-empty asset list size: {}", nonEmptyAssets.size());
 
         List<CloudKit.RecordRetrieveResponse> responses
                 = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
-        List<Asset> assets = assets(responses, zone);
 
+        List<Asset> assets = assets(responses, assetIDDomains, zone);
         if (logger.isDebugEnabled()) {
             // Normally valid for 48 hours.
             assets.stream()
@@ -74,25 +75,30 @@ public final class AssetTokenClient {
                     .sorted()
                     .forEach(u -> logger.debug("-- apply() - expiration: {}", u));
         }
-
         return assets;
     }
 
-    static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+    static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
         return responses
                 .parallelStream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> asset(r, zone))
+                .map(r -> asset(r, assetIDDomains, zone))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
-    static Optional<Asset> asset(CloudKit.Record record, ProtectionZone zone) {
+    static Optional<Asset> asset(CloudKit.Record record, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
         logger.trace("-- asset() - record: {} zone: {}", record, zone);
-        return PZFactory.instance()
-                .create(zone, record.getProtectionInfo())
-                .flatMap(u -> AssetFactory.from(record, u));
+        ProtectionZone pz = PZFactory.instance().create(zone, record.getProtectionInfo()).orElse(zone);
+        String recordId = record.getRecordIdentifier().getValue().getName();
+        String domain = AssetID.from(recordId)
+                .map(u -> assetIDDomains.get(u))
+                .orElseGet(() -> {
+                    logger.warn("-- asset() - no domain record: {}");
+                    return "NO_DOMAIN";
+                });
+        return AssetFactory.from(record, domain, pz);
     }
 }

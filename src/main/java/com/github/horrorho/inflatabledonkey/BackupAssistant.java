@@ -135,7 +135,7 @@ public final class BackupAssistant {
         return AssetsClient.apply(httpClient, kitty, mbksync, manifests);
     }
 
-    public List<Asset> assets(HttpClient httpClient, Collection<AssetID> assetIDs) throws IOException {
+    public List<Asset> assets(HttpClient httpClient, Map<AssetID, String> assetIDs) throws IOException {
         return AssetTokenClient.apply(httpClient, kitty, mbksync, assetIDs);
     }
 
