@@ -32,6 +32,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.UnknownFieldSet;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -93,7 +94,7 @@ public final class AssetEncryptedAttributesFactory {
     }
 
     public static AssetEncryptedAttributes fromProtobuf(CloudKit.EncryptedAttributes data, String domain) {
-        logger.debug("-- fromProtobuf() - data: {}", data);
+        logger.trace("<< fromProtobuf() - data: {} domain: {}", domain, data);
         if (data.hasDomain() && !data.getDomain().equals(domain)) {
             logger.warn("-- fromProtobuf() - domain mismatch: {} != {}", data.getDomain(), domain);
         }
@@ -127,6 +128,19 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> checksum = data.hasSha256Signature()
                 ? Optional.of(data.getSha256Signature().toByteArray())
                 : Optional.empty();
+        Optional<Integer> contentEncodingMethod = data.hasContentEncodingMethod()
+                ? Optional.of(data.getContentEncodingMethod())
+                : Optional.empty();
+        Optional<Integer> contentCompressionMethod = data.hasContentCompressionMethod()
+                ? Optional.of(data.getContentCompressionMethod())
+                : Optional.empty();
+
+        if (logger.isDebugEnabled()) {
+            UnknownFieldSet unknownFields = data.getUnknownFields();
+            if (!unknownFields.asMap().isEmpty()) {
+                logger.debug("-- fromProtobuf() - unknown fields: {} message: {}", unknownFields, data);
+            }
+        }
 
         AssetEncryptedAttributes attributes = new AssetEncryptedAttributes(
                 Optional.of(domain),
@@ -139,8 +153,10 @@ public final class AssetEncryptedAttributesFactory {
                 mode,
                 size,
                 encryptionKey,
-                checksum);
-        logger.debug("-- fromProtobuf() - encrypted attributes: {}", attributes);
+                checksum,
+                contentEncodingMethod,
+                contentCompressionMethod);
+        logger.trace(">> fromProtobuf() - encrypted attributes: {}", attributes);
         return attributes;
     }
 
@@ -149,6 +165,7 @@ public final class AssetEncryptedAttributesFactory {
     }
 
     public static AssetEncryptedAttributes fromDictionary(NSDictionary data, String domain) {
+        logger.trace("<< fromDictionary() - data:{} domain: {}", data.toXMLPropertyList(), domain);
         NSDictionaries.as(data, "domain", NSString.class)
                 .map(NSString::getContent)
                 .filter(u -> !u.equals(domain))
@@ -175,6 +192,8 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> encryptionKey = NSDictionaries.as(data, "encryptionKey", NSData.class)
                 .map(NSData::bytes);
         Optional<byte[]> checksum = Optional.empty();   // not present
+        Optional<Integer> contentEncodingMethod = Optional.empty();   // not present
+        Optional<Integer> contentCompressionMethod = Optional.empty();   // not present
 
         AssetEncryptedAttributes attributes = new AssetEncryptedAttributes(
                 Optional.of(domain),
@@ -187,8 +206,10 @@ public final class AssetEncryptedAttributesFactory {
                 mode,
                 size,
                 encryptionKey,
-                checksum);
-        logger.debug("-- fromDictionary() - encrypted attributes: {}", attributes);
+                checksum,
+                contentEncodingMethod,
+                contentCompressionMethod);
+        logger.trace(">> fromDictionary() - encrypted attributes: {}", attributes);
         return attributes;
     }
 }
