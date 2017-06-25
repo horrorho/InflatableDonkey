@@ -140,6 +140,13 @@ For further information please refer to the comments/ code in [Main](https://git
 [CloudKit Notes](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) describes some of the low level mechanics we have discovered over the last couple of weeks.
 
 ### Credits
+
+[Yaldo425](https://github.com/Yaldo425) and [AsifMehmoood](https://github.com/asifmehmoood) - for supplying iOS11/ iOS 10 backups to work with, because as odd as it sounds I don't actually own an iPhone.
+
+[Jirmi](https://github.com/jirmi) - for various suggestions and Protobuf assistance.
+
+[Louti](https://github.com/Louti) - for additional insights on cryptographic key handling.
+
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions.
 
 Oleksii K - for cryptographical assistance, before he was mysteriously abducted by aliens and subjected to various probing experiments.
@@ -153,3 +160,5 @@ Oleksii K - for cryptographical assistance, before he was mysteriously abducted 
 My cat - for being my cat and keeping me company.
 
 There have been some contributors who, rather like vampires, prefer the cover of darkness. You know who you are and thank you!
+
+I've also probably forgotten others. If so I'm sorry and thank you too!
