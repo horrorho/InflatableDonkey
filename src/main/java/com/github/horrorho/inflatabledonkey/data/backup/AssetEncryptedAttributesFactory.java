@@ -32,7 +32,6 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.util.NSDictionaries;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.UnknownFieldSet;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -125,18 +124,9 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> encryptionKey = data.hasEncryptionKey()
                 ? Optional.of(data.getEncryptionKey().toByteArray())
                 : Optional.empty();
-        Optional<byte[]> checksum = data.hasChecksum()
-                ? Optional.of(data.getChecksum().toByteArray())
+        Optional<byte[]> checksum = data.hasSha256Signature()
+                ? Optional.of(data.getSha256Signature().toByteArray())
                 : Optional.empty();
-
-        // Experimental debug notifications as not all fields are known.
-        // TOFIX unknown field 14: observed values 1
-        if (logger.isDebugEnabled()) {
-            UnknownFieldSet unknownFields = data.getUnknownFields();
-            if (!unknownFields.asMap().isEmpty()) {
-                logger.debug("-- fromProtobuf() - unknown fields: {} message: {}", unknownFields, data);
-            }
-        }
 
         AssetEncryptedAttributes attributes = new AssetEncryptedAttributes(
                 Optional.of(domain),
@@ -198,6 +188,7 @@ public final class AssetEncryptedAttributesFactory {
                 size,
                 encryptionKey,
                 checksum);
+        logger.debug("-- fromDictionary() - encrypted attributes: {}", attributes);
         return attributes;
     }
 }

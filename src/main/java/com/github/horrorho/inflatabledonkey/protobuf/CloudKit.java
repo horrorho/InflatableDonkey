@@ -31572,17 +31572,17 @@ public final class CloudKit {
     com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoOrBuilder();
 
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    boolean hasProtectionInfoX();
+    boolean hasRecordProtectionInfo();
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX();
+    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getRecordProtectionInfo();
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder();
+    com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getRecordProtectionInfoOrBuilder();
   }
   /**
    * Protobuf type {@code Zone}
@@ -31665,12 +31665,12 @@ public final class CloudKit {
             case 50: {
               com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder subBuilder = null;
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
-                subBuilder = protectionInfoX_.toBuilder();
+                subBuilder = recordProtectionInfo_.toBuilder();
               }
-              protectionInfoX_ = input.readMessage(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.PARSER, extensionRegistry);
+              recordProtectionInfo_ = input.readMessage(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(protectionInfoX_);
-                protectionInfoX_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(recordProtectionInfo_);
+                recordProtectionInfo_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000004;
               break;
@@ -31757,31 +31757,31 @@ public final class CloudKit {
       return protectionInfo_;
     }
 
-    public static final int PROTECTIONINFOX_FIELD_NUMBER = 6;
-    private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo protectionInfoX_;
+    public static final int RECORDPROTECTIONINFO_FIELD_NUMBER = 6;
+    private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo recordProtectionInfo_;
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    public boolean hasProtectionInfoX() {
+    public boolean hasRecordProtectionInfo() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX() {
-      return protectionInfoX_;
+    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getRecordProtectionInfo() {
+      return recordProtectionInfo_;
     }
     /**
-     * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+     * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
      */
-    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder() {
-      return protectionInfoX_;
+    public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getRecordProtectionInfoOrBuilder() {
+      return recordProtectionInfo_;
     }
 
     private void initFields() {
       zoneIdentifier_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordZoneIdentifier.getDefaultInstance();
       protectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
-      protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+      recordProtectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -31803,7 +31803,7 @@ public final class CloudKit {
         output.writeMessage(3, protectionInfo_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(6, protectionInfoX_);
+        output.writeMessage(6, recordProtectionInfo_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -31824,7 +31824,7 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, protectionInfoX_);
+          .computeMessageSize(6, recordProtectionInfo_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -31937,7 +31937,7 @@ public final class CloudKit {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getZoneIdentifierFieldBuilder();
           getProtectionInfoFieldBuilder();
-          getProtectionInfoXFieldBuilder();
+          getRecordProtectionInfoFieldBuilder();
         }
       }
       private static Builder create() {
@@ -31958,10 +31958,10 @@ public final class CloudKit {
           protectionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
-        if (protectionInfoXBuilder_ == null) {
-          protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+        if (recordProtectionInfoBuilder_ == null) {
+          recordProtectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
         } else {
-          protectionInfoXBuilder_.clear();
+          recordProtectionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
         return this;
@@ -32011,10 +32011,10 @@ public final class CloudKit {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        if (protectionInfoXBuilder_ == null) {
-          result.protectionInfoX_ = protectionInfoX_;
+        if (recordProtectionInfoBuilder_ == null) {
+          result.recordProtectionInfo_ = recordProtectionInfo_;
         } else {
-          result.protectionInfoX_ = protectionInfoXBuilder_.build();
+          result.recordProtectionInfo_ = recordProtectionInfoBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -32038,8 +32038,8 @@ public final class CloudKit {
         if (other.hasProtectionInfo()) {
           mergeProtectionInfo(other.getProtectionInfo());
         }
-        if (other.hasProtectionInfoX()) {
-          mergeProtectionInfoX(other.getProtectionInfoX());
+        if (other.hasRecordProtectionInfo()) {
+          mergeRecordProtectionInfo(other.getRecordProtectionInfo());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -32300,120 +32300,120 @@ public final class CloudKit {
         return protectionInfoBuilder_;
       }
 
-      private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+      private com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo recordProtectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder> protectionInfoXBuilder_;
+          com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder> recordProtectionInfoBuilder_;
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public boolean hasProtectionInfoX() {
+      public boolean hasRecordProtectionInfo() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getProtectionInfoX() {
-        if (protectionInfoXBuilder_ == null) {
-          return protectionInfoX_;
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo getRecordProtectionInfo() {
+        if (recordProtectionInfoBuilder_ == null) {
+          return recordProtectionInfo_;
         } else {
-          return protectionInfoXBuilder_.getMessage();
+          return recordProtectionInfoBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public Builder setProtectionInfoX(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
-        if (protectionInfoXBuilder_ == null) {
+      public Builder setRecordProtectionInfo(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
+        if (recordProtectionInfoBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          protectionInfoX_ = value;
+          recordProtectionInfo_ = value;
           onChanged();
         } else {
-          protectionInfoXBuilder_.setMessage(value);
+          recordProtectionInfoBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public Builder setProtectionInfoX(
+      public Builder setRecordProtectionInfo(
           com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder builderForValue) {
-        if (protectionInfoXBuilder_ == null) {
-          protectionInfoX_ = builderForValue.build();
+        if (recordProtectionInfoBuilder_ == null) {
+          recordProtectionInfo_ = builderForValue.build();
           onChanged();
         } else {
-          protectionInfoXBuilder_.setMessage(builderForValue.build());
+          recordProtectionInfoBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public Builder mergeProtectionInfoX(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
-        if (protectionInfoXBuilder_ == null) {
+      public Builder mergeRecordProtectionInfo(com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo value) {
+        if (recordProtectionInfoBuilder_ == null) {
           if (((bitField0_ & 0x00000004) == 0x00000004) &&
-              protectionInfoX_ != com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance()) {
-            protectionInfoX_ =
-              com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.newBuilder(protectionInfoX_).mergeFrom(value).buildPartial();
+              recordProtectionInfo_ != com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance()) {
+            recordProtectionInfo_ =
+              com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.newBuilder(recordProtectionInfo_).mergeFrom(value).buildPartial();
           } else {
-            protectionInfoX_ = value;
+            recordProtectionInfo_ = value;
           }
           onChanged();
         } else {
-          protectionInfoXBuilder_.mergeFrom(value);
+          recordProtectionInfoBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000004;
         return this;
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public Builder clearProtectionInfoX() {
-        if (protectionInfoXBuilder_ == null) {
-          protectionInfoX_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
+      public Builder clearRecordProtectionInfo() {
+        if (recordProtectionInfoBuilder_ == null) {
+          recordProtectionInfo_ = com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.getDefaultInstance();
           onChanged();
         } else {
-          protectionInfoXBuilder_.clear();
+          recordProtectionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder getProtectionInfoXBuilder() {
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder getRecordProtectionInfoBuilder() {
         bitField0_ |= 0x00000004;
         onChanged();
-        return getProtectionInfoXFieldBuilder().getBuilder();
+        return getRecordProtectionInfoFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
-      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getProtectionInfoXOrBuilder() {
-        if (protectionInfoXBuilder_ != null) {
-          return protectionInfoXBuilder_.getMessageOrBuilder();
+      public com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder getRecordProtectionInfoOrBuilder() {
+        if (recordProtectionInfoBuilder_ != null) {
+          return recordProtectionInfoBuilder_.getMessageOrBuilder();
         } else {
-          return protectionInfoX_;
+          return recordProtectionInfo_;
         }
       }
       /**
-       * <code>optional .ProtectionInfo protectionInfoX = 6;</code>
+       * <code>optional .ProtectionInfo recordProtectionInfo = 6;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder> 
-          getProtectionInfoXFieldBuilder() {
-        if (protectionInfoXBuilder_ == null) {
-          protectionInfoXBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getRecordProtectionInfoFieldBuilder() {
+        if (recordProtectionInfoBuilder_ == null) {
+          recordProtectionInfoBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfo.Builder, com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ProtectionInfoOrBuilder>(
-                  getProtectionInfoX(),
+                  getRecordProtectionInfo(),
                   getParentForChildren(),
                   isClean());
-          protectionInfoX_ = null;
+          recordProtectionInfo_ = null;
         }
-        return protectionInfoXBuilder_;
+        return recordProtectionInfoBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Zone)
@@ -32461,52 +32461,28 @@ public final class CloudKit {
 
     /**
      * <code>optional uint64 birth = 3;</code>
-     *
-     * <pre>
-     * probably
-     * </pre>
      */
     boolean hasBirth();
     /**
      * <code>optional uint64 birth = 3;</code>
-     *
-     * <pre>
-     * probably
-     * </pre>
      */
     long getBirth();
 
     /**
      * <code>optional uint64 modified = 4;</code>
-     *
-     * <pre>
-     * possibly 5
-     * </pre>
      */
     boolean hasModified();
     /**
      * <code>optional uint64 modified = 4;</code>
-     *
-     * <pre>
-     * possibly 5
-     * </pre>
      */
     long getModified();
 
     /**
      * <code>optional uint64 statusChanged = 5;</code>
-     *
-     * <pre>
-     * possibly 4
-     * </pre>
      */
     boolean hasStatusChanged();
     /**
      * <code>optional uint64 statusChanged = 5;</code>
-     *
-     * <pre>
-     * possibly 4
-     * </pre>
      */
     long getStatusChanged();
 
@@ -32547,55 +32523,76 @@ public final class CloudKit {
     int getMode();
 
     /**
-     * <code>optional uint64 x = 10;</code>
-     *
-     * <pre>
-     * unknown, multiples of 4096 ?? file system block related
-     * </pre>
+     * <code>optional uint64 sizeBeforeCopy = 10;</code>
      */
-    boolean hasX();
+    boolean hasSizeBeforeCopy();
     /**
-     * <code>optional uint64 x = 10;</code>
-     *
-     * <pre>
-     * unknown, multiples of 4096 ?? file system block related
-     * </pre>
+     * <code>optional uint64 sizeBeforeCopy = 10;</code>
      */
-    long getX();
+    long getSizeBeforeCopy();
+
+    /**
+     * <code>optional bytes linkTarget = 11;</code>
+     */
+    boolean hasLinkTarget();
+    /**
+     * <code>optional bytes linkTarget = 11;</code>
+     */
+    com.google.protobuf.ByteString getLinkTarget();
 
     /**
      * <code>optional bytes encryptionKey = 12;</code>
-     *
-     * <pre>
-     * 11 - unknown
-     * </pre>
      */
     boolean hasEncryptionKey();
     /**
      * <code>optional bytes encryptionKey = 12;</code>
-     *
-     * <pre>
-     * 11 - unknown
-     * </pre>
      */
     com.google.protobuf.ByteString getEncryptionKey();
 
     /**
-     * <code>optional bytes checksum = 13;</code>
-     *
-     * <pre>
-     * SHA-256 checksum
-     * </pre>
+     * <code>optional bytes sha256Signature = 13;</code>
      */
-    boolean hasChecksum();
+    boolean hasSha256Signature();
     /**
-     * <code>optional bytes checksum = 13;</code>
-     *
-     * <pre>
-     * SHA-256 checksum
-     * </pre>
+     * <code>optional bytes sha256Signature = 13;</code>
      */
-    com.google.protobuf.ByteString getChecksum();
+    com.google.protobuf.ByteString getSha256Signature();
+
+    /**
+     * <code>optional int32 domainOrdinal = 14;</code>
+     */
+    boolean hasDomainOrdinal();
+    /**
+     * <code>optional int32 domainOrdinal = 14;</code>
+     */
+    int getDomainOrdinal();
+
+    /**
+     * <code>optional int32 flags = 15;</code>
+     */
+    boolean hasFlags();
+    /**
+     * <code>optional int32 flags = 15;</code>
+     */
+    int getFlags();
+
+    /**
+     * <code>optional int32 contentEncodingMethod = 16;</code>
+     */
+    boolean hasContentEncodingMethod();
+    /**
+     * <code>optional int32 contentEncodingMethod = 16;</code>
+     */
+    int getContentEncodingMethod();
+
+    /**
+     * <code>optional int32 contentCompressionMethod = 17;</code>
+     */
+    boolean hasContentCompressionMethod();
+    /**
+     * <code>optional int32 contentCompressionMethod = 17;</code>
+     */
+    int getContentCompressionMethod();
   }
   /**
    * Protobuf type {@code EncryptedAttributes}
@@ -32702,17 +32699,42 @@ public final class CloudKit {
             }
             case 80: {
               bitField0_ |= 0x00000200;
-              x_ = input.readUInt64();
+              sizeBeforeCopy_ = input.readUInt64();
+              break;
+            }
+            case 90: {
+              bitField0_ |= 0x00000400;
+              linkTarget_ = input.readBytes();
               break;
             }
             case 98: {
-              bitField0_ |= 0x00000400;
+              bitField0_ |= 0x00000800;
               encryptionKey_ = input.readBytes();
               break;
             }
             case 106: {
-              bitField0_ |= 0x00000800;
-              checksum_ = input.readBytes();
+              bitField0_ |= 0x00001000;
+              sha256Signature_ = input.readBytes();
+              break;
+            }
+            case 112: {
+              bitField0_ |= 0x00002000;
+              domainOrdinal_ = input.readInt32();
+              break;
+            }
+            case 120: {
+              bitField0_ |= 0x00004000;
+              flags_ = input.readInt32();
+              break;
+            }
+            case 128: {
+              bitField0_ |= 0x00008000;
+              contentEncodingMethod_ = input.readInt32();
+              break;
+            }
+            case 136: {
+              bitField0_ |= 0x00010000;
+              contentCompressionMethod_ = input.readInt32();
               break;
             }
           }
@@ -32843,20 +32865,12 @@ public final class CloudKit {
     private long birth_;
     /**
      * <code>optional uint64 birth = 3;</code>
-     *
-     * <pre>
-     * probably
-     * </pre>
      */
     public boolean hasBirth() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>optional uint64 birth = 3;</code>
-     *
-     * <pre>
-     * probably
-     * </pre>
      */
     public long getBirth() {
       return birth_;
@@ -32866,20 +32880,12 @@ public final class CloudKit {
     private long modified_;
     /**
      * <code>optional uint64 modified = 4;</code>
-     *
-     * <pre>
-     * possibly 5
-     * </pre>
      */
     public boolean hasModified() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional uint64 modified = 4;</code>
-     *
-     * <pre>
-     * possibly 5
-     * </pre>
      */
     public long getModified() {
       return modified_;
@@ -32889,20 +32895,12 @@ public final class CloudKit {
     private long statusChanged_;
     /**
      * <code>optional uint64 statusChanged = 5;</code>
-     *
-     * <pre>
-     * possibly 4
-     * </pre>
      */
     public boolean hasStatusChanged() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional uint64 statusChanged = 5;</code>
-     *
-     * <pre>
-     * possibly 4
-     * </pre>
      */
     public long getStatusChanged() {
       return statusChanged_;
@@ -32968,73 +32966,124 @@ public final class CloudKit {
       return mode_;
     }
 
-    public static final int X_FIELD_NUMBER = 10;
-    private long x_;
+    public static final int SIZEBEFORECOPY_FIELD_NUMBER = 10;
+    private long sizeBeforeCopy_;
     /**
-     * <code>optional uint64 x = 10;</code>
-     *
-     * <pre>
-     * unknown, multiples of 4096 ?? file system block related
-     * </pre>
+     * <code>optional uint64 sizeBeforeCopy = 10;</code>
      */
-    public boolean hasX() {
+    public boolean hasSizeBeforeCopy() {
       return ((bitField0_ & 0x00000200) == 0x00000200);
     }
     /**
-     * <code>optional uint64 x = 10;</code>
-     *
-     * <pre>
-     * unknown, multiples of 4096 ?? file system block related
-     * </pre>
+     * <code>optional uint64 sizeBeforeCopy = 10;</code>
      */
-    public long getX() {
-      return x_;
+    public long getSizeBeforeCopy() {
+      return sizeBeforeCopy_;
+    }
+
+    public static final int LINKTARGET_FIELD_NUMBER = 11;
+    private com.google.protobuf.ByteString linkTarget_;
+    /**
+     * <code>optional bytes linkTarget = 11;</code>
+     */
+    public boolean hasLinkTarget() {
+      return ((bitField0_ & 0x00000400) == 0x00000400);
+    }
+    /**
+     * <code>optional bytes linkTarget = 11;</code>
+     */
+    public com.google.protobuf.ByteString getLinkTarget() {
+      return linkTarget_;
     }
 
     public static final int ENCRYPTIONKEY_FIELD_NUMBER = 12;
     private com.google.protobuf.ByteString encryptionKey_;
     /**
      * <code>optional bytes encryptionKey = 12;</code>
-     *
-     * <pre>
-     * 11 - unknown
-     * </pre>
      */
     public boolean hasEncryptionKey() {
-      return ((bitField0_ & 0x00000400) == 0x00000400);
+      return ((bitField0_ & 0x00000800) == 0x00000800);
     }
     /**
      * <code>optional bytes encryptionKey = 12;</code>
-     *
-     * <pre>
-     * 11 - unknown
-     * </pre>
      */
     public com.google.protobuf.ByteString getEncryptionKey() {
       return encryptionKey_;
     }
 
-    public static final int CHECKSUM_FIELD_NUMBER = 13;
-    private com.google.protobuf.ByteString checksum_;
+    public static final int SHA256SIGNATURE_FIELD_NUMBER = 13;
+    private com.google.protobuf.ByteString sha256Signature_;
     /**
-     * <code>optional bytes checksum = 13;</code>
-     *
-     * <pre>
-     * SHA-256 checksum
-     * </pre>
+     * <code>optional bytes sha256Signature = 13;</code>
      */
-    public boolean hasChecksum() {
-      return ((bitField0_ & 0x00000800) == 0x00000800);
+    public boolean hasSha256Signature() {
+      return ((bitField0_ & 0x00001000) == 0x00001000);
     }
     /**
-     * <code>optional bytes checksum = 13;</code>
-     *
-     * <pre>
-     * SHA-256 checksum
-     * </pre>
+     * <code>optional bytes sha256Signature = 13;</code>
      */
-    public com.google.protobuf.ByteString getChecksum() {
-      return checksum_;
+    public com.google.protobuf.ByteString getSha256Signature() {
+      return sha256Signature_;
+    }
+
+    public static final int DOMAINORDINAL_FIELD_NUMBER = 14;
+    private int domainOrdinal_;
+    /**
+     * <code>optional int32 domainOrdinal = 14;</code>
+     */
+    public boolean hasDomainOrdinal() {
+      return ((bitField0_ & 0x00002000) == 0x00002000);
+    }
+    /**
+     * <code>optional int32 domainOrdinal = 14;</code>
+     */
+    public int getDomainOrdinal() {
+      return domainOrdinal_;
+    }
+
+    public static final int FLAGS_FIELD_NUMBER = 15;
+    private int flags_;
+    /**
+     * <code>optional int32 flags = 15;</code>
+     */
+    public boolean hasFlags() {
+      return ((bitField0_ & 0x00004000) == 0x00004000);
+    }
+    /**
+     * <code>optional int32 flags = 15;</code>
+     */
+    public int getFlags() {
+      return flags_;
+    }
+
+    public static final int CONTENTENCODINGMETHOD_FIELD_NUMBER = 16;
+    private int contentEncodingMethod_;
+    /**
+     * <code>optional int32 contentEncodingMethod = 16;</code>
+     */
+    public boolean hasContentEncodingMethod() {
+      return ((bitField0_ & 0x00008000) == 0x00008000);
+    }
+    /**
+     * <code>optional int32 contentEncodingMethod = 16;</code>
+     */
+    public int getContentEncodingMethod() {
+      return contentEncodingMethod_;
+    }
+
+    public static final int CONTENTCOMPRESSIONMETHOD_FIELD_NUMBER = 17;
+    private int contentCompressionMethod_;
+    /**
+     * <code>optional int32 contentCompressionMethod = 17;</code>
+     */
+    public boolean hasContentCompressionMethod() {
+      return ((bitField0_ & 0x00010000) == 0x00010000);
+    }
+    /**
+     * <code>optional int32 contentCompressionMethod = 17;</code>
+     */
+    public int getContentCompressionMethod() {
+      return contentCompressionMethod_;
     }
 
     private void initFields() {
@@ -33047,9 +33096,14 @@ public final class CloudKit {
       groupID_ = 0;
       userID_ = 0;
       mode_ = 0;
-      x_ = 0L;
+      sizeBeforeCopy_ = 0L;
+      linkTarget_ = com.google.protobuf.ByteString.EMPTY;
       encryptionKey_ = com.google.protobuf.ByteString.EMPTY;
-      checksum_ = com.google.protobuf.ByteString.EMPTY;
+      sha256Signature_ = com.google.protobuf.ByteString.EMPTY;
+      domainOrdinal_ = 0;
+      flags_ = 0;
+      contentEncodingMethod_ = 0;
+      contentCompressionMethod_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -33092,13 +33146,28 @@ public final class CloudKit {
         output.writeUInt32(9, mode_);
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeUInt64(10, x_);
+        output.writeUInt64(10, sizeBeforeCopy_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        output.writeBytes(12, encryptionKey_);
+        output.writeBytes(11, linkTarget_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        output.writeBytes(13, checksum_);
+        output.writeBytes(12, encryptionKey_);
+      }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        output.writeBytes(13, sha256Signature_);
+      }
+      if (((bitField0_ & 0x00002000) == 0x00002000)) {
+        output.writeInt32(14, domainOrdinal_);
+      }
+      if (((bitField0_ & 0x00004000) == 0x00004000)) {
+        output.writeInt32(15, flags_);
+      }
+      if (((bitField0_ & 0x00008000) == 0x00008000)) {
+        output.writeInt32(16, contentEncodingMethod_);
+      }
+      if (((bitField0_ & 0x00010000) == 0x00010000)) {
+        output.writeInt32(17, contentCompressionMethod_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -33147,15 +33216,35 @@ public final class CloudKit {
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(10, x_);
+          .computeUInt64Size(10, sizeBeforeCopy_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(12, encryptionKey_);
+          .computeBytesSize(11, linkTarget_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(13, checksum_);
+          .computeBytesSize(12, encryptionKey_);
+      }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(13, sha256Signature_);
+      }
+      if (((bitField0_ & 0x00002000) == 0x00002000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(14, domainOrdinal_);
+      }
+      if (((bitField0_ & 0x00004000) == 0x00004000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(15, flags_);
+      }
+      if (((bitField0_ & 0x00008000) == 0x00008000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(16, contentEncodingMethod_);
+      }
+      if (((bitField0_ & 0x00010000) == 0x00010000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(17, contentCompressionMethod_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -33296,12 +33385,22 @@ public final class CloudKit {
         bitField0_ = (bitField0_ & ~0x00000080);
         mode_ = 0;
         bitField0_ = (bitField0_ & ~0x00000100);
-        x_ = 0L;
+        sizeBeforeCopy_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000200);
-        encryptionKey_ = com.google.protobuf.ByteString.EMPTY;
+        linkTarget_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000400);
-        checksum_ = com.google.protobuf.ByteString.EMPTY;
+        encryptionKey_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000800);
+        sha256Signature_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00001000);
+        domainOrdinal_ = 0;
+        bitField0_ = (bitField0_ & ~0x00002000);
+        flags_ = 0;
+        bitField0_ = (bitField0_ & ~0x00004000);
+        contentEncodingMethod_ = 0;
+        bitField0_ = (bitField0_ & ~0x00008000);
+        contentCompressionMethod_ = 0;
+        bitField0_ = (bitField0_ & ~0x00010000);
         return this;
       }
 
@@ -33369,15 +33468,35 @@ public final class CloudKit {
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000200;
         }
-        result.x_ = x_;
+        result.sizeBeforeCopy_ = sizeBeforeCopy_;
         if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
           to_bitField0_ |= 0x00000400;
         }
-        result.encryptionKey_ = encryptionKey_;
+        result.linkTarget_ = linkTarget_;
         if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
           to_bitField0_ |= 0x00000800;
         }
-        result.checksum_ = checksum_;
+        result.encryptionKey_ = encryptionKey_;
+        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
+          to_bitField0_ |= 0x00001000;
+        }
+        result.sha256Signature_ = sha256Signature_;
+        if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
+          to_bitField0_ |= 0x00002000;
+        }
+        result.domainOrdinal_ = domainOrdinal_;
+        if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
+          to_bitField0_ |= 0x00004000;
+        }
+        result.flags_ = flags_;
+        if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
+          to_bitField0_ |= 0x00008000;
+        }
+        result.contentEncodingMethod_ = contentEncodingMethod_;
+        if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
+          to_bitField0_ |= 0x00010000;
+        }
+        result.contentCompressionMethod_ = contentCompressionMethod_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -33425,14 +33544,29 @@ public final class CloudKit {
         if (other.hasMode()) {
           setMode(other.getMode());
         }
-        if (other.hasX()) {
-          setX(other.getX());
+        if (other.hasSizeBeforeCopy()) {
+          setSizeBeforeCopy(other.getSizeBeforeCopy());
+        }
+        if (other.hasLinkTarget()) {
+          setLinkTarget(other.getLinkTarget());
         }
         if (other.hasEncryptionKey()) {
           setEncryptionKey(other.getEncryptionKey());
         }
-        if (other.hasChecksum()) {
-          setChecksum(other.getChecksum());
+        if (other.hasSha256Signature()) {
+          setSha256Signature(other.getSha256Signature());
+        }
+        if (other.hasDomainOrdinal()) {
+          setDomainOrdinal(other.getDomainOrdinal());
+        }
+        if (other.hasFlags()) {
+          setFlags(other.getFlags());
+        }
+        if (other.hasContentEncodingMethod()) {
+          setContentEncodingMethod(other.getContentEncodingMethod());
+        }
+        if (other.hasContentCompressionMethod()) {
+          setContentCompressionMethod(other.getContentCompressionMethod());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -33616,30 +33750,18 @@ public final class CloudKit {
       private long birth_ ;
       /**
        * <code>optional uint64 birth = 3;</code>
-       *
-       * <pre>
-       * probably
-       * </pre>
        */
       public boolean hasBirth() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
        * <code>optional uint64 birth = 3;</code>
-       *
-       * <pre>
-       * probably
-       * </pre>
        */
       public long getBirth() {
         return birth_;
       }
       /**
        * <code>optional uint64 birth = 3;</code>
-       *
-       * <pre>
-       * probably
-       * </pre>
        */
       public Builder setBirth(long value) {
         bitField0_ |= 0x00000004;
@@ -33649,10 +33771,6 @@ public final class CloudKit {
       }
       /**
        * <code>optional uint64 birth = 3;</code>
-       *
-       * <pre>
-       * probably
-       * </pre>
        */
       public Builder clearBirth() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -33664,30 +33782,18 @@ public final class CloudKit {
       private long modified_ ;
       /**
        * <code>optional uint64 modified = 4;</code>
-       *
-       * <pre>
-       * possibly 5
-       * </pre>
        */
       public boolean hasModified() {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
        * <code>optional uint64 modified = 4;</code>
-       *
-       * <pre>
-       * possibly 5
-       * </pre>
        */
       public long getModified() {
         return modified_;
       }
       /**
        * <code>optional uint64 modified = 4;</code>
-       *
-       * <pre>
-       * possibly 5
-       * </pre>
        */
       public Builder setModified(long value) {
         bitField0_ |= 0x00000008;
@@ -33697,10 +33803,6 @@ public final class CloudKit {
       }
       /**
        * <code>optional uint64 modified = 4;</code>
-       *
-       * <pre>
-       * possibly 5
-       * </pre>
        */
       public Builder clearModified() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -33712,30 +33814,18 @@ public final class CloudKit {
       private long statusChanged_ ;
       /**
        * <code>optional uint64 statusChanged = 5;</code>
-       *
-       * <pre>
-       * possibly 4
-       * </pre>
        */
       public boolean hasStatusChanged() {
         return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional uint64 statusChanged = 5;</code>
-       *
-       * <pre>
-       * possibly 4
-       * </pre>
        */
       public long getStatusChanged() {
         return statusChanged_;
       }
       /**
        * <code>optional uint64 statusChanged = 5;</code>
-       *
-       * <pre>
-       * possibly 4
-       * </pre>
        */
       public Builder setStatusChanged(long value) {
         bitField0_ |= 0x00000010;
@@ -33745,10 +33835,6 @@ public final class CloudKit {
       }
       /**
        * <code>optional uint64 statusChanged = 5;</code>
-       *
-       * <pre>
-       * possibly 4
-       * </pre>
        */
       public Builder clearStatusChanged() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -33885,50 +33971,69 @@ public final class CloudKit {
         return this;
       }
 
-      private long x_ ;
+      private long sizeBeforeCopy_ ;
       /**
-       * <code>optional uint64 x = 10;</code>
-       *
-       * <pre>
-       * unknown, multiples of 4096 ?? file system block related
-       * </pre>
+       * <code>optional uint64 sizeBeforeCopy = 10;</code>
        */
-      public boolean hasX() {
+      public boolean hasSizeBeforeCopy() {
         return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
-       * <code>optional uint64 x = 10;</code>
-       *
-       * <pre>
-       * unknown, multiples of 4096 ?? file system block related
-       * </pre>
+       * <code>optional uint64 sizeBeforeCopy = 10;</code>
        */
-      public long getX() {
-        return x_;
+      public long getSizeBeforeCopy() {
+        return sizeBeforeCopy_;
       }
       /**
-       * <code>optional uint64 x = 10;</code>
-       *
-       * <pre>
-       * unknown, multiples of 4096 ?? file system block related
-       * </pre>
+       * <code>optional uint64 sizeBeforeCopy = 10;</code>
        */
-      public Builder setX(long value) {
+      public Builder setSizeBeforeCopy(long value) {
         bitField0_ |= 0x00000200;
-        x_ = value;
+        sizeBeforeCopy_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional uint64 x = 10;</code>
-       *
-       * <pre>
-       * unknown, multiples of 4096 ?? file system block related
-       * </pre>
+       * <code>optional uint64 sizeBeforeCopy = 10;</code>
        */
-      public Builder clearX() {
+      public Builder clearSizeBeforeCopy() {
         bitField0_ = (bitField0_ & ~0x00000200);
-        x_ = 0L;
+        sizeBeforeCopy_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString linkTarget_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes linkTarget = 11;</code>
+       */
+      public boolean hasLinkTarget() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <code>optional bytes linkTarget = 11;</code>
+       */
+      public com.google.protobuf.ByteString getLinkTarget() {
+        return linkTarget_;
+      }
+      /**
+       * <code>optional bytes linkTarget = 11;</code>
+       */
+      public Builder setLinkTarget(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000400;
+        linkTarget_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes linkTarget = 11;</code>
+       */
+      public Builder clearLinkTarget() {
+        bitField0_ = (bitField0_ & ~0x00000400);
+        linkTarget_ = getDefaultInstance().getLinkTarget();
         onChanged();
         return this;
       }
@@ -33936,101 +34041,197 @@ public final class CloudKit {
       private com.google.protobuf.ByteString encryptionKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes encryptionKey = 12;</code>
-       *
-       * <pre>
-       * 11 - unknown
-       * </pre>
        */
       public boolean hasEncryptionKey() {
-        return ((bitField0_ & 0x00000400) == 0x00000400);
+        return ((bitField0_ & 0x00000800) == 0x00000800);
       }
       /**
        * <code>optional bytes encryptionKey = 12;</code>
-       *
-       * <pre>
-       * 11 - unknown
-       * </pre>
        */
       public com.google.protobuf.ByteString getEncryptionKey() {
         return encryptionKey_;
       }
       /**
        * <code>optional bytes encryptionKey = 12;</code>
-       *
-       * <pre>
-       * 11 - unknown
-       * </pre>
        */
       public Builder setEncryptionKey(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
         encryptionKey_ = value;
         onChanged();
         return this;
       }
       /**
        * <code>optional bytes encryptionKey = 12;</code>
-       *
-       * <pre>
-       * 11 - unknown
-       * </pre>
        */
       public Builder clearEncryptionKey() {
-        bitField0_ = (bitField0_ & ~0x00000400);
+        bitField0_ = (bitField0_ & ~0x00000800);
         encryptionKey_ = getDefaultInstance().getEncryptionKey();
         onChanged();
         return this;
       }
 
-      private com.google.protobuf.ByteString checksum_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString sha256Signature_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes checksum = 13;</code>
-       *
-       * <pre>
-       * SHA-256 checksum
-       * </pre>
+       * <code>optional bytes sha256Signature = 13;</code>
        */
-      public boolean hasChecksum() {
-        return ((bitField0_ & 0x00000800) == 0x00000800);
+      public boolean hasSha256Signature() {
+        return ((bitField0_ & 0x00001000) == 0x00001000);
       }
       /**
-       * <code>optional bytes checksum = 13;</code>
-       *
-       * <pre>
-       * SHA-256 checksum
-       * </pre>
+       * <code>optional bytes sha256Signature = 13;</code>
        */
-      public com.google.protobuf.ByteString getChecksum() {
-        return checksum_;
+      public com.google.protobuf.ByteString getSha256Signature() {
+        return sha256Signature_;
       }
       /**
-       * <code>optional bytes checksum = 13;</code>
-       *
-       * <pre>
-       * SHA-256 checksum
-       * </pre>
+       * <code>optional bytes sha256Signature = 13;</code>
        */
-      public Builder setChecksum(com.google.protobuf.ByteString value) {
+      public Builder setSha256Signature(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000800;
-        checksum_ = value;
+  bitField0_ |= 0x00001000;
+        sha256Signature_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bytes checksum = 13;</code>
-       *
-       * <pre>
-       * SHA-256 checksum
-       * </pre>
+       * <code>optional bytes sha256Signature = 13;</code>
        */
-      public Builder clearChecksum() {
-        bitField0_ = (bitField0_ & ~0x00000800);
-        checksum_ = getDefaultInstance().getChecksum();
+      public Builder clearSha256Signature() {
+        bitField0_ = (bitField0_ & ~0x00001000);
+        sha256Signature_ = getDefaultInstance().getSha256Signature();
+        onChanged();
+        return this;
+      }
+
+      private int domainOrdinal_ ;
+      /**
+       * <code>optional int32 domainOrdinal = 14;</code>
+       */
+      public boolean hasDomainOrdinal() {
+        return ((bitField0_ & 0x00002000) == 0x00002000);
+      }
+      /**
+       * <code>optional int32 domainOrdinal = 14;</code>
+       */
+      public int getDomainOrdinal() {
+        return domainOrdinal_;
+      }
+      /**
+       * <code>optional int32 domainOrdinal = 14;</code>
+       */
+      public Builder setDomainOrdinal(int value) {
+        bitField0_ |= 0x00002000;
+        domainOrdinal_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 domainOrdinal = 14;</code>
+       */
+      public Builder clearDomainOrdinal() {
+        bitField0_ = (bitField0_ & ~0x00002000);
+        domainOrdinal_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int flags_ ;
+      /**
+       * <code>optional int32 flags = 15;</code>
+       */
+      public boolean hasFlags() {
+        return ((bitField0_ & 0x00004000) == 0x00004000);
+      }
+      /**
+       * <code>optional int32 flags = 15;</code>
+       */
+      public int getFlags() {
+        return flags_;
+      }
+      /**
+       * <code>optional int32 flags = 15;</code>
+       */
+      public Builder setFlags(int value) {
+        bitField0_ |= 0x00004000;
+        flags_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 flags = 15;</code>
+       */
+      public Builder clearFlags() {
+        bitField0_ = (bitField0_ & ~0x00004000);
+        flags_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int contentEncodingMethod_ ;
+      /**
+       * <code>optional int32 contentEncodingMethod = 16;</code>
+       */
+      public boolean hasContentEncodingMethod() {
+        return ((bitField0_ & 0x00008000) == 0x00008000);
+      }
+      /**
+       * <code>optional int32 contentEncodingMethod = 16;</code>
+       */
+      public int getContentEncodingMethod() {
+        return contentEncodingMethod_;
+      }
+      /**
+       * <code>optional int32 contentEncodingMethod = 16;</code>
+       */
+      public Builder setContentEncodingMethod(int value) {
+        bitField0_ |= 0x00008000;
+        contentEncodingMethod_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 contentEncodingMethod = 16;</code>
+       */
+      public Builder clearContentEncodingMethod() {
+        bitField0_ = (bitField0_ & ~0x00008000);
+        contentEncodingMethod_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int contentCompressionMethod_ ;
+      /**
+       * <code>optional int32 contentCompressionMethod = 17;</code>
+       */
+      public boolean hasContentCompressionMethod() {
+        return ((bitField0_ & 0x00010000) == 0x00010000);
+      }
+      /**
+       * <code>optional int32 contentCompressionMethod = 17;</code>
+       */
+      public int getContentCompressionMethod() {
+        return contentCompressionMethod_;
+      }
+      /**
+       * <code>optional int32 contentCompressionMethod = 17;</code>
+       */
+      public Builder setContentCompressionMethod(int value) {
+        bitField0_ |= 0x00010000;
+        contentCompressionMethod_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 contentCompressionMethod = 17;</code>
+       */
+      public Builder clearContentCompressionMethod() {
+        bitField0_ = (bitField0_ & ~0x00010000);
+        contentCompressionMethod_ = 0;
         onChanged();
         return this;
       }
@@ -34338,18 +34539,22 @@ public final class CloudKit {
       "ifier\"N\n\024ZoneRetrieveResponse\0226\n\014zoneSum" +
       "marys\030\001 \003(\0132 .ZoneRetrieveResponseZoneSu" +
       "mmary\"<\n\037ZoneRetrieveResponseZoneSummary" +
-      "\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"\210\001\n\004Zone\022-\n\016" +
+      "\022\031\n\ntargetZone\030\001 \001(\0132\005.Zone\"\215\001\n\004Zone\022-\n\016" +
       "zoneIdentifier\030\001 \001(\0132\025.RecordZoneIdentif",
       "ier\022\'\n\016protectionInfo\030\003 \001(\0132\017.Protection" +
-      "Info\022(\n\017protectionInfoX\030\006 \001(\0132\017.Protecti" +
-      "onInfo\"\344\001\n\023EncryptedAttributes\022\024\n\014relati" +
-      "vePath\030\001 \001(\t\022\016\n\006domain\030\002 \001(\t\022\r\n\005birth\030\003 " +
-      "\001(\004\022\020\n\010modified\030\004 \001(\004\022\025\n\rstatusChanged\030\005" +
-      " \001(\004\022\014\n\004size\030\006 \001(\004\022\017\n\007groupID\030\007 \001(\r\022\016\n\006u" +
-      "serID\030\010 \001(\r\022\014\n\004mode\030\t \001(\r\022\t\n\001x\030\n \001(\004\022\025\n\r" +
-      "encryptionKey\030\014 \001(\014\022\020\n\010checksum\030\r \001(\014B9\n" +
-      "-com.github.horrorho.inflatabledonkey.pr" +
-      "otobufB\010CloudKit"
+      "Info\022-\n\024recordProtectionInfo\030\006 \001(\0132\017.Pro" +
+      "tectionInfo\"\363\002\n\023EncryptedAttributes\022\024\n\014r" +
+      "elativePath\030\001 \001(\t\022\016\n\006domain\030\002 \001(\t\022\r\n\005bir" +
+      "th\030\003 \001(\004\022\020\n\010modified\030\004 \001(\004\022\025\n\rstatusChan" +
+      "ged\030\005 \001(\004\022\014\n\004size\030\006 \001(\004\022\017\n\007groupID\030\007 \001(\r" +
+      "\022\016\n\006userID\030\010 \001(\r\022\014\n\004mode\030\t \001(\r\022\026\n\016sizeBe" +
+      "foreCopy\030\n \001(\004\022\022\n\nlinkTarget\030\013 \001(\014\022\025\n\ren" +
+      "cryptionKey\030\014 \001(\014\022\027\n\017sha256Signature\030\r \001" +
+      "(\014\022\025\n\rdomainOrdinal\030\016 \001(\005\022\r\n\005flags\030\017 \001(\005",
+      "\022\035\n\025contentEncodingMethod\030\020 \001(\005\022 \n\030conte" +
+      "ntCompressionMethod\030\021 \001(\005B9\n-com.github." +
+      "horrorho.inflatabledonkey.protobufB\010Clou" +
+      "dKit"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -34578,13 +34783,13 @@ public final class CloudKit {
     internal_static_Zone_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Zone_descriptor,
-        new java.lang.String[] { "ZoneIdentifier", "ProtectionInfo", "ProtectionInfoX", });
+        new java.lang.String[] { "ZoneIdentifier", "ProtectionInfo", "RecordProtectionInfo", });
     internal_static_EncryptedAttributes_descriptor =
       getDescriptor().getMessageTypes().get(36);
     internal_static_EncryptedAttributes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_EncryptedAttributes_descriptor,
-        new java.lang.String[] { "RelativePath", "Domain", "Birth", "Modified", "StatusChanged", "Size", "GroupID", "UserID", "Mode", "X", "EncryptionKey", "Checksum", });
+        new java.lang.String[] { "RelativePath", "Domain", "Birth", "Modified", "StatusChanged", "Size", "GroupID", "UserID", "Mode", "SizeBeforeCopy", "LinkTarget", "EncryptionKey", "Sha256Signature", "DomainOrdinal", "Flags", "ContentEncodingMethod", "ContentCompressionMethod", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
