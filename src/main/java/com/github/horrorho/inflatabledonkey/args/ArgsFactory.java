@@ -219,7 +219,7 @@ public final class ArgsFactory {
                 .hasArg()
                 .optionalArg(true)
                 .build();
-        return new Arg(Property.PATH_LZFSE, option);
+        return new Arg(Property.PATH_LZFSE, option, ArgsFactory::mapNull);
     }
 
     static Arg mode() {
@@ -329,6 +329,10 @@ public final class ArgsFactory {
         return "" + LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
                 .atStartOfDay(ZoneId.systemDefault())
                 .toEpochSecond();
+    }
+
+    static String mapNull(String string) {
+        return string == null ? "" : string;
     }
 }
 // TODO negative integer rejection

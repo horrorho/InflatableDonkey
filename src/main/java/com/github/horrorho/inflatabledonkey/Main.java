@@ -52,6 +52,7 @@ import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
 import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
+import com.github.horrorho.inflatabledonkey.util.LZFSEExtInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -96,14 +97,25 @@ public class Main {
             if (!PropertyLoader.instance().test(args)) {
                 return;
             }
+            Property.PATH_LZFSE.as(Paths::get).ifPresent(Main::testLZFSE);
+
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
+        } catch (IllegalStateException ex) {
+            System.out.println("Configuration error: " + ex.getMessage());
+            System.exit(-2);
         }
 
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
+
+        if (Property.PATH_LZFSE.as(Paths::get).isPresent()) {
+            System.out.println("LZFSE external compressor configured.");
+        } else {
+            System.out.println("No LZFSE compressor specified. Decryption may fail on certain iOS 11 files.");
+        }
 
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
@@ -361,6 +373,20 @@ public class Main {
                 })
                 .flatMap(Collection::stream)
                 .forEach(u -> System.out.println("  SNAPSHOT: " + u.info()));
+    }
+
+    static void testLZFSE(Path path) {
+        try (LZFSEExtInputStream is
+                = LZFSEExtInputStream.create(path, Main.class.getClassLoader().getResourceAsStream("num.lzfse"))) {
+            for (int i = 0, n = 0; (n = is.read()) != -1; i = ++i % 256) {
+                if (i != n) {
+                    throw new IOException("decompression test failed");
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("External LZFSE failure: " + ex.getMessage());
+        }
+        logger.info("-- testLZFSE() - LZFSE decompression test passed: {}", path);
     }
 }
 

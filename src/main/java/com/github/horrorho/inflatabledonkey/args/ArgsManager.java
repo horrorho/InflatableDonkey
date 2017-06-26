@@ -85,7 +85,6 @@ public class ArgsManager {
         if (arg == null) {
             throw new IllegalArgumentException("unreferenced option");
         }
-
         String value = parse(option, arg::map);
         return new SimpleImmutableEntry<>(arg.property(), value);
     }
