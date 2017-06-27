@@ -48,6 +48,7 @@ public final class AssetEncryptedAttributes {
     private final Optional<Long> size;
     private final Optional<byte[]> encryptionKey;
     private final Optional<byte[]> checksum;        // SHA-256
+    private final Optional<Long> sizeBeforeCopy;
     private final Optional<Integer> contentEncodingMethod;
     private final Optional<Integer> contentCompressionMethod;
 
@@ -63,6 +64,7 @@ public final class AssetEncryptedAttributes {
             Optional<Long> size,
             Optional<byte[]> encryptionKey,
             Optional<byte[]> checksum,
+            Optional<Long> sizeBeforeCopy,
             Optional<Integer> contentEncodingMethod,
             Optional<Integer> contentCompressionMethod) {
         this.domain = Objects.requireNonNull(domain);
@@ -76,6 +78,7 @@ public final class AssetEncryptedAttributes {
         this.size = Objects.requireNonNull(size);
         this.encryptionKey = encryptionKey.map(bs -> Arrays.copyOf(bs, bs.length));
         this.checksum = checksum.map(bs -> Arrays.copyOf(bs, bs.length));
+        this.sizeBeforeCopy = Objects.requireNonNull(sizeBeforeCopy);
         this.contentEncodingMethod = Objects.requireNonNull(contentEncodingMethod);
         this.contentCompressionMethod = Objects.requireNonNull(contentCompressionMethod);
     }
@@ -124,6 +127,10 @@ public final class AssetEncryptedAttributes {
         return checksum.map(bs -> Arrays.copyOf(bs, bs.length));
     }
 
+    public Optional<Long> sizeBeforeCopy() {
+        return sizeBeforeCopy;
+    }
+
     public Optional<Integer> contentEncodingMethod() {
         return contentEncodingMethod;
     }
@@ -146,6 +153,7 @@ public final class AssetEncryptedAttributes {
                 + ", size=" + size
                 + ", encryptionKey=0x" + encryptionKey.map((Hex::toHexString))
                 + ", checksum=0x" + checksum.map((Hex::toHexString))
+                + ", sizeBeforeCopy=" + sizeBeforeCopy
                 + ", contentEncodingMethod=" + contentEncodingMethod
                 + ", contentCompressionMethod=" + contentCompressionMethod
                 + '}';

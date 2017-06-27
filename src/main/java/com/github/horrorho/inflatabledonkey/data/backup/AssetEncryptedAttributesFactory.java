@@ -128,6 +128,9 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> checksum = data.hasSha256Signature()
                 ? Optional.of(data.getSha256Signature().toByteArray())
                 : Optional.empty();
+        Optional<Long> sizeBeforeCopy = data.hasSizeBeforeCopy()
+                ? Optional.of(data.getSizeBeforeCopy())
+                : Optional.empty();
         Optional<Integer> contentEncodingMethod = data.hasContentEncodingMethod()
                 ? Optional.of(data.getContentEncodingMethod())
                 : Optional.empty();
@@ -154,6 +157,7 @@ public final class AssetEncryptedAttributesFactory {
                 size,
                 encryptionKey,
                 checksum,
+                sizeBeforeCopy,
                 contentEncodingMethod,
                 contentCompressionMethod);
         logger.trace(">> fromProtobuf() - encrypted attributes: {}", attributes);
@@ -192,6 +196,7 @@ public final class AssetEncryptedAttributesFactory {
         Optional<byte[]> encryptionKey = NSDictionaries.as(data, "encryptionKey", NSData.class)
                 .map(NSData::bytes);
         Optional<byte[]> checksum = Optional.empty();   // not present
+        Optional<Long> sizeBeforeCopy = Optional.empty();   // not present
         Optional<Integer> contentEncodingMethod = Optional.empty();   // not present
         Optional<Integer> contentCompressionMethod = Optional.empty();   // not present
 
@@ -207,6 +212,7 @@ public final class AssetEncryptedAttributesFactory {
                 size,
                 encryptionKey,
                 checksum,
+                sizeBeforeCopy,
                 contentEncodingMethod,
                 contentCompressionMethod);
         logger.trace(">> fromDictionary() - encrypted attributes: {}", attributes);

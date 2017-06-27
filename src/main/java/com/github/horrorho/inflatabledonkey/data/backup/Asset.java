@@ -39,8 +39,9 @@ import org.slf4j.LoggerFactory;
  */
 @Immutable
 public final class Asset extends AbstractRecord {
+
     private static final Logger logger = LoggerFactory.getLogger(Asset.class);
-    
+
     private final AssetID assetID;
     private final Optional<Integer> protectionClass;
     private final Optional<Long> size;
@@ -165,6 +166,18 @@ public final class Asset extends AbstractRecord {
 
     public Optional<byte[]> attributeChecksum() {
         return encryptedAttributes.flatMap(AssetEncryptedAttributes::checksum);
+    }
+
+    public Optional<Long> sizeBeforeCopy() {
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::sizeBeforeCopy);
+    }
+
+    public Optional<Integer> contentCompressionMethod() {
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::contentCompressionMethod);
+    }
+
+    public Optional<Integer> contentEncodingMethod() {
+        return encryptedAttributes.flatMap(AssetEncryptedAttributes::contentEncodingMethod);
     }
 
     public Optional<CloudKit.Asset> asset() {
