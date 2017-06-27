@@ -23,16 +23,20 @@
  */
 package com.github.horrorho.inflatabledonkey.file;
 
-import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
+import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
+import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.io.IOSupplier;
 import com.github.horrorho.inflatabledonkey.io.IOSupplierSequenceStream;
+import com.github.horrorho.inflatabledonkey.util.LZFSEExtInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,6 +61,8 @@ public final class FileAssembler
         implements BiConsumer<Asset, Optional<List<Chunk>>>, BiPredicate<Asset, Optional<List<Chunk>>> {
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
+
+    private static final Path LZFSE = Property.PATH_LZFSE.as(Paths::get).orElse(null);
 
     private final Function<byte[], Optional<XFileKey>> fileKeys;
     private final UnaryOperator<Optional<XFileKey>> mutator;
@@ -113,29 +119,61 @@ public final class FileAssembler
 
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
         String info = info(asset);
+        asset.contentCompressionMethod()
+                .ifPresent(u -> logger.info("-- assemble() - content compression method: {} {}", info, u));
+        asset.contentEncodingMethod()
+                .ifPresent(u -> logger.info("-- assemble() - content encoding method: {} {}", info, u));
         return asset.encryptionKey()
-                .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum()))
-                .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum()));
+                .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum(), asset.contentCompressionMethod()))
+                .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum(), asset.contentCompressionMethod()));
     }
 
-    boolean decrypt(Path path, String info, List<Chunk> chunks, byte[] encryptionKey, Optional<byte[]> signature) {
+    boolean decrypt(Path path,
+            String info,
+            List<Chunk> chunks,
+            byte[] encryptionKey,
+            Optional<byte[]> signature,
+            Optional<Integer> compression) {
         return fileKeys.apply(encryptionKey)
                 .map(Optional::of)
                 .map(mutator)
-                .map(u -> write(path, info, chunks, u, signature))
+                .map(u -> write(path, info, chunks, u, signature, compression))
                 .orElseGet(() -> {
                     logger.warn("-- decrypt() - failed to unwrap encryption key");
                     return false;
                 });
     }
 
-    boolean write(Path path, String info, List<Chunk> chunks, Optional<XFileKey> keyCipher, Optional<byte[]> signature) {
+    boolean write(Path path,
+            String info,
+            List<Chunk> chunks, Optional<XFileKey> keyCipher,
+            Optional<byte[]> signature,
+            Optional<Integer> compression) {
         logger.debug("-- write() - path: {} key cipher: {} signature: 0x{}",
                 path, keyCipher, signature.map(Hex::toHexString).orElse("NULL"));
 
+        boolean status = true;
+        Optional<IOFunction<InputStream, InputStream>> decompress;
+        if (compression.isPresent()) {
+            if (compression.get() == 2) {
+                if (LZFSE == null) {
+                    logger.warn("-- write() - no  decompressor: {} -> {}", info, compression.get());
+                    decompress = Optional.empty();
+                } else {
+                    decompress = Optional.of(u -> LZFSEExtInputStream.create(LZFSE, u));
+                }
+            } else {
+                logger.warn("-- write() - unsupported compression: {} -> {}", info, compression.get());
+                decompress = Optional.empty();
+            }
+        } else {
+            decompress = Optional.empty();
+        }
+
         try (OutputStream out = Files.newOutputStream(path);
                 InputStream in = chunkStream(chunks)) {
-            boolean status = FileStreamWriter.copy(in, out, keyCipher, signature);
+            status &= FileStreamWriter.copy(in, out, keyCipher, signature, decompress);
+//            status &= FileStreamWriter.copy(in, out, keyCipher, signature);
 
             if (keyCipher.isPresent()) {
                 XFileKey kc = keyCipher.get();
