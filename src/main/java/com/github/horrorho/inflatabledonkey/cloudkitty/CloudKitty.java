@@ -24,7 +24,9 @@
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.exception.UncheckedInterruptedException;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHeader;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
 import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.DelimitedProtobufHandler;
@@ -118,6 +120,7 @@ public final class CloudKitty {
             Function<ResponseOperation, T> field) throws IOException {
         try {
             logger.debug("-- execute() - requests: {}", requests.size());
+            logger.trace("-- execute() - requests: {}", requests);
 
             // Split and concurrently pipeline requests over our limit.
             List<List<RequestOperation>> split = ListUtils.split(requests, limit);
