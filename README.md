@@ -1,3 +1,9 @@
+**Update**, 29 June 2017.
+
+Oh my how time flies! Although this tool has been on the back burner over the last year, thanks to the assistance of others (see below) I've still managed to keep it functional through iOS 10 and now iOS 11. The caveat being that iOS 11 at present needs an external [lzfse](https://github.com/lzfse/lzfse) decoder as detailed [here](https://github.com/horrorho/InflatableDonkey/issues/67#issuecomment-311392692). I do hope to have a built-in decoder available at some point, hopefully [soon](https://wow.gamepedia.com/Soon)!
+
+There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
+
 **Update**, 15 August 2016. 
 
 Good news and bad news...
@@ -8,12 +14,6 @@ The bad. I'm putting this project on the back-burner for the foreseeable future.
 
 So! I've spent countless nights studying arcane crypto material, reverse-engineering binaries and poring over logs. Others, see below, have also contributed. InflatableDonkey now knows many secrets and I'm rather hoping others can take it and fly with it.
 
-
-**Update**, 30 July 2016. 
-
-Finally! The reworked and simplified download engine. Multi-threaded support is now enabled by default (x4 threads) which should increase download speeds. I've also tidied up the output so that it behaves more like a respectable tool and less like a warped experiment (which it probably still is).
-
-Most of the code base should now be easier to understand. The crypto code might cause some eye bleeding, but I've tried to provide references for the algorithms in use. Please ticket any requests for code clarification.
 
 
 ### What is it?
