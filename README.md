@@ -17,7 +17,7 @@ So! I've spent countless nights studying arcane crypto material, reverse-enginee
 
 
 ### What is it?
-Java proof of concept iOS9 iCloud backup retrieval tool.
+Java proof of concept iOS9/ 10/ 11 iCloud backup retrieval tool.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
