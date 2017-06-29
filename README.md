@@ -2,7 +2,7 @@
 
 Oh my how time flies! Although this tool has been on the back burner over the last year, thanks to the assistance of others (see below) I've still managed to keep it functional through iOS 10 and now iOS 11. The caveat being that iOS 11 at present needs an external [lzfse](https://github.com/lzfse/lzfse) decoder as detailed [here](https://github.com/horrorho/InflatableDonkey/issues/67#issuecomment-311392692). I do hope to have a built-in decoder available at some point, hopefully [soon](https://wow.gamepedia.com/Soon)!
 
-There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
+There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to be used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
 
 **Update**, 15 August 2016. 
 
