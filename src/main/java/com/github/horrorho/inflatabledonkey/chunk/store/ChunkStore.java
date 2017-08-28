@@ -26,10 +26,12 @@ package com.github.horrorho.inflatabledonkey.chunk.store;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
+import static java.util.stream.Collectors.toSet;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -64,11 +66,24 @@ public interface ChunkStore {
      */
     boolean delete(byte[] checksum) throws IOException;
 
-    default Optional<List<Chunk>> chunks(Collection<byte[]> checksums) {
-        List<Chunk> chunks = checksums.stream()
+    default Set<Chunk> anyChunks(Collection<byte[]> checksums) {
+        return checksums.stream()
                 .map(this::chunk)
-                .map(u -> u.orElse(null))
-                .collect(Collectors.toList());
-        return (chunks.contains(null)) ? Optional.empty() : Optional.of(chunks);
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toSet());
+    }
+
+    default Optional<List<Chunk>> allChunks(Collection<byte[]> checksums) {
+        List<Chunk> chunks = new ArrayList<>();
+        for (byte[] checksum : checksums) {
+            Optional<Chunk> chunk = chunk(checksum);
+            if (chunk.isPresent()) {
+                chunks.add(chunk.get());
+            } else {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(chunks);
     }
 }

@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.file;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
+import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -52,21 +53,46 @@ public final class FileStreamWriter {
 
     private static final int BUFFER_SIZE = Property.FILE_WRITER_BUFFER_LENGTH.asInteger().orElse(8192);
 
-    public static boolean
-            copy(InputStream in, OutputStream out, Optional<XFileKey> keyCipher, Optional<byte[]> signature)
-            throws IOException {
+    public static boolean copy(InputStream in,
+            OutputStream out,
+            Optional<XFileKey> keyCipher,
+            Optional<byte[]> signature,
+            Optional<IOFunction<InputStream, InputStream>> decompress) throws IOException {
 
         Digest digest = signature.flatMap(FileSignature::type)
                 .orElse(FileSignature.ONE)
                 .newDigest();
 
-        DigestInputStream digestInputStream = new DigestInputStream(in, digest);
+        DigestInputStream dis = new DigestInputStream(in, digest);
 
-        IOUtils.copyLarge(decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
+        InputStream fis = decryptStream(dis, keyCipher);
+
+        if (decompress.isPresent()) {
+            logger.info("-- copy() - decompressing");
+            fis = decompress.get().apply(fis);
+        }
+
+        IOUtils.copyLarge(fis, out, new byte[BUFFER_SIZE]);
         out.flush();
 
-        return testSignature(digestInputStream.getDigest(), signature);
+        return testSignature(dis.getDigest(), signature);
     }
+
+//    public static boolean
+//            copy(InputStream in, OutputStream out, Optional<XFileKey> keyCipher, Optional<byte[]> signature)
+//            throws IOException {
+//
+//        Digest digest = signature.flatMap(FileSignature::type)
+//                .orElse(FileSignature.ONE)
+//                .newDigest();
+//
+//        DigestInputStream digestInputStream = new DigestInputStream(in, digest);
+//
+//        IOUtils.copyLarge(decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
+//        out.flush();
+//
+//        return testSignature(digestInputStream.getDigest(), signature);
+//    }
 
     static InputStream decryptStream(InputStream in, Optional<XFileKey> keyCipher) {
         return keyCipher

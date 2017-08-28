@@ -146,13 +146,15 @@ public final class DiskChunkStore implements ChunkStore {
                 logger.debug("-- copy() - positive checksum match: {}", Hex.toHexString(digest));
             } else {
                 Files.deleteIfExists(temp);
-                throw new IOException("DiskChunkStore copy, bad digest: " + Hex.toHexString(digest));
+                throw new IOException("DiskChunkStore copy, bad digest/ corrupt data: " + Hex.toHexString(digest));
             }
 
             if (Files.exists(to)) {
                 logger.debug("-- copy() - duplicate chunk ignored: {}", to);
+                Files.deleteIfExists(temp);
                 return;
             }
+
             if (!Files.exists(temp)) {
                 throw new IOException("DiskChunkStore copy, temporary file missing: " + temp);
             }

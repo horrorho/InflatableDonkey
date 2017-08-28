@@ -23,24 +23,23 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.engine;
 
-import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
-import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.ChunkInfo;
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer.StorageHostChunkList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import net.jcip.annotations.ThreadSafe;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import net.jcip.annotations.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.commons.io.output.NullOutputStream;
+import org.apache.commons.io.input.CountingInputStream;
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.modes.CFBBlockCipher;
 import org.bouncycastle.crypto.io.CipherInputStream;
@@ -50,103 +49,157 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Decrypts storage host chunk list streams. Limited to contiguous chunk blocks and type 0x01 chunk decryption.
+ * Decrypts storage host chunk list streams. Limited to type 0x01 chunk decryption and streams under 2 Gb in length.
  *
  * @author Ahseya
  */
-@ThreadSafe
-public final class ChunkListDecrypter implements IOFunction<InputStream, Set<Chunk>> {
+@Immutable
+public final class ChunkListDecrypter {
+
+    public static ChunkListDecrypter instance() {
+        return INSTANCE;
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(ChunkListDecrypter.class);
 
-    private final ChunkStore store;
-    private final StorageHostChunkList container;
+    private static final ChunkListDecrypter INSTANCE = new ChunkListDecrypter();
 
-    public ChunkListDecrypter(ChunkStore store, StorageHostChunkList container) {
-        this.store = Objects.requireNonNull(store);
-        this.container = Objects.requireNonNull(container);
+    private static final Comparator<ChunkInfo> CHUNK_OFFSET_COMPARATOR
+            = Comparator.comparing(ChunkInfo::getChunkOffset);
+
+    private ChunkListDecrypter() {
     }
 
-    @Override
-    public Set<Chunk> apply(InputStream inputStream) throws IOException {
-        try {
-            logger.trace("<< apply() - InputStream: {}", inputStream);
+    /**
+     *
+     * @param container
+     * @param inputStream closed on exit
+     * @param store
+     * @throws IOException
+     * @throws ArithmeticException on input streams over 2 Gb.
+     * @throws IllegalArgumentException on non 0x01 chunk keys
+     */
+    public void apply(StorageHostChunkList container, InputStream inputStream, ChunkStore store) throws IOException {
+        logger.trace("<< apply() - input: {}", inputStream);
+        // Ensure our chunk offsets are sequentially ordered.
+        List<ChunkInfo> list = container.getChunkInfoList()
+                .stream()
+                .sorted(CHUNK_OFFSET_COMPARATOR)
+                .collect(toList());
 
-            Set<Chunk> chunks = new HashSet<>();
-            List<ChunkInfo> list = container.getChunkInfoList();
-            for (int i = 0, offset = 0, n = list.size(); i < n; i++) {
-                ChunkInfo chunkInfo = list.get(i);
-                if (chunkInfo.getChunkOffset() != offset) {
-                    throw new IOException("bad chunk offset data");
-                }
-                offset += chunkInfo.getChunkLength();
-                chunk(inputStream, chunkInfo).ifPresent(chunks::add);
+        try (CountingInputStream countingInputStream = new CountingInputStream(inputStream)) {
+            streamChunks(list, countingInputStream, store);
+        } catch (UncheckedIOException ex) {
+            throw ex.getCause();
+        }
+
+        if (logger.isDebugEnabled()) {
+            // Sanity check. Has a minor IO cost with a disk based chunk store.
+            String missingChunks = list.stream()
+                    .map(ci -> ci.getChunkChecksum().toByteArray())
+                    .filter(c -> !store.contains(c))
+                    .map(c -> "0x" + Hex.toHexString(c))
+                    .collect(joining(" "));
+            if (missingChunks.isEmpty()) {
+                logger.debug("-- apply() - all chunks have been stored");
+            } else {
+                logger.warn("-- apply() - missing chunks: {}", missingChunks);
             }
-
-            logger.trace(">> apply() - chunks: {}", chunks);
-            return chunks;
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
+        logger.trace(">> apply()");
     }
 
-    Optional<Chunk> chunk(InputStream inputStream, ChunkInfo chunkInfo) throws IOException {
-        logger.trace("<< chunk() - chunkInfo: {} index: {}", chunkInfo);
-
-        BoundedInputStream bis = new BoundedInputStream(inputStream, chunkInfo.getChunkLength());
-        bis.setPropagateClose(false);
-        Optional<Chunk> chunk = chunk(bis, chunkInfo);
-        consume(bis);
-
-        logger.trace(">> chunk() - chunk: {}", chunk);
-        return chunk;
+    void streamChunks(List<ChunkInfo> chunkInfos, CountingInputStream inputStream, ChunkStore store) {
+        logger.debug("-- streamChunks() - chunk count: {}", chunkInfos.size());
+        chunkInfos.stream()
+                .peek(ci -> logger.debug("-- streamChunks() - chunk info: {}", ci))
+                .filter(u -> isChunkMissing(u, store))
+                .forEach(u -> streamChunk(inputStream, inputStream.getCount(), u, store));
     }
 
-    Optional<Chunk> chunk(BoundedInputStream bis, ChunkInfo chunkInfo) throws IOException {
+    boolean isChunkMissing(ChunkInfo chunkInfo, ChunkStore store) {
         byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
-        Optional<Chunk> chunk = store.chunk(checksum);
-        if (chunk.isPresent()) {
-            logger.debug("-- chunk() - chunk present in store: 0x{}", Hex.toHexString(checksum));
-            return chunk;
+        if (store.contains(checksum)) {
+            logger.debug("-- isChunkMissing() - chunk already present in store: 0x{}", Hex.toHexString(checksum));
+            return false;
         }
-        logger.debug("-- chunk() - chunk not present in store: 0x{}", Hex.toHexString(checksum));
+        return true;
+    }
+
+    void streamChunk(InputStream inputStream, int position, ChunkInfo chunkInfo, ChunkStore store) {
+        byte[] checksum = chunkInfo.getChunkChecksum().toByteArray();
+        int chunkOffset = chunkInfo.getChunkOffset();
+        int chunkLength = chunkInfo.getChunkLength();
+        byte[] key = key(chunkInfo);
+
+        logger.debug("-- streamChunk() - streaming chunk: 0x{}", Hex.toHexString(checksum));
+        positionedStream(inputStream, position, chunkOffset, chunkLength)
+                .map(s -> boundedInputStream(s, chunkLength))
+                .map(s -> cipherInputStream(s, key, checksum))
+                .ifPresent(s -> copy(s, checksum, store));
+    }
+
+    Optional<InputStream> positionedStream(InputStream inputStream, int position, int chunkOffset, int chunkLength) {
+        // Align stream offset with chunk offset, although we cannot back track nor should we need to.
+        try {
+            if (chunkOffset < position) {
+                logger.warn("-- positionedStream() - bad stream position: {} chunk offset: {}", position, chunkOffset);
+                return Optional.empty();
+            }
+            if (chunkOffset > position) {
+                int bytes = chunkOffset - position;
+                logger.debug("-- positionedStream() - skipping: {}", bytes);
+                inputStream.skip(bytes);
+            }
+            return Optional.of(inputStream);
+
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    BoundedInputStream boundedInputStream(InputStream inputStream, int length) {
+        BoundedInputStream bis = new BoundedInputStream(inputStream, length); // No close() required/ not propagated.
+        bis.setPropagateClose(false);
+        return bis;
+    }
+
+    CipherInputStream cipherInputStream(InputStream inputStream, byte[] key, byte[] checksum) {
+        CFBBlockCipher cipher = new CFBBlockCipher(new AESFastEngine(), 128);
+        KeyParameter keyParameter = new KeyParameter(key);
+        cipher.init(false, keyParameter);
+        return new CipherInputStream(inputStream, cipher);
+    }
+
+    byte[] key(ChunkInfo chunkInfo) {
         byte[] chunkEncryptionKey = chunkInfo.getChunkEncryptionKey().toByteArray();
-        return decrypt(bis, chunkEncryptionKey, checksum);
-    }
-
-    Optional<Chunk> decrypt(BoundedInputStream bis, byte[] chunkEncryptionKey, byte[] checksum) throws IOException {
         if (chunkEncryptionKey.length != 0x11 || chunkEncryptionKey[0] != 0x01) {
-            logger.warn("-- decrypt() - unsupported chunk encryption key: 0x{}", Hex.toHexString(chunkEncryptionKey));
-        } else {
-            byte[] key = Arrays.copyOfRange(chunkEncryptionKey, 1, chunkEncryptionKey.length);
-            CFBBlockCipher cipher = new CFBBlockCipher(new AESFastEngine(), 128);
-            cipher.init(false, new KeyParameter(key));
-            store(new CipherInputStream(bis, cipher), checksum);
+            throw new IllegalArgumentException("unsupported key type: 0x" + Hex.toHexString(chunkEncryptionKey));
         }
-        return store.chunk(checksum);
+        return Arrays.copyOfRange(chunkEncryptionKey, 1, chunkEncryptionKey.length);
     }
 
-    void store(CipherInputStream is, byte[] checksum) throws IOException {
-        Optional<OutputStream> os = store.outputStream(checksum);
-        if (os.isPresent()) {
-            logger.debug("-- store() - copying chunk into store: 0x{}", Hex.toHexString(checksum));
-            copy(is, os.get());
-        } else {
-            logger.debug("-- store() - store now already contains chunk: 0x{}", Hex.toHexString(checksum));
+    void copy(InputStream is, byte[] checksum, ChunkStore store) {
+        try {
+            Optional<OutputStream> os = store.outputStream(checksum);
+            if (os.isPresent()) {
+                logger.debug("-- copy() - copying chunk into store: 0x{}", Hex.toHexString(checksum));
+                doCopy(is, os.get());
+            } else {
+                logger.debug("-- copy() - store now already contains chunk: 0x{}", Hex.toHexString(checksum));
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        } finally {
+            IOUtils.closeQuietly(is);
         }
     }
 
-    void consume(InputStream is) throws IOException {
-        copy(is, new NullOutputStream());
-    }
-
-    void copy(InputStream is, OutputStream os) throws IOException {
+    void doCopy(InputStream is, OutputStream os) throws IOException {
         try {
             IOUtils.copy(is, os);
         } finally {
-            // ChunkStore errors are lost.
-            IOUtils.closeQuietly(is);
-            IOUtils.closeQuietly(os);
+            os.close(); // May throw an error/ bad checksum.
         }
     }
 }

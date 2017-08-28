@@ -23,12 +23,9 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.args.Property;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
-import java.math.BigInteger;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHeader;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import net.jcip.annotations.Immutable;
 
@@ -39,13 +36,6 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class RequestOperationHeaders implements Function<String, RequestOperationHeader> {
 
-    public static final RequestOperationHeader requestOperationHeader() {
-        UUID deviceID = UUID.randomUUID();
-        String deviceHardwareID
-                = new BigInteger(256, ThreadLocalRandom.current()).toString(16).toUpperCase(Property.locale());
-        return requestOperationHeader(deviceID, deviceHardwareID);
-    }
-
     public static final RequestOperationHeader requestOperationHeader(UUID deviceID, String deviceHardwareID) {
         return RequestOperationHeader.newBuilder(REQUESTOPERATIONHEADERPROTO)
                 .setDeviceIdentifier(CKProto.identifier(deviceID.toString(), 2))
@@ -55,18 +45,18 @@ public final class RequestOperationHeaders implements Function<String, RequestOp
 
     static final RequestOperationHeader REQUESTOPERATIONHEADERPROTO
             = RequestOperationHeader.newBuilder()
-            .setF4("4.0.0.0")
-            .setDeviceSoftwareVersion("9.0.1")
-            .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
-            .setDeviceLibraryVersion("479")
-            .setDeviceFlowControlBudget(40000)
-            .setDeviceFlowControlBudgetCap(40000)
-            .setVersion("4.0")
-            .setF19(1)
-            .setDeviceAssignedName("My iPhone")
-            .setF23(1)
-            .setF25(1)
-            .build();
+                    .setF4("4.0.0.0")
+                    .setDeviceSoftwareVersion("9.0.1")
+                    .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
+                    .setDeviceLibraryVersion("479")
+                    .setDeviceFlowControlBudget(40000)
+                    .setDeviceFlowControlBudgetCap(40000)
+                    .setVersion("4.0")
+                    .setF19(1)
+                    .setDeviceAssignedName("Wonderwoman's iPhone")
+                    .setF23(1)
+                    .setF25(1)
+                    .build();
 
     private final RequestOperationHeader proto;
     private final String container;
@@ -80,10 +70,6 @@ public final class RequestOperationHeaders implements Function<String, RequestOp
 
     public RequestOperationHeaders(String container, String bundle, UUID deviceID, String deviceHardwareID) {
         this(requestOperationHeader(deviceID, deviceHardwareID), container, bundle);
-    }
-
-    public RequestOperationHeaders(String container, String bundle) {
-        this(requestOperationHeader(), container, bundle);
     }
 
     @Override

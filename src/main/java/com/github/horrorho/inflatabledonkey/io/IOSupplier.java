@@ -30,6 +30,7 @@ import java.io.IOException;
  * @author Ahseya
  * @param <T> type
  */
+@FunctionalInterface
 public interface IOSupplier<T> {
 
     T get() throws IOException;

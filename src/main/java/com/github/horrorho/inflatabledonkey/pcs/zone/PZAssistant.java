@@ -28,27 +28,26 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECurves;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPublicKey;
-import com.github.horrorho.inflatabledonkey.pcs.key.Key;
-import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
-import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
 import com.github.horrorho.inflatabledonkey.data.der.EncryptedKey;
 import com.github.horrorho.inflatabledonkey.data.der.KeySet;
 import com.github.horrorho.inflatabledonkey.data.der.NOS;
 import com.github.horrorho.inflatabledonkey.data.der.ProtectionInfo;
 import com.github.horrorho.inflatabledonkey.data.der.ProtectionObject;
+import com.github.horrorho.inflatabledonkey.pcs.key.Key;
+import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
+import com.github.horrorho.inflatabledonkey.pcs.key.imports.KeyImports;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
 import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,31 +87,36 @@ public final class PZAssistant {
         this.useCompactKeys = useCompactKeys;
     }
 
-    public Optional< byte[]> masterKey(ProtectionInfo protectionInfo, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
-        return masterKey(protectionInfo.encryptedKeys().encryptedKeySet(), keys);
+    public List<byte[]> masterKeys(ProtectionInfo protectionInfo, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
+        return masterKeys(protectionInfo.encryptedKeys().encryptedKeySet(), keys);
     }
 
-    Optional< byte[]> masterKey(Set<EncryptedKey> encryptedKeySet, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
-        return encryptedKey(encryptedKeySet)
-                .flatMap(ek -> unwrapKey(ek, keys));
+    List<byte[]> masterKeys(List<EncryptedKey> encryptedKeySet, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
+        return encryptedKeys(encryptedKeySet)
+                .stream()
+                .map(ek -> unwrapKey(ek, keys))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toList());
     }
 
-    Optional<EncryptedKey> encryptedKey(Set<EncryptedKey> encryptedKeySet) {
-        logger.debug("-- encryptedKey() - encrypted key set: {}", encryptedKeySet);
-        if (encryptedKeySet.size() != 1) {
-            logger.warn("-- encryptedKey() - unexpected encrypted key count: {}", encryptedKeySet.size());
-        }
+    List<EncryptedKey> encryptedKeys(List<EncryptedKey> encryptedKeySet) {
+        logger.debug("-- encryptedKeys() - encrypted key set: {}", encryptedKeySet);
         return encryptedKeySet.stream()
-                .findFirst();
+                .collect(toList());
     }
 
     Optional<byte[]> unwrapKey(EncryptedKey encryptedKey, LinkedHashMap<KeyID, Key<ECPrivateKey>> keys) {
-        return importPublicKey(encryptedKey.masterKey().key())
+        Optional<byte[]> key = importPublicKey(encryptedKey.masterKey().key())
                 .map(Key::keyID)
                 .map(keys::get)
                 .map(Key::keyData)
                 .map(ECPrivateKey::d)
                 .map(d -> dataUnwrap.apply(encryptedKey.wrappedKey(), d));
+        if (!key.isPresent()) {
+            logger.warn("-- unwrapKey - failed to unwrap key: {}", encryptedKey);
+        }
+        return key;
     }
 
     Optional<Key<ECPublicKey>> importPublicKey(byte[] keyData) {
@@ -120,14 +124,26 @@ public final class PZAssistant {
                 .apply(keyData);
     }
 
-    public List<Key<ECPrivateKey>> keys(ProtectionInfo protectionInfo, byte[] key) {
+    public List<Key<ECPrivateKey>> keys(ProtectionInfo protectionInfo, List<byte[]> keys) {
         return protectionInfo.data()
-                .map(bs -> keys(bs, key))
+                .map(bs -> keys(bs, keys))
                 .orElse(Collections.emptyList());
     }
 
-    List<Key<ECPrivateKey>> keys(byte[] encryptedProtectionInfoData, byte[] key) {
-        return keys(GCMDataA.decrypt(key, encryptedProtectionInfoData));
+    List<Key<ECPrivateKey>> keys(byte[] encryptedProtectionInfoData, List<byte[]> keys) {
+        return keys.stream()
+                .map(u -> {
+                    try {
+                        return GCMDataA.decrypt(u, encryptedProtectionInfoData);
+                    } catch (IllegalArgumentException | IllegalStateException ex) {
+                        logger.debug("-- decrypt() - exception: {}", ex.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .map(this::keys)
+                .findFirst()
+                .orElseGet(() -> Collections.emptyList());
     }
 
     List<Key<ECPrivateKey>> keys(byte[] protectionInfoData) {
@@ -137,7 +153,7 @@ public final class PZAssistant {
                 .orElse(Collections.emptyList());
     }
 
-    List<Key<ECPrivateKey>> keys(Set<NOS> masterKeySet) {
+    List<Key<ECPrivateKey>> keys(List<NOS> masterKeySet) {
         List<Key<ECPrivateKey>> keys = masterKeySet.stream()
                 .map(this::keys)
                 .filter(Optional::isPresent)
@@ -151,7 +167,6 @@ public final class PZAssistant {
     Optional<Collection<Key<ECPrivateKey>>> keys(NOS masterKey) {
         return DERUtils.parse(masterKey.key(), KeySet::new)
                 .flatMap(ServiceKeySetBuilder::build)
-                .map(ServiceKeySet::services)
-                .map(Map::values);
+                .map(ServiceKeySet::keys);
     }
 }

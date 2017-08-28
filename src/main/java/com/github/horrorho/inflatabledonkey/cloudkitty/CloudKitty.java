@@ -24,15 +24,15 @@
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.exception.UncheckedInterruptedException;
-import com.github.horrorho.inflatabledonkey.io.IOFunction;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
-import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufParser;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHeader;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.DelimitedProtobufHandler;
 import com.github.horrorho.inflatabledonkey.util.ListUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
@@ -63,16 +63,12 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public final class CloudKitty {
 
-    static ResponseHandler<List<ResponseOperation>> responseHandler() {
-        IOFunction<InputStream, ResponseOperation> parser
-                = logger.isTraceEnabled()
-                        ? new ProtobufParser<>(ResponseOperation::parseFrom)
-                        : ResponseOperation::parseFrom;
-        return new DelimitedProtobufHandler<>(parser);
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(CloudKitty.class);
-    private static final int LIMIT = 400;
+
+    private static final ResponseHandler<List<ResponseOperation>> RESPONSE_HANDLER
+            = new DelimitedProtobufHandler<>(ResponseOperation::parseFrom);
+
+    private static final int LIMIT = 400;   // TODO inject
 
     private final ResponseHandler<List<ResponseOperation>> responseHandler;
     private final Function<String, RequestOperationHeader> requestOperationHeaders;
@@ -98,7 +94,7 @@ public final class CloudKitty {
             ProtoBufsRequestFactory requestFactory,
             ForkJoinPool forkJoinPool,
             int limit) {
-        this(responseHandler(), requestOperationHeaders, requestFactory, forkJoinPool, limit);
+        this(RESPONSE_HANDLER, requestOperationHeaders, requestFactory, forkJoinPool, limit);
     }
 
     CloudKitty(
@@ -124,6 +120,7 @@ public final class CloudKitty {
             Function<ResponseOperation, T> field) throws IOException {
         try {
             logger.debug("-- execute() - requests: {}", requests.size());
+            logger.trace("-- execute() - requests: {}", requests);
 
             // Split and concurrently pipeline requests over our limit.
             List<List<RequestOperation>> split = ListUtils.split(requests, limit);
@@ -135,9 +132,9 @@ public final class CloudKitty {
 
             List<SimpleImmutableEntry<Integer, List<ResponseOperation>>> get
                     = forkJoinPool.submit(() -> list.parallelStream()
-                            .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
-                            .collect(toList()))
-                    .get();
+                    .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
+                    .collect(toList()))
+                            .get();
 
             // Order responses to match requests.
             List<T> reordered = get.stream()
@@ -199,7 +196,9 @@ public final class CloudKitty {
     List<ResponseOperation> client(HttpClient httpClient, byte[] data) {
         try {
             HttpUriRequest uriRequest = requestFactory.apply(UUID.randomUUID(), data);
-            return httpClient.execute(uriRequest, responseHandler);
+            List<ResponseOperation> responses = httpClient.execute(uriRequest, responseHandler);
+            responses.forEach(ProtobufAssistant::logDebugUnknownFields);
+            return responses;
 
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

@@ -71,10 +71,10 @@ public final class SRPAssistant {
         int length = length(N);
 
         // hI = H(I)
-        byte[] hI = SRPAssistant.hash(digest, identity);
+        byte[] hI = hash(digest, identity);
 
         // tmp = H(N) XOR H(g)
-        byte[] hNxhG = ByteUtils.xor(SRPAssistant.hash(digest, padded(N, length)), SRPAssistant.hash(digest, padded(g, length)));
+        byte[] hNxhG = ByteUtils.xor(hash(digest, padded(N, length)), hash(digest, padded(g, length)));
 
         return hash(digest, hNxhG, hI, salt, ephemeralKeyA, ephemeralKeyB, key);
     }
@@ -104,7 +104,9 @@ public final class SRPAssistant {
     }
 
     public static BigInteger generatex(Digest digest, BigInteger N, byte[] salt, byte[] identity, byte[] password) {
-        // x = SHA1(s | SHA1(I | ":" | P))
+        // https://tools.ietf.org/html/rfc5054
+        // Verifier (RFC 5054 Section 2.3)
+        //      x = SHA1(s | SHA1(I | ":" | P))
         byte[] tmp = hash(digest, identity, COLON, password);
         byte[] hash = hash(digest, salt, tmp);
 

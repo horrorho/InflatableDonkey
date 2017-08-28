@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public final class ChunkKeys implements ChunkEncryptionKeyMapper<byte[]> {
 
     public static Optional<Integer> keyType(byte[] chunkEncryptionKey) {
-        if (chunkEncryptionKey.length == 0x00) {
+        if (chunkEncryptionKey.length == 0) {
             logger.warn("-- keyType() - empty chunk key encryption key", Hex.toHexString(chunkEncryptionKey));
             return Optional.empty();
         }

@@ -48,7 +48,7 @@ public final class SnapshotID {
     }
 
     static Optional<SnapshotID> parse(String id) {
-        // Format: S:<base64 hash>
+        // Format: S:<uuid>
         String[] split = id.split(":");
         if (split.length != 2 || !split[0].equals("S")) {
             logger.warn("-- parse() - unexpected format: {}", id);
@@ -58,20 +58,20 @@ public final class SnapshotID {
                 : Optional.of(new SnapshotID(split[1]));
     }
 
-    private final String hash;
+    private final String uuid;
 
     public SnapshotID(String hash) {
-        this.hash = Objects.requireNonNull(hash, "hash");
+        this.uuid = Objects.requireNonNull(hash, "hash");
     }
 
-    public String hash() {
-        return hash;
+    public String uuid() {
+        return uuid;
     }
 
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.hash);
+        hash = 97 * hash + Objects.hashCode(this.uuid);
         return hash;
     }
 
@@ -87,7 +87,7 @@ public final class SnapshotID {
             return false;
         }
         final SnapshotID other = (SnapshotID) obj;
-        if (!Objects.equals(this.hash, other.hash)) {
+        if (!Objects.equals(this.uuid, other.uuid)) {
             return false;
         }
         return true;
@@ -95,6 +95,6 @@ public final class SnapshotID {
 
     @Override
     public String toString() {
-        return "S:" + hash;
+        return "S:" + uuid;
     }
 }

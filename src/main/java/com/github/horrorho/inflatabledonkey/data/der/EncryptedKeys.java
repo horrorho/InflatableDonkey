@@ -23,11 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.data.der;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -64,12 +64,12 @@ public final class EncryptedKeys extends ASN1Object {
     private static final int CONT0 = 0;
 
     private final int x;
-    private final Set<EncryptedKey> encryptedKeySet;
+    private final List<EncryptedKey> encryptedKeySet;
     private final Optional<byte[]> cont0;
 
-    public EncryptedKeys(int x, Set<EncryptedKey> encryptedKeySet, Optional<byte[]> cont0) {
+    public EncryptedKeys(int x, List<EncryptedKey> encryptedKeySet, Optional<byte[]> cont0) {
         this.x = x;
-        this.encryptedKeySet = new HashSet<>(encryptedKeySet);
+        this.encryptedKeySet = new ArrayList<>(encryptedKeySet);
         this.cont0 = cont0.map(a -> Arrays.copyOf(a, a.length));
     }
 
@@ -93,8 +93,8 @@ public final class EncryptedKeys extends ASN1Object {
         return x;
     }
 
-    public Set<EncryptedKey> encryptedKeySet() {
-        return new HashSet<>(encryptedKeySet);
+    public List<EncryptedKey> encryptedKeySet() {
+        return new ArrayList<>(encryptedKeySet);
     }
 
     public Optional<byte[]> cont0() {

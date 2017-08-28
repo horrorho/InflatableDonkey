@@ -32,6 +32,7 @@ import java.util.Objects;
  * @param <T> first type
  * @param <U> second type
  */
+@FunctionalInterface
 public interface IOBiConsumer<T, U> {
 
     void accept(T t, U u) throws IOException;

@@ -23,35 +23,43 @@
  */
 package com.github.horrorho.inflatabledonkey;
 
-import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
-import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.args.PropertyItemType;
 import com.github.horrorho.inflatabledonkey.args.PropertyLoader;
 import com.github.horrorho.inflatabledonkey.args.filter.ArgsSelector;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetFilter;
+import com.github.horrorho.inflatabledonkey.args.filter.AssetsFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.SnapshotFilter;
 import com.github.horrorho.inflatabledonkey.args.filter.UserSelector;
+import com.github.horrorho.inflatabledonkey.cache.FileCache;
+import com.github.horrorho.inflatabledonkey.cache.InflatableData;
 import com.github.horrorho.inflatabledonkey.chunk.engine.ChunkClient;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigest;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkDigests;
 import com.github.horrorho.inflatabledonkey.chunk.store.disk.DiskChunkStore;
-import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
 import com.github.horrorho.inflatabledonkey.cloud.Donkey;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Account;
 import com.github.horrorho.inflatabledonkey.cloud.accounts.Accounts;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.github.horrorho.inflatabledonkey.cloud.auth.Authenticator;
+import com.github.horrorho.inflatabledonkey.cloud.escrow.EscrowedKeys;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.Device;
 import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
+import com.github.horrorho.inflatabledonkey.data.der.DERUtils;
+import com.github.horrorho.inflatabledonkey.data.der.KeySet;
+import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySet;
+import com.github.horrorho.inflatabledonkey.pcs.service.ServiceKeySetBuilder;
+import com.github.horrorho.inflatabledonkey.util.BatchSetIterator;
+import com.github.horrorho.inflatabledonkey.util.LZFSEExtInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,14 +97,25 @@ public class Main {
             if (!PropertyLoader.instance().test(args)) {
                 return;
             }
+            Property.PATH_LZFSE.as(Paths::get).ifPresent(Main::testLZFSE);
+
         } catch (IllegalArgumentException ex) {
             System.out.println("Argument error: " + ex.getMessage());
             System.out.println("Try '" + Property.APP_NAME.value().orElse("") + " --help' for more information.");
             System.exit(-1);
+        } catch (IllegalStateException ex) {
+            System.out.println("Configuration error: " + ex.getMessage());
+            System.exit(-2);
         }
 
         Arrays.asList(Property.values())
                 .forEach(u -> logger.info("-- main() - {} = {}", u.name(), u.value()));
+
+        if (Property.PATH_LZFSE.as(Paths::get).isPresent()) {
+            System.out.println("LZFSE external compressor configured.");
+        } else {
+            System.out.println("No LZFSE compressor specified. Decryption may fail on certain iOS 11 files.");
+        }
 
         // INFO
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
@@ -172,18 +191,59 @@ public class Main {
         // Account
         Account account = Accounts.account(httpClient, auth);
 
-        // Backup
-        BackupAssistant assistant = BackupAssistant.create(httpClient, forkJoinPool, account);
-
         // Output folders.
         Path outputFolder = Paths.get(Property.OUTPUT_FOLDER.value().orElse("backups")).normalize()
                 .resolve(account.accountInfo().appleId());
         Path assetOutputFolder = outputFolder;
         Path chunkOutputFolder = outputFolder.resolve("cache"); // TOFIX from Property normalize()
+        Path cachedData = chunkOutputFolder.resolve("data.enc");
         Path tempOutputFolder = outputFolder.resolve("temp"); // TOFIX from Property normalize()
         logger.info("-- main() - output folder backups: {}", assetOutputFolder.toAbsolutePath());
         logger.info("-- main() - output folder chunk cache: {}", chunkOutputFolder.toAbsolutePath());
+        logger.info("-- main() - cached data: {}", cachedData.toAbsolutePath());
         System.out.println("\nOutput folder: " + assetOutputFolder.toAbsolutePath());
+
+        // Cached data if available
+        byte[] bs = Base64.getDecoder().decode(auth.mmeAuthToken());
+        byte[] cachedPassword = Arrays.copyOfRange(bs, bs.length - 16, bs.length);
+        FileCache cache = FileCache.defaultInstance();
+        InflatableData data = cache.load(cachedData, cachedPassword)
+                .flatMap(InflatableData::from)
+                .orElseGet(() -> {
+                    logger.info("-- main() - no cached data available");
+                    return InflatableData.generate();
+                });
+
+        // Escrowed keys
+        ServiceKeySet escrowServiceKeySet = null;
+        if (data.hasEscrowedKeys()) {
+            escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
+                    .flatMap(ServiceKeySetBuilder::build)
+                    .orElseGet(() -> {
+                        logger.info("-- main() - failed to decrypt cached escrowed keys");
+                        return null;
+                    });
+        }
+        try {
+            if (escrowServiceKeySet == null) {
+                byte[] escrowedKeys = EscrowedKeys.data(httpClient, account);
+                data.setEscrowedKeys(escrowedKeys);
+                escrowServiceKeySet = DERUtils.parse(data.escrowedKeys(), KeySet::new)
+                        .flatMap(ServiceKeySetBuilder::build)
+                        .orElseThrow(() -> new IllegalStateException("failed to decrypt escrowed keys"));
+                cache.store(cachedData, cachedPassword, data.encoded());
+            }
+        } catch (IllegalArgumentException ex) {
+            logger.warn("-- main() - exception : {}", ex);
+            System.out.println(ex.getLocalizedMessage());
+            System.exit(-1);
+        }
+
+        logger.info("-- main() - device -> hardware id: {} uuid: {}", data.deviceHardWareId(), data.deviceUuid());
+
+        // Backup
+        BackupAssistant assistant
+                = BackupAssistant.create(httpClient, forkJoinPool, account, escrowServiceKeySet, data.deviceUuid(), data.deviceHardWareId());
 
         // TODO automatic decrypt mode
         Property.DP_MODE.value().ifPresent(u -> logger.info("-- main() - decrypt mode override: {}", u));
@@ -192,12 +252,13 @@ public class Main {
         DiskChunkStore chunkStore = new DiskChunkStore(ChunkDigest::new, ChunkDigests::test, chunkOutputFolder, tempOutputFolder);
         KeyBagManager keyBagManager = assistant.newKeyBagManager();
 
-        ChunkClient chunkClient = ChunkClient.defaultInstance();
+        ChunkClient chunkClient = ChunkClient.defaults();
 
         Donkey donkey = new Donkey(chunkClient, chunkStore, fragmentationThreshold);
         int batchThreshold = Property.ENGINE_BATCH_THRESHOLD.asInteger().orElse(1048576);
+
         Function<Set<Asset>, List<Set<Asset>>> batchFunction
-                = u -> BatchSetIterator.batchedSetList(u, a -> a.size().orElse(0), batchThreshold);
+                = u -> BatchSetIterator.batchedSetList(u, a -> a.size().map(Long::intValue).orElse(0), batchThreshold);
         DownloadAssistant downloadAssistant
                 = new DownloadAssistant(batchFunction, keyBagManager, forkJoinPool, forkJoinPoolAux, donkey, outputFolder);
         Backup backup = new Backup(assistant, downloadAssistant);
@@ -290,14 +351,6 @@ public class Main {
                 Property.FILTER_ASSET_STATUS_CHANGED_MAX.asLong(),
                 Property.FILTER_ASSET_STATUS_CHANGED_MIN.asLong());
 
-        Optional<Long> snapshotDateMax = Stream.of(Property.FILTER_ASSET_BIRTH_MAX, Property.FILTER_ASSET_STATUS_CHANGED_MAX)
-                .map(Property::asLong)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .sorted(Comparator.reverseOrder())
-                .findFirst();
-        logger.info("-- main() - snapshot date max: {}", snapshotDateMax);
-
         Optional<Long> snapshotDateMin = Stream.of(Property.FILTER_ASSET_BIRTH_MIN, Property.FILTER_ASSET_STATUS_CHANGED_MIN)
                 .map(Property::asLong)
                 .filter(Optional::isPresent)
@@ -305,7 +358,8 @@ public class Main {
                 .findFirst();
         logger.info("-- main() - snapshot date min: {}", snapshotDateMin);
 
-        Predicate<Snapshot> snapshotFilter = new SnapshotFilter(snapshotDateMax, snapshotDateMin);
+        // Can probably optimize further with snapshot date max to skip type 1 backups.
+        Predicate<Snapshot> snapshotFilter = new SnapshotFilter(snapshotDateMin);
 
         backup.download(httpClient, filtered, snapshotFilter, assetsFilter, assetFilter);
     }
@@ -320,8 +374,21 @@ public class Main {
                 .flatMap(Collection::stream)
                 .forEach(u -> System.out.println("  SNAPSHOT: " + u.info()));
     }
+
+    static void testLZFSE(Path path) {
+        try (LZFSEExtInputStream is
+                = LZFSEExtInputStream.create(path, Main.class.getClassLoader().getResourceAsStream("num.lzfse"))) {
+            for (int i = 0, n = 0; (n = is.read()) != -1; i = ++i % 256) {
+                if (i != n) {
+                    throw new IOException("decompression test failed");
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("External LZFSE failure: " + ex.getMessage());
+        }
+        logger.info("-- testLZFSE() - LZFSE decompression test passed: {}", path);
+    }
 }
 
 // TODO filter AssetID size rather than wait to download Asset and then filter.
 // TODO reconstruct empty files/ empty directories
-

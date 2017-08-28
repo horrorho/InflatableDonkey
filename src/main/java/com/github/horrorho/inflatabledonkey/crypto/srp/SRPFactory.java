@@ -28,7 +28,6 @@ import java.security.SecureRandom;
 import net.jcip.annotations.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  * SRPFactory.
@@ -39,7 +38,7 @@ import org.bouncycastle.util.encoders.Hex;
 public final class SRPFactory {
 
     public static SRPClient rfc5054(SecureRandom random) {
-        BigInteger N = new BigInteger(1, Hex.decode(DEFAULT_PRIME_HEX));
+        BigInteger N = new BigInteger(DEFAULT_PRIME_HEX, 16);
         Digest digest = new SHA256Digest();
         return new SRPClient(random, digest, N, BigInteger.valueOf(2));
     }

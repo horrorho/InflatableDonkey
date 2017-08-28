@@ -27,10 +27,14 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.pcs.key.Key;
 import com.github.horrorho.inflatabledonkey.pcs.key.KeyID;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable; 
+import java.util.Set;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import net.jcip.annotations.Immutable;
 
 /**
  * ServiceKeySet.
@@ -40,44 +44,55 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public final class ServiceKeySet {
 
-    private final Map<Integer, Key<ECPrivateKey>> serviceKeys = new HashMap<>();
+    static <K, V> Map<K, Set<V>> copy(Map<K, Set<V>> map) {
+        return map.entrySet()
+                .stream()
+                .collect(toMap(Map.Entry::getKey, u -> new HashSet<>(u.getValue())));
+    }
+
+    private final Map<Integer, Set<Key<ECPrivateKey>>> serviceKeys;
     private final String name;
     private final String ksID;
     private final boolean isCompact;
 
     ServiceKeySet(
-            Map<Integer, Key<ECPrivateKey>> serviceKeys,
+            Map<Integer, Set<Key<ECPrivateKey>>> serviceKeys,
             String name,
             String ksID,
             boolean isCompact) {
-
-        this.serviceKeys.putAll(serviceKeys);
-        this.name = name;
-        this.ksID = ksID;
+        this.serviceKeys = copy(serviceKeys);
+        this.name = Objects.requireNonNull(name);
+        this.ksID = Objects.requireNonNull(ksID);
         this.isCompact = isCompact;
     }
 
-    public Optional<Key<ECPrivateKey>> key(Service service) {
+    public Set<Key<ECPrivateKey>> key(Service service) {
         return key(service.number());
     }
 
-    public Optional<Key<ECPrivateKey>> key(int service) {
-        return Optional.ofNullable(serviceKeys.get(service));
+    public Set<Key<ECPrivateKey>> key(int service) {
+        return serviceKeys.containsKey(service)
+                ? new HashSet<>(serviceKeys.get(service))
+                : new HashSet<>();
     }
 
     public Optional<Key<ECPrivateKey>> key(KeyID keyID) {
         return serviceKeys.values()
                 .stream()
+                .flatMap(Collection::stream)
                 .filter(key -> key.keyID().equals(keyID))
                 .findFirst();
     }
 
-    public Map<Integer, Key<ECPrivateKey>> services() {
-        return new HashMap<>(serviceKeys);
+    public Map<Integer, Set<Key<ECPrivateKey>>> serviceKeys() {
+        return copy(serviceKeys);
     }
 
     public Collection<Key<ECPrivateKey>> keys() {
-        return serviceKeys.values();
+        return serviceKeys.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(toSet());
     }
 
     public String name() {

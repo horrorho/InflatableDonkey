@@ -75,6 +75,7 @@ public final class ArgsFactory {
         args.add(snapshots());
         args.add(domains());
         args.add(token());
+        args.add(lzfse());
         args.add(help());
         return args;
     }
@@ -210,6 +211,17 @@ public final class ArgsFactory {
         return new Arg(Property.ARGS_HELP, option);
     }
 
+    static Arg lzfse() {
+        Option option = Option.builder()
+                .longOpt("lzfse")
+                .desc("Use external lzfse compressor. Optional path.")
+                .argName("path")
+                .hasArg()
+                .optionalArg(true)
+                .build();
+        return new Arg(Property.PATH_LZFSE, option, ArgsFactory::mapNull);
+    }
+
     static Arg mode() {
         Option option = Option.builder()
                 .longOpt("mode")
@@ -253,7 +265,7 @@ public final class ArgsFactory {
                 .longOpt("threads")
                 .desc("Number of concurrent download threads." + defaultValue(Property.ENGINE_THREADS))
                 .argName("int")
-                .hasArgs()
+                .hasArg()
                 .build();
         return new Arg(Property.ENGINE_THREADS, option, ArgsFactory::mapNumber);
     }
@@ -317,6 +329,10 @@ public final class ArgsFactory {
         return "" + LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
                 .atStartOfDay(ZoneId.systemDefault())
                 .toEpochSecond();
+    }
+
+    static String mapNull(String string) {
+        return string == null ? "" : string;
     }
 }
 // TODO negative integer rejection

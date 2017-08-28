@@ -25,6 +25,7 @@ package com.github.horrorho.inflatabledonkey.pcs.key;
 
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECKey;
 import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
+import com.github.horrorho.inflatabledonkey.data.der.Signature;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -99,14 +100,27 @@ public final class Key<T extends ECKey> {
         return publicKeyInfo.map(PublicKeyInfo::service);
     }
 
-    public Key<T> selfVerify() {
-        return verify(this);
+    public Optional<KeyID> masterKeyID() {
+        return publicKeyInfo
+                .flatMap(PublicKeyInfo::signature)
+                .map(Signature::signerKeyID)
+                .map(KeyID::importKeyID);
     }
 
-    public Key<T> verify(Key<? extends ECKey> masterKey) {
+    public Optional<Key<T>> verifed() {
+        return isTrusted
+                ? Optional.of(this)
+                : verified(this);
+    }
+
+    public Optional<Key<T>> verified(Key<? extends ECKey> masterKey) {
+        return Optional.ofNullable(doVerify(masterKey));
+    }
+
+    Key<T> doVerify(Key<? extends ECKey> masterKey) {
         return SignatureAssistant.verify(this, masterKey)
                 ? new Key<>(keyID, keyData, publicExportData, publicKeyInfo, isCompact, true)
-                : this;
+                : null;
     }
 
     @Override

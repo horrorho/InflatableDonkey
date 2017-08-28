@@ -48,14 +48,24 @@ public final class FileTruncater {
         try {
             // Truncate if the final attribute size is different from the initial size (padded/ encrypted).
             // Don't truncate if either optional is missing.
+            logger.debug("-- truncate() - path: {} asset: {}", path, asset);
             asset.attributeSize()
                     .filter(u -> asset.size().map(t -> !Objects.equals(t, u)).orElse(false))
+                    //                    .filter(u -> asset.sizeBeforeCopy().isPresent())
+                    .filter(u -> !asset.contentCompressionMethod().isPresent())
                     .ifPresent(u -> FileTruncater.truncate(path, u));
             return true;
-
         } catch (UncheckedIOException ex) {
             logger.warn("-- truncate() - UncheckedIOException: ", ex);
             return false;
+        }
+    }
+
+    public static boolean checkSize(Path file, long size) {
+        try {
+            return Files.size(file) == size;
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -64,14 +74,12 @@ public final class FileTruncater {
             if (to <= 0) {  // TODO consider:  to < 0
                 return;
             }
-
+            logger.info("-- truncate() - file: {} -> {}", file, to);
             long size = Files.size(file);
             if (size > to) {
                 Files.newByteChannel(file, WRITE)
                         .truncate(to)
                         .close();
-                logger.debug("-- truncate() - truncated: {}, {} > {}", file, size, to);
-
             } else if (size < to) {
                 logger.warn("-- truncate() - cannot truncate: {}, {} > {}", file, size, to);
             }

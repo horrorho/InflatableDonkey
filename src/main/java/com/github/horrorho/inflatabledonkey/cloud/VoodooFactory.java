@@ -69,8 +69,8 @@ public final class VoodooFactory {
     }
 
     static Map<ByteString, List<ChunkReference>>
-            fileSignatureToChunkReferences(Collection<FileChecksumChunkReferences> fstcr) {
-        return fstcr.stream()
+            fileSignatureToChunkReferences(Collection<FileChecksumChunkReferences> references) {
+        return references.stream()
                 .filter(u -> {
                     if (u.hasFileSignature()) {
                         return true;
@@ -88,10 +88,10 @@ public final class VoodooFactory {
                         }));
     }
 
-    static Map<Integer, StorageHostChunkList> indexToSHCL(List<StorageHostChunkList> shcls) {
-        return IntStream.range(0, shcls.size())
+    static Map<Integer, StorageHostChunkList> indexToSHCL(List<StorageHostChunkList> containers) {
+        return IntStream.range(0, containers.size())
                 .mapToObj(Integer::valueOf)
-                .collect(toMap(Function.identity(), shcls::get));
+                .collect(toMap(Function.identity(), containers::get));
     }
 
     private static final Logger logger = LoggerFactory.getLogger(VoodooFactory.class);

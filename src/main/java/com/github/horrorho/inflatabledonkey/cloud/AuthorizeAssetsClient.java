@@ -57,9 +57,10 @@ public final class AuthorizeAssetsClient implements IOBiFunction<HttpClient, Col
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizeAssetsClient.class);
 
-    private static final long TIMESTAMP_TOLERANCE = 15 * 60 * 1000;
+    private static final long FALLBACK_DURATION_MS = 55 * 60 * 1000;    // conservative 55 minutes (default: 60 minutes)
+
     private static final ResponseHandler<FileGroups> RESPONSE_HANDLER
-            = new AuthorizeAssetsResponseHandler(TIMESTAMP_TOLERANCE);
+            = new AuthorizeAssetsResponseHandler(FALLBACK_DURATION_MS);
     private static final AuthorizeAssetsClient BACKUPD = new AuthorizeAssetsClient("com.apple.backup.ios");
 
     private final ResponseHandler<FileGroups> responseHandler;
@@ -111,7 +112,7 @@ public final class AuthorizeAssetsClient implements IOBiFunction<HttpClient, Col
 
     FileGroups fileGroups(HttpClient httpClient, String contentBaseUrl, Collection<CloudKit.Asset> ckAssets)
             throws UncheckedIOException {
-
+        logger.debug("-- fileGroups() - contentBaseUrl: {} ckAssets: {}", contentBaseUrl, ckAssets.size());
         String dsPrsID = dsPrsID(ckAssets);
         CloudKit.FileTokens fileTokens = FileTokensFactory.from(ckAssets);
         return fileGroups(httpClient, dsPrsID, contentBaseUrl, fileTokens);

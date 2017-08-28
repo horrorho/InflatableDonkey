@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author cain
+ * @author Ahseya
  */
 @Immutable
 public final class ECPrivateKey implements ECKey {

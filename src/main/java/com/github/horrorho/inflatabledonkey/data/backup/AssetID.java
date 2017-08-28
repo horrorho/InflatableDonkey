@@ -78,7 +78,7 @@ public final class AssetID {
         try {
             return Long.parseLong(info);
         } catch (NumberFormatException ex) {
-            logger.warn("-- from() - NumberFormatException: {}", ex.getMessage());
+            logger.warn("-- size() - NumberFormatException: {}", ex.getMessage());
             return 0;
         }
     }

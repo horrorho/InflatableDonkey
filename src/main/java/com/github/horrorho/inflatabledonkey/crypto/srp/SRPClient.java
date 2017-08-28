@@ -43,6 +43,8 @@ import org.slf4j.LoggerFactory;
 @NotThreadSafe
 public class SRPClient {
     // https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol
+    // https://tools.ietf.org/html/rfc5054
+    // https://tools.ietf.org/html/rfc2945
 
     protected static final Logger logger = LoggerFactory.getLogger(SRPClient.class);
 
@@ -82,6 +84,10 @@ public class SRPClient {
 
     public Optional<byte[]>
             calculateClientEvidenceMessage(byte[] salt, byte[] identity, byte[] password, byte[] serverB) {
+        logger.debug("-- calculateClientEvidenceMessage() - salt: 0x{}", Hex.toHexString(salt));
+        logger.debug("-- calculateClientEvidenceMessage() - identity: 0x{}", Hex.toHexString(identity));
+        logger.debug("-- calculateClientEvidenceMessage() - password: 0x{}", Hex.toHexString(password));
+        logger.debug("-- calculateClientEvidenceMessage() - serverB: 0x{}", Hex.toHexString(serverB));
 
         if (this.ephemeralKeyA == null) {
             throw new IllegalStateException("Client credentials not yet generated");
@@ -90,6 +96,7 @@ public class SRPClient {
         BigInteger B = new BigInteger(1, serverB);
 
         if (SRPAssistant.isZero(N, B)) {
+            logger.warn("-- calculateClientEvidenceMessage() - zero");
             return Optional.empty();
         }
 

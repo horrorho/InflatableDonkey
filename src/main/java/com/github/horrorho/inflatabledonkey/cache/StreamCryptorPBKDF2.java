@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2016 Ahseya.
+ * Copyright 2017 Ayesha.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,30 +21,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.github.horrorho.inflatabledonkey.args.filter;
+package com.github.horrorho.inflatabledonkey.cache;
 
-import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.function.Supplier;
 import net.jcip.annotations.Immutable;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
+import org.bouncycastle.crypto.params.KeyParameter;
 
 /**
  *
- * @author Ahseya
+ * @author Ayesha
  */
 @Immutable
-public final class SnapshotFilter implements Predicate<Snapshot> {
+final class StreamCryptorPBKDF2 implements StreamCryptor.KDF {
 
-    private final Optional<Long> dateMin;
+    private final Supplier<Digest> digests;
+    private final int iterations;
+    private final int keyLength;
 
-    public SnapshotFilter(Optional<Long> dateMin) {
-        this.dateMin = Objects.requireNonNull(dateMin);
+    StreamCryptorPBKDF2(Supplier<Digest> digests, int iterations, int keyLength) {
+        this.digests = Objects.requireNonNull(digests);
+        this.iterations = iterations;
+        this.keyLength = keyLength;
     }
 
     @Override
-    public boolean test(Snapshot snapshot) {
-        long timestamp = snapshot.timestamp().getEpochSecond();
-        return dateMin.map(v -> timestamp >= v).orElse(true);
+    public byte[] apply(byte[] password, byte[] salt) {
+        PKCS5S2ParametersGenerator generator = new PKCS5S2ParametersGenerator(digests.get());
+        generator.init(password, salt, iterations);
+        return ((KeyParameter) generator.generateDerivedParameters(keyLength * 8)).getKey();
+    }
+
+    @Override
+    public String toString() {
+        return "StreamCryptorPBKDF2{"
+                + "digests=" + digests
+                + ", iterations=" + iterations
+                + ", keyLength=" + keyLength
+                + '}';
     }
 }

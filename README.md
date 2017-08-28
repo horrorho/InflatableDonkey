@@ -1,3 +1,9 @@
+**Update**, 29 June 2017.
+
+Oh my how time flies! Although this tool has been on the back burner over the last year, thanks to the assistance of others (see below) I've still managed to keep it functional through iOS 10 and now iOS 11. The caveat being that iOS 11 at present needs an external [lzfse](https://github.com/lzfse/lzfse) decoder as detailed [here](https://github.com/horrorho/InflatableDonkey/issues/67#issuecomment-311392692). I do hope to have a built-in decoder available at some point, hopefully [soon](https://wow.gamepedia.com/Soon)!
+
+There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to be used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
+
 **Update**, 15 August 2016. 
 
 Good news and bad news...
@@ -9,15 +15,9 @@ The bad. I'm putting this project on the back-burner for the foreseeable future.
 So! I've spent countless nights studying arcane crypto material, reverse-engineering binaries and poring over logs. Others, see below, have also contributed. InflatableDonkey now knows many secrets and I'm rather hoping others can take it and fly with it.
 
 
-**Update**, 30 July 2016. 
-
-Finally! The reworked and simplified download engine. Multi-threaded support is now enabled by default (x4 threads) which should increase download speeds. I've also tidied up the output so that it behaves more like a respectable tool and less like a warped experiment (which it probably still is).
-
-Most of the code base should now be easier to understand. The crypto code might cause some eye bleeding, but I've tried to provide references for the algorithms in use. Please ticket any requests for code clarification.
-
 
 ### What is it?
-Java proof of concept iOS9 iCloud backup retrieval tool.
+Java proof of concept iOS9/ 10/ 11 iCloud backup retrieval tool.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
@@ -140,6 +140,13 @@ For further information please refer to the comments/ code in [Main](https://git
 [CloudKit Notes](https://github.com/horrorho/InflatableDonkey/blob/master/CloudKit.md) describes some of the low level mechanics we have discovered over the last couple of weeks.
 
 ### Credits
+
+[Yaldo425](https://github.com/Yaldo425) and [AsifMehmoood](https://github.com/asifmehmoood) - for supplying iOS11/ iOS 10 backups to work with, because as odd as it sounds I don't actually own an iPhone.
+
+[Jirmi](https://github.com/jirmi) - for various suggestions and Protobuf assistance.
+
+[Louti](https://github.com/Louti) - for additional insights on cryptographic key handling.
+
 [ItsASmallWorld](https://github.com/ItsASmallWorld) - for deciphering key client/ server interactions and assisting with Protobuf definitions.
 
 Oleksii K - for cryptographical assistance, before he was mysteriously abducted by aliens and subjected to various probing experiments.
@@ -153,3 +160,5 @@ Oleksii K - for cryptographical assistance, before he was mysteriously abducted 
 My cat - for being my cat and keeping me company.
 
 There have been some contributors who, rather like vampires, prefer the cover of darkness. You know who you are and thank you!
+
+I've also probably forgotten others. If so I'm sorry and thank you too!

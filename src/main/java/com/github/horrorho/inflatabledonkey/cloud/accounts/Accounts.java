@@ -23,17 +23,22 @@
  */
 package com.github.horrorho.inflatabledonkey.cloud.accounts;
 
-import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.dd.plist.NSDictionary;
+import com.dd.plist.PropertyListFormatException;
+import com.dd.plist.PropertyListParser;
+import com.github.horrorho.inflatabledonkey.cloud.auth.Auth;
 import com.github.horrorho.inflatabledonkey.requests.AccountSettingsRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
+import java.text.ParseException;
+import javax.xml.parsers.ParserConfigurationException;
 import net.jcip.annotations.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * AccountInfos.
@@ -56,6 +61,15 @@ public final class Accounts {
                 = httpClient.execute(accountSettingsRequest, PropertyListResponseHandler.dictionary());
 
         return account(settings);
+    }
+
+    public static Account account(byte[] bs) {
+        try {
+            NSDictionary dict = (NSDictionary) PropertyListParser.parse(bs);
+            return account(dict);
+        } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     public static Account account(NSDictionary settings) {

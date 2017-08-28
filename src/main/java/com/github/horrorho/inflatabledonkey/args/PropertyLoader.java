@@ -23,6 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,15 @@ public final class PropertyLoader implements Predicate<String[]> {
             if (properties.containsKey(Property.ARGS_HELP)) {
                 help(manager.listOptions(), args.header(), args.footer(), args.cmdLineSyntax());
                 return false;
+            }
+
+            if (properties.containsKey(Property.PATH_LZFSE)) {
+                String path = properties.get(Property.PATH_LZFSE);
+                if (path.isEmpty()) {
+                    properties.put(Property.PATH_LZFSE, Property.PATH_LZFSE_BIN.peek().orElse("lzfse"));
+                } else if (!Files.exists(Paths.get(path))) {
+                    throw new IllegalArgumentException("LZFSE binary not found at: " + path);
+                }
             }
 
             List<String> operands = commandLine.getArgList();

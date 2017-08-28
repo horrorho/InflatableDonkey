@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.data.der;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,14 +61,14 @@ public final class ProtectionObject extends ASN1Object {
     private static final int CONT1 = 1;
     private static final int CONT2 = 2;
 
-    private final Optional<Set<byte[]>> xSet;
+    private final Optional<List<byte[]>> xSet;
     private final Optional<NOS> masterKey;
-    private final Optional<Set<NOS>> masterKeySet;
+    private final Optional<List<NOS>> masterKeySet;
 
     public ProtectionObject(
-            Optional<Set<byte[]>> xSet,
+            Optional<List<byte[]>> xSet,
             Optional<NOS> masterKey,
-            Optional<Set<NOS>> masterKeySet) {
+            Optional<List<NOS>> masterKeySet) {
 
         this.xSet = Objects.requireNonNull(xSet, "xSet")
                 .filter(set -> !set.isEmpty());
@@ -103,8 +104,8 @@ public final class ProtectionObject extends ASN1Object {
         return masterKey;
     }
 
-    public Optional<Set<NOS>> getMasterKeySet() {
-        return masterKeySet.map(HashSet::new);
+    public Optional<List<NOS>> getMasterKeySet() {
+        return masterKeySet.map(ArrayList::new);
     }
 
     @Override
