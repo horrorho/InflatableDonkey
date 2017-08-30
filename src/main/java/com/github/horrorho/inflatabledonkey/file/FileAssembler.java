@@ -173,15 +173,14 @@ public final class FileAssembler
         try (OutputStream out = Files.newOutputStream(path);
                 InputStream in = chunkStream(chunks)) {
             status &= FileStreamWriter.copy(in, out, keyCipher, signature, decompress);
-//            status &= FileStreamWriter.copy(in, out, keyCipher, signature);
 
             if (keyCipher.isPresent()) {
                 XFileKey kc = keyCipher.get();
-                logger.info("-- write() - written: {} status: {} mode: {} flags: 0x{}",
+                logger.debug("-- write() - written: {} status: {} mode: {} flags: 0x{}",
                         path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
                 System.out.println(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
             } else {
-                logger.info("-- write() - written: {} status: {}", path, status);
+                logger.debug("-- write() - written: {} status: {}", path, status);
                 System.out.println(">> " + info);
             }
             return status;
