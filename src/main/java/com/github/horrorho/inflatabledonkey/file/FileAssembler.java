@@ -31,12 +31,6 @@ import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.io.IOSupplier;
 import com.github.horrorho.inflatabledonkey.io.IOSupplierSequenceStream;
 import com.github.horrorho.inflatabledonkey.util.LZFSEExtInputStream;
-import net.jcip.annotations.Immutable;
-import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.util.encoders.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,6 +45,11 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import net.jcip.annotations.Immutable;
+import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * FileAssembler.
@@ -105,7 +104,7 @@ public final class FileAssembler
     }
 
     boolean fail(Asset asset) {
-        logger.error("-- " + info(asset) + " failed");
+        System.out.println("-- " + info(asset) + " failed");
         return false;
     }
 
@@ -174,16 +173,15 @@ public final class FileAssembler
         try (OutputStream out = Files.newOutputStream(path);
                 InputStream in = chunkStream(chunks)) {
             status &= FileStreamWriter.copy(in, out, keyCipher, signature, decompress);
-//            status &= FileStreamWriter.copy(in, out, keyCipher, signature);
 
             if (keyCipher.isPresent()) {
                 XFileKey kc = keyCipher.get();
                 logger.debug("-- write() - written: {} status: {} mode: {} flags: 0x{}",
                         path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
-                logger.info(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
+                System.out.println(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
             } else {
                 logger.debug("-- write() - written: {} status: {}", path, status);
-                logger.info(">> " + info);
+                System.out.println(">> " + info);
             }
             return status;
 
