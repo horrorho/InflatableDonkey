@@ -63,6 +63,7 @@ public final class FileAssembler
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
     private static final Path LZFSE = Property.PATH_LZFSE.as(Paths::get).orElse(null);
+    private static final boolean QUIET = Property.QUIET.asBoolean().orElse(false);
 
     private final Function<byte[], Optional<XFileKey>> fileKeys;
     private final UnaryOperator<Optional<XFileKey>> mutator;
@@ -104,7 +105,10 @@ public final class FileAssembler
     }
 
     boolean fail(Asset asset) {
-        System.out.println("-- " + info(asset) + " failed");
+        logger.debug("-- fail() - failed: {}" + info(asset));
+        if (!QUIET) {
+            System.out.println("-- " + info(asset) + " failed");
+        }
         return false;
     }
 
@@ -178,10 +182,14 @@ public final class FileAssembler
                 XFileKey kc = keyCipher.get();
                 logger.debug("-- write() - written: {} status: {} mode: {} flags: 0x{}",
                         path, status, kc.ciphers(), Hex.toHexString(kc.flags()));
-                System.out.println(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
+                if (!QUIET) {
+                    System.out.println(">> " + info + " " + kc.ciphers() + " " + Hex.toHexString(kc.flags()));
+                }
             } else {
                 logger.debug("-- write() - written: {} status: {}", path, status);
-                System.out.println(">> " + info);
+                if (!QUIET) {
+                    System.out.println(">> " + info);
+                }
             }
             return status;
 

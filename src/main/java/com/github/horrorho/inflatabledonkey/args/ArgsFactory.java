@@ -76,6 +76,7 @@ public final class ArgsFactory {
         args.add(domains());
         args.add(token());
         args.add(lzfse());
+        args.add(quiet());
         args.add(help());
         return args;
     }
@@ -240,6 +241,15 @@ public final class ArgsFactory {
                 .hasArg()
                 .build();
         return new Arg(Property.OUTPUT_FOLDER, option);
+    }
+
+    static Arg quiet() {
+        Option option = Option.builder()
+                .longOpt("quiet")
+                .desc("Reduced output verbosity.")
+                .hasArg(false)
+                .build();
+        return new Arg(Property.QUIET, option);
     }
 
     static Arg snapshots() {
