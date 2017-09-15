@@ -30,13 +30,12 @@ import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
 import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import com.github.horrorho.inflatabledonkey.io.IOSupplier;
 import com.github.horrorho.inflatabledonkey.io.IOSupplierSequenceStream;
-import com.github.horrorho.inflatabledonkey.util.LZFSEExtInputStream;
+import com.github.horrorho.ragingmoose.LZFSEInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -62,7 +61,6 @@ public final class FileAssembler
 
     private static final Logger logger = LoggerFactory.getLogger(FileAssembler.class);
 
-    private static final Path LZFSE = Property.PATH_LZFSE.as(Paths::get).orElse(null);
     private static final boolean QUIET = Property.QUIET.asBoolean().orElse(false);
 
     private final Function<byte[], Optional<XFileKey>> fileKeys;
@@ -160,12 +158,7 @@ public final class FileAssembler
         Optional<IOFunction<InputStream, InputStream>> decompress;
         if (compression.isPresent()) {
             if (compression.get() == 2) {
-                if (LZFSE == null) {
-                    logger.warn("-- write() - no  decompressor: {} -> {}", info, compression.get());
-                    decompress = Optional.empty();
-                } else {
-                    decompress = Optional.of(u -> LZFSEExtInputStream.create(LZFSE, u));
-                }
+                decompress = Optional.of(LZFSEInputStream::new);
             } else {
                 logger.warn("-- write() - unsupported compression: {} -> {}", info, compression.get());
                 decompress = Optional.empty();

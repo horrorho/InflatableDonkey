@@ -75,7 +75,6 @@ public final class ArgsFactory {
         args.add(snapshots());
         args.add(domains());
         args.add(token());
-        args.add(lzfse());
         args.add(quiet());
         args.add(help());
         return args;
@@ -210,17 +209,6 @@ public final class ArgsFactory {
                 .hasArg(false)
                 .build();
         return new Arg(Property.ARGS_HELP, option);
-    }
-
-    static Arg lzfse() {
-        Option option = Option.builder()
-                .longOpt("lzfse")
-                .desc("Use external lzfse compressor. Optional path.")
-                .argName("path")
-                .hasArg()
-                .optionalArg(true)
-                .build();
-        return new Arg(Property.PATH_LZFSE, option, ArgsFactory::mapNull);
     }
 
     static Arg mode() {

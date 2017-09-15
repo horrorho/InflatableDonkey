@@ -81,8 +81,6 @@ public enum Property {
     PATH_CHUNK_STORE("chunks"),
     PATH_CHUNK_STORE_SUBSPLIT("3"),
     PATH_TEMP("temp"),
-    PATH_LZFSE(),
-    PATH_LZFSE_BIN("lzfse"),
     QUIET(),
     SRP_REMAINING_ATTEMPTS_THRESHOLD("3"),
     PROPERTIES_RESOURCE("/inflatable_donkey.properties");

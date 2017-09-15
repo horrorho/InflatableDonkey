@@ -78,22 +78,6 @@ public final class FileStreamWriter {
         return testSignature(dis.getDigest(), signature);
     }
 
-//    public static boolean
-//            copy(InputStream in, OutputStream out, Optional<XFileKey> keyCipher, Optional<byte[]> signature)
-//            throws IOException {
-//
-//        Digest digest = signature.flatMap(FileSignature::type)
-//                .orElse(FileSignature.ONE)
-//                .newDigest();
-//
-//        DigestInputStream digestInputStream = new DigestInputStream(in, digest);
-//
-//        IOUtils.copyLarge(decryptStream(digestInputStream, keyCipher), out, new byte[BUFFER_SIZE]);
-//        out.flush();
-//
-//        return testSignature(digestInputStream.getDigest(), signature);
-//    }
-
     static InputStream decryptStream(InputStream in, Optional<XFileKey> keyCipher) {
         return keyCipher
                 .map(kc -> decryptStream(in, kc))
