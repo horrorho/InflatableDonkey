@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import static com.github.horrorho.inflatabledonkey.data.blob.BlobUtils.align;
 
 /**

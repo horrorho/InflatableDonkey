@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collection;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * FileTokens factory.

@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.dataprotection;
 import com.github.horrorho.inflatabledonkey.args.Property;
 import java.util.Objects;
 import java.util.function.IntFunction;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;

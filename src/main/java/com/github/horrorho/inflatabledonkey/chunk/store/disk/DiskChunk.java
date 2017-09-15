@@ -34,7 +34,7 @@ import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.READ;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.ThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;

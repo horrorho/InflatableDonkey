@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.pcs.zone;
 import com.github.horrorho.inflatabledonkey.crypto.NISTKDF;
 import java.util.Objects;
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.Arrays;

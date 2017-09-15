@@ -42,7 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bouncycastle.crypto.digests.SHA256Digest;

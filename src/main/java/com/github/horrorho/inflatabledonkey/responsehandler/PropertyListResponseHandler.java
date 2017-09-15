@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Objects;
 import javax.xml.parsers.ParserConfigurationException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.xml.sax.SAXException;

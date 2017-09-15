@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.crypto;
 import java.nio.ByteBuffer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.generators.KDFCounterBytesGenerator;
 import org.bouncycastle.crypto.macs.HMac;

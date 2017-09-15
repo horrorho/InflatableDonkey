@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.google.protobuf.ByteString;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECAssistant;
 import com.github.horrorho.inflatabledonkey.crypto.ec.ECPointsCompact;
 import java.math.BigInteger;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.util.BigIntegers;
 import java.util.Optional;

@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.pcs.key;
 
 import java.util.Arrays;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.encoders.Hex; 

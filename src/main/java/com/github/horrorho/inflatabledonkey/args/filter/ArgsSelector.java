@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import static java.util.stream.Collectors.toMap;
 
 /**

@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.chunk;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import net.jcip.annotations.ThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Chunk. SHALL implement hashcode/ equals methods based solely on the chunk checksum. Not immutable, as the underlying

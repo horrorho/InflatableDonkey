@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
 import java.util.UUID;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

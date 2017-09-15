@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;

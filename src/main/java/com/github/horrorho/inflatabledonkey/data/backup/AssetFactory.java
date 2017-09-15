@@ -29,7 +29,7 @@ import com.google.protobuf.ByteString;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

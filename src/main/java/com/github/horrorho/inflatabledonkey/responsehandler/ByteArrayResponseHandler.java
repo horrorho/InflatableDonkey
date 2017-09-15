@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.responsehandler;
 
 import java.io.IOException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 

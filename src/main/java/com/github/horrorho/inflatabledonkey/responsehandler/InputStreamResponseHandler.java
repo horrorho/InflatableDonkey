@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.io.IOFunction;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.HttpEntity;
 
 /**

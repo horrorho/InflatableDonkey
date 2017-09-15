@@ -27,7 +27,7 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSString;
 import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * AccountInfo.

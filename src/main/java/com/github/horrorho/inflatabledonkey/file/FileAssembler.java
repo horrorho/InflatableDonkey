@@ -45,7 +45,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;

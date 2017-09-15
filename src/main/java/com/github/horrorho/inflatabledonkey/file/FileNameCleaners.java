@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.file;
 
 import java.util.function.UnaryOperator;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.SystemUtils;
 
 /**

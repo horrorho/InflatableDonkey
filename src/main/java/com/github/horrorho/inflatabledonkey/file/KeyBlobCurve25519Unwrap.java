@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;

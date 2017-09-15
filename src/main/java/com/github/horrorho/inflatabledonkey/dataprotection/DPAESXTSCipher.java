@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.dataprotection;
 
 import com.github.horrorho.inflatabledonkey.args.Property;
 import com.github.horrorho.inflatabledonkey.crypto.xts.XTSAESBlockCipher;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 

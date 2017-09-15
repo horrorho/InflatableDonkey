@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.crypto.ec;
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;

@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.crypto.ec;
 
 import java.math.BigInteger;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECConstants;
 import org.bouncycastle.math.ec.ECCurve;

@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.args;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

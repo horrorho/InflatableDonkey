@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.crypto.rfc6637.RFC6637Factory;
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.function.BiFunction;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 
 /**

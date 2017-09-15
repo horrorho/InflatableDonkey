@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Optional;
 import javax.xml.parsers.ParserConfigurationException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

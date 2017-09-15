@@ -41,7 +41,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  *

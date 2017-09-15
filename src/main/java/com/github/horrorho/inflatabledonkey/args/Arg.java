@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.args;
 
 import java.util.Objects;
 import java.util.function.UnaryOperator;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.commons.cli.Option;
 
 /**

@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.requests;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * AccessTokens.

@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.chunk.engine;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Maps chunk encryption keys using the supplied metadata. Keys that are already in a valid state are returned

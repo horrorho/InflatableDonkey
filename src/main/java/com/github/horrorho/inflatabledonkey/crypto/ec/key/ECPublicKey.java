@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.crypto.ec.ECCurvePoint;
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public final class ECPublicKey implements ECKey {

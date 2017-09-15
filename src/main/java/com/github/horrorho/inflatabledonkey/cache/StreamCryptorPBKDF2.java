@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.cache;
 
 import java.util.Objects;
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;

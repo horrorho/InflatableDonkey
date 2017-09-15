@@ -28,7 +28,7 @@ import com.github.horrorho.inflatabledonkey.cloud.accounts.Token;
 import com.github.horrorho.inflatabledonkey.requests.CkAppInitBackupRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.JsonResponseHandler;
 import java.io.IOException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;

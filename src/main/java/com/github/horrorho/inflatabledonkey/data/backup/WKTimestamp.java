@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.time.Instant;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * WKTimestamp. Cocoa/ Webkit timestamp utility.

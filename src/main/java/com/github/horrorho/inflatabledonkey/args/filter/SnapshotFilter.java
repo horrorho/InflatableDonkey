@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.data.backup.Snapshot;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

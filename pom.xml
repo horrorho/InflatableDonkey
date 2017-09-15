@@ -94,11 +94,6 @@
             <version>2.8.7</version>
         </dependency>
         <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.56</version>
@@ -139,6 +134,11 @@
             <artifactId>JUnitParams</artifactId>
             <version>1.0.6</version>
             <scope>test</scope>
+        </dependency>        
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
     </dependencies>
     <properties>

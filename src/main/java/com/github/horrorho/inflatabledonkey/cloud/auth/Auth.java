@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.cloud.auth;
 
 import com.github.horrorho.inflatabledonkey.data.DsPrsID;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Auth.

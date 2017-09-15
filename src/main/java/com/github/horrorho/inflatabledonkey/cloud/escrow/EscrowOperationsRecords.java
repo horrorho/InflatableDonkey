@@ -27,7 +27,7 @@ import com.dd.plist.NSDictionary;
 import com.github.horrorho.inflatabledonkey.requests.EscrowProxyRequestFactory;
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import java.io.IOException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;

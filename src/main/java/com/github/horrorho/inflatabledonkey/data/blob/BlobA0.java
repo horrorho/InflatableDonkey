@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.blob;
 
 import java.nio.ByteBuffer;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

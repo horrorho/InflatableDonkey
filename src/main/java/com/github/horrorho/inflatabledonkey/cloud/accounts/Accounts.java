@@ -33,7 +33,7 @@ import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
 import java.text.ParseException;
 import javax.xml.parsers.ParserConfigurationException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;

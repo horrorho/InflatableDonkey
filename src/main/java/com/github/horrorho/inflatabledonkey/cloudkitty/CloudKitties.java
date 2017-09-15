@@ -29,7 +29,7 @@ import com.github.horrorho.inflatabledonkey.cloud.cloudkit.CKInit;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * CloudKitty factory.

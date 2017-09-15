@@ -30,7 +30,7 @@ import com.github.horrorho.inflatabledonkey.requests.AuthenticationRequestFactor
 import com.github.horrorho.inflatabledonkey.responsehandler.PropertyListResponseHandler;
 import com.github.horrorho.inflatabledonkey.util.PListsLegacy;
 import java.io.IOException;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpUriRequest;

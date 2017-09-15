@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.der;
 
 import java.math.BigInteger;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;

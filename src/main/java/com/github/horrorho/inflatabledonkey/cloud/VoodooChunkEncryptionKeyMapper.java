@@ -40,7 +40,7 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static java.util.stream.Collectors.toSet;

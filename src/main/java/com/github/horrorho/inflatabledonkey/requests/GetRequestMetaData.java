@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.requests;
 
 import java.nio.charset.StandardCharsets;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;

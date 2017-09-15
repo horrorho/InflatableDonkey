@@ -31,7 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.crypto.RuntimeCryptoException;
 import org.bouncycastle.crypto.digests.SHA256Digest;

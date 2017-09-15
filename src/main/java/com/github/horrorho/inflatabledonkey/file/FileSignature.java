@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.file;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 
 /**

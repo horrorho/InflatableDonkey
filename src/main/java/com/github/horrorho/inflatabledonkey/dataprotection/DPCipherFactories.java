@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.dataprotection;
 
 import java.util.function.Supplier;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.BlockCipher;
 
 /**

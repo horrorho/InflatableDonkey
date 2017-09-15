@@ -31,7 +31,7 @@ import com.github.horrorho.inflatabledonkey.data.der.PublicKeyInfo;
 import com.github.horrorho.inflatabledonkey.data.der.Signature;
 import java.io.IOException;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.digests.SHA512Digest;

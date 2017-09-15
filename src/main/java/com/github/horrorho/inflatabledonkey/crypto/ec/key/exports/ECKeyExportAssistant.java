@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.crypto.ec.key.exports;
 
 import java.util.stream.Stream;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * ECKeyExportAssistant.

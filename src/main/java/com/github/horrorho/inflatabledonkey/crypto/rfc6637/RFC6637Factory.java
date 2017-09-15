@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.crypto.rfc6637;
 
 import java.io.IOException;
 import java.util.function.Supplier;
-import net.jcip.annotations.ThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.crypto.Digest;

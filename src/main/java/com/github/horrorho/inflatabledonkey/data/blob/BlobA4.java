@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.blob;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

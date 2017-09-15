@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.crypto.ec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Elliptic curves.

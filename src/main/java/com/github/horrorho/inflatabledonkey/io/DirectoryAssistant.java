@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.io;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

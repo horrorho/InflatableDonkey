@@ -23,10 +23,10 @@
  */
 package com.github.horrorho.inflatabledonkey.chunk.store.disk;
 
-import com.github.horrorho.inflatabledonkey.io.HookOutputStream;
 import com.github.horrorho.inflatabledonkey.chunk.Chunk;
 import com.github.horrorho.inflatabledonkey.chunk.store.ChunkStore;
 import com.github.horrorho.inflatabledonkey.io.DirectoryAssistant;
+import com.github.horrorho.inflatabledonkey.io.HookOutputStream;
 import com.github.horrorho.inflatabledonkey.io.IOConsumer;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,8 +39,8 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.io.DigestOutputStream;
 import org.bouncycastle.util.encoders.Hex;

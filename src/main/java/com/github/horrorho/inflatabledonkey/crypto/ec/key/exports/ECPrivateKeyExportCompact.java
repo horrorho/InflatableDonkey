@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.crypto.ec.key.exports;
 
 import com.github.horrorho.inflatabledonkey.crypto.ec.key.ECPrivateKey;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * ECPrivateKeyExportCompact. Format: data = x(compact) || d

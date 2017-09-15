@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;

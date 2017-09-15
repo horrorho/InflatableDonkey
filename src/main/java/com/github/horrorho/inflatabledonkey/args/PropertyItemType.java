@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import static java.util.stream.Collectors.toList;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import static java.util.stream.Collectors.joining;
 
 /**

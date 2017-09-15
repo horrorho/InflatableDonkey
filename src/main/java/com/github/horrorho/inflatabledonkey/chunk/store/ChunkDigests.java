@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.chunk.store;
 
 import java.util.Arrays;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

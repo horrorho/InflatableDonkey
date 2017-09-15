@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.crypto;
 
 import java.util.Optional;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.RuntimeCryptoException;
 import org.bouncycastle.crypto.engines.AESFastEngine;

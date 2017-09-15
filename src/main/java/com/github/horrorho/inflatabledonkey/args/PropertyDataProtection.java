@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.args;
 
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Data Protection mode.

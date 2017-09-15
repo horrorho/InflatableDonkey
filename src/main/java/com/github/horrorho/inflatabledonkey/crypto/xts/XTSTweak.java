@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.crypto.xts;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.LongFunction;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.engines.AESFastEngine;

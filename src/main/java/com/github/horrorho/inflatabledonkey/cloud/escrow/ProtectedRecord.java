@@ -43,7 +43,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

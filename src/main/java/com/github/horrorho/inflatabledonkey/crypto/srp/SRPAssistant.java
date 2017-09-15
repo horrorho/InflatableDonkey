@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.crypto.srp;
 
 import java.math.BigInteger;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
 import org.bouncycastle.util.BigIntegers;

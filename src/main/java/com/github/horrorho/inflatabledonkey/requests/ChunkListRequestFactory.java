@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.requests;
 
 import com.github.horrorho.inflatabledonkey.protobuf.ChunkServer;
 import java.util.function.Function;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.message.BasicHeader;

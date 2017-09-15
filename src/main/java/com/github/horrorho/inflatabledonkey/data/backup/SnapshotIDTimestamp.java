@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.data.backup;
 
 import java.time.Instant;
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

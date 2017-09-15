@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.accounts;
 
 import java.util.Objects;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Account.

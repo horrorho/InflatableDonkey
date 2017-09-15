@@ -26,7 +26,7 @@ package com.github.horrorho.inflatabledonkey.io;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

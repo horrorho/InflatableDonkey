@@ -32,7 +32,7 @@ import com.github.horrorho.inflatabledonkey.data.der.SECPrivateKey;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * PrivateSECKeyImport.

@@ -27,7 +27,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHe
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

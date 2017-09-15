@@ -3,7 +3,7 @@ package com.github.horrorho.inflatabledonkey.requests;
 import static com.github.horrorho.inflatabledonkey.requests.Headers.*;
 import java.util.HashMap;
 import java.util.Map;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.http.Header;
 
 /*

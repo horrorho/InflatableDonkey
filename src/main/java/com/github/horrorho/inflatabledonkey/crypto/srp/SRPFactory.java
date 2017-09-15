@@ -25,7 +25,7 @@ package com.github.horrorho.inflatabledonkey.crypto.srp;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 

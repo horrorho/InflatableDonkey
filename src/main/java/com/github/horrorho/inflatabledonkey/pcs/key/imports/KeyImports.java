@@ -35,7 +35,7 @@ import com.github.horrorho.inflatabledonkey.data.der.PrivateKey;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * KeyImports.

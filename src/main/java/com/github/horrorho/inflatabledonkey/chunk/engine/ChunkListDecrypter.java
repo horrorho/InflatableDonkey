@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.input.CountingInputStream;

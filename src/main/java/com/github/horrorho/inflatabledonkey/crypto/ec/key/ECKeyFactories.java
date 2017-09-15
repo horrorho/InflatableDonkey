@@ -23,7 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.crypto.ec.key;
 
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Default elliptic curve key factories.

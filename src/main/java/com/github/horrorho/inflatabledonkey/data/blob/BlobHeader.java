@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.data.blob;
 
 import java.nio.ByteBuffer;
-import net.jcip.annotations.Immutable;
+import javax.annotation.concurrent.Immutable;
 
 /**
  *

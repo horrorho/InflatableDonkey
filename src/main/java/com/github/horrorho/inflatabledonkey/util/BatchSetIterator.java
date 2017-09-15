@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntFunction;
-import net.jcip.annotations.NotThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Simple iterator that attempts to batch sized items together, based on a minimum size threshold.
