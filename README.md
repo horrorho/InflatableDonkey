@@ -1,19 +1,12 @@
+**Update**, 14 September 2017.
+
+LZFSE decompression via [RagingMoose](https://github.com/horrorho/RagingMoose). Test build.
+
 **Update**, 29 June 2017.
 
 Oh my how time flies! Although this tool has been on the back burner over the last year, thanks to the assistance of others (see below) I've still managed to keep it functional through iOS 10 and now iOS 11. The caveat being that iOS 11 at present needs an external [lzfse](https://github.com/lzfse/lzfse) decoder as detailed [here](https://github.com/horrorho/InflatableDonkey/issues/67#issuecomment-311392692). I do hope to have a built-in decoder available at some point, hopefully [soon](https://wow.gamepedia.com/Soon)!
 
 There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to be used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
-
-**Update**, 15 August 2016. 
-
-Good news and bad news...
-
-The good. New build with bugfixes and a few filtering enhancements. The download engine now auto-tunes the thread count and will handle backups with numerous small files more efficiently. I do have a much better designed engine with improved functionality and more appropriate leverage of Java concurrency available but it's still not quite finished.
-
-The bad. I'm putting this project on the back-burner for the foreseeable future. I just can't spare the time to add in enhancements. This project was only ever intended to be an experimental tool to aid in the discovery of the iOS 9 iCloud backup process, something it achieved a while ago. I've sinced whacked it around to function as a download tool in it's own right. 
-
-So! I've spent countless nights studying arcane crypto material, reverse-engineering binaries and poring over logs. Others, see below, have also contributed. InflatableDonkey now knows many secrets and I'm rather hoping others can take it and fly with it.
-
 
 
 ### What is it?
