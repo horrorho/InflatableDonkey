@@ -122,9 +122,9 @@ public final class FileAssembler
     boolean assemble(Path path, Asset asset, List<Chunk> chunks) {
         String info = info(asset);
         asset.contentCompressionMethod()
-                .ifPresent(u -> logger.info("-- assemble() - content compression method: {} {}", info, u));
+                .ifPresent(u -> logger.info("-- assemble() - asset: {} content compression method: {}", info, u));
         asset.contentEncodingMethod()
-                .ifPresent(u -> logger.info("-- assemble() - content encoding method: {} {}", info, u));
+                .ifPresent(u -> logger.info("-- assemble() - asset: {} content encoding method: {}", info, u));
         return asset.encryptionKey()
                 .map(u -> decrypt(path, info, chunks, u, asset.fileChecksum(), asset.contentCompressionMethod()))
                 .orElseGet(() -> write(path, info, chunks, Optional.empty(), asset.fileChecksum(), asset.contentCompressionMethod()));

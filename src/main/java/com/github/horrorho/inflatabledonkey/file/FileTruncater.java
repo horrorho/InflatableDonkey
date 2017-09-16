@@ -74,7 +74,7 @@ public final class FileTruncater {
             if (to <= 0) {  // TODO consider:  to < 0
                 return;
             }
-            logger.info("-- truncate() - file: {} -> {}", file, to);
+            logger.debug("-- truncate() - file: {} -> {}", file, to);
             long size = Files.size(file);
             if (size > to) {
                 Files.newByteChannel(file, WRITE)
