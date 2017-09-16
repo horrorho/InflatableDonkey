@@ -26,6 +26,7 @@ package com.github.horrorho.inflatabledonkey.file;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -77,9 +78,9 @@ public final class FileTruncater {
             logger.debug("-- truncate() - file: {} -> {}", file, to);
             long size = Files.size(file);
             if (size > to) {
-                Files.newByteChannel(file, WRITE)
-                        .truncate(to)
-                        .close();
+                try (SeekableByteChannel ch = Files.newByteChannel(file, WRITE)) {
+                    ch.truncate(to);
+                }
             } else if (size < to) {
                 logger.warn("-- truncate() - cannot truncate: {}, {} > {}", file, size, to);
             }
