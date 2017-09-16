@@ -41,8 +41,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.input.CountingInputStream;
 import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.modes.CFBBlockCipher;
 import org.bouncycastle.crypto.io.CipherInputStream;
+import org.bouncycastle.crypto.modes.CFBBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
@@ -149,7 +149,7 @@ public final class ChunkListDecrypter {
             if (chunkOffset > position) {
                 int bytes = chunkOffset - position;
                 logger.debug("-- positionedStream() - skipping: {}", bytes);
-                inputStream.skip(bytes);
+                IOUtils.skipFully(inputStream, bytes);
             }
             return Optional.of(inputStream);
 
