@@ -1,6 +1,9 @@
-**Update**, 14 September 2017.
+**Update**, 17 September 2017.
 
-LZFSE decompression via [RagingMoose](https://github.com/horrorho/RagingMoose). Test build.
+iOS 11 build. LZFSE decompression via [RagingMoose](https://github.com/horrorho/RagingMoose) integration. No external `lzfse` compressor required, It should all work out of the box.
+
+Please report any issues.
+
 
 **Update**, 29 June 2017.
 
@@ -10,7 +13,7 @@ There has been some [confusion](https://github.com/horrorho/InflatableDonkey/iss
 
 
 ### What is it?
-Java proof of concept iOS9/ 10/ 11 iCloud backup retrieval tool.
+Java proof of concept iOS9/ 10/ 11 iCloud backup retrieval tool. Educational/ personal backup usage only.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
