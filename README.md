@@ -1,3 +1,10 @@
+**IMPORTANT NOTICE**, 6 November 2017.
+
+Without being able to expand on the reasons why and with immediate effect, I will no longer be maintaining this project or servicing tickets. I'm also unable to divulge any information regarding iOS/ iCloud mechanics or render any assistance in this regard.
+
+I apologise for this.
+
+
 **Update**, 17 September 2017.
 
 iOS 11 build. LZFSE decompression via [RagingMoose](https://github.com/horrorho/RagingMoose) integration. No external `lzfse` compressor required, It should all work out of the box.
