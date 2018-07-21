@@ -51,9 +51,7 @@ public final class AssetTokenClient {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetTokenClient.class);
 
-    public static List<Asset>
-            apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Map<AssetID, String> assetIDDomains)
-            throws IOException {
+    public static List<Asset> apply(HttpClient httpClient, CloudKitty kitty, ProtectionZone zone, Map<AssetID, String> assetIDDomains) throws IOException {
         List<String> nonEmptyAssets = assetIDDomains.entrySet()
                 .stream()
                 .filter(e -> e.getKey().size() > 0)
@@ -79,6 +77,7 @@ public final class AssetTokenClient {
     }
 
     static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
+//        TODO record CloudKit.RecordRetrieveResponse::hasRecord is 0 need to check why and how
         return responses
                 .parallelStream()
                 .filter(CloudKit.RecordRetrieveResponse::hasRecord)

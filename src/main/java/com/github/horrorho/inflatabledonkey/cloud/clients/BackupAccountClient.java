@@ -70,7 +70,10 @@ public final class BackupAccountClient {
 
         CloudKit.ProtectionInfo protectionInfo = response.getRecord().getProtectionInfo();
         ProtectionZone newZone = PZFactory.instance().create(zone, protectionInfo)
-                .orElseThrow(() -> new BadDataException("BackupAccountClient, failed to retrieve protection info"));
+                .orElseThrow(() -> {
+                    logger.warn("BackupAccountClient, failed to retrieve protection info");
+                    return new BadDataException("BackupAccountClient, failed to retrieve protection info");
+                });
 
         BackupAccount backupAccount = BackupAccountFactory.from(responses.get(0).getRecord(), newZone);
         logger.debug("-- backupAccount() - backup account: {}", backupAccount);

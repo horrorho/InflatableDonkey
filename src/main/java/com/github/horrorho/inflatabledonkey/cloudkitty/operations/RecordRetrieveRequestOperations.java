@@ -48,15 +48,13 @@ public final class RecordRetrieveRequestOperations {
         return get(kitty, httpClient, zone, Arrays.asList(recordNames));
     }
 
-    public static List<RecordRetrieveResponse>
-            get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames)
-            throws IOException {
+    public static List<RecordRetrieveResponse> get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames) throws IOException {
+
         List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
         return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
     }
 
-    static List<RequestOperation>
-            operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
+    static List<RequestOperation> operations(String zone, Collection<String> recordNames, String cloudKitUserId) {
         return recordNames.stream()
                 .map(u -> operation(zone, u, cloudKitUserId))
                 .collect(Collectors.toList());

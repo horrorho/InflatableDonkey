@@ -46,14 +46,14 @@ public final class RequestOperationHeaders implements Function<String, RequestOp
     static final RequestOperationHeader REQUESTOPERATIONHEADERPROTO
             = RequestOperationHeader.newBuilder()
                     .setF4("4.0.0.0")
-                    .setDeviceSoftwareVersion("9.0.1")
+                    .setDeviceSoftwareVersion("11.0.1")
                     .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
-                    .setDeviceLibraryVersion("479")
+                    .setDeviceLibraryVersion("735")
                     .setDeviceFlowControlBudget(40000)
                     .setDeviceFlowControlBudgetCap(40000)
                     .setVersion("4.0")
                     .setF19(1)
-                    .setDeviceAssignedName("Wonderwoman's iPhone")
+                    .setDeviceAssignedName("dB's iPhone")
                     .setF23(1)
                     .setF25(1)
                     .build();

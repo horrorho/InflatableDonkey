@@ -142,7 +142,7 @@ public class Main {
                 .setDefaultRequestConfig(config)
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setRetryHandler(retryHandler)
-                .setUserAgent("CloudKit/479 (13A404)")
+                .setUserAgent("CloudKit/480 (13A405)")
                 .useSystemProperties()
                 .build();
 
@@ -150,7 +150,7 @@ public class Main {
         int threads = Property.ENGINE_THREADS.asInteger().orElse(1);
         ForkJoinPool forkJoinPool = new ForkJoinPool(threads);
 
-        // Hack to improve the speed of multiple small asset retrieval by providing a larger auxillary threadpool for 
+        // Hack to improve the speed of multiple small asset retrieval by providing a larger auxillary threadpool for
         // them.
         int auxThreads = Property.ENGINE_FRAGMENTATION_POOL_MULTIPLIER.asInteger().orElse(0) * threads;
         Optional<ForkJoinPool> forkJoinPoolAux = auxThreads == 0
