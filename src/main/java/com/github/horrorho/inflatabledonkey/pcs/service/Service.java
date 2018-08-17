@@ -35,25 +35,59 @@ import java.util.stream.Collectors;
  * @author Ahseya
  */
 public enum Service {
+    // Internal non-standard: service is specified but not recognised as an enum
     UNKNOWN(-1),
-    RAW(0), // Raw
-    PCS_MASTERKEY(1), // MasterKey
-    BLADERUNNER(2), // iCloudDrive
-    HYPERION(3), // Photos
-    LIVERPOOL(4), // CloudKit
-    PCS_ESCROW(5), // Escrow
-    PCS_FDE(6), // FDE
-    PIANOMOVER(7), // Maildrop
-    PCS_BACKUP(8), // Backup
-    PCS_NOTES(9), // Notes
-    PCS_IMESSAGE(10), // iMessage
-    FELDSPAR(11), // News
-    BURNTCOOKIE(12), // * placeholder *
-    WOBBLYJELLY(13), // * placeholder *
-    MIDNIGHTBLUE(14), // * placeholder *
-    DRIEDWATER(15), // * placeholder *
-    FURIOUSPOTATO(16), // * placeholder *
-    LUMPYMATTRESS(17);   // * placeholder *
+    // Raw
+    RAW(0),
+    // MasterKey
+    PCS_MASTERKEY(1),
+    // iCloudDrive
+    BLADERUNNER(2),
+    // Photos
+    HYPERION(3),
+    // CloudKit
+    LIVERPOOL(4),
+    // Escrow
+    PCS_ESCROW(5),
+    // FDE
+    PCS_FDE(6),
+    // Maildrop
+    PIANOMOVER(7),
+    // Backup
+    PCS_BACKUP(8),
+    // Notes
+    PCS_NOTES(9),
+    // iMessage
+    PCS_IMESSAGE(10),
+    // News
+    NEWS(11),
+    // Sharing
+    SHARING(12),
+    // KeyboardServices
+    KEYBOARD_SERVICES(13),
+    // Activities
+    ACTIVITIES(14),
+    // Gaming
+    GAMING(15),
+    // iAD
+    IAD(16),
+    // BulkMail
+    BULK_MAIL(17),
+    // BTPairing
+    BT_PAIRING(18),
+    // BTAnnouncement
+    BT_ANNOUNCEMENT(19),
+    // TTYCallHistory
+    TTY_CALL_HISTORY(20),
+    // Continuity
+    CONTINUITY(21),
+    // Placeholders
+    LOBSTER_ROMANCE(22),
+    HAPPY_STONES(23),
+    HORROR_HO(24),
+    RED_SKIES(25),
+    BROKEN_PANDA(26),
+    FROZEN_MOOSE(27);
 
     private static final Map<Integer, Service> map = Arrays.asList(Service.values())
             .stream()
