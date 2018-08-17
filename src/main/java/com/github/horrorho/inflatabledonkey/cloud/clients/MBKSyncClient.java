@@ -93,8 +93,8 @@ public final class MBKSyncClient {
                 .map(CloudKit.ZoneRetrieveResponse::getZoneSummaryList)
                 .flatMap(Collection::stream)
                 .map(CloudKit.ZoneRetrieveResponse.ZoneSummary::getTargetZone)
-                .filter(CloudKit.Zone::hasProtectionInfo)
-                .map(CloudKit.Zone::getProtectionInfo)
+                .filter(CloudKit.Zone::hasRecordProtectionInfo)
+                .map(CloudKit.Zone::getRecordProtectionInfo)
                 .collect(Collectors.toList());
     }
 }

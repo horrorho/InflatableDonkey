@@ -548,6 +548,7 @@ message Zone {
   optional RecordZoneIdentifier zoneIdentifier = 1;
   optional string etag= 2;
   optional ProtectionInfo protectionInfo = 3;
+  optional ProtectionInfo recordProtectionInfo = 6;
 }
 
 message FileTokens {
