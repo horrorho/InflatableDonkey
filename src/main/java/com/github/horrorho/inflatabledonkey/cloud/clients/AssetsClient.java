@@ -117,6 +117,7 @@ public final class AssetsClient {
         return responses
                 .stream()
                 .map(CloudKit.RecordRetrieveResponse::getRecord)
+                .filter(CloudKit.Record::hasRecordIdentifier)
                 .map(AssetsClient::manifestIDRecord)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -129,7 +130,7 @@ public final class AssetsClient {
         Optional<Map.Entry<ManifestID, CloudKit.Record>> entry = ManifestIDIndex.from(name)
                 .map(u -> new SimpleImmutableEntry<>(u.id(), record));
         if (!entry.isPresent()) {
-            logger.warn("-- manifestIDRecord() - no manifest id found: {}", name);
+            logger.debug("-- manifestIDRecord() - no manifest id found: {}", record);
         }
         return entry;
     }
