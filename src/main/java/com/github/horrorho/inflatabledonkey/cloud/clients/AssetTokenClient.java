@@ -32,10 +32,12 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -79,9 +81,11 @@ public final class AssetTokenClient {
     }
 
     static List<Asset> assets(List<CloudKit.QueryRetrieveResponse> responses, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
-        return responses
+        return responses.stream()
+                .map(CloudKit.QueryRetrieveResponse::getQueryResultsList)
+                .flatMap(Collection::stream)
+                .collect(toList())
                 .parallelStream()
-                .flatMap(u -> u.getQueryResultsList().parallelStream())
                 .filter(CloudKit.QueryRetrieveResponse.QueryResult::hasRecord)
                 .map(CloudKit.QueryRetrieveResponse.QueryResult::getRecord)
                 .map(u -> asset(u, assetIDDomains, zone))
