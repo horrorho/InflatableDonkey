@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.QueryRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBag;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.KeyBagID;
@@ -32,7 +32,9 @@ import com.github.horrorho.inflatabledonkey.exception.BadDataException;
 import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.QueryRetrieveResponse;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
@@ -53,18 +55,24 @@ public final class KeyBagClient {
             throws BadDataException, IOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagID);
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
+        List<CloudKit.QueryRetrieveResponse> responses
+                = QueryRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
+
         return keyBag(responses, zone);
     }
 
-    static KeyBag keyBag(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) throws BadDataException {
+    static KeyBag keyBag(List<CloudKit.QueryRetrieveResponse> responses, ProtectionZone zone) throws BadDataException {
         logger.debug("-- keyBag() - responses: {}", responses);
-        CloudKit.ProtectionInfo protectionInfo = responses.get(0)
-                .getRecord()
-                .getProtectionInfo();
-        ProtectionZone newZone = PZFactory.instance().create(zone, protectionInfo)
+        CloudKit.Record record = responses.stream()
+                .map(QueryRetrieveResponse::getQueryResultsList)
+                .flatMap(Collection::stream)
+                .filter(QueryRetrieveResponse.QueryResult::hasRecord)
+                .map(QueryRetrieveResponse.QueryResult::getRecord)
+                .findFirst()
+                .orElseThrow(() -> new BadDataException("KeyBagClient, missing record"));
+
+        ProtectionZone newZone = PZFactory.instance().create(zone, record.getProtectionInfo())
                 .orElseThrow(() -> new BadDataException("KeyBagClient, failed to retrieve protection info"));
-        return KeyBagFactory.from(responses.get(0), newZone);
+        return KeyBagFactory.from(record, newZone);
     }
 }

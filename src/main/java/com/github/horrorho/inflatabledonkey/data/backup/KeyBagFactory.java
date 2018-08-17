@@ -45,15 +45,15 @@ public final class KeyBagFactory {
     private static final Logger logger = LoggerFactory.getLogger(KeyBagFactory.class);
 
     public static KeyBag
-            from(CloudKit.RecordRetrieveResponse response, ProtectionZone zone)
+            from(CloudKit.Record record, ProtectionZone zone)
             throws BadDataException {
 
-        Optional<byte[]> keyBagData = field(response.getRecord(), KEYBAG_DATA, zone);
+        Optional<byte[]> keyBagData = field(record, KEYBAG_DATA, zone);
         if (!keyBagData.isPresent()) {
             throw new BadDataException("KeyBagFactory, no key bag data");
         }
 
-        Optional<byte[]> secret = field(response.getRecord(), SECRET, zone);
+        Optional<byte[]> secret = field(record, SECRET, zone);
         if (!secret.isPresent()) {
             throw new BadDataException("KeyBagFactory, failed to acquire key bag pass code");
         }
@@ -65,12 +65,12 @@ public final class KeyBagFactory {
         return record.getRecordFieldList()
                 .stream()
                 .filter(u -> u
-                        .getIdentifier()
-                        .getName()
-                        .equals(label))
+                .getIdentifier()
+                .getName()
+                .equals(label))
                 .map(u -> u
-                        .getValue()
-                        .getBytesValue())
+                .getValue()
+                .getBytesValue())
                 .map(ByteString::toByteArray)
                 .map(bs -> zone.decrypt(bs, label))
                 .filter(Optional::isPresent)
