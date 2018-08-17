@@ -64,9 +64,9 @@ public final class AuthorizeGetRequestFactory {
         }
         CloudKit.FileToken base = fileTokens.getFileTokens(0);
         String mmcsAuthToken = Stream.of(
-                Hex.encodeHexString(base.getFileChecksum().toByteArray()),
-                Hex.encodeHexString(base.getFileSignature().toByteArray()),
-                base.getToken())
+                Hex.encodeHexString(base.getSignature().toByteArray()),
+                Hex.encodeHexString(base.getReferenceSignature().toByteArray()),
+                base.getDownloadToken())
                 .collect(Collectors.joining(" "));
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(fileTokens.toByteArray());
 

@@ -52,7 +52,7 @@ public final class DeviceFactory {
         return new Device(record, deviceID, snapshots(record.getRecordFieldList()));
     }
 
-    static List<SnapshotIDTimestamp> snapshots(List<CloudKit.RecordField> records) {
+    static List<SnapshotIDTimestamp> snapshots(List<CloudKit.Record.Field> records) {
         List<SnapshotID> snapshotRecords = snapshotRecords(records);
         List<Instant> snapshotCommittedDates = snapshotCommittedDates(records);
         logger.debug("-- snapshots() - records: {}", snapshotRecords.size());
@@ -67,7 +67,7 @@ public final class DeviceFactory {
                 .collect(Collectors.toList());
     }
 
-    static List<SnapshotID> snapshotRecords(List<CloudKit.RecordField> records) {
+    static List<SnapshotID> snapshotRecords(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -75,7 +75,7 @@ public final class DeviceFactory {
                         .equals("snapshots"))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
                 .map(u -> u
                         .getReferenceValue()
@@ -88,7 +88,7 @@ public final class DeviceFactory {
                 .collect(Collectors.toList());
     }
 
-    static List<Instant> snapshotCommittedDates(List<CloudKit.RecordField> records) {
+    static List<Instant> snapshotCommittedDates(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -96,7 +96,7 @@ public final class DeviceFactory {
                         .equals("snapshotCommittedDates"))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
                 .map(u -> u
                         .getDateValue()

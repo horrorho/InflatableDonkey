@@ -53,24 +53,25 @@ public final class AssetFactory {
     }
 
     static Asset from(AssetID assetID, String domain, CloudKit.Record record, ProtectionZone zone) {
-        List<CloudKit.RecordField> records = record.getRecordFieldList();
+        List<CloudKit.Record.Field> records = record.getRecordFieldList();
         Optional<Integer> protectionClass = protectionClass(records);
         Optional<Integer> fileType = fileType(records);
         Optional<AssetEncryptedAttributes> encryptedAttributes = encryptedAttributes(records)
                 .flatMap(u -> zone.decrypt(u, ENCRYPTED_ATTRIBUTES))
                 .flatMap(u -> AssetEncryptedAttributesFactory.from(u, domain));
         Optional<CloudKit.Asset> asset = asset(records);
-        Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasData)
-                .map(u -> u.getData().getValue().toByteArray())
+        Optional<byte[]> keyEncryptionKey = asset.filter(CloudKit.Asset::hasProtectionInfo)
+
+                .map(u -> u.getProtectionInfo().getProtectionInfo().toByteArray())
                 .flatMap(zone::unwrapKey);
-        Optional<byte[]> fileChecksum = asset.filter(CloudKit.Asset::hasFileChecksum)
-                .map(u -> u.getFileChecksum().toByteArray());
-        Optional<byte[]> fileSignature = asset.filter(CloudKit.Asset::hasFileSignature)
-                .map(u -> u.getFileSignature().toByteArray());
+        Optional<byte[]> fileChecksum = asset.filter(CloudKit.Asset::hasSignature)
+                .map(u -> u.getSignature().toByteArray());
+        Optional<byte[]> fileSignature = asset.filter(CloudKit.Asset::hasReferenceSignature)
+                .map(u -> u.getReferenceSignature().toByteArray());
         Optional<String> contentBaseURL = asset.filter(CloudKit.Asset::hasContentBaseURL)
                 .map(CloudKit.Asset::getContentBaseURL);
-        Optional<String> dsPrsID = asset.filter(CloudKit.Asset::hasDsPrsID)
-                .map(CloudKit.Asset::getDsPrsID);
+        Optional<String> dsPrsID = asset.filter(CloudKit.Asset::hasOwner)
+                .map(CloudKit.Asset::getOwner);
         Optional<Long> fileSize = asset.filter(CloudKit.Asset::hasSize)
                 .map(CloudKit.Asset::getSize);
         Optional<Instant> downloadTokenExpiration = asset.filter(CloudKit.Asset::hasDownloadTokenExpiration)
@@ -95,7 +96,7 @@ public final class AssetFactory {
         return newAsset;
     }
 
-    static Optional<Integer> protectionClass(List<CloudKit.RecordField> records) {
+    static Optional<Integer> protectionClass(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                 .getIdentifier()
@@ -108,7 +109,7 @@ public final class AssetFactory {
                 .findFirst();
     }
 
-    static Optional<Integer> fileType(List<CloudKit.RecordField> records) {
+    static Optional<Integer> fileType(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(value -> value.getIdentifier().getName().equals(FILE_TYPE))
                 .map(u -> u
@@ -118,7 +119,7 @@ public final class AssetFactory {
                 .findFirst();
     }
 
-    static Optional<CloudKit.Asset> asset(List<CloudKit.RecordField> records) {
+    static Optional<CloudKit.Asset> asset(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(value -> value
                 .getIdentifier()
@@ -130,7 +131,7 @@ public final class AssetFactory {
                 .findFirst();
     }
 
-    static Optional<byte[]> encryptedAttributes(List<CloudKit.RecordField> records) {
+    static Optional<byte[]> encryptedAttributes(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                 .getIdentifier()

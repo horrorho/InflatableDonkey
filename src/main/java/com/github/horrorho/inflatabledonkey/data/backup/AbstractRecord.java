@@ -44,7 +44,7 @@ public abstract class AbstractRecord {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractRecord.class);
 
-    static Map<String, CloudKit.RecordField> map(Collection<CloudKit.RecordField> recordFields) {
+    static Map<String, CloudKit.Record.Field> map(Collection<CloudKit.Record.Field> recordFields) {
         return recordFields.stream()
                 .collect(Collectors.toMap(
                         u -> u.getIdentifier().getName(),
@@ -56,9 +56,9 @@ public abstract class AbstractRecord {
     }
 
     private final CloudKit.Record record;
-    private final Map<String, CloudKit.RecordField> recordFields;
+    private final Map<String, CloudKit.Record.Field> recordFields;
 
-    private AbstractRecord(CloudKit.Record record, Map<String, CloudKit.RecordField> recordFields) {
+    private AbstractRecord(CloudKit.Record record, Map<String, CloudKit.Record.Field> recordFields) {
         this.record = Objects.requireNonNull(record, "record");
         this.recordFields = Objects.requireNonNull(recordFields, "recordFields");
     }
@@ -89,16 +89,16 @@ public abstract class AbstractRecord {
         return WKTimestamp.toInstant(timestamp);
     }
 
-    public final Map<String, CloudKit.RecordField> recordFields() {
+    public final Map<String, CloudKit.Record.Field> recordFields() {
         return new HashMap<>(recordFields);
     }
 
-    public final Optional<CloudKit.RecordField> recordField(String name) {
+    public final Optional<CloudKit.Record.Field> recordField(String name) {
         return Optional.ofNullable(recordFields.get(name));
     }
 
-    public final Optional<CloudKit.RecordFieldValue> recordFieldValue(String name) {
-        return Optional.ofNullable(recordFields.get(name)).map(CloudKit.RecordField::getValue);
+    public final Optional<CloudKit.Record.Field.Value> recordFieldValue(String name) {
+        return Optional.ofNullable(recordFields.get(name)).map(CloudKit.Record.Field::getValue);
     }
 
     @Override

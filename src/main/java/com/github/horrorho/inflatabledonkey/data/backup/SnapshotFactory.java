@@ -63,7 +63,7 @@ public final class SnapshotFactory {
         return snapshot;
     }
 
-    static List<Manifest> manifests(List<CloudKit.RecordField> records) {
+    static List<Manifest> manifests(List<CloudKit.Record.Field> records) {
         List<ManifestID> manifestIDs = manifestIDs(records);
         List<Integer> manifestCounts = manifestCounts(records);
         List<Integer> manifestChecksums = manifestChecksums(records);
@@ -83,7 +83,7 @@ public final class SnapshotFactory {
                 .collect(Collectors.toList());
     }
 
-    static List<Integer> manifestCounts(List<CloudKit.RecordField> records) {
+    static List<Integer> manifestCounts(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -91,14 +91,14 @@ public final class SnapshotFactory {
                         .equals(MANIFEST_COUNTS))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(CloudKit.Record.Field.Value::getSignedValue)
                 .map(Long::intValue)
                 .collect(Collectors.toList());
     }
 
-    static List<Integer> manifestChecksums(List<CloudKit.RecordField> records) {
+    static List<Integer> manifestChecksums(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -106,14 +106,14 @@ public final class SnapshotFactory {
                         .equals(MANIFEST_CHECKSUMS))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getSignedValue)
+                .map(CloudKit.Record.Field.Value::getSignedValue)
                 .map(Long::intValue)
                 .collect(Collectors.toList());
     }
 
-    static List<ManifestID> manifestIDs(List<CloudKit.RecordField> records) {
+    static List<ManifestID> manifestIDs(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -121,16 +121,16 @@ public final class SnapshotFactory {
                         .equals(MANIFEST_IDS))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .map(ManifestID::from)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
-    static Optional<byte[]> backupProperties(List<CloudKit.RecordField> records) {
+    static Optional<byte[]> backupProperties(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()

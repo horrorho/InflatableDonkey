@@ -43,14 +43,14 @@ public final class BackupAccountFactory {
     private static final String DEVICES = "devices";
 
     public static BackupAccount from(CloudKit.Record record, ProtectionZone zone) {
-        List<CloudKit.RecordField> records = record.getRecordFieldList();
+        List<CloudKit.Record.Field> records = record.getRecordFieldList();
         Optional<byte[]> hmacKey = hmacKey(records)
                 .flatMap(u -> zone.decrypt(u, HMAC_KEY));
         Collection<DeviceID> devices = devices(records);
         return new BackupAccount(record, hmacKey, devices);
     }
 
-    public static Optional<byte[]> hmacKey(List<CloudKit.RecordField> records) {
+    public static Optional<byte[]> hmacKey(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -63,7 +63,7 @@ public final class BackupAccountFactory {
                 .findFirst();
     }
 
-    public static Collection<DeviceID> devices(List<CloudKit.RecordField> records) {
+    public static Collection<DeviceID> devices(List<CloudKit.Record.Field> records) {
         return records.stream()
                 .filter(u -> u
                         .getIdentifier()
@@ -71,7 +71,7 @@ public final class BackupAccountFactory {
                         .equals(DEVICES))
                 .map(u -> u
                         .getValue()
-                        .getRecordFieldValueList())
+                        .getListValuesList())
                 .flatMap(Collection::stream)
                 .map(u -> u
                         .getReferenceValue()

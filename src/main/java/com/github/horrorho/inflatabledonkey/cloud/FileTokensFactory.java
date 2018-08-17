@@ -52,16 +52,16 @@ public final class FileTokensFactory {
     }
 
     static CloudKit.FileToken fileToken(CloudKit.Asset asset) {
-        return fileToken(asset.getFileChecksum(), asset.getFileSignature(), asset.getDownloadToken());
+        return fileToken(asset.getSignature(), asset.getReferenceSignature(), asset.getDownloadToken());
     }
 
     static CloudKit.FileToken
             fileToken(ByteString fileChecksum, ByteString fileSignature, String downloadToken) {
 
         return CloudKit.FileToken.newBuilder()
-                .setFileChecksum(fileChecksum)
-                .setFileSignature(fileSignature)
-                .setToken(downloadToken)
+                .setSignature(fileChecksum)
+                .setReferenceSignature(fileSignature)
+                .setDownloadToken(downloadToken)
                 .build();
     }
 }

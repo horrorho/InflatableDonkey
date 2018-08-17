@@ -23,6 +23,7 @@
  */
 package com.github.horrorho.inflatabledonkey.data.backup;
 
+import static com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory.from;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.util.Collection;
@@ -34,7 +35,6 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory.from;
 
 /**
  *
@@ -103,7 +103,7 @@ public final class AssetsFactory {
     }
 
     static Optional<byte[]>
-            domain(List<CloudKit.RecordField> records) {
+            domain(List<CloudKit.Record.Field> records) {
         return records
                 .stream()
                 .filter(u -> u.getIdentifier().getName().equals(DOMAIN))
@@ -117,7 +117,7 @@ public final class AssetsFactory {
                 .map(CloudKit.Record::getRecordFieldList)
                 .flatMap(Collection::stream)
                 .filter(u -> u.getIdentifier().getName().equals(FILES))
-                .map(u -> u.getValue().getRecordFieldValueList())
+                .map(u -> u.getValue().getListValuesList())
                 .flatMap(Collection::stream)
                 .map(u -> u.getReferenceValue().getRecordIdentifier().getValue().getName())
                 .map(AssetID::from)

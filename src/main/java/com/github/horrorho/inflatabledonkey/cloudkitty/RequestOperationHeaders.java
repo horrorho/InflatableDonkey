@@ -23,7 +23,8 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHeader;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Identifier;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
@@ -34,35 +35,35 @@ import javax.annotation.concurrent.Immutable;
  * @author Ahseya
  */
 @Immutable
-public final class RequestOperationHeaders implements Function<String, RequestOperationHeader> {
+public final class RequestOperationHeaders implements Function<String, RequestOperation.Header> {
 
-    public static final RequestOperationHeader requestOperationHeader(UUID deviceID, String deviceHardwareID) {
-        return RequestOperationHeader.newBuilder(REQUESTOPERATIONHEADERPROTO)
-                .setDeviceIdentifier(CKProto.identifier(deviceID.toString(), 2))
+    public static final RequestOperation.Header requestOperationHeader(UUID deviceID, String deviceHardwareID) {
+        return RequestOperation.Header.newBuilder(REQUESTOPERATIONHEADERPROTO)
+                .setDeviceIdentifier(CKProto.identifier(deviceID.toString(), Identifier.Type.DEVICE))
                 .setDeviceHardwareID(deviceHardwareID)
                 .build();
     }
 
-    static final RequestOperationHeader REQUESTOPERATIONHEADERPROTO
-            = RequestOperationHeader.newBuilder()
-                    .setF4("4.0.0.0")
+    static final RequestOperation.Header REQUESTOPERATIONHEADERPROTO
+            = RequestOperation.Header.newBuilder()
+                    .setApplicationVersion("4.0.0.0")
                     .setDeviceSoftwareVersion("9.0.1")
                     .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
                     .setDeviceLibraryVersion("479")
                     .setDeviceFlowControlBudget(40000)
                     .setDeviceFlowControlBudgetCap(40000)
-                    .setVersion("4.0")
-                    .setF19(1)
-                    .setDeviceAssignedName("Wonderwoman's iPhone")
-                    .setF23(1)
-                    .setF25(1)
+                    .setMmcsProtocolVersion("4.0")
+                    .setApplicationContainerEnvironment(RequestOperation.Header.ContainerEnvironment.PRODUCTION)
+                    .setDeviceAssignedName("Computer")
+                    .setTargetDatabase(RequestOperation.Header.Database.PRIVATE_DB)
+                    .setIsolationLevel(RequestOperation.Header.IsolationLevel.ZONE)
                     .build();
 
-    private final RequestOperationHeader proto;
+    private final RequestOperation.Header proto;
     private final String container;
     private final String bundle;
 
-    public RequestOperationHeaders(RequestOperationHeader proto, String container, String bundle) {
+    public RequestOperationHeaders(RequestOperation.Header proto, String container, String bundle) {
         this.proto = Objects.requireNonNull(proto, "proto");
         this.container = Objects.requireNonNull(container, "container");
         this.bundle = Objects.requireNonNull(bundle, "bundle");
@@ -73,11 +74,11 @@ public final class RequestOperationHeaders implements Function<String, RequestOp
     }
 
     @Override
-    public RequestOperationHeader apply(String operation) {
-        return RequestOperationHeader.newBuilder(proto)
+    public RequestOperation.Header apply(String key) {
+        return RequestOperation.Header.newBuilder(proto)
                 .setApplicationContainer(container)
                 .setApplicationBundle(bundle)
-                .setOperation(operation)
+                .setDeviceFlowControlKey(key)
                 .build();
     }
 

@@ -23,7 +23,11 @@
  */
 package com.github.horrorho.inflatabledonkey.cloudkitty;
 
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Identifier;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Operation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordIdentifier;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordZoneIdentifier;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
 import java.util.UUID;
 import javax.annotation.concurrent.Immutable;
 
@@ -34,19 +38,19 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class CKProto {
 
-    public static RequestOperation requestOperationWithHeader(RequestOperation operation, RequestOperationHeader header) {
+    public static RequestOperation requestOperationWithHeader(RequestOperation operation, RequestOperation.Header header) {
         return RequestOperation.newBuilder(operation)
-                .setRequestOperationHeader(header)
+                .setHeader(header)
                 .build();
     }
 
-    public static Operation operation(int type) {
+    public static Operation operation(Operation.Type type) {
         return operation(UUID.randomUUID(), type);
     }
 
-    public static Operation operation(UUID uuid, int type) {
+    public static Operation operation(UUID uuid, Operation.Type type) {
         return Operation.newBuilder()
-                .setUuid(uuid.toString())
+                .setOperationUUID(uuid.toString())
                 .setType(type)
                 .build();
     }
@@ -57,19 +61,19 @@ public final class CKProto {
 
     public static RecordIdentifier recordIdentifier(RecordZoneIdentifier recordZoneID, String recordName) {
         return RecordIdentifier.newBuilder()
-                .setValue(identifier(recordName, 1))
+                .setValue(identifier(recordName, Identifier.Type.RECORD))
                 .setZoneIdentifier(recordZoneID)
                 .build();
     }
 
     public static RecordZoneIdentifier recordZoneIdentifier(String zone, String cloudKitUserId) {
         return RecordZoneIdentifier.newBuilder()
-                .setValue(identifier(zone, 6))
-                .setOwnerIdentifier(identifier(cloudKitUserId, 7))
+                .setValue(identifier(zone, Identifier.Type.RECORD_ZONE))
+                .setOwnerIdentifier(identifier(cloudKitUserId, Identifier.Type.USER))
                 .build();
     }
 
-    public static Identifier identifier(String name, int type) {
+    public static Identifier identifier(String name, Identifier.Type type) {
         return Identifier.newBuilder()
                 .setName(name)
                 .setType(type)

@@ -25,7 +25,11 @@ package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Operation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordRetrieveRequest;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordRetrieveResponse;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,7 +56,7 @@ public final class RecordRetrieveRequestOperations {
             get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames)
             throws IOException {
         List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
-        return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getRecordRetrieveResponse);
+        return kitty.get(httpClient, KEY, operations, ResponseOperation::getRecordRetrieveResponse);
     }
 
     static List<RequestOperation>
@@ -64,16 +68,16 @@ public final class RecordRetrieveRequestOperations {
 
     static RequestOperation operation(String zone, String recordName, String cloudKitUserId) {
         return RequestOperation.newBuilder()
-                .setOperation(CKProto.operation(211))
+                .setRequest(CKProto.operation(Operation.Type.RECORD_RETRIEVE_TYPE))
                 .setRecordRetrieveRequest(request(zone, recordName, cloudKitUserId))
                 .build();
     }
 
     static RecordRetrieveRequest request(String zone, String recordName, String cloudKitUserId) {
         return RecordRetrieveRequest.newBuilder()
-                .setRecordID(CKProto.recordIdentifier(zone, recordName, cloudKitUserId))
+                .setRecordIdentifier(CKProto.recordIdentifier(zone, recordName, cloudKitUserId))
                 .build();
     }
 
-    private static final String OPERATION = "GetRecordsURLRequest";
+    private static final String KEY = "GetRecordsURLRequest";
 }

@@ -73,41 +73,41 @@ public final class Device extends AbstractRecord {
 
     public Optional<String> domainHMAC() {
         return recordFieldValue(DOMAIN_HMAC)
-                .map(CloudKit.RecordFieldValue::getStringValue);
+                .map(CloudKit.Record.Field.Value::getStringValue);
     }
 
     public Optional<String> currentKeybagUUID() {
         return recordFieldValue(KEYBAG_UUID)
-                .map(CloudKit.RecordFieldValue::getStringValue);
+                .map(CloudKit.Record.Field.Value::getStringValue);
     }
 
     public String deviceClass() {
         return recordFieldValue("deviceClass")
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .orElse("");
     }
 
     public String hardwareModel() {
         return recordFieldValue("hardwareModel")
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .orElse("");
     }
 
     public String marketingName() {
         return recordFieldValue("marketingName")
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .orElse("");
     }
 
     public String productType() {
         return recordFieldValue("productType")
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .orElse("");
     }
 
     public String serialNumber() {
         return recordFieldValue("serialNumber")
-                .map(CloudKit.RecordFieldValue::getStringValue)
+                .map(CloudKit.Record.Field.Value::getStringValue)
                 .orElse("");
     }
 

@@ -25,7 +25,6 @@ package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.exception.UncheckedInterruptedException;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperationHeader;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
 import com.github.horrorho.inflatabledonkey.protobuf.util.ProtobufAssistant;
 import com.github.horrorho.inflatabledonkey.requests.ProtoBufsRequestFactory;
@@ -71,14 +70,14 @@ public final class CloudKitty {
     private static final int LIMIT = 400;   // TODO inject
 
     private final ResponseHandler<List<ResponseOperation>> responseHandler;
-    private final Function<String, RequestOperationHeader> requestOperationHeaders;
+    private final Function<String, RequestOperation.Header> requestOperationHeaders;
     private final ProtoBufsRequestFactory requestFactory;
     private final ForkJoinPool forkJoinPool;
     private final int limit;
 
     CloudKitty(
             ResponseHandler<List<ResponseOperation>> responseHandler,
-            Function<String, RequestOperationHeader> requestOperationHeaders,
+            Function<String, RequestOperation.Header> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
             ForkJoinPool forkJoinPool,
             int limit) {
@@ -90,7 +89,7 @@ public final class CloudKitty {
     }
 
     CloudKitty(
-            Function<String, RequestOperationHeader> requestOperationHeaders,
+            Function<String, RequestOperation.Header> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
             ForkJoinPool forkJoinPool,
             int limit) {
@@ -98,7 +97,7 @@ public final class CloudKitty {
     }
 
     CloudKitty(
-            Function<String, RequestOperationHeader> requestOperationHeaders,
+            Function<String, RequestOperation.Header> requestOperationHeaders,
             ProtoBufsRequestFactory requestFactory,
             ForkJoinPool forkJoinPool) {
         this(requestOperationHeaders, requestFactory, forkJoinPool, LIMIT);
@@ -110,13 +109,13 @@ public final class CloudKitty {
         return get(httpClient, operation, requests, Function.identity());
     }
 
-    public <T> List<T> get(HttpClient httpClient, String operation, List<RequestOperation> requests,
+    public <T> List<T> get(HttpClient httpClient, String key, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws IOException {
 
-        return execute(httpClient, requestOperationHeaders.apply(operation), requests, field);
+        return execute(httpClient, requestOperationHeaders.apply(key), requests, field);
     }
 
-    <T> List<T> execute(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests,
+    <T> List<T> execute(HttpClient httpClient, RequestOperation.Header header, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws IOException {
         try {
             logger.debug("-- execute() - requests: {}", requests.size());
@@ -165,7 +164,7 @@ public final class CloudKitty {
     }
 
     List<ResponseOperation>
-            request(HttpClient httpClient, RequestOperationHeader header, List<RequestOperation> requests)
+            request(HttpClient httpClient, RequestOperation.Header header, List<RequestOperation> requests)
             throws UncheckedIOException {
         logger.trace("<< request() - httpClient: {} header: {} requests: {}", httpClient, header, requests);
         logger.debug("-- request() - requests: {}", requests.size());
@@ -178,7 +177,7 @@ public final class CloudKitty {
         return responses;
     }
 
-    byte[] encode(RequestOperationHeader header, Iterator<RequestOperation> it) throws UncheckedIOException {
+    byte[] encode(RequestOperation.Header header, Iterator<RequestOperation> it) throws UncheckedIOException {
         try {
             assert (it.hasNext());
             ByteArrayOutputStream os = new ByteArrayOutputStream();

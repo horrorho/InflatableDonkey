@@ -78,9 +78,9 @@ public final class MBKSyncClient {
             protectionInfo(List<CloudKit.ZoneRetrieveResponse> response, ProtectionZone zone) {
         return response
                 .stream()
-                .map(CloudKit.ZoneRetrieveResponse::getZoneSummarysList)
+                .map(CloudKit.ZoneRetrieveResponse::getZoneSummaryList)
                 .flatMap(Collection::stream)
-                .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
+                .map(CloudKit.ZoneRetrieveResponse.ZoneSummary::getTargetZone)
                 .filter(CloudKit.Zone::hasProtectionInfo)
                 .map(CloudKit.Zone::getProtectionInfo)
                 .collect(Collectors.toList());
@@ -90,11 +90,11 @@ public final class MBKSyncClient {
             recordProtectionInfo(List<CloudKit.ZoneRetrieveResponse> response, ProtectionZone zone) {
         return response
                 .stream()
-                .map(CloudKit.ZoneRetrieveResponse::getZoneSummarysList)
+                .map(CloudKit.ZoneRetrieveResponse::getZoneSummaryList)
                 .flatMap(Collection::stream)
-                .map(CloudKit.ZoneRetrieveResponseZoneSummary::getTargetZone)
-                .filter(CloudKit.Zone::hasRecordProtectionInfo)
-                .map(CloudKit.Zone::getRecordProtectionInfo)
+                .map(CloudKit.ZoneRetrieveResponse.ZoneSummary::getTargetZone)
+                .filter(CloudKit.Zone::hasProtectionInfo)
+                .map(CloudKit.Zone::getProtectionInfo)
                 .collect(Collectors.toList());
     }
 }

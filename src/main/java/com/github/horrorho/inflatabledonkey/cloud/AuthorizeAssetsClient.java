@@ -133,7 +133,7 @@ public final class AuthorizeAssetsClient implements IOBiFunction<HttpClient, Col
     String dsPrsID(Collection<CloudKit.Asset> ckAssets) {
         return ckAssets
                 .stream()
-                .map(CloudKit.Asset::getDsPrsID)
+                .map(CloudKit.Asset::getOwner)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("missing dsPrsID"));
     }

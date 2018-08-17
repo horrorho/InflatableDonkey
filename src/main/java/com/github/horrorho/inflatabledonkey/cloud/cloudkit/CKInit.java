@@ -24,6 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.cloudkit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.horrorho.inflatabledonkey.data.CKContainer;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ import jdk.nashorn.internal.ir.annotations.Immutable;
  * @author Ahseya
  */
 @Immutable
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class CKInit {
 
     private final String cloudKitDeviceUrl;

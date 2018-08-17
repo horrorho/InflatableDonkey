@@ -25,7 +25,12 @@ package com.github.horrorho.inflatabledonkey.cloudkitty.operations;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CKProto;
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.*;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Operation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordZoneIdentifier;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ZoneRetrieveRequest;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ZoneRetrieveResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +56,7 @@ public final class ZoneRetrieveRequestOperations {
             get(CloudKitty kitty, HttpClient httpClient, Collection<String> zones)
             throws IOException {
         List<RequestOperation> operations = operations(zones, kitty.cloudKitUserId());
-        return kitty.get(httpClient, OPERATION, operations, ResponseOperation::getZoneRetrieveResponse);
+        return kitty.get(httpClient, KEY, operations, ResponseOperation::getZoneRetrieveResponse);
     }
 
     static List<RequestOperation> operations(Collection<String> zones, String cloudKitUserId) {
@@ -62,7 +67,7 @@ public final class ZoneRetrieveRequestOperations {
 
     static RequestOperation operation(String zone, String cloudKitUserId) {
         return RequestOperation.newBuilder()
-                .setOperation(CKProto.operation(201))
+                .setRequest(CKProto.operation(Operation.Type.ZONE_RETRIEVE_TYPE))
                 .setZoneRetrieveRequest(request(zone, cloudKitUserId))
                 .build();
     }
@@ -74,5 +79,5 @@ public final class ZoneRetrieveRequestOperations {
                 .build();
     }
 
-    private static final String OPERATION = "CKDFetchRecordZonesOperation";
+    private static final String KEY = "CKDFetchRecordZonesOperation";
 }
