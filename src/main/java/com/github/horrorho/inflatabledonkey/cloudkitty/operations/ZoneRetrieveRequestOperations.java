@@ -40,7 +40,7 @@ import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
 
 /**
- * CloudKit M211 RecordRetrieveRequestOperation.
+ * CloudKit M201 RecordRetrieveRequestOperation.
  *
  * @author Ahseya
  */

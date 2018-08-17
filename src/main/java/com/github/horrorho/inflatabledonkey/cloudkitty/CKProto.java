@@ -25,6 +25,8 @@ package com.github.horrorho.inflatabledonkey.cloudkitty;
 
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Identifier;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Operation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Record;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Record.Reference;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordIdentifier;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordZoneIdentifier;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
@@ -37,6 +39,19 @@ import javax.annotation.concurrent.Immutable;
  */
 @Immutable
 public final class CKProto {
+
+    public static Record.Type recordType(String name) {
+        return Record.Type.newBuilder()
+                .setName(name)
+                .build();
+    }
+
+    public static Reference reference(Reference.Type type, RecordIdentifier recordIdentifier) {
+        return Reference.newBuilder()
+                .setType(type)
+                .setRecordIdentifier(recordIdentifier)
+                .build();
+    }
 
     public static RequestOperation requestOperationWithHeader(RequestOperation operation, RequestOperation.Header header) {
         return RequestOperation.newBuilder(operation)
@@ -52,6 +67,12 @@ public final class CKProto {
         return Operation.newBuilder()
                 .setOperationUUID(uuid.toString())
                 .setType(type)
+                .build();
+    }
+
+    public static Record.Field.Identifier recordFieldIdentifier(String name) {
+        return Record.Field.Identifier.newBuilder()
+                .setName(name)
                 .build();
     }
 
