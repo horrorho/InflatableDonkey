@@ -61,7 +61,7 @@ public final class GCMDataA {
      * @throws IllegalArgumentException on decryption exceptions
      * @throws NullPointerException on null arguments
      */
-    public static byte[] decrypt(byte[] key, byte[] data, Optional<byte[]> optional) {
+    public static byte[] decrypt(byte[] key, byte[] data, Optional<byte[]> optional) { 
         try {
             // Network byte orderered data.
             ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -108,8 +108,8 @@ public final class GCMDataA {
             int tagLength,
             Optional<byte[]> optional) {
 
-        logger.trace("<< doDecrypt() - data: {} key: {} headerLength: {} nonce length: {} tag length: {}",
-                Hex.toHexString(buffer.array()), Hex.toHexString(key), headerLength, nonceLength, tagLength);
+        logger.trace("<< doDecrypt() - data: {} key: {} headerLength: {} nonce length: {} tag length: {} optional: {}",
+                Hex.toHexString(buffer.array()), Hex.toHexString(key), headerLength, nonceLength, tagLength, optional.map(Hex::toHexString));
 
         int cipherTextLength = buffer.limit() - headerLength - nonceLength - tagLength;
         if (cipherTextLength < 0) {
