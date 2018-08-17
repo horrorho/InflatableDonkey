@@ -39,9 +39,9 @@ public final class CoreHeaders {
 
     private static final Map<Headers, Header> HEADERS = Headers.headers(
             USERAGENT.mapEntry(
-                    "CloudKit/479 (13A404)"),
+                    "CloudKit/482.30 (13G36)"),
             XMMECLIENTINFO.mapEntry(
-                    "<iPhone5,3> <iPhone OS;9.0.1;13A404> <com.apple.cloudkit.CloudKitDaemon/479 (com.apple.cloudd/479)>"),
+                    "<iPad3,3> <iPhone OS;11.1;13G36> <com.apple.cloudkit.CloudKitDaemon/482.30 (com.apple.cloudd/482.30)>"),
             XCLOUDKITPROTOCOLVERSION.mapEntry(
                     "client=1;comments=1;device=1;presence=1;records=1;sharing=1;subscriptions=1;users=1;mescal=1;"),
             XAPPLEMMCSPROTOVERSION.mapEntry(
