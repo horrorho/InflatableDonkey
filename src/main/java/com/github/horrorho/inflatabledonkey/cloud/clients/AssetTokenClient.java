@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.QueryRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Asset;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetID;
@@ -61,8 +61,8 @@ public final class AssetTokenClient {
                 .collect(Collectors.toList());
         logger.debug("-- apply() - non-empty asset list size: {}", nonEmptyAssets.size());
 
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
+        List<CloudKit.QueryRetrieveResponse> responses
+                = QueryRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
 
         List<Asset> assets = assets(responses, assetIDDomains, zone);
         if (logger.isDebugEnabled()) {
@@ -78,12 +78,13 @@ public final class AssetTokenClient {
         return assets;
     }
 
-    static List<Asset> assets(List<CloudKit.RecordRetrieveResponse> responses, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
+    static List<Asset> assets(List<CloudKit.QueryRetrieveResponse> responses, Map<AssetID, String> assetIDDomains, ProtectionZone zone) {
         return responses
                 .parallelStream()
-                .filter(CloudKit.RecordRetrieveResponse::hasRecord)
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
-                .map(r -> asset(r, assetIDDomains, zone))
+                .flatMap(u -> u.getQueryResultsList().parallelStream())
+                .filter(CloudKit.QueryRetrieveResponse.QueryResult::hasRecord)
+                .map(CloudKit.QueryRetrieveResponse.QueryResult::getRecord)
+                .map(u -> asset(u, assetIDDomains, zone))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
