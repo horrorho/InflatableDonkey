@@ -47,7 +47,7 @@ public final class ArgsFactory {
     }
 
     public static Args defaults() {
-        String header = "iOS9 iCloud backup retrieval proof of concept tool.\n\n";
+        String header = "iOS9+ iCloud backup retrieval proof of concept tool.\n\n";
         String footer = "\nDates are ISO format e.g. 2000-12-31. Filters are case insensitive."
                 + "\nPass multiple argument values separated by spaces e.g. --extension png jpg";
         String cmdLineSyntax = Property.APP_NAME.peek().orElse("") + " (<token> | <appleid> <password>) [OPTION]...";
