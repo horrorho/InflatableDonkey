@@ -1,26 +1,14 @@
-**IMPORTANT NOTICE**, 6 November 2017.
+**Update**, 17 August 2018.
 
-Without being able to expand on the reasons why and with immediate effect, I will no longer be maintaining this project or servicing tickets. I'm also unable to divulge any information regarding iOS/ iCloud mechanics or render any assistance in this regard.
+Although this project is technically dead, in light of certain events, I have patched and returned InflatableDonkey to a functional state.
 
-I apologise for this.
+Please don't take this an indication that this project is being resurrected, it is not. I apologise for this.
 
-
-**Update**, 17 September 2017.
-
-iOS 11 build. LZFSE decompression via [RagingMoose](https://github.com/horrorho/RagingMoose) integration. No external `lzfse` compressor required, It should all work out of the box.
-
-Please report any issues.
-
-
-**Update**, 29 June 2017.
-
-Oh my how time flies! Although this tool has been on the back burner over the last year, thanks to the assistance of others (see below) I've still managed to keep it functional through iOS 10 and now iOS 11. The caveat being that iOS 11 at present needs an external [lzfse](https://github.com/lzfse/lzfse) decoder as detailed [here](https://github.com/horrorho/InflatableDonkey/issues/67#issuecomment-311392692). I do hope to have a built-in decoder available at some point, hopefully [soon](https://wow.gamepedia.com/Soon)!
-
-There has been some [confusion](https://github.com/horrorho/InflatableDonkey/issues/56#issuecomment-312075165) regarding InflatableDonkey's intent so I would like to clarify that it's only to be used for users accessing their own backups. Although I do try and keep it functional I can't promise that it will always work for everyone.
+Once again, I would like to clarify that InflatableDonkey is only to be used to access backups that you own.
 
 
 ### What is it?
-Java proof of concept iOS9/ 10/ 11 iCloud backup retrieval tool. Educational/ personal backup usage only.
+Java proof of concept iOS9+ iCloud backup retrieval tool. Educational/ personal backup usage only.
 
 ### Build
 Requires [Java 8 JRE/ JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) and [Maven](https://maven.apache.org).
