@@ -65,12 +65,12 @@ public final class KeyBagFactory {
         return record.getRecordFieldList()
                 .stream()
                 .filter(u -> u
-                .getIdentifier()
-                .getName()
-                .equals(label))
+                    .getIdentifier()
+                    .getName()
+                    .equals(label))
                 .map(u -> u
-                .getValue()
-                .getBytesValue())
+                    .getValue()
+                    .getBytesValue())
                 .map(ByteString::toByteArray)
                 .map(bs -> zone.decrypt(bs, label))
                 .filter(Optional::isPresent)
