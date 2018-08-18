@@ -113,13 +113,7 @@ public class Main {
         System.out.println("NOTE! Experimental Data Protection class mode detection.");
         System.out.println("If you have file corruption issues please try setting the mode manually:");
         System.out.println("    --mode CBC  OR  --mode XTS");
-        // SystemDefault HttpClient.
-        // TODO close
-//        CloseableHttpClient httpClient = HttpClients.custom()
-//                .setUserAgent("CloudKit/479 (13A404)")
-//                .setRedirectStrategy(new LaxRedirectStrategy())
-//                .useSystemProperties()
-//                .build();
+
         int maxConnections = Property.HTTP_CLIENT_CONNECTIONS_MAX_TOTAL.asInteger().orElse(256);
         int maxConnectionsPerRoute = Property.HTTP_CLIENT_CONNECTIONS_MAX_PER_ROUTE.asInteger().orElse(32);
         int timeoutMS = Property.HTTP_CLIENT_TIMEOUT_MS.asInteger().orElse(60000);
@@ -137,12 +131,13 @@ public class Main {
                 .setSocketTimeout(timeoutMS)
                 .build();
 
+        // TODO tidy resource handling.
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setConnectionManager(connManager)
                 .setDefaultRequestConfig(config)
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setRetryHandler(retryHandler)
-                .setUserAgent("CloudKit/479 (13A404)")
+                .setUserAgent("CloudKit/482.30 (13G36)")
                 .useSystemProperties()
                 .build();
 
@@ -370,3 +365,4 @@ public class Main {
 
 // TODO filter AssetID size rather than wait to download Asset and then filter.
 // TODO reconstruct empty files/ empty directories
+// TODO Fix zones/ excessive key unwrapping.
