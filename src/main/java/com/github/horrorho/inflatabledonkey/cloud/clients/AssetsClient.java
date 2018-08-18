@@ -24,7 +24,7 @@
 package com.github.horrorho.inflatabledonkey.cloud.clients;
 
 import com.github.horrorho.inflatabledonkey.cloudkitty.CloudKitty;
-import com.github.horrorho.inflatabledonkey.cloudkitty.operations.RecordRetrieveRequestOperations;
+import com.github.horrorho.inflatabledonkey.cloudkitty.operations.QueryRetrieveRequestOperations;
 import com.github.horrorho.inflatabledonkey.data.backup.Assets;
 import com.github.horrorho.inflatabledonkey.data.backup.AssetsFactory;
 import com.github.horrorho.inflatabledonkey.data.backup.Manifest;
@@ -66,8 +66,8 @@ public final class AssetsClient {
         }
 
         List<String> manifestIDs = manifestIDs(manifests);
-        List<CloudKit.RecordRetrieveResponse> responses
-                = RecordRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs);
+        List<CloudKit.QueryRetrieveResponse> responses
+                = QueryRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", manifestIDs);
         return assetsList(responses, zone);
     }
 
@@ -86,7 +86,7 @@ public final class AssetsClient {
                 .collect(Collectors.toList());
     }
 
-    static List<Assets> assetsList(List<CloudKit.RecordRetrieveResponse> responses, ProtectionZone zone) {
+    static List<Assets> assetsList(List<CloudKit.QueryRetrieveResponse> responses, ProtectionZone zone) {
         return groupByManifestID(responses)
                 .values()
                 .stream()
@@ -113,10 +113,11 @@ public final class AssetsClient {
     }
 
     static Map<ManifestID, List<CloudKit.Record>>
-            groupByManifestID(Collection<CloudKit.RecordRetrieveResponse> responses) {
-        return responses
-                .stream()
-                .map(CloudKit.RecordRetrieveResponse::getRecord)
+            groupByManifestID(Collection<CloudKit.QueryRetrieveResponse> responses) {
+        return responses.stream()
+                .map(CloudKit.QueryRetrieveResponse::getQueryResultsList)
+                .flatMap(Collection::stream)
+                .map(CloudKit.QueryRetrieveResponse.QueryResult::getRecord)
                 .filter(CloudKit.Record::hasRecordIdentifier)
                 .map(AssetsClient::manifestIDRecord)
                 .filter(Optional::isPresent)
@@ -130,7 +131,7 @@ public final class AssetsClient {
         Optional<Map.Entry<ManifestID, CloudKit.Record>> entry = ManifestIDIndex.from(name)
                 .map(u -> new SimpleImmutableEntry<>(u.id(), record));
         if (!entry.isPresent()) {
-            logger.debug("-- manifestIDRecord() - no manifest id found: {}", record);
+            logger.warn("-- manifestIDRecord() - no manifest id found: {}", record);
         }
         return entry;
     }
