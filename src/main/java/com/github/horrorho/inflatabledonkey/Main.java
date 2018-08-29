@@ -137,7 +137,7 @@ public class Main {
                 .setDefaultRequestConfig(config)
                 .setRedirectStrategy(new LaxRedirectStrategy())
                 .setRetryHandler(retryHandler)
-                .setUserAgent("CloudKit/482.30 (13G36)")
+                .setUserAgent("CloudKit/479 (13A452)")
                 .useSystemProperties()
                 .build();
 

@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import javax.annotation.concurrent.Immutable;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -43,7 +42,7 @@ import org.apache.http.entity.ByteArrayEntity;
  * @author Ahseya
  */
 @Immutable
-public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], HttpUriRequest> {
+public final class ProtoBufsRequestFactory {
 
     private static final Map<Headers, Header> HEADERS = new HashMap<>(CoreHeaders.headers());
     private static final String ACCEPT = "application/x-protobuf";
@@ -53,7 +52,7 @@ public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], H
             + "messageType=RequestOperation; delimited=true";
 
     private final Map<Headers, Header> headers;
-    private final String url;
+    private final String baseUrl;
     private final String container;
     private final String bundle;
     private final String cloudKitUserId;
@@ -63,7 +62,7 @@ public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], H
             Map<Headers, Header> headers,
             String url, String container, String bundle, String cloudKitUserId, String cloudKitToken) {
         this.headers = new HashMap<>(headers);
-        this.url = Objects.requireNonNull(url, "url");
+        this.baseUrl = Objects.requireNonNull(url, "url");
         this.container = Objects.requireNonNull(container, "container");
         this.bundle = Objects.requireNonNull(bundle, "bundle");
         this.cloudKitUserId = Objects.requireNonNull(cloudKitUserId, "cloudKitUserId");
@@ -71,14 +70,13 @@ public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], H
     }
 
     public ProtoBufsRequestFactory(
-            String url, String container, String bundle, String cloudKitUserId, String cloudKitToken) {
-        this(HEADERS, url, container, bundle, cloudKitUserId, cloudKitToken);
+            String baseUrl, String container, String bundle, String cloudKitUserId, String cloudKitToken) {
+        this(HEADERS, baseUrl, container, bundle, cloudKitUserId, cloudKitToken);
     }
 
-    @Override
-    public HttpUriRequest apply(UUID uuid, byte[] delimitedMessages) {
+    public HttpUriRequest apply(String api, UUID uuid, byte[] delimitedMessages) {
         ByteArrayEntity byteArrayEntity = new ByteArrayEntity(delimitedMessages);
-        HttpPost post = new HttpPost(url);
+        HttpPost post = new HttpPost(baseUrl + api);
         post.setHeader(Headers.XAPPLEREQUESTUUID.header(uuid.toString()));
         post.setHeader(Headers.XCLOUDKITUSERID.header(cloudKitUserId));
         post.setHeader(Headers.XCLOUDKITAUTHTOKEN.header(cloudKitToken));
@@ -94,7 +92,7 @@ public final class ProtoBufsRequestFactory implements BiFunction<UUID, byte[], H
     }
 
     public String url() {
-        return url;
+        return baseUrl;
     }
 
     public String container() {

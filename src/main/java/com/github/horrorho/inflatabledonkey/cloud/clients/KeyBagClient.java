@@ -34,6 +34,7 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.QueryRetrieveResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;
@@ -55,9 +56,11 @@ public final class KeyBagClient {
             throws BadDataException, IOException {
         logger.debug("-- keyBag() - keybag UUID: {}", keyBagID);
 
+        List<String> fieldTypes = Arrays.asList();
         List<CloudKit.QueryRetrieveResponse> responses
-                = QueryRetrieveRequestOperations.get(kitty, httpClient, "mbksync", keyBagID.toString());
+                = QueryRetrieveRequestOperations.get(kitty, httpClient, "PrivilegedBatchRecordFetch", "mbksync", fieldTypes, Arrays.asList(keyBagID.toString()));
 
+        responses.forEach(u -> logger.debug("-- apply() - {}", u));
         return keyBag(responses, zone);
     }
 

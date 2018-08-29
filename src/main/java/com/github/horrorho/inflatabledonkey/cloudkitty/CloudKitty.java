@@ -103,19 +103,19 @@ public final class CloudKitty {
         this(requestOperationHeaders, requestFactory, forkJoinPool, LIMIT);
     }
 
-    public List<ResponseOperation> get(HttpClient httpClient, String operation, List<RequestOperation> requests)
+    public List<ResponseOperation> get(HttpClient httpClient, String api, String operation, List<RequestOperation> requests)
             throws IOException {
 
-        return get(httpClient, operation, requests, Function.identity());
+        return get(httpClient, api, operation, requests, Function.identity());
     }
 
-    public <T> List<T> get(HttpClient httpClient, String key, List<RequestOperation> requests,
+    public <T> List<T> get(HttpClient httpClient, String api, String key, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws IOException {
 
-        return execute(httpClient, requestOperationHeaders.apply(key), requests, field);
+        return execute(httpClient, api, requestOperationHeaders.apply(key), requests, field);
     }
 
-    <T> List<T> execute(HttpClient httpClient, RequestOperation.Header header, List<RequestOperation> requests,
+    <T> List<T> execute(HttpClient httpClient, String api, RequestOperation.Header header, List<RequestOperation> requests,
             Function<ResponseOperation, T> field) throws IOException {
         try {
             logger.debug("-- execute() - requests: {}", requests.size());
@@ -131,7 +131,7 @@ public final class CloudKitty {
 
             List<SimpleImmutableEntry<Integer, List<ResponseOperation>>> get
                     = forkJoinPool.submit(() -> list.parallelStream()
-                    .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, header, u.getValue())))
+                    .map(u -> new SimpleImmutableEntry<>(u.getKey(), request(httpClient, api, header, u.getValue())))
                     .collect(toList()))
                             .get();
 
@@ -164,14 +164,14 @@ public final class CloudKitty {
     }
 
     List<ResponseOperation>
-            request(HttpClient httpClient, RequestOperation.Header header, List<RequestOperation> requests)
+            request(HttpClient httpClient, String api, RequestOperation.Header header, List<RequestOperation> requests)
             throws UncheckedIOException {
         logger.trace("<< request() - httpClient: {} header: {} requests: {}", httpClient, header, requests);
         logger.debug("-- request() - requests: {}", requests.size());
 
         assert (!requests.isEmpty());
         byte[] data = encode(header, requests.iterator());
-        List<ResponseOperation> responses = client(httpClient, data);
+        List<ResponseOperation> responses = client(httpClient, api, data);
 
         logger.trace(">> request() - responses: {}", responses);
         return responses;
@@ -192,13 +192,12 @@ public final class CloudKitty {
         }
     }
 
-    List<ResponseOperation> client(HttpClient httpClient, byte[] data) {
+    List<ResponseOperation> client(HttpClient httpClient, String api, byte[] data) {
         try {
-            HttpUriRequest uriRequest = requestFactory.apply(UUID.randomUUID(), data);
+            HttpUriRequest uriRequest = requestFactory.apply(api, UUID.randomUUID(), data);
             List<ResponseOperation> responses = httpClient.execute(uriRequest, responseHandler);
             responses.forEach(ProtobufAssistant::logDebugUnknownFields);
             return responses;
-
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

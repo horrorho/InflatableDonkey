@@ -32,6 +32,7 @@ import com.github.horrorho.inflatabledonkey.pcs.zone.PZFactory;
 import com.github.horrorho.inflatabledonkey.pcs.zone.ProtectionZone;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -61,10 +62,11 @@ public final class AssetTokenClient {
                 .filter(e -> e.getKey().size() > 0)
                 .map(e -> e.getKey().toString())
                 .collect(Collectors.toList());
-        logger.debug("-- apply() - non-empty asset list size: {}", nonEmptyAssets.size());
-
+        logger.debug("-- apply() - non-empty asset id list size: {}", nonEmptyAssets.size());
+        
+        List<String> fieldTypes = Arrays.asList();
         List<CloudKit.QueryRetrieveResponse> responses
-                = QueryRetrieveRequestOperations.get(kitty, httpClient, "_defaultZone", nonEmptyAssets);
+                = QueryRetrieveRequestOperations.get(kitty, httpClient, "PrivilegedBatchRecordFetch", "_defaultZone", fieldTypes, nonEmptyAssets);
 
         List<Asset> assets = assets(responses, assetIDDomains, zone);
         if (logger.isDebugEnabled()) {
@@ -77,6 +79,7 @@ public final class AssetTokenClient {
                     .sorted()
                     .forEach(u -> logger.debug("-- apply() - expiration: {}", u));
         }
+        logger.debug("-- apply() - asset list size: {}", assets.size());
         return assets;
     }
 

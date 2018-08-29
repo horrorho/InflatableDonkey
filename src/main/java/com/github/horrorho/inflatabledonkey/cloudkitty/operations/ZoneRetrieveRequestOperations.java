@@ -56,7 +56,7 @@ public final class ZoneRetrieveRequestOperations {
             get(CloudKitty kitty, HttpClient httpClient, Collection<String> zones)
             throws IOException {
         List<RequestOperation> operations = operations(zones, kitty.cloudKitUserId());
-        return kitty.get(httpClient, KEY, operations, ResponseOperation::getZoneRetrieveResponse);
+        return kitty.get(httpClient, API, KEY, operations, ResponseOperation::getZoneRetrieveResponse);
     }
 
     static List<RequestOperation> operations(Collection<String> zones, String cloudKitUserId) {
@@ -80,4 +80,7 @@ public final class ZoneRetrieveRequestOperations {
     }
 
     private static final String KEY = "CKDFetchRecordZonesOperation";
+
+    private static final String API = "/zone/retrieve";
+
 }

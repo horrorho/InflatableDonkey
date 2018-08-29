@@ -59,11 +59,9 @@ public final class CloudKitties {
     static CloudKitty create(ForkJoinPool forkJoinPool, UUID deviceID, String deviceHardwareID, String container, String bundle, String cloudKitUserId,
             String cloudKitToken, String baseUrl) {
 
-        String url = baseUrl + RECORD_RETRIEVE;
         RequestOperationHeaders requestOperationHeaders = new RequestOperationHeaders(container, bundle, deviceID, deviceHardwareID);
         ProtoBufsRequestFactory requestFactory
-                = new ProtoBufsRequestFactory(url, container, bundle, cloudKitUserId, cloudKitToken);
+                = new ProtoBufsRequestFactory(baseUrl, container, bundle, cloudKitUserId, cloudKitToken);
         return new CloudKitty(requestOperationHeaders, requestFactory, forkJoinPool);
     }
-    private static final String RECORD_RETRIEVE = "/record/retrieve";
 }

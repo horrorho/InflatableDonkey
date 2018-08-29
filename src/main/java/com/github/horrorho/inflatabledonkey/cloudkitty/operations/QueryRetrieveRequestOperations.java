@@ -33,6 +33,7 @@ import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.QueryRetrieveRespo
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.Record;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RecordIdentifier;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestOperation;
+import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.RequestedFields;
 import com.github.horrorho.inflatabledonkey.protobuf.CloudKit.ResponseOperation;
 import java.io.IOException;
 import java.util.Arrays;
@@ -41,6 +42,8 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 import javax.annotation.concurrent.Immutable;
 import org.apache.http.client.HttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CloudKit M220 RecordRetrieveRequestOperation.
@@ -50,40 +53,45 @@ import org.apache.http.client.HttpClient;
 @Immutable
 public final class QueryRetrieveRequestOperations {
 
-    public static List<QueryRetrieveResponse> get(CloudKitty kitty, HttpClient httpClient, String zone, String... recordNames)
-            throws IOException {
-        return get(kitty, httpClient, zone, Arrays.asList(recordNames));
-    }
+    private static final Logger logger = LoggerFactory.getLogger(QueryRetrieveRequestOperations.class);
 
     public static List<QueryRetrieveResponse>
-            get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames)
+            get(CloudKitty kitty, HttpClient httpClient, String type, String zone, List<String> requestedFields, Collection<String> recordNames)
             throws IOException {
-        List<RequestOperation> operations = operations(kitty.cloudKitUserId(), zone, recordNames);
-        return kitty.get(httpClient, KEY, operations, ResponseOperation::getQueryRetrieveResponse);
+        List<RequestOperation> operations = operations(kitty.cloudKitUserId(), type, zone, requestedFields, recordNames);
+        return kitty.get(httpClient, API, KEY, operations, ResponseOperation::getQueryRetrieveResponse);
     }
 
-    static List<RequestOperation> operations(String cloudKitUserId, String zone, Collection<String> recordNames) {
-        return Arrays.asList(operation(cloudKitUserId, zone, recordNames));
+    static List<RequestOperation> operations(String cloudKitUserId, String type, String zone, List<String> requestedFields, Collection<String> recordNames) {
+        return Arrays.asList(operation(cloudKitUserId, type, zone, requestedFields, recordNames));
     }
 
-    static RequestOperation operation(String cloudKitUserId, String zone, Collection<String> recordNames) {
+    static RequestOperation operation(String cloudKitUserId, String type, String zone, List<String> requestedFields, Collection<String> recordNames) {
         return RequestOperation.newBuilder()
                 .setRequest(CKProto.operation(Operation.Type.QUERY_RETRIEVE_TYPE))
-                .setQueryRetrieveRequest(request(cloudKitUserId, zone, recordNames))
+                .setQueryRetrieveRequest(request(cloudKitUserId, type, zone, requestedFields, recordNames))
                 .build();
     }
 
-    static QueryRetrieveRequest request(String cloudKitUserId, String zone, Collection<String> recordNames) {
-        Query query = query(cloudKitUserId, zone, recordNames);
+    static QueryRetrieveRequest request(String cloudKitUserId, String type, String zone, List<String> requestedFields, Collection<String> recordNames) {
+        List<Record.Field.Identifier> fieldList = requestedFields.stream()
+                .map(u -> Record.Field.Identifier.newBuilder().setName(u).build())
+                .collect(toList());
+        RequestedFields _requestedFields = RequestedFields.newBuilder().addAllFields(fieldList).build();
+
+        Query query = query(cloudKitUserId, type, zone, recordNames);
         AssetsToDownload assetsToDownload = AssetsToDownload.newBuilder().setAllAssets(true).build();
-        return QueryRetrieveRequest.newBuilder()
+        QueryRetrieveRequest.Builder builder = QueryRetrieveRequest.newBuilder()
                 .setQuery(query)
                 .setZoneIdentifier(CKProto.recordZoneIdentifier(zone, cloudKitUserId))
-                .setAssetsToDownload(assetsToDownload)
-                .build();
+                .setAssetsToDownload(assetsToDownload);
+        if (_requestedFields.getFieldsCount() > 0) {
+            builder.setRequestedFields(_requestedFields);
+        }
+        return builder.build();
     }
 
-    static Query query(String cloudKitUserId, String zone, Collection<String> recordNames) {
+    static Query query(String cloudKitUserId, String type, String zone, Collection<String> recordNames) {
         List<RecordIdentifier> recordIdentifierList = recordNames
                 .stream()
                 .map(u -> CKProto.recordIdentifier(zone, u, cloudKitUserId))
@@ -93,7 +101,7 @@ public final class QueryRetrieveRequestOperations {
         Query.Filter filter = filter(fieldName, fieldValue, Query.Filter.Type.IN);
 
         return Query.newBuilder()
-                .addTypes(CKProto.recordType("PrivilegedBatchRecordFetch"))
+                .addTypes(CKProto.recordType(type))
                 .addFilters(filter)
                 .build();
     }
@@ -123,4 +131,6 @@ public final class QueryRetrieveRequestOperations {
     }
 
     private static final String KEY = "CKDQueryOperation";
+
+    private static final String API = "/query/retrieve";
 }

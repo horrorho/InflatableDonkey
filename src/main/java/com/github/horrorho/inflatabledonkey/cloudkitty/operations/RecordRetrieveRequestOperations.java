@@ -56,7 +56,7 @@ public final class RecordRetrieveRequestOperations {
             get(CloudKitty kitty, HttpClient httpClient, String zone, Collection<String> recordNames)
             throws IOException {
         List<RequestOperation> operations = operations(zone, recordNames, kitty.cloudKitUserId());
-        return kitty.get(httpClient, KEY, operations, ResponseOperation::getRecordRetrieveResponse);
+        return kitty.get(httpClient, API, KEY, operations, ResponseOperation::getRecordRetrieveResponse);
     }
 
     static List<RequestOperation>
@@ -80,4 +80,7 @@ public final class RecordRetrieveRequestOperations {
     }
 
     private static final String KEY = "GetRecordsURLRequest";
+
+    private static final String API = "/record/retrieve";
+
 }
