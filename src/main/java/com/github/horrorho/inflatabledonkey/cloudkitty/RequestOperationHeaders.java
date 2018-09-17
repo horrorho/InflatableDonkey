@@ -46,10 +46,10 @@ public final class RequestOperationHeaders implements Function<String, RequestOp
 
     static final RequestOperation.Header REQUESTOPERATIONHEADERPROTO
             = RequestOperation.Header.newBuilder()
-                    .setApplicationVersion("4.0.0.0")
-                    .setDeviceSoftwareVersion("9.3.5")
+                    .setApplicationVersion("482.30")
+                    .setDeviceSoftwareVersion("iPhone OS;11.4.1;15G77")
                     .setDeviceLibraryName("com.apple.cloudkit.CloudKitDaemon")
-//                    .setDeviceLibraryVersion("482.30")
+                    .setDeviceLibraryVersion("482.30")
                     .setDeviceFlowControlBudget(0)
                     .setDeviceFlowControlBudgetCap(0)
                     .setMmcsProtocolVersion("4.0")
