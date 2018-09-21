@@ -1,11 +1,3 @@
-package com.github.horrorho.inflatabledonkey.requests;
-
-import static com.github.horrorho.inflatabledonkey.requests.Headers.*;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.concurrent.Immutable;
-import org.apache.http.Header;
-
 /*
  * The MIT License
  *
@@ -34,6 +26,15 @@ import org.apache.http.Header;
  *
  * @author Ahseya
  */
+
+package com.github.horrorho.inflatabledonkey.requests;
+
+import static com.github.horrorho.inflatabledonkey.requests.Headers.*;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.concurrent.Immutable;
+import org.apache.http.Header;
+
 @Immutable
 public final class CoreHeaders {
 
