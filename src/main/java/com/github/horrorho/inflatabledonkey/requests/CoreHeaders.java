@@ -41,7 +41,7 @@ public final class CoreHeaders {
             USERAGENT.mapEntry(
                     "CloudKit/482.30 (15G77)"),
             XMMECLIENTINFO.mapEntry(
-                    "<iPhone10,2> <iPhone OS;11.4.1;15G77)> <com.apple.cloudkit.CloudKitDaemon/482.30 (com.apple.cloudd/482.30)>"),
+                    "<iPhone10,2> <iPhone OS;11.4.1;15G77> <com.apple.cloudkit.CloudKitDaemon/482.30 (com.apple.cloudd/482.30)>"),
             XCLOUDKITPROTOCOLVERSION.mapEntry(
                     "client=1;comments=1;device=1;presence=1;records=1;sharing=1;subscriptions=1;users=1;mescal=1;"),
             XAPPLEMMCSPROTOVERSION.mapEntry(
